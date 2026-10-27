@@ -103,6 +103,37 @@ def _pmf(k, mu, r):
     return math.exp(math.lgamma(k + r) - math.lgamma(r) - math.lgamma(k + 1) + r * math.log(r / (r + mu)) + k * math.log(mu / (r + mu)))
 
 
+def linee(k, mu):
+    """Righe Over/Under [codice, prob, quota equa, 0] per la statistica k con media attesa mu."""
+    M, out = MODELLI[k], []
+    for L in M["linee"]:
+        po = 1 - sum(_pmf(i, mu, M["r"]) for i in range(int(L) + 1))
+        for c, p in ((f"{k}O{L}", po), (f"{k}U{L}", 1 - po)):
+            if 0.03 < p < 0.97:
+                out.append([c, round(p, 4), round(max(1.01, 0.94 / p), 2), 0])
+    return out
+
+
+def con_arbitro(m, arb):
+    """Aggiorna cartellini e falli di una partita gia calcolata quando l'arbitro viene designato dopo (arb: ratio K/F)."""
+    cart = m.get("cart") or {}
+    if not arb or not arb.get("ratio"):
+        return False
+    nuove = {}
+    for k, beta in ARBITRO["beta"].items():
+        if k in cart and cart[k].get("senza_arbitro"):
+            mu = cart[k]["senza_arbitro"] * arb["ratio"][k] ** beta
+            cart[k]["attesi"] = round(mu, 2)
+            nuove[k] = linee(k, mu)
+    if not nuove:
+        return False
+    tieni = lambda x: not (isinstance(x, list) and str(x[0])[:1] in nuove and str(x[0])[1:2] in ("O", "U"))
+    agg = [r for k in nuove for r in nuove[k]]
+    m["markets"] = [x for x in m.get("markets", []) if tieni(x)] + agg
+    m["_extra"] = [x for x in m.get("_extra", []) if tieni(x)] + agg
+    return True
+
+
 def mercati(med, casa, ospite, p1, p2, arb=None):
     """Mercati Over/Under di cartellini, angoli e falli per una partita (con l'arbitro designato, se noto). casa/ospite: nomi come nel CSV. None se mancano i dati."""
     if not med:
@@ -125,9 +156,5 @@ def mercati(med, casa, ospite, p1, p2, arb=None):
         if arb and k in ARBITRO["beta"] and arb.get("ratio"):
             mu *= arb["ratio"][k] ** ARBITRO["beta"][k]
         info[k] = {"attesi": round(mu, 2), "senza_arbitro": round(senza, 2), "media_lega": round(lg, 2), "casa": [round(h[k + "f"], 2), round(h[k + "s"], 2)], "ospite": [round(a[k + "f"], 2), round(a[k + "s"], 2)]}
-        for L in M["linee"]:
-            po = 1 - sum(_pmf(i, mu, M["r"]) for i in range(int(L) + 1))
-            for c, p in ((f"{k}O{L}", po), (f"{k}U{L}", 1 - po)):
-                if 0.03 < p < 0.97:
-                    out.append([c, round(p, 4), round(max(1.01, 0.94 / p), 2), 0])
+        out += linee(k, mu)
     return out, info

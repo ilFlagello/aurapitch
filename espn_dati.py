@@ -132,6 +132,60 @@ def classifica_espn(lg):
     return righe
 
 
+def giro_arbitri(base="data", giorni=3):
+    """Arbitri designati per le partite dei prossimi giorni (ESPN: scoreboard, o la scheda della partita se manca).
+    Serve quando football-data.org non ha ancora il nome dell'arbitro."""
+    ora = datetime.now(timezone.utc)
+    out = []
+    da, a_ = ora.strftime("%Y%m%d"), (ora + timedelta(days=giorni)).strftime("%Y%m%d")
+    for k, lg in ESPN_LG.items():
+        try:
+            evs = get(f"{SITE}{lg}/scoreboard?dates={da}-{a_}").get("events", [])
+        except Exception as e:  # noqa: BLE001
+            print(f"ESPN arbitri {k}: {e}")
+            continue
+        for ev in evs:
+            try:
+                c = ev["competitions"][0]
+                if ev["status"]["type"].get("completed"):
+                    continue
+                uff = c.get("officials") or []
+                if not uff and datetime.fromisoformat(ev["date"].replace("Z", "+00:00")) - ora <= timedelta(hours=60):
+                    uff = (get(f"{SITE}{lg}/summary?event={ev['id']}").get("gameInfo") or {}).get("officials") or []
+                nome = next((o.get("displayName") or o.get("fullName") for o in uff
+                             if (o.get("position") or {}).get("name", "Referee").lower() in ("referee", "arbitro") and (o.get("displayName") or o.get("fullName"))), None)
+                if not nome and uff:
+                    nome = uff[0].get("displayName") or uff[0].get("fullName")
+                h = next(x for x in c["competitors"] if x["homeAway"] == "home")["team"]["displayName"]
+                a = next(x for x in c["competitors"] if x["homeAway"] == "away")["team"]["displayName"]
+                if nome:
+                    out.append({"lg": k, "t": ev["date"], "h": h, "a": a, "nome": nome})
+            except Exception as e:  # noqa: BLE001
+                print(f"ESPN arbitri {k} {ev.get('id')}: {e}")
+    os.makedirs(os.path.join(base, "espn"), exist_ok=True)
+    with open(os.path.join(base, "espn", "arbitri.json"), "w", encoding="utf-8") as f:
+        json.dump({"agg": ora.isoformat(), "partite": out}, f, ensure_ascii=False, separators=(",", ":"))
+    print(f"ESPN: arbitri designati trovati {len(out)}")
+
+
+def arbitro_designato(elenco, lg, h, a, ko):
+    """Nome dell'arbitro designato per la partita (lg, casa, ospite, calcio d'inizio) dall'elenco di giro_arbitri."""
+    best, bs = None, 1.5
+    for x in elenco or []:
+        if x.get("lg") != lg:
+            continue
+        try:
+            t = datetime.fromisoformat(x["t"].replace("Z", "+00:00"))
+        except (KeyError, ValueError):
+            continue
+        if abs((t - ko).total_seconds()) > 6 * 3600:
+            continue
+        s = sim(h, [x["h"]]) + sim(a, [x["a"]])
+        if s > bs:
+            best, bs = x["nome"], s
+    return best
+
+
 def giro_espn(base="data", ore=48):
     try:
         with open(os.path.join("app", "data", "giornata.json"), encoding="utf-8") as f:
@@ -193,6 +247,10 @@ def giro_espn(base="data", ore=48):
             out["classifiche"][k] = classifica_espn(ESPN_LG[k])
         except Exception as e:  # noqa: BLE001
             print(f"ESPN classifica {k}: errore {e}")
+    try:
+        giro_arbitri(base)
+    except Exception as e:  # noqa: BLE001
+        print(f"ESPN arbitri: errore {e}")
     os.makedirs(os.path.join(base, "espn"), exist_ok=True)
     with open(os.path.join(base, "espn", "squadre.json"), "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))

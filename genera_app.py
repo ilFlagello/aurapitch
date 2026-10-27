@@ -368,6 +368,9 @@ def genera():
     medie_ck = {k: CK.medie_stagione(os.path.join(FD, f"stagione_{k}.csv")) for k in ("I1", "I2", "E0", "SP1", "D1")}
     refs, _ = storia_arbitri(fdp)
     print(f"Arbitri con statistiche: {len(refs)}")
+    designati = (jload(os.path.join(DATA, "espn", "arbitri.json"), {}) or {}).get("partite", [])
+    with open(ARBITRI, "w", encoding="utf-8") as f:  # per gli aggiornamenti durante il giorno (arbitri designati dopo il mattino)
+        json.dump({c: {"nome": v["nome"], "n": v["n"], "ratio": v["ratio"], "media": v["media"]} for c, v in refs.items()}, f, ensure_ascii=False, separators=(",", ":"))
 
     xg_lega = {k: jload(os.path.join(FD, f"understat_{k}.json"), []) or [] for k in ("I1", "E0", "SP1", "D1")}
 
@@ -476,16 +479,10 @@ def genera():
         if not (sh and sa):
             for v in tip.values():
                 v["perche"].append("Statistiche delle squadre non disponibili per questo campionato: il consiglio si basa solo sulle quote.")
-        arb_nome = arbitro_di(m_fd) if m_fd else None
+        arb_nome = (arbitro_di(m_fd) if m_fd else None) or ES.arbitro_designato(designati, k, h, a, t0)
         arb = refs.get(CK.chiave_arbitro(arb_nome)) if arb_nome else None
         extra, cart = CK.mercati(medie_ck.get(k), nome_csv(k, h), nome_csv(k, a), q["mk"][0], q["mk"][2], arb) if k in medie_ck else (None, None)
-        arbitro = None
-        if arb_nome:
-            lgm = (medie_ck.get(k) or {}).get("lega") or {}
-            arbitro = {"nome": arb_nome, "n": arb["n"] if arb else 0,
-                       "media": {kk: round(v, 2) for kk, v in (arb["media"] if arb else {}).items() if v is not None},
-                       "ratio": {kk: round(v, 3) for kk, v in (arb["ratio"] if arb else {}).items()},
-                       "lega": {kk: round(lgm[kk], 2) for kk in ("K", "F") if lgm.get(kk)}}
+        arbitro = scheda_arbitro(arb_nome, arb, (medie_ck.get(k) or {}).get("lega") or {}) if arb_nome else None
         extra = extra or []
         mid = f"{k}-{m_fd['id'] if m_fd else zlib.crc32((h + '|' + a + '|' + loc.date().isoformat()).encode())}"
         out["matches"].append({
@@ -541,6 +538,38 @@ def genera():
 
 NOTIZIE = os.path.join(DATA, "notizie", "notizie.json")
 ESPN = os.path.join(DATA, "espn", "squadre.json")
+ARBITRI = os.path.join(DATA, "arbitri.json")
+
+
+def scheda_arbitro(nome, arb, lega):
+    return {"nome": nome, "n": arb["n"] if arb else 0,
+            "media": {kk: round(v, 2) for kk, v in (arb["media"] if arb else {}).items() if v is not None},
+            "ratio": {kk: round(v, 3) for kk, v in (arb["ratio"] if arb else {}).items()},
+            "lega": {kk: round(lega[kk], 2) for kk in ("K", "F") if lega.get(kk)}}
+
+
+def aggiorna_arbitri(d):
+    """Durante il giorno: arbitri designati dopo il giro del mattino -> scheda arbitro e mercati cartellini/falli ricalcolati."""
+    designati = (jload(os.path.join(DATA, "espn", "arbitri.json"), {}) or {}).get("partite", [])
+    refs = jload(ARBITRI, {}) or {}
+    n = 0
+    for m in d.get("matches", []):
+        if m.get("arbitro") or m.get("st") != "NS":
+            continue
+        try:
+            ko = datetime.fromisoformat(m["ko"])
+        except (KeyError, ValueError):
+            continue
+        nome = ES.arbitro_designato(designati, m.get("lg"), m["h"], m["a"], ko)
+        if not nome:
+            continue
+        arb = refs.get(CK.chiave_arbitro(nome))
+        lega = {kk: (m.get("cart") or {}).get(kk, {}).get("media_lega") for kk in ("K", "F")}
+        m["arbitro"] = scheda_arbitro(nome, arb, {kk: v for kk, v in lega.items() if v})
+        if arb:
+            CK.con_arbitro(m, arb)
+        n += 1
+    return n
 
 
 def aggiorna_prepartita(d):
@@ -674,8 +703,9 @@ def aggiorna_live():
     print(f"Partite aggiornate: {cambi}")
     npre = aggiorna_prepartita(d)
     nf = applica_fattori(d)
-    print(f"Quote pre-partita applicate: {npre}; partite ricalcolate: {nf}")
-    return d if (cambi or nf or npre) else None
+    na = aggiorna_arbitri(d)
+    print(f"Quote pre-partita applicate: {npre}; partite ricalcolate: {nf}; arbitri aggiunti: {na}")
+    return d if (cambi or nf or npre or na) else None
 
 
 STORICO_IN = os.path.join(DATA, "consigli.json")

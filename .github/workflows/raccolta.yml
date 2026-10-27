@@ -53,6 +53,7 @@ jobs:
           python raccoglitore.py --aggiorna
           python raccoglitore.py --prepartita
           python raccoglitore.py --notizie
+          python raccoglitore.py --arbitri
           python genera_app.py --live
 
       - name: Salva i dati nell'archivio
@@ -64,5 +65,5 @@ jobs:
             echo "Nessun dato nuovo"
           else
             git commit -m "Dati $(date -u +%Y-%m-%d_%H%M)"
-            git push
+            for i in 1 2 3 4; do git pull --rebase -X theirs -q origin main && git push && break; sleep 5; done
           fi

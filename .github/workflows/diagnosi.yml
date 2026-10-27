@@ -9,5 +9,9 @@ jobs:
       - uses: actions/checkout@v4
       - run: |
           curl -s https://aurapitch-push.ilflagello.workers.dev/diagnosi | python3 -m json.tool > worker/diagnosi.json || echo '{"errore":"servizio non raggiungibile"}' > worker/diagnosi.json
+          # prova del sondaggio su una partita fittizia "prova"
+          curl -s -X POST -H "Content-Type: application/json" -d '{"id":"prova","s":1,"chi":"diagnosi0001"}' https://aurapitch-push.ilflagello.workers.dev/voto > worker/sondaggio.json || true
+          curl -s "https://aurapitch-push.ilflagello.workers.dev/voti?id=prova" >> worker/sondaggio.json || true
+          git add worker/sondaggio.json || true
           git config user.name "aurapitch-raccolta"; git config user.email "aurapitch-raccolta@users.noreply.github.com"
           git add worker/diagnosi.json && git commit -m "Diagnosi notifiche" && git pull --rebase && git push || true

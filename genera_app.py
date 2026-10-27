@@ -447,7 +447,7 @@ def applica_fattori(d):
                 diffidati += [{"chi": p["n"], "lato": lato, "gialli": p["gialli"]} for p in ES.diffidati(es) if p["g"] + p["a"] > 0 or p["tit"] >= 3]
             else:
                 gioc, gol, squal = [g for g in marc.get(m["lg"], []) if g["t"] == sq], (c.get("gol") or [None, None])[lato], []
-            lista, t, sg = FT.fattori_squadra(sq, lato, items, gioc, gol, foto, ko, squal)
+            lista, t, sg = FT.fattori_squadra(sq, lato, items, gioc, gol, foto, ko, squal, prossima.get(sq) == m["ko"])
             tutti += lista
             tot[lato] = t
             segnali += [dict(x, lato=lato) for x in sg]

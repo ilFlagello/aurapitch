@@ -113,7 +113,7 @@ ALLENATORE = ["esonerat", "esonero", "nuovo allenatore", "nuovo tecnico", "panch
               "entlassen", "neuer trainer", "trennt sich von trainer"]
 
 
-def fattori_squadra(squadra, lato, notizie, giocatori, gol_squadra, foto_utc, ko_utc, squalifiche=()):
+def fattori_squadra(squadra, lato, notizie, giocatori, gol_squadra, foto_utc, ko_utc, squalifiche=(), prima_partita=True):
     """Correzioni per una squadra: notizie (infortuni, squalifiche, dubbi) e squalifiche dall'ultima partita.
     giocatori: rosa con gol e assist di stagione (ESPN) o, in mancanza, i migliori marcatori (football-data).
     Restituisce (lista fattori, correzione relativa totale, segnali senza peso)."""
@@ -134,6 +134,8 @@ def fattori_squadra(squadra, lato, notizie, giocatori, gol_squadra, foto_utc, ko
             if not _cognome_in(g["n"], n["titolo"]):
                 continue
             tipo = classifica(frase_di(g["n"], n["titolo"]))
+            if tipo == "squalifica" and not prima_partita:
+                continue  # una squalifica si sconta nella prima partita, non in quelle dopo
             quota = _quota(g, gol_squadra)
             prezzo = GIA_NELLE_QUOTE if foto_utc and t < foto_utc else 1.0
             aff = AFFIDABILITA.get(tipo, 0.0)

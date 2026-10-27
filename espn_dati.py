@@ -226,7 +226,8 @@ def arbitri_da_notizie(base, gia, giorni=4):
             p = FT.piano(t)
             if not any(w in p for w in PAROLE_ARB[lingua]):
                 continue
-            if not any(re.search(r"\b" + re.escape(w) + r"\b", p) for w in toks(m["h"]) + toks(m["a"]) if len(w) >= 3):
+            c = lambda nome: any(re.search(r"\b" + re.escape(w) + r"\b", p) for w in toks(nome) if len(w) >= 3)
+            if not (c(m["h"]) and c(m["a"])):  # il titolo deve nominare entrambe le squadre
                 continue
             for cg, nome in nomi.items():
                 if re.search(r"\b" + re.escape(cg) + r"\b", p):
@@ -234,6 +235,10 @@ def arbitri_da_notizie(base, gia, giorni=4):
         if voti:
             nome = max(voti, key=voti.get)
             out.append({"lg": m["lg"], "t": m["ko"], "h": m["h"], "a": m["a"], "nome": nome, "fonte": "notizie"})
+    # lo stesso arbitro non dirige due partite a meno di 2 giorni di distanza: in quel caso il titolo era ambiguo, si scartano
+    def t_(x):
+        return datetime.fromisoformat(x["t"].replace("Z", "+00:00"))
+    out = [x for x in out if not any(y is not x and y["nome"] == x["nome"] and abs((t_(y) - t_(x)).total_seconds()) < 48 * 3600 for y in out + list(gia))]
     print(f"Arbitri dalle notizie: {len(out)}")
     return out
 

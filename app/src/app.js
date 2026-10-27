@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import htm from "htm";
-import { useLiveScores, useSummary, loadPlayer, loadCareer, ruolo } from "./live.js";
+import { useLiveScores, useSummary, loadPlayer, loadCareer, ruolo, findTeam, loadTeam, minuto, ESPN_LG } from "./live.js";
 import { LuActivity, LuCalculator, LuCalendar, LuChartColumn, LuCheck, LuChevronDown, LuChevronLeft, LuChevronRight, LuChevronUp, LuCircleCheck, LuCircleDot, LuCircleHelp, LuCircleX, LuClock, LuCopy, LuCrown, LuInfo, LuLock, LuMoon, LuNewspaper, LuPlay, LuPlus, LuRepeat, LuShield, LuShieldCheck, LuShirt, LuSmartphone, LuSparkles, LuStar, LuSun, LuSwords, LuTrash2, LuTrendingUp, LuTriangleAlert, LuTrophy, LuUsers, LuX, LuZap } from "react-icons/lu";
 
 const html = htm.bind(React.createElement);
@@ -361,8 +361,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
             <span className=${"w-5 text-[11px] tabular-nums " + C.mu}>${p.num}</span><span className=${"truncate flex-1 " + (p.inn ? "font-semibold" : "")}>${p.short}</span>${p.inn && html`<span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-300 shrink-0">${p.minIn || "in"}</span>`}</button>`)}</div>`)}</div></div><//>`;
     }
     const ST_IT = [["totalGoals", "Gol"], ["goalAssists", "Assist"], ["totalShots", "Tiri"], ["shotsOnTarget", "Tiri in porta"], ["foulsCommitted", "Falli fatti"], ["foulsSuffered", "Falli subiti"], ["offsides", "Fuorigioco"], ["yellowCards", "Gialli"], ["redCards", "Rossi"], ["saves", "Parate"], ["goalsConceded", "Gol subiti"], ["shotsFaced", "Tiri subiti"], ["ownGoals", "Autogol"]];
-    function PlayerSheet({ p, side, m, col, onClose }) {
-      const [t, setT] = useState(0);
+    function PlayerSheet({ p, side, m, col, onClose, noMatch }) {
+      const [t, setT] = useState(noMatch ? 1 : 0);
       const [info, setInfo] = useState(null);
       const [car, setCar] = useState(null);
       const [err, setErr] = useState("");
@@ -375,9 +375,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const stato = p.starter ? (p.out ? `Titolare, uscito al ${p.minOut || "?"}` : "Titolare") : p.inn ? `Entrato al ${p.minIn || "?"}` : "In panchina";
       return html`<${Sheet} title=${p.name} onClose=${onClose}>
         <div className="flex items-center gap-3"><span className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold text-white shrink-0" style=${{ background: col || "#8E8E93" }}>${p.num || "-"}</span>
-          <div className="min-w-0"><div className=${"text-sm font-semibold " + C.tx}>${ruolo(p.pos)}${pr && pr.squadra ? " - " + pr.squadra : " - " + (side === 0 ? m.h : m.a)}</div>
+          <div className="min-w-0"><div className=${"text-sm font-semibold " + C.tx}>${ruolo(p.pos)}${pr && pr.squadra ? " - " + pr.squadra : m.h ? " - " + (side === 0 ? m.h : m.a) : ""}</div>
             <div className=${"text-xs " + C.mu}>${pr ? [pr.naz, pr.eta ? pr.eta + " anni" : "", pr.altezza].filter(Boolean).join(" - ") : err || "Caricamento del profilo..."}</div></div></div>
-        <${Seg} small=${true} items=${["Questa partita", "Stagione", "Carriera"]} val=${t} set=${setT} />
+        ${noMatch ? html`<${Seg} small=${true} items=${["Stagione", "Carriera"]} val=${t - 1} set=${(i) => setT(i + 1)} />` : html`<${Seg} small=${true} items=${["Questa partita", "Stagione", "Carriera"]} val=${t} set=${setT} />`}
         ${t === 0 && html`<${React.Fragment}><div className=${"text-xs " + C.mu}>${stato}</div>
           <div className="grid grid-cols-4 gap-2">${ST_IT.filter(([k]) => (gk ? true : !["saves", "goalsConceded", "shotsFaced"].includes(k)) && (s[k] != null)).map(([k, l]) => box(l, s[k]))}</div><//>`}
         ${t === 1 && html`<${React.Fragment}>${!info ? html`<div className=${"text-sm " + C.mu}>${err || "Caricamento..."}</div>` : !info.stagione.length ? html`<div className=${"text-sm " + C.mu}>Nessuna statistica per la stagione in corso.</div>`
@@ -394,8 +394,117 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           <p className=${"text-[11px] " + C.mu}>Campionati e coppe stagione per stagione, dalle più recenti. Le amichevoli sono escluse.</p><//>`}<//>`;
     }
 
+    /* ---- consiglio IA in diretta ---- */
+    function pois(l) { const o = [Math.exp(-l)]; for (let k = 1; k <= 8; k++) o.push((o[k - 1] * l) / k); return o; }
+    function liveProb(code, xg, g, min, reds) {
+      const f = Math.max(0.005, (90 - Math.min(min, 90)) / 90);
+      const rh = Math.pow(0.67, reds[0]) * Math.pow(1.25, reds[1]), ra = Math.pow(0.67, reds[1]) * Math.pow(1.25, reds[0]);
+      const ph = pois(Math.max(0.01, xg[0] * f * rh)), pa = pois(Math.max(0.01, xg[1] * f * ra));
+      let p = 0, tot = 0;
+      for (let i = 0; i <= 8; i++) for (let j = 0; j <= 8; j++) { const w = ph[i] * pa[j]; tot += w; if (evalCode(code, g[0] + i, g[1] + j)) p += w; }
+      return p / tot;
+    }
+    function LiveTips({ m, sm }) {
+      const tip = m.tip || {};
+      const ks = ["consiglio", "prudente", "coraggiosa"].filter((k) => tip[k]);
+      if (!ks.length || !(m.st === "LIVE" || m.st === "FT")) return null;
+      const g = (sm && sm.st !== "NS" && sm.g[0] != null ? sm.g : m.g) || [0, 0];
+      if (m.st === "FT") {
+        return html`<div className=${C.card + " p-4 space-y-2"}><div className=${C.lab}>Com'è andata</div>
+          ${ks.map((k) => { const ok = evalCode(tip[k].c, g[0], g[1]); return html`<div key=${k} className="flex items-center gap-2 text-sm">
+            <span className=${"flex-1 " + C.tx}><span className=${C.mu}>${tip[k].titolo}:</span> ${mLabel(m, tip[k].c)}</span>
+            <span className=${"text-xs font-semibold px-2 py-0.5 rounded-full border " + (ok ? TONE.good : TONE.bad)}>${ok ? "Presa" : "Non presa"}</span></div>`; })}
+          <div className=${"text-[11px] " + C.mu}>Risultato finale ${g[0]}-${g[1]}. Lo storico completo dei consigli è in Schedina IA.</div></div>`;
+      }
+      const clock = (sm && sm.clock) || m.clock || "";
+      const min = minuto(clock);
+      const reds = [0, 1].map((j) => (sm ? sm.eventi.filter((e) => e.k === "rosso" && e.side === j).length : 0));
+      const xg = m.xg && m.xg[0] != null ? m.xg : [1.35, 1.1];
+      return html`<div className=${C.card + " p-4 space-y-2 ring-1 ring-rose-200 dark:ring-rose-500/40"}>
+        <div className="flex items-center gap-2"><span className="relative flex w-2 h-2"><span className="absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75 animate-ping"></span><span className="relative inline-flex rounded-full w-2 h-2 bg-rose-500"></span></span>
+          <span className=${C.lab + " flex-1"}>Consigli in diretta</span><span className=${"text-xs tabular-nums " + C.mu}>${clock} - ${g[0]}-${g[1]}</span></div>
+        ${ks.map((k) => { const t = tip[k], p = liveProb(t.c, xg, g, min, reds), d = p - t.p;
+          const lab = p >= 0.999 ? ["Già vinta", TONE.good] : p <= 0.001 ? ["Persa", TONE.bad] : null;
+          return html`<div key=${k} className="flex items-center gap-2 text-sm">
+            <span className=${"flex-1 min-w-0 " + C.tx}><span className=${C.mu}>${{ consiglio: "Consiglio", prudente: "Prudente", coraggiosa: "Coraggiosa" }[k]}:</span> ${mLabel(m, t.c)}</span>
+            ${lab ? html`<span className=${"text-xs font-semibold px-2 py-0.5 rounded-full border " + lab[1]}>${lab[0]}</span>`
+              : html`<span className="tabular-nums text-right"><b className=${C.tx}>${pct(p)}%</b> <span className=${"text-xs " + (d >= 0 ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>${d >= 0 ? "+" : ""}${pct(d)}</span></span>`}</div>`; })}
+        <div className=${"text-[11px] " + C.mu}>Probabilità ricalcolate su punteggio, minuto ed espulsioni, partendo dai gol attesi prima della partita (il numero piccolo è la differenza rispetto al pre-partita).${reds[0] + reds[1] ? " Espulsioni considerate: " + reds[0] + " - " + reds[1] + "." : ""}</div></div>`;
+    }
+
+    /* ---- storico dei consigli ---- */
+    function StoricoCard() {
+      const { stor } = React.useContext(Ctx);
+      const [open, setOpen] = useState(false);
+      if (!stor || !stor.riass) return null;
+      const R = stor.riass, nomi = { consiglio: "Consiglio", prudente: "Prudente", coraggiosa: "Coraggiosa" };
+      const tot = R.consiglio ? R.consiglio.n : 0;
+      return html`<div className=${C.card + " p-4 space-y-2"}>
+        <div className="flex items-center"><span className=${C.lab + " flex-1"}>Storico consigli IA - ultimi ${stor.giorni} giorni</span><${Ic.BarChart3} size=${15} className=${C.mu} /></div>
+        ${!tot ? html`<p className=${"text-sm " + C.mu}>Lo storico parte da oggi: ogni consiglio viene salvato prima del calcio d'inizio e verificato a fine partita, senza ritocchi. Torna tra qualche giorno.</p>`
+          : html`<${React.Fragment}>
+            <div className=${"grid grid-cols-[1.3fr_1fr_0.8fr_0.8fr] text-[11px] font-medium " + C.mu}><span>Profilo</span><span className="text-right">Presi</span><span className="text-right">Attesi</span><span className="text-right">Resa</span></div>
+            ${Object.keys(nomi).filter((k) => R[k] && R[k].n).map((k) => { const r = R[k]; return html`<div key=${k} className=${"grid grid-cols-[1.3fr_1fr_0.8fr_0.8fr] text-sm tabular-nums border-t pt-1.5 " + C.bd + " " + C.tx}>
+              <span className="font-semibold">${nomi[k]}</span><span className="text-right">${r.vinti}/${r.n} <span className=${"text-xs " + C.mu}>${Math.round((r.vinti / r.n) * 100)}%</span></span>
+              <span className=${"text-right " + C.mu}>${String(r.attesa).replace(".", ",")}</span><span className=${"text-right font-semibold " + (r.resa >= 0 ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>${r.resa >= 0 ? "+" : ""}${String(r.resa).replace(".", ",")}</span></div>`; })}
+            <p className=${"text-[11px] " + C.mu}>"Attesi" è quanti consigli ci si aspettava di prendere sommando le probabilità: se "Presi" gli resta vicino, le probabilità sono oneste. "Resa" è il guadagno in unità puntando 1 su ogni consiglio alla quota mostrata (stimata dove manca quella media).</p>
+            <button onClick=${() => setOpen(!open)} className="text-xs font-semibold text-[#0A84FF]">${open ? "Nascondi le partite" : "Vedi partita per partita"}</button>
+            ${open && html`<div className="space-y-1.5">${stor.lista.map((v, i) => html`<div key=${i} className=${"text-sm border-t pt-1.5 " + C.bd}>
+              <div className=${"flex justify-between " + C.tx}><span className="truncate">${v.h} - ${v.a}</span><b className="tabular-nums">${v.g ? v.g[0] + "-" + v.g[1] : ""}</b></div>
+              <div className="flex flex-wrap gap-1 mt-1">${Object.keys(nomi).filter((k) => v.tips[k]).map((k) => html`<span key=${k} className=${"text-[11px] px-2 py-0.5 rounded-full border " + (v.esiti[k] ? TONE.good : TONE.bad)}>${mLabel({ h: v.h, a: v.a }, v.tips[k].c, true)}</span>`)}</div></div>`)}</div>`}<//>`}</div>`;
+    }
+
+    /* ---- pagina squadra ---- */
+    function TeamView() {
+      const { team, setTeam } = React.useContext(Ctx);
+      const [t, setT] = useState(0);
+      const [d, setDd] = useState(null);
+      const [err, setErr] = useState("");
+      const [pl, setPl] = useState(null);
+      useEffect(() => {
+        let ok = true;
+        (async () => {
+          try {
+            const id = team.id || (await findTeam(team.lgE, team.name));
+            if (!id) throw new Error("non trovata");
+            const x = await loadTeam(team.lgE, id);
+            if (ok) setDd(x);
+          } catch (e) { if (ok) setErr("Dati della squadra non disponibili in questo momento."); }
+        })();
+        return () => { ok = false; };
+      }, [team.lgE, team.id, team.name]);
+      const dt = (s) => { const x = new Date(s); return x.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" }) + " " + x.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }); };
+      const form = d ? d.risultati.slice(0, 5).reverse().map((r) => ({ esito: r.esito, avv: r.avv, ris: r.g.join("-") })) : [];
+      const RUOLI = ["Portiere", "Difensore", "Centrocampista", "Attaccante"];
+      return html`<div className="px-4 space-y-3">
+        <button onClick=${() => setTeam(null)} className="flex items-center gap-1 text-sm font-medium text-[#0A84FF]"><${Ic.ChevronLeft} size=${18} />Indietro</button>
+        <div className=${C.card + " p-4 flex items-center gap-3"}><${Crest} t=${team.name} size=${52} />
+          <div className="flex-1 min-w-0"><div className=${"text-xl font-semibold truncate " + C.tx}>${team.name}</div>
+            ${form.length > 0 && html`<div className="mt-1.5"><${Form} list=${form} /></div>`}</div></div>
+        <${Seg} items=${["Partite", "Rosa"]} val=${t} set=${setT} />
+        ${!d ? html`<div className=${C.card + " p-4 text-sm " + C.mu}>${err || "Caricamento..."}</div>`
+          : t === 0 ? html`<${React.Fragment}>
+            <div className=${C.lab}>Prossime partite</div>
+            <div className=${C.card + " px-4 py-1"}>${d.prossime.length ? d.prossime.slice(0, 6).map((r, i) => html`<div key=${r.id} className=${"flex items-center gap-2 py-2 text-sm " + (i ? "border-t " + C.bd : "") + " " + C.tx}>
+              <span className=${"w-24 text-xs tabular-nums " + C.mu}>${dt(r.date)}</span><span className="flex-1 truncate">${r.casa ? "vs" : "@"} ${r.avv}</span><span className=${"text-[11px] " + C.mu}>${r.comp}</span></div>`)
+              : html`<div className=${"py-2 text-sm " + C.mu}>Nessuna partita in calendario.</div>`}</div>
+            <div className=${C.lab}>Risultati</div>
+            <div className=${C.card + " px-4 py-1"}>${d.risultati.slice(0, 12).map((r, i) => html`<div key=${r.id} className=${"flex items-center gap-2 py-2 text-sm " + (i ? "border-t " + C.bd : "") + " " + C.tx}>
+              <span className=${"w-6 h-6 rounded-md border text-[11px] font-semibold flex items-center justify-center " + TONE[r.esito === "V" ? "good" : r.esito === "N" ? "warn" : "bad"]}>${r.esito}</span>
+              <span className=${"w-12 text-xs tabular-nums " + C.mu}>${new Date(r.date).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" })}</span>
+              <span className="flex-1 truncate">${r.casa ? "vs" : "@"} ${r.avv}</span><b className="tabular-nums">${r.g[0]}-${r.g[1]}</b></div>`)}</div><//>`
+          : html`<${React.Fragment}>${RUOLI.map((ru) => { const ps = d.rosa.filter((p) => p.ruolo === ru); if (!ps.length) return null; return html`<div key=${ru}>
+            <div className=${C.lab + " mb-1.5"}>${ru === "Attaccante" ? "Attaccanti" : ru === "Portiere" ? "Portieri" : ru === "Difensore" ? "Difensori" : "Centrocampisti"}</div>
+            <div className=${C.card + " px-4 py-1"}>${ps.map((p, i) => html`<button key=${p.id} onClick=${() => setPl(p)} className=${"w-full flex items-center gap-2 py-2 text-left text-sm " + (i ? "border-t " + C.bd : "") + " " + C.tx}>
+              <span className=${"w-6 text-xs tabular-nums " + C.mu}>${p.num || ""}</span><span className="flex-1 truncate">${p.name}</span>
+              ${p.inf && html`<span className=${"text-[10px] font-semibold px-1.5 py-0.5 rounded-full border " + TONE.bad}>${/out|injur/i.test(p.inf) ? "Infortunato" : p.inf}</span>`}
+              <span className=${"text-xs " + C.mu}>${[p.naz, p.eta ? p.eta + " a" : ""].filter(Boolean).join(" - ")}</span><${Ic.ChevronRight} size=${14} className=${C.mu} /></button>`)}</div></div>`; })}<//>`}
+        ${pl && html`<${PlayerSheet} p=${pl} side=${0} col=${d && d.colore} m=${{ h: team.name, a: "" }} noMatch=${true} onClose=${() => setPl(null)} />`}
+        <p className=${"text-[11px] " + C.mu}>Dati da ESPN: calendario, risultati e rosa si aggiornano da soli.</p></div>`;
+    }
+
     /* ---- consiglio IA motivato e tutti i mercati ---- */
-    function TipView({ m }) {
+    function TipView({ m, sm }) {
       const { mySlip, addLeg } = React.useContext(Ctx);
       const [why, setWhy] = useState("consiglio");
       const [grp, setGrp] = useState(null);
@@ -418,6 +527,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const opts = options(m);
       const groups = GROUPS.map((g) => [g, opts.filter((o) => mGroup(o.k) === g)]).filter(([, l]) => l.length);
       return html`<${React.Fragment}>
+        <${LiveTips} m=${m} sm=${sm} />
         ${tip.consiglio ? html`<${Card} k="consiglio" /><div className="grid gap-2"><${Card} k="prudente" /><${Card} k="coraggiosa" /></div>`
           : html`<div className=${C.card + " p-4 text-sm " + C.tx}>Nessun consiglio: per questa partita mancano quote sufficienti per stimare i mercati.</div>`}
         <div className=${C.lab + " pt-1"}>Tutti i mercati - tocca un gruppo</div>
@@ -433,7 +543,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
 
     /* ---- scheda partita ---- */
     function MatchView({ m }) {
-      const { D, lg, unlocked, setOpen, mt, setMt, mySlip, addLeg } = React.useContext(Ctx);
+      const { D, lg, unlocked, setOpen, mt, setMt, mySlip, addLeg, setTeam, favM, toggleFavM } = React.useContext(Ctx);
       const L = lg(m.lg);
       const [pOpen, setPOpen] = useState(null);
       const [filt, setFilt] = useState(0);
@@ -463,10 +573,12 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <button onClick=${() => setOpen(null)} className="flex items-center gap-1 text-sm font-medium text-[#0A84FF]"><${Ic.ChevronLeft} size=${18} />Partite</button>
         <div className=${C.card + " p-4"}>
           <div className="flex items-center gap-2"><${Flag} k=${L.flag} w=${18} /><span className=${"text-xs " + C.mu}>${L.name}</span>
-            <span className=${"ml-auto text-xs " + C.mu}>${m.date.slice(8)}/${m.date.slice(5, 7)} ${m.time || ""}</span></div>
+            <span className=${"ml-auto text-xs " + C.mu}>${m.date.slice(8)}/${m.date.slice(5, 7)} ${m.time || ""}</span>
+            <button aria-label=${favM.includes(m.id) ? "Togli dalle preferite" : "Aggiungi alle preferite"} onClick=${() => toggleFavM(m.id)} className="ml-1 -mr-1 p-1">
+              <${Ic.Star} size=${18} className=${favM.includes(m.id) ? "text-amber-400 fill-amber-400" : C.mu} /></button></div>
           <div className="flex items-start justify-between mt-4">
-            ${[m.h, m.a].map((t, j) => html`<div key=${t} className=${"flex flex-col items-center gap-1.5 w-28 " + (j ? "order-3" : "order-1")}><${Crest} t=${t} size=${44} />
-              <span className=${"text-sm font-semibold text-center leading-tight " + C.tx}>${t}</span><span className=${"text-[11px] " + C.mu}>${pos(t) ? pos(t) + "° in classifica" : ""}</span></div>`)}
+            ${[m.h, m.a].map((t, j) => html`<button key=${t} onClick=${() => setTeam({ lgE: m.lgE || ESPN_LG[m.lg], id: j ? m.aid : m.hid, name: t })} className=${"flex flex-col items-center gap-1.5 w-28 " + (j ? "order-3" : "order-1")}><${Crest} t=${t} size=${44} />
+              <span className=${"text-sm font-semibold text-center leading-tight " + C.tx}>${t}</span><span className=${"text-[11px] " + C.mu}>${pos(t) ? pos(t) + "° in classifica" : "Pagina squadra"}</span></button>`)}
             <div className="order-2 flex flex-col items-center pt-2"><div className=${"text-3xl font-semibold tabular-nums " + C.tx}>${m.g ? m.g[0] + " - " + m.g[1] : m.time}</div>
               <div className=${"text-xs mt-1 " + (m.st === "LIVE" ? "text-rose-500 font-semibold " : C.mu)}>${m.st === "FT" ? "Finale" : m.st === "LIVE" ? (sm && sm.clock) || m.clock || "In corso" : m.st === "RINV" ? "Rinviata" : ""}</div></div></div>
           <div className="flex items-center justify-center gap-2 mt-4"><${FavPill} m=${m} unlocked=${unlocked(m)} big=${true} />
@@ -496,7 +608,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           <//><//>`}
 
         ${mt === 3 && html`<${Gate} m=${m} title="Analisi IA: probabilità, gol attesi e consiglio">
-          <${TipView} m=${m} />
+          <${TipView} m=${m} sm=${sm} />
           <div className=${C.card + " p-4 space-y-2"}><div className=${C.lab}>Laboratorio: IA contro quote</div>
             <div className="overflow-x-auto"><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}><th className="text-left font-medium py-1">Esito</th><th className="text-right font-medium">IA</th><th className="text-right font-medium">Quote</th><th className="text-right font-medium">${D.demo ? "Bet365" : "Media"}</th><th className="text-right font-medium">Migliore</th></tr></thead>
               <tbody>${[["1", m.p[0], m.mk[0], m.odds["1"], m.max["1"]], ["X", m.p[1], m.mk[1], m.odds["X"], m.max["X"]], ["2", m.p[2], m.mk[2], m.odds["2"], m.max["2"]],
@@ -535,7 +647,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
 
     /* ---- campionati ---- */
     function LeaguesView() {
-      const { D, lg, fav } = React.useContext(Ctx);
+      const { D, lg, fav, setTeam } = React.useContext(Ctx);
+      const [vista, setVista] = useState(0);
       const [k, setK] = useState(() => { const s0 = store.get("lgSel", null); return D.leagues.some((l) => l.k === s0) ? s0 : D.leagues[0].k; });
       const [filt, setFilt] = useState(0);
       const L = lg(k);
@@ -545,21 +658,29 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       return html`<div className="px-4 space-y-3">
         <div className="flex gap-2 overflow-x-auto noscroll -mx-4 px-4">${D.leagues.map((l) => html`<${Chip} key=${l.k} on=${k === l.k} onClick=${() => { setK(l.k); store.set("lgSel", l.k); }}><${Flag} k=${l.flag} w=${16} />${l.name}<//>`)}</div>
         <div className=${"flex items-center gap-2 text-sm font-semibold " + C.tx}><${Flag} k=${L.flag} w=${22} />${L.country} - ${L.name} 2026/27</div>
+        <${Seg} items=${["Classifica", "Marcatori", "Assist"]} val=${vista} set=${setVista} />
+        ${vista > 0 && (() => { const sc = ((D.scorers || {})[k] || []).slice().sort((a, b) => (vista === 1 ? b.g - a.g || b.a - a.a : b.a - a.a || b.g - a.g)).filter((r) => (vista === 1 ? r.g : r.a) > 0);
+          return sc.length ? html`<div className=${C.card + " px-4 py-1"}>${sc.slice(0, 20).map((r, i) => html`<div key=${r.n + r.t} className=${"flex items-center gap-2 py-2 text-sm " + (i ? "border-t " + C.bd : "") + " " + C.tx}>
+            <span className=${"w-5 text-xs tabular-nums " + C.mu}>${i + 1}</span><${Crest} t=${r.t} size=${16} /><span className="flex-1 min-w-0"><span className="block truncate font-semibold">${r.n}</span><span className=${"block text-[11px] truncate " + C.mu}>${r.t} - ${r.pg} presenze${vista === 1 && r.r ? " - " + r.r + " su rigore" : ""}</span></span>
+            <span className="text-right tabular-nums"><b className="text-base">${vista === 1 ? r.g : r.a}</b><span className=${"block text-[10px] " + C.mu}>${vista === 1 ? (r.a ? r.a + " assist" : "") : r.g + " gol"}</span></span></div>`)}</div>`
+            : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${D.scorers ? "Classifica marcatori non disponibile per questo campionato nella fonte dati gratuita." : "La classifica marcatori arriva con il prossimo aggiornamento dei dati (ogni mattina)."}</div>`; })()}
+        ${vista === 0 && html`<${React.Fragment}>
         <${Seg} items=${["Generale", "Solo Casa", "Solo Trasferta"]} val=${filt} set=${setFilt} />
         <div className=${C.card + " p-2 overflow-x-auto"}><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}>
           <th className="text-left font-medium p-1.5 w-7">#</th><th className="text-left font-medium">Squadra</th><th className="text-right font-medium">G</th><th className="text-right font-medium">GF</th><th className="text-right font-medium">GS</th><th className="text-right font-medium pr-1.5">Pt</th></tr></thead>
-          <tbody>${st.map((r, i) => html`<tr key=${r.team} className=${r.team === fav ? "bg-emerald-50 dark:bg-emerald-500/15 font-semibold" : ""}>
+          <tbody>${st.map((r, i) => html`<tr key=${r.team} onClick=${() => ESPN_LG[k] && setTeam({ lgE: ESPN_LG[k], name: r.team })} className=${"cursor-pointer " + (r.team === fav ? "bg-emerald-50 dark:bg-emerald-500/15 font-semibold" : "")}>
             <td className="p-1.5"><span className="flex items-center gap-1"><span className=${"w-1 h-4 rounded-full " + (zone(i) || "bg-transparent")}></span>${i + 1}</span></td>
             <td><span className="flex items-center gap-1.5 min-w-0"><${Crest} t=${r.team} size=${14} /><span className="truncate">${r.team}</span></span></td>
             <td className=${"text-right " + C.mu}>${r.pg}</td><td className="text-right">${r.gf}</td><td className="text-right">${r.gs}</td><td className="text-right pr-1.5 font-semibold">${r.pt}</td></tr>`)}</tbody></table></div>
         ${!st.length && html`<div className=${C.card + " p-4 text-sm " + C.mu}>Classifica non disponibile per questo campionato nella fonte dati gratuita.</div>`}
+        ${st.length > 0 && html`<p className=${"text-[11px] -mt-1 " + C.mu}>Tocca una squadra per aprire calendario, risultati e rosa.</p>`}<//>`}
         <div className=${C.lab}>${D.demo ? "Partite della giornata" : "Partite in programma"}</div>
         <div className=${C.card + " overflow-hidden"}>${ms.map((m, i) => html`<${Row} key=${m.id} m=${m} i=${i} />`)}</div></div>`;
     }
 
     /* ---- il mio club ---- */
     function ClubView() {
-      const { D, lg, fav, setFav } = React.useContext(Ctx);
+      const { D, lg, fav, setFav, setTeam } = React.useContext(Ctx);
       const lgK = Object.keys(D.standings).find((k) => D.standings[k].generale.some((r) => r.team === fav));
       const L = lgK && lg(lgK);
       const pos = lgK ? D.standings[lgK].generale.findIndex((r) => r.team === fav) + 1 : 0;
@@ -570,7 +691,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <div className=${C.card + " p-4"}><div className="flex items-center gap-3"><${Crest} t=${fav} size=${52} />
           <div className="flex-1 min-w-0"><div className=${"text-xs " + C.mu}>Squadra del cuore</div><div className=${"text-xl font-semibold truncate " + C.tx}>${fav}</div>
             ${L && html`<div className=${"text-xs flex items-center gap-1.5 " + C.mu}><${Flag} k=${L.flag} w=${14} />${L.name} - ${pos}° con ${row.pt} punti</div>`}</div></div>
-          ${l5.length > 0 && html`<div className="mt-4"><div className=${C.lab + " mb-1.5"}>Ultime 5</div><${Form} list=${l5} /></div>`}</div>
+          ${l5.length > 0 && html`<div className="mt-4"><div className=${C.lab + " mb-1.5"}>Ultime 5</div><${Form} list=${l5} /></div>`}
+          ${lgK && ESPN_LG[lgK] && html`<button onClick=${() => setTeam({ lgE: ESPN_LG[lgK], name: fav })} className=${"mt-4 w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}>Calendario, risultati e rosa<${Ic.ChevronRight} size=${15} /></button>`}</div>
         ${m ? html`<div className=${C.lab}>Partita della giornata</div><div className=${C.card + " overflow-hidden"}><${Row} m=${m} i=${0} /></div>`
           : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${fav} non gioca in questa giornata.</div>`}
         <div className=${C.card + " p-4 space-y-2"}><label htmlFor="fav" className=${C.lab}>Cambia squadra</label>
@@ -602,6 +724,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         ${h === null ? null : h ? html`<${Ic.CheckCircle2} size=${17} className="text-emerald-500" />` : html`<${Ic.XCircle} size=${17} className="text-rose-500" />`}
         ${onDel && html`<button aria-label="Rimuovi" onClick=${onDel} className=${C.mu}><${Ic.Trash2} size=${15} /></button>`}</div>`; };
       return html`<div className="px-4 space-y-3">
+        <${StoricoCard} />
         <div className=${C.lab}>Schedina IA</div>
         <div className="flex gap-2 overflow-x-auto noscroll -mx-4 px-4">${D.leagues.map((l) => html`<${Chip} key=${l.k} on=${!off.includes(l.k)} onClick=${() => { const nx = off.includes(l.k) ? off.filter((q) => q !== l.k) : [...off, l.k]; setOff(nx); store.set("slipOff", nx); }}><${Flag} k=${l.flag} w=${16} />${l.name}<//>`)}</div>
         <div className="grid grid-cols-3 gap-2">${["Zero Tachicardia", "Classica del Sabato", "Colpaccio da Bar"].map((p, i) => { const lk = i === 2 && !pro; return html`<button key=${p} onClick=${() => (lk ? setUnlock(true) : (setProf(i), setShield(false)))}
@@ -640,7 +763,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       if (!l) return m;
       const ok = l.st === "LIVE" || l.st === "FT" || (l.st === "RINV" && m.st !== "FT");
       const g = ok && l.g ? l.g : m.g;
-      return { ...m, eid: l.eid, lgE: l.lgE, clock: l.clock, ...(ok ? { st: l.st, g, res: g ? (g[0] > g[1] ? 0 : g[0] === g[1] ? 1 : 2) : m.res } : {}) };
+      return { ...m, eid: l.eid, lgE: l.lgE, clock: l.clock, hid: l.hid, aid: l.aid, ...(ok ? { st: l.st, g, res: g ? (g[0] > g[1] ? 0 : g[0] === g[1] ? 1 : 2) : m.res } : {}) };
     }) }, [Draw, live]);
     const [err, setErr] = useState("");
     const [theme, setTheme] = useState(store.get("theme", "system"));
@@ -663,8 +786,14 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const [banner, setBanner] = useState(store.get("banner2", true));
     const [copyText, setCopyText] = useState(null);
     const [toast, setToast] = useState("");
+    const [team, setTeam] = useState(null);
+    const [stor, setStor] = useState(null);
+    const [favM, setFavM] = useState(store.get("favM", []));
+    const [avvisi, setAvvisi] = useState(store.get("avvisi", true));
+    const prev = useRef(null);
 
     useEffect(() => {
+      fetch("data/storico.json").then((r) => (r.ok ? r.json() : null)).then(setStor).catch(() => {});
       fetch("data/giornata.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).then((d) => { setD(d); if (d.today && (d.days || []).some((x) => x.k === d.today)) setDay(d.today); })
         .catch(() => setErr("Non riesco a leggere i dati delle partite. Controlla la connessione e ricarica la pagina."));
       try { if ("serviceWorker" in navigator && window.top === window.self) navigator.serviceWorker.register("sw.js").catch(() => {}); } catch (e) { /* non installabile qui */ }
@@ -688,6 +817,31 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     useEffect(() => store.set("slip", mySlip), [mySlip]);
     useEffect(() => { if (toast) { const id = setTimeout(() => setToast(""), 1800); return () => clearTimeout(id); } }, [toast]);
     const flash = (t) => setToast(t);
+    // avvisi: gol e fine partita delle partite preferite e della squadra del cuore (con l'app aperta)
+    useEffect(() => {
+      if (!D) return;
+      const now = {};
+      for (const m of D.matches) now[m.id] = { st: m.st, g: m.g ? m.g.join("-") : null };
+      const old = prev.current;
+      prev.current = now;
+      if (!old || !avvisi) return;
+      for (const m of D.matches) {
+        if (!(favM.includes(m.id) || m.h === fav || m.a === fav)) continue;
+        const o = old[m.id], n = now[m.id];
+        if (!o) continue;
+        let msg = null;
+        if (o.st !== "LIVE" && n.st === "LIVE") msg = `Calcio d'inizio: ${m.h} - ${m.a}`;
+        else if (n.g && o.g !== n.g && n.st === "LIVE") msg = `Gol! ${m.h} ${m.g[0]} - ${m.g[1]} ${m.a}${m.clock ? " (" + m.clock + ")" : ""}`;
+        else if (o.st === "LIVE" && n.st === "FT") msg = `Finale: ${m.h} ${m.g[0]} - ${m.g[1]} ${m.a}`;
+        if (!msg) continue;
+        setToast(msg);
+        try { if (navigator.vibrate) navigator.vibrate([120, 60, 120]); } catch (e) { /* non supportato */ }
+        try {
+          if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker)
+            navigator.serviceWorker.ready.then((r) => r.showNotification("AuraPitch", { body: msg, icon: "icon-192.png", tag: m.id }));
+        } catch (e) { /* notifiche non disponibili */ }
+      }
+    }, [D]);
 
     const left = Math.max(0, Math.ceil((until - now) / 1000));
     const pro = !!sub || left > 0;
@@ -699,7 +853,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const byId = Object.fromEntries(D.matches.map((m) => [m.id, m]));
     const lg = (k) => D.leagues.find((l) => l.k === k);
     const lgOpen = openL || D.leagues.map((l) => l.k);
-    const goMatch = (id) => { setOpen(id); setMt(0); window.scrollTo(0, 0); };
+    const goMatch = (id) => { setOpen(id); setMt(0); setTeam(null); window.scrollTo(0, 0); };
+    const toggleFavM = (id) => { const nx = favM.includes(id) ? favM.filter((x) => x !== id) : [...favM, id]; setFavM(nx); store.set("favM", nx); flash(favM.includes(id) ? "Tolta dalle preferite" : "Aggiunta alle preferite: ti avviso dei gol"); };
+    const openTeam = (t) => { setTeam(t); window.scrollTo(0, 0); };
     const addLeg = (m, k) => {
       if (mySlip.some((x) => x.id === m.id)) { setMySlip(mySlip.map((x) => (x.id === m.id ? { id: m.id, k } : x))); flash("Esito aggiornato in schedina"); }
       else { setMySlip([...mySlip, { id: m.id, k }]); flash("Aggiunta alla schedina"); }
@@ -711,7 +867,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     /* ---- header ---- */
     const header = html`<header className="sticky z-30 bg-[#F5F5F7]/90 dark:bg-black/90 backdrop-blur-md" style=${{ top: "env(safe-area-inset-top, 0px)" }}>
       <div className="max-w-[480px] mx-auto px-4 py-3 flex items-center gap-2">
-        <button onClick=${() => { setOpen(null); setTab("partite"); }} className="flex items-center gap-2 mr-auto" aria-label="AuraPitch, vai alle partite">
+        <button onClick=${() => { setOpen(null); setTeam(null); setTab("partite"); }} className="flex items-center gap-2 mr-auto" aria-label="AuraPitch, vai alle partite">
           <span className="w-8 h-8 rounded-[10px] flex items-center justify-center bg-[#1D1D1F] dark:bg-white"><${Ic.Activity} size=${17} className="text-emerald-300 dark:text-emerald-600" /></span>
           <span className=${"text-[17px] font-semibold tracking-tight " + C.tx}>AuraPitch</span>
           <span className=${"text-[10px] font-semibold px-1.5 py-0.5 rounded-md " + C.ch + " " + C.mu}>BETA</span></button>
@@ -720,7 +876,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <button aria-label="Profilo e impostazioni" onClick=${() => setProfile(true)} className=${"w-8 h-8 rounded-full text-[11px] font-semibold " + C.on}>${ini}</button>
       </div></header>`;
 
-    const steps = ["Partite: tocca un campionato per aprirlo. La pillola a destra dice il favorito e la sua probabilità.", "Tocca una partita: Panoramica, Cronaca, Formazioni, Analisi IA e Classifiche. Scorri col dito a destra o a sinistra per cambiare sezione.",
+    const steps = ["Partite: tocca un campionato per aprirlo. La stella dentro una partita la mette tra le Preferite, in cima, con gli avvisi dei gol.", "Tocca una partita: Panoramica, Cronaca, Formazioni, Analisi IA e Classifiche. Scorri col dito a destra o a sinistra per cambiare sezione.",
       "Le analisi IA sono libere sulle partite FREE; sulle altre si sbloccano con PRO o con un video da 15 minuti.", "In Schedina IA scegli un profilo o costruisci la tua schedina dalle partite."];
     const guideBox = guide > 0 && html`<div className=${"mx-4 mb-3 p-3 rounded-2xl border text-sm flex items-start gap-2 " + TONE.info}>
       <div className="flex-1"><b>Guida ${guide}/4.</b> ${steps[guide - 1]}</div>
@@ -736,6 +892,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <button aria-label="Chiudi avviso" onClick=${() => { setBanner(false); store.set("banner2", false); }} className=${C.mu}><${Ic.X} size=${16} /></button></div>`}
       <div className="flex gap-2 overflow-x-auto noscroll -mx-4 px-4">${[{ k: "all", label: D.demo ? "Tutta la giornata" : "Tutti i giorni" }, ...D.days].map((d) => html`<${Chip} key=${d.k} on=${day === d.k} onClick=${() => setDay(d.k)}>${d.label}<//>`)}</div>
       <div className="w-40"><${Seg} items=${["Tutte", "Live"]} val=${liveOnly} set=${setLiveOnly} /></div>
+      ${(() => { const fm = dayMatches.filter((m) => favM.includes(m.id) || m.h === fav || m.a === fav); return fm.length > 0 && html`<div className=${C.card + " overflow-hidden"}>
+        <div className="flex items-center gap-3 px-4 py-3"><${Ic.Star} size=${17} className="text-amber-400 fill-amber-400" /><span className=${"flex-1 text-sm font-semibold " + C.tx}>Preferite</span><span className=${"text-xs " + C.mu}>${fm.length}</span></div>
+        <div className=${"border-t " + C.bd}>${fm.map((m, i) => html`<${Row} key=${m.id} m=${m} i=${i} />`)}</div></div>`; })()}
       ${D.leagues.map((l) => {
         const ms = dayMatches.filter((m) => m.lg === l.k);
         if (!ms.length) return null;
@@ -754,13 +913,13 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const views = { partite: home, campionati: html`<${LeaguesView} />`, schedina: html`<${SlipView} />`, club: html`<${ClubView} />` };
     const DOCK = [["partite", "Partite", Ic.Calendar], ["campionati", "Campionati", Ic.Trophy], ["schedina", "Schedina IA", Ic.Sparkles], ["club", "Il Mio Club", Ic.Shield]];
 
-    const ctx = { D, byId, lg, pro, unlocked, goMatch, setOpen, mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav };
+    const ctx = { D, byId, lg, pro, unlocked, goMatch, setOpen, mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, favM, toggleFavM };
     return html`<${Ctx.Provider} value=${ctx}><div className="min-h-screen pb-28">
       ${header}
-      <main className="max-w-[480px] mx-auto">${guideBox}${open_m ? html`<${MatchView} key=${open_m.id} m=${open_m} />` : views[tab]}</main>
+      <main className="max-w-[480px] mx-auto">${guideBox}${team ? html`<${TeamView} key=${team.name} />` : open_m ? html`<${MatchView} key=${open_m.id} m=${open_m} />` : views[tab]}</main>
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-black/[0.06] dark:border-white/[0.08] backdrop-blur-md bg-white/90 dark:bg-[#1C1C1E]/90"
         style=${{ paddingBottom: "env(safe-area-inset-bottom, 0px)", paddingLeft: "env(safe-area-inset-left, 0px)", paddingRight: "env(safe-area-inset-right, 0px)" }}>
-        <div className="max-w-[480px] mx-auto grid grid-cols-4">${DOCK.map(([k, l, I]) => html`<button key=${k} onClick=${() => { setTab(k); setOpen(null); window.scrollTo(0, 0); }}
+        <div className="max-w-[480px] mx-auto grid grid-cols-4">${DOCK.map(([k, l, I]) => html`<button key=${k} onClick=${() => { setTab(k); setOpen(null); setTeam(null); window.scrollTo(0, 0); }}
           aria-current=${tab === k && !open ? "page" : undefined}
           className=${"flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium " + (tab === k && !open ? "text-[#0A84FF]" : C.mu)}><${I} size=${22} />${l}</button>`)}</div></nav>
 
@@ -784,6 +943,11 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <input id="nome" value=${name} onChange=${(e) => { setName(e.target.value); store.set("name", e.target.value); }} placeholder="Come ti chiami?" className=${"w-full rounded-xl px-3 py-2 outline-none " + C.ch + " " + C.tx} />
         <div className=${C.lab}>Tema</div>
         <${Seg} items=${["Automatico", "Chiaro", "Scuro"]} val=${["system", "light", "dark"].indexOf(theme)} set=${(i) => setTheme(["system", "light", "dark"][i])} />
+        <div className=${C.lab}>Avvisi</div>
+        <button onClick=${() => { const v = !avvisi; setAvvisi(v); store.set("avvisi", v); if (v && "Notification" in window && Notification.permission === "default") Notification.requestPermission().catch(() => {}); }}
+          className=${"w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left " + C.ch}>
+          <span className="flex-1"><span className=${"block text-sm font-semibold " + C.tx}>Gol e risultati delle preferite</span><span className=${"block text-xs " + C.mu}>Partite con la stella e squadra del cuore. Per ora funzionano con l'app aperta.</span></span>
+          <span className=${"w-11 h-6 rounded-full p-0.5 transition-colors " + (avvisi ? "bg-emerald-500" : "bg-black/20 dark:bg-white/20")}><span className=${"block w-5 h-5 rounded-full bg-white shadow transition-transform " + (avvisi ? "translate-x-5" : "")}></span></span></button>
         <div className=${C.lab}>Squadra del cuore</div>
         <div className=${"text-sm " + C.tx}>${fav} <button onClick=${() => { setProfile(false); setOpen(null); setTab("club"); }} className="text-[#0A84FF] font-medium ml-1">Cambia</button></div>
         <div className=${C.lab}>Accesso</div>

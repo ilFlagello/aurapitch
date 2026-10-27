@@ -279,6 +279,9 @@ def giro_fd(base="data", completo=True, max_h2h=40):
             st = fd(f"/competitions/{code}/standings")
             if st:
                 salva(cart, f"{code}_standings.json", st)
+            sc = fd(f"/competitions/{code}/scorers", limit=30)
+            if sc:
+                salva(cart, f"{code}_scorers.json", sc)
             ms = fd(f"/competitions/{code}/matches")
             if ms:
                 salva(cart, f"{code}_matches.json", ms)

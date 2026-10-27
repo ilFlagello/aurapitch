@@ -357,6 +357,10 @@ def genera():
             conv = lambda rows: [{"team": nome_fd(r.get("team")), "pg": r.get("playedGames", 0), "v": r.get("won", 0), "n": r.get("draw", 0), "p": r.get("lost", 0),
                                   "gf": r.get("goalsFor", 0), "gs": r.get("goalsAgainst", 0), "pt": r.get("points", 0)} for r in rows]
             out["standings"][k] = {"generale": conv(tabs.get("TOTAL", [])), "casa": conv(tabs.get("HOME", [])), "trasferta": conv(tabs.get("AWAY", []))}
+        sc = (jload(os.path.join(FD, f"{code}_scorers.json"), {}) or {}).get("scorers", []) if code else []
+        if sc:
+            out.setdefault("scorers", {})[k] = [{"n": (r.get("player") or {}).get("name", "?"), "t": nome_fd(r.get("team")), "g": r.get("goals") or 0, "a": r.get("assists") or 0,
+                                                  "r": r.get("penalties") or 0, "pg": r.get("playedMatches") or 0} for r in sc]
     etich = {-1: "Ieri", 0: "Oggi", 1: "Domani"}
     for d in giorni:
         if any(m["date"] == d.isoformat() for m in out["matches"]):
@@ -394,6 +398,48 @@ def aggiorna_live():
     return d if cambi else None
 
 
+STORICO_IN = os.path.join(DATA, "consigli.json")
+STORICO_OUT = os.path.join("app", "data", "storico.json")
+
+
+def aggiorna_storico(d):
+    """Salva i consigli IA prima del calcio d'inizio e li verifica a fine partita (storico trasparente)."""
+    st = jload(STORICO_IN, {}) or {}
+    for m in d.get("matches", []):
+        tip = m.get("tip") or {}
+        if not tip:
+            continue
+        r = st.get(m["id"])
+        if r is None or (r.get("st") == "NS" and m["st"] == "NS"):
+            # finche la partita non inizia si tiene l'ultima versione del consiglio (quote piu recenti)
+            r = {"date": m["date"], "lg": m["lg"], "h": m["h"], "a": m["a"], "st": m["st"], "g": m.get("g"),
+                 "tips": {k: {x: v[x] for x in ("c", "l", "p", "q", "qm")} for k, v in tip.items()}}
+            st[m["id"]] = r
+        if m["st"] in ("FT", "LIVE", "RINV"):
+            r["st"], r["g"] = m["st"], m.get("g")
+        if r["st"] == "FT" and r.get("g"):
+            r["esiti"] = {k: M.valuta(v["c"], r["g"][0], r["g"][1]) for k, v in r["tips"].items()}
+    limite = (datetime.now(timezone.utc).astimezone(ROME).date() - timedelta(days=60)).isoformat()
+    st = {k: v for k, v in st.items() if v["date"] >= limite}
+    os.makedirs(os.path.dirname(STORICO_IN), exist_ok=True)
+    with open(STORICO_IN, "w", encoding="utf-8") as f:
+        json.dump(st, f, ensure_ascii=False, separators=(",", ":"))
+    chiuse = sorted((v for v in st.values() if v.get("esiti")), key=lambda v: v["date"], reverse=True)
+    trenta = (datetime.now(timezone.utc).astimezone(ROME).date() - timedelta(days=30)).isoformat()
+    rec = [v for v in chiuse if v["date"] >= trenta]
+    riass = {}
+    for k in ("consiglio", "prudente", "coraggiosa"):
+        z = [v for v in rec if k in v["esiti"]]
+        vinti = sum(v["esiti"][k] for v in z)
+        riass[k] = {"n": len(z), "vinti": vinti, "attesa": round(sum(v["tips"][k]["p"] for v in z), 1),
+                    "resa": round(sum((v["tips"][k]["q"] - 1) if v["esiti"][k] else -1 for v in z), 2)}
+    out = {"generato": datetime.now(timezone.utc).astimezone(ROME).strftime("%d/%m/%Y %H:%M"), "giorni": 30, "riass": riass,
+           "lista": [{"date": v["date"], "lg": v["lg"], "h": v["h"], "a": v["a"], "g": v["g"], "tips": v["tips"], "esiti": v["esiti"]} for v in rec[:60]]}
+    with open(STORICO_OUT, "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
+    print(f"Storico consigli: {len(chiuse)} partite verificate, {len(st)} salvate")
+
+
 def main():
     if "--live" in sys.argv:
         d = aggiorna_live()
@@ -409,6 +455,7 @@ def main():
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(d, f, ensure_ascii=False, separators=(",", ":"))
+    aggiorna_storico(d)
 
 
 if __name__ == "__main__":

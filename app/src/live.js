@@ -56,6 +56,7 @@ function compact(ev) {
     eid: ev.id, st, g: st === "NS" || st === "RINV" ? null : [Number(h.score), Number(a.score)],
     clock: half ? "Intervallo" : st === "LIVE" ? ev.status.displayClock || "" : "",
     hc: "#" + (h.team.color || "8E8E93"), ac: "#" + (a.team.color || "8E8E93"),
+    hid: h.team.id, aid: a.team.id,
   };
 }
 
@@ -359,4 +360,52 @@ export async function loadCareer(id) {
     } catch (e) { /* stagione senza statistiche */ }
   }));
   return top.map((r) => ({ ...r, squadra: teams[r.teamRef] || "", lega: nomeLega(r.lega), stagione: r.anno + "/" + String(r.anno + 1).slice(2) }));
+}
+
+/* ---------- squadra ---------- */
+export async function findTeam(lgE, name) {
+  const d = await getJSON(`${SITE}${lgE}/teams`, 86400e3);
+  const list = (((d.sports || [])[0] || {}).leagues || [{}])[0].teams || [];
+  let best = null, bs = 0;
+  for (const t of list) {
+    const s0 = sim(name, [t.team.displayName, t.team.shortDisplayName, t.team.name, t.team.location].filter(Boolean));
+    if (s0 > bs) { best = t.team; bs = s0; }
+  }
+  return bs >= 0.8 ? best.id : null;
+}
+function riga(ev, tid) {
+  const c = ev.competitions[0];
+  const me = c.competitors.find((x) => x.team.id === tid) || c.competitors[0];
+  const op = c.competitors.find((x) => x !== me) || {};
+  const sc = (x) => (x && x.score != null ? Number(typeof x.score === "object" ? x.score.value : x.score) : null);
+  const t = (c.status || ev.status || {}).type || {};
+  const g = [sc(me), sc(op)];
+  return {
+    id: ev.id, date: ev.date, casa: me.homeAway === "home", avv: op.team ? op.team.shortDisplayName || op.team.displayName : "?",
+    comp: ev.league ? ev.league.abbreviation || ev.league.name : "", fatto: t.state === "post" && g[0] != null, g,
+    esito: t.state === "post" && g[0] != null ? (g[0] > g[1] ? "V" : g[0] === g[1] ? "N" : "P") : null,
+  };
+}
+export async function loadTeam(lgE, tid) {
+  const [res, fix, ros] = await Promise.all([
+    getJSON(`${SITE}${lgE}/teams/${tid}/schedule`, 600e3).catch(() => null),
+    getJSON(`${SITE}${lgE}/teams/${tid}/schedule?fixture=true`, 600e3).catch(() => null),
+    getJSON(`${SITE}${lgE}/teams/${tid}/roster`, 3600e3).catch(() => null),
+  ]);
+  const team = (res && res.team) || (ros && ros.team) || {};
+  const risultati = ((res && res.events) || []).map((e) => riga(e, tid)).filter((r) => r.fatto).sort((a, b) => b.date.localeCompare(a.date));
+  const prossime = ((fix && fix.events) || []).map((e) => riga(e, tid)).filter((r) => !r.fatto).sort((a, b) => a.date.localeCompare(b.date));
+  const rosa = ((ros && ros.athletes) || []).map((a) => ({
+    id: a.id, name: a.displayName, short: a.shortName || a.displayName, last: a.lastName || a.displayName, num: a.jersey, pos: a.position && a.position.abbreviation,
+    ruolo: ruolo(a.position && a.position.abbreviation), eta: a.age, naz: nazione(a.citizenship),
+    inf: (a.injuries || []).length ? (a.injuries[0].status || "Infortunato") : null, st: {},
+  }));
+  return { nome: team.displayName || team.name || "", colore: "#" + (team.color || "8E8E93"), risultati, prossime, rosa };
+}
+
+/* ---------- consiglio in diretta ---------- */
+export function minuto(clock) {
+  const m = /(\d+)'(?:\+(\d+))?/.exec(clock || "");
+  if (/Intervallo/.test(clock || "")) return 45;
+  return m ? Number(m[1]) : 0;
 }

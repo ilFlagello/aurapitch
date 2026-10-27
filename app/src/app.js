@@ -498,13 +498,17 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const nf = (x) => (x == null ? "-" : Number(x).toFixed(2).replace(".", ","));
       return html`<div className=${C.card + " p-4 space-y-2"}>
         <button onClick=${() => setOpen(!open)} className="w-full flex items-center gap-2 text-left"><span className=${C.lab + " flex-1"}>Fattori dell'IA</span>
-          <span className=${"text-xs " + C.mu}>${att.length ? att.length + " correzion" + (att.length === 1 ? "e" : "i") : "nessuna correzione"}</span><${open ? Ic.ChevronUp : Ic.ChevronDown} size=${15} className=${C.mu} /></button>
+          <span className=${"text-xs " + C.mu}>${att.length ? att.length + " correzion" + (att.length === 1 ? "e" : "i") : "nessuna correzione"}${(m.segnali || []).length + (m.diffidati || []).length ? " - " + ((m.segnali || []).length + (m.diffidati || []).length) + " segnali" : ""}</span><${open ? Ic.ChevronUp : Ic.ChevronDown} size=${15} className=${C.mu} /></button>
         <div className=${"text-sm " + C.tx}>Gol attesi: ${m.h} <b>${nf(m.xg[0])}</b>, ${m.a} <b>${nf(m.xg[1])}</b>${att.length ? html` <span className=${C.mu}>(dalle quote ${nf(xm[0])} e ${nf(xm[1])})</span>` : html` <span className=${C.mu}>(uguali alla lettura delle quote)</span>`}</div>
         ${open && html`<div className="space-y-2 pt-1">
           ${att.map((f, i) => html`<div key=${i} className=${"text-sm rounded-xl p-2.5 " + C.ch + " " + C.tx}>
-            <div><b>${f.chi}</b> (${f.lato ? m.a : m.h}) ${TIPO[f.tipo] || f.tipo}: gol attesi ${Math.round(f.delta * 1000) / 10}%</div>
-            <div className=${"text-[11px] " + C.mu}>Peso nei gol della squadra ${Math.round(f.quota * 100)}% x scoperto dal sostituto 50% x affidabilità ${Math.round(f.affidabilita * 100)}%${f.prezzo < 1 ? " x 25% perché notizia già nelle quote" : ""}${f.tetto ? ", ridotto dal tetto del 15%" : ""}.</div>
-            ${f.link && html`<a href=${f.link} target="_blank" rel="noopener" className="text-[11px] text-[#0A84FF]">${f.fonte || "Fonte"}: ${f.titolo}</a>`}</div>`)}
+            <div><b>${f.chi}</b> (${f.lato ? m.a : m.h}) ${TIPO[f.tipo] || f.tipo}: gol attesi ${String(Math.round(f.delta * 1000) / 10).replace(".", ",")}%</div>
+            <div className=${"text-[11px] " + C.mu}>Peso nei gol della squadra ${Math.round(f.quota * 100)}% x scoperto dal sostituto 50% x affidabilità ${Math.round(f.affidabilita * 100)}%${f.prezzo < 1 ? " x 25% perché già nota al mercato" : ""}${f.tetto ? ", ridotto dal tetto del 15%" : ""}.</div>
+            ${f.link ? html`<a href=${f.link} target="_blank" rel="noopener" className="text-[11px] text-[#0A84FF]">${f.fonte || "Fonte"}: ${f.titolo}</a>` : html`<div className=${"text-[11px] " + C.mu}>${f.titolo}</div>`}</div>`)}
+          ${(m.segnali || []).length > 0 && html`<div className=${"text-[11px] font-semibold " + C.mu}>Segnali registrati (peso zero, in attesa di misura)</div>${m.segnali.map((x, i) => html`<div key=${"s" + i} className=${"text-[12px] " + C.tx}>
+            ${x.tipo === "allenatore" ? html`Cambio in panchina (${x.lato ? m.a : m.h}): ${x.link ? html`<a href=${x.link} target="_blank" rel="noopener" className="text-[#0A84FF]">${x.titolo}</a>` : x.titolo}` : html`Riposo: ${x.lato ? m.a : m.h} ha ${x.titolo}.`}</div>`)}
+            <div className=${"text-[11px] " + C.mu}>Cambio di allenatore e giorni di riposo vengono registrati ma non pesano: nei test il riposo non ha migliorato le quote e il "rimbalzo" del nuovo allenatore è in gran parte già nel prezzo. Lo storico dirà se meritano un peso.</div>`}
+          ${(m.diffidati || []).length > 0 && html`<div className=${"text-[12px] " + C.tx}><b>Diffidati</b> (alla prossima ammonizione saltano la partita dopo): ${m.diffidati.map((x) => x.chi + " (" + (x.lato ? m.a : m.h) + ")").join(", ")}.</div>`}
           ${info.length > 0 && html`<div className=${"text-[11px] font-semibold " + C.mu}>Notizie lette ma senza effetto sulle probabilità</div>${info.map((f, i) => html`<a key=${"i" + i} href=${f.link} target="_blank" rel="noopener" className=${"block text-[12px] " + C.tx}>${f.chi}: ${TIPO[f.tipo] || f.tipo} <span className=${C.mu}>- ${f.fonte}</span></a>`)}`}
           <p className=${"text-[11px] " + C.mu}>Base: le quote dei bookmaker, che nei test su 55.000 partite sono la stima più precisa. Ogni informazione nuova (notizie su infortuni e squalifiche, formazioni ufficiali) corregge i gol attesi con un peso dichiarato e un tetto del 15% per squadra, per non sbilanciare il risultato. Ogni correzione viene registrata e misurata: i pesi si ritarano sui risultati.</p></div>`}</div>`;
     }
@@ -708,7 +712,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
 
         ${mt === 4 && html`<${React.Fragment}>
           <div className=${"flex items-center gap-2 text-sm font-semibold " + C.tx}><${Flag} k=${L.flag} />Classifica ${L.name}</div>
-          <${Seg} items=${["Generale", "Solo Casa", "Solo Trasferta"]} val=${filt} set=${setFilt} />
+          ${!(S && S.solo_generale) && html`<${Seg} items=${["Generale", "Solo Casa", "Solo Trasferta"]} val=${filt} set=${setFilt} />`}
           <div className=${C.card + " p-2 overflow-x-auto"}><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}>
             <th className="text-left font-medium p-1.5 w-6">#</th><th className="text-left font-medium">Squadra</th><th className="text-right font-medium">G</th><th className="text-right font-medium">V</th><th className="text-right font-medium">N</th><th className="text-right font-medium">P</th><th className="text-right font-medium">DR</th><th className="text-right font-medium pr-1.5">Pt</th></tr></thead>
             <tbody>${st.map((r, i) => { const hl = r.team === m.h || r.team === m.a; return html`<tr key=${r.team} className=${hl ? "bg-emerald-50 dark:bg-emerald-500/15 font-semibold" : ""}>
@@ -751,7 +755,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
             <span className="text-right tabular-nums"><b className="text-base">${vista === 1 ? r.g : r.a}</b><span className=${"block text-[10px] " + C.mu}>${vista === 1 ? (r.a ? r.a + " assist" : "") : r.g + " gol"}</span></span></div>`)}</div>`
             : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${D.scorers ? "Classifica marcatori non disponibile per questo campionato nella fonte dati gratuita." : "La classifica marcatori arriva con il prossimo aggiornamento dei dati (ogni mattina)."}</div>`; })()}
         ${vista === 0 && html`<${React.Fragment}>
-        <${Seg} items=${["Generale", "Solo Casa", "Solo Trasferta"]} val=${filt} set=${setFilt} />
+        ${!(D.standings[k] && D.standings[k].solo_generale) && html`<${Seg} items=${["Generale", "Solo Casa", "Solo Trasferta"]} val=${filt} set=${setFilt} />`}
         <div className=${C.card + " p-2 overflow-x-auto"}><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}>
           <th className="text-left font-medium p-1.5 w-7">#</th><th className="text-left font-medium">Squadra</th><th className="text-right font-medium">G</th><th className="text-right font-medium">GF</th><th className="text-right font-medium">GS</th><th className="text-right font-medium pr-1.5">Pt</th></tr></thead>
           <tbody>${st.map((r, i) => html`<tr key=${r.team} onClick=${() => ESPN_LG[k] && setTeam({ lgE: ESPN_LG[k], name: r.team })} className=${"cursor-pointer " + (r.team === fav ? "bg-emerald-50 dark:bg-emerald-500/15 font-semibold" : "")}>

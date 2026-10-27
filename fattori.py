@@ -16,9 +16,9 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 
-VERSIONE = "fattori-1"
+VERSIONE = "fattori-2"
 SOSTITUTO = 0.5
-AFFIDABILITA = {"squalifica": 0.9, "infortunio": 0.7, "dubbio": 0.3, "assente": 1.0, "panchina": 0.6}
+AFFIDABILITA = {"squalifica": 0.9, "squalifica_gialli": 0.8, "infortunio": 0.7, "dubbio": 0.3, "assente": 1.0, "panchina": 0.6}
 GIA_NELLE_QUOTE = 0.25
 TETTO = 0.15
 ASSIST = 0.5
@@ -105,31 +105,53 @@ def classifica(titolo):
     return None
 
 
-def fattori_squadra(squadra, lato, lam, notizie, marcatori, gol_squadra, foto_utc, ko_utc):
-    """Correzioni per una squadra a partire dalle notizie. Restituisce (lista fattori, correzione relativa totale)."""
-    per_giocatore = {}
+def _quota(g, gol_squadra):
+    return min(QUOTA_MAX, (g["g"] + ASSIST * g["a"]) / max(gol_squadra, g["g"] + g["a"], 1))
+
+
+ALLENATORE = ["esonerat", "esonero", "nuovo allenatore", "nuovo tecnico", "panchina a ", "sacked", "new manager", "new head coach", "cesado", "destituido", "nuevo entrenador",
+              "entlassen", "neuer trainer", "trennt sich von trainer"]
+
+
+def fattori_squadra(squadra, lato, notizie, giocatori, gol_squadra, foto_utc, ko_utc, squalifiche=()):
+    """Correzioni per una squadra: notizie (infortuni, squalifiche, dubbi) e squalifiche dall'ultima partita.
+    giocatori: rosa con gol e assist di stagione (ESPN) o, in mancanza, i migliori marcatori (football-data).
+    Restituisce (lista fattori, correzione relativa totale, segnali senza peso)."""
+    if not gol_squadra:  # gol della squadra non noti: somma dei gol della rosa, o stima prudente dai marcatori
+        gol_squadra = max(sum(x["g"] for x in giocatori) * (1.0 if len(giocatori) > 15 else 1.4), 1)
+    per_giocatore, segnali = {}, []
+    regolari = [g for g in giocatori if g["g"] + g["a"] > 0 or (g.get("tit") or 0) >= 3]
     for n in notizie:
         if not n.get("t"):
             continue
         t = datetime.fromisoformat(n["t"])
         if ko_utc and t > ko_utc:
             continue
-        for g in marcatori:
+        tp = " " + piano(n["titolo"]) + " "
+        if any(k in tp for k in ALLENATORE) and (ko_utc is None or (ko_utc - t).days <= 10):
+            segnali.append({"tipo": "allenatore", "titolo": n["titolo"], "fonte": n["fonte"], "link": n["link"], "t": n["t"]})
+        for g in regolari:
             if not _cognome_in(g["n"], n["titolo"]):
                 continue
             tipo = classifica(frase_di(g["n"], n["titolo"]))
-            if not gol_squadra:  # gol della squadra non noti: stima prudente dai marcatori in elenco
-                gol_squadra = max(sum(x["g"] for x in marcatori) * 1.4, max(x.get("pg") or 0 for x in marcatori) * 1.3, 1)
-            quota = min(QUOTA_MAX, (g["g"] + ASSIST * g["a"]) / max(gol_squadra, g["g"] + g["a"], 1))
+            quota = _quota(g, gol_squadra)
             prezzo = GIA_NELLE_QUOTE if foto_utc and t < foto_utc else 1.0
             aff = AFFIDABILITA.get(tipo, 0.0)
-            delta = -quota * (1 - SOSTITUTO) * aff * prezzo
             f = {"tipo": tipo or "notizia", "chi": g["n"], "lato": lato, "squadra": squadra, "quota": round(quota, 3), "affidabilita": aff, "prezzo": prezzo,
-                 "delta": round(delta, 4), "titolo": n["titolo"], "fonte": n["fonte"], "link": n["link"], "t": n["t"]}
+                 "delta": round(-quota * (1 - SOSTITUTO) * aff * prezzo, 4), "titolo": n["titolo"], "fonte": n["fonte"], "link": n["link"], "t": n["t"], "fonte_tipo": "notizia"}
             old = per_giocatore.get(g["n"])
             # per ogni giocatore vale la notizia piu recente (un rientro annulla un infortunio piu vecchio)
             if old is None or f["t"] > old["t"]:
                 per_giocatore[g["n"]] = f
+    for sq in squalifiche:
+        g = sq["giocatore"]
+        aff = AFFIDABILITA["squalifica"] if "rosso" in sq["motivo"] else AFFIDABILITA["squalifica_gialli"]
+        quota = _quota(g, gol_squadra)
+        f = {"tipo": "squalifica", "chi": g["n"], "lato": lato, "squadra": squadra, "quota": round(quota, 3), "affidabilita": aff, "prezzo": GIA_NELLE_QUOTE,
+             "delta": round(-quota * (1 - SOSTITUTO) * aff * GIA_NELLE_QUOTE, 4), "titolo": f"Squalificato: {sq['motivo']}", "fonte": "Cartellini ESPN", "link": "", "t": "", "fonte_tipo": "cartellini"}
+        old = per_giocatore.get(g["n"])
+        if old is None or f["delta"] < old["delta"]:  # tra notizia e cartellini vale la correzione piu forte, non la somma
+            per_giocatore[g["n"]] = f
     lista = sorted(per_giocatore.values(), key=lambda f: f["delta"])
     somma = sum(f["delta"] for f in lista)
     if somma < -TETTO:  # oltre il tetto: tutte le correzioni ridotte in proporzione
@@ -137,4 +159,4 @@ def fattori_squadra(squadra, lato, lam, notizie, marcatori, gol_squadra, foto_ut
             f["delta"] = round(f["delta"] * TETTO / -somma, 4)
             f["tetto"] = True
         somma = -TETTO
-    return lista, somma
+    return lista, somma, segnali

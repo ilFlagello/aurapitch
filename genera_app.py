@@ -17,6 +17,7 @@ import sys
 import unicodedata
 import zlib
 
+import espn_dati as ES
 import fattori as FT
 import mercati as M
 from datetime import datetime, timedelta, timezone
@@ -284,6 +285,20 @@ def genera():
     quote = carica_quote()
     fdp, classifiche = carica_fd()
     per_team = storico(fdp)
+    # Serie B (non coperta da football-data): risultati e classifica da ESPN, con id "es:<nome>"
+    esd = jload(ESPN, {}) or {}
+    for nome, es in (esd.get("squadre") or {}).items():
+        if es.get("lg") == "I2" and es.get("risultati"):
+            per_team["es:" + nome] = [{"t": utc(x["t"].replace("Z", "+00:00") if x["t"].endswith("Z") else x["t"]), "avv": x["avv"], "casa": x["casa"], "gf": x["gf"], "gs": x["gs"]} for x in es["risultati"]]
+    cl2 = (esd.get("classifiche") or {}).get("I2")
+    if cl2:
+        nostri = [n for n, es in (esd.get("squadre") or {}).items() if es.get("lg") == "I2"]
+        righe = []
+        for i, r in enumerate(cl2):
+            mio = next((n for n in nostri if ES.sim(n, [r["team"]]) >= 0.8), None)
+            righe.append({"team": {"id": "es:" + (mio or r["team"]), "shortName": mio or r["team"]}, "position": r["rank"] or i + 1, "points": r["pt"], "playedGames": r["pg"],
+                          "won": r["v"], "draw": r["n"], "lost": r["p"], "goalsFor": r["gf"], "goalsAgainst": r["gs"]})
+        classifiche["ES_I2"] = {"TOTAL": righe}
     scores = {}
     for path in glob.glob(os.path.join(FD, "scores_*.json")):
         for e in jload(path, []) or []:
@@ -312,6 +327,8 @@ def genera():
             st, g = stato(m_fd)
         else:
             h, a, hid, aid = pulisci(r["casa"]), pulisci(r["ospite"]), None, None
+            hid = "es:" + h if "es:" + h in per_team else None
+            aid = "es:" + a if "es:" + a in per_team else None
             st, g = "NS", None
             sc = scores.get((" ".join(sorted(toks(r["casa"]))), " ".join(sorted(toks(r["ospite"])))))
             if sc and None not in sc:
@@ -320,16 +337,16 @@ def genera():
                 except (TypeError, ValueError):
                     pass
         t0 = r["_t"]
-        l5 = [ultime5(per_team, hid, t0), ultime5(per_team, aid, t0)] if code else [[], []]
+        l5 = [ultime5(per_team, hid, t0), ultime5(per_team, aid, t0)] if (code or hid or aid) else [[], []]
         prec, h2h = precedenti(m_fd["id"], hid, aid) if m_fd else ({"tone": "ok", "text": "Precedenti non disponibili per questo campionato nei dati gratuiti."}, [])
-        rh, ra = (riposo(per_team, hid, t0), riposo(per_team, aid, t0)) if code else (None, None)
+        rh, ra = (riposo(per_team, hid, t0), riposo(per_team, aid, t0)) if (code or hid or aid) else (None, None)
         if rh is not None and ra is not None and abs(rh - ra) >= 3:
             ctx = {"tone": "info", "text": f"{h if rh > ra else a} ha {abs(rh - ra)} giorni di riposo in più."}
         elif rh is not None and ra is not None:
             ctx = {"tone": "ok", "text": f"Riposo simile: {rh} giorni per {h}, {ra} per {a} (partite di campionato e coppe nei dati)."}
         else:
             ctx = {"tone": "ok", "text": "Giorni di riposo non disponibili per questo campionato."}
-        tabs = classifiche.get(code) if code else None
+        tabs = classifiche.get(code) if code else classifiche.get("ES_" + k)
         # mercati e consiglio IA motivato
         lh, la = M.gol_attesi(q["mk"], q["mo"])
         raccolte = {c: v for c, v in (("1", q["odds"]["1"]), ("X", q["odds"]["X"]), ("2", q["odds"]["2"]), ("O2.5", q["odds"]["O"]), ("U2.5", q["odds"]["U"])) if v}
@@ -349,12 +366,12 @@ def genera():
             "h": h, "a": a, "st": st, "g": g, "res": (None if g is None else (0 if g[0] > g[1] else 1 if g[0] == g[1] else 2)), "free": False,
             "p": q["mk"], "mk": q["mk"], "po": q["mo"] if q["mo"] is not None else 0.5, "mo": q["mo"] if q["mo"] is not None else 0.5,
             "odds": q["odds"], "max": q["max"], "nb": q["nb"], "xg": [lh, la], "elo": [None, None],
-            "forma": [testo_forma(l5[0]), testo_forma(l5[1])] if code else [{"tone": "ok", "text": "Forma non disponibile per questo campionato nei dati gratuiti."}] * 2,
+            "forma": [testo_forma(l5[0]), testo_forma(l5[1])] if (code or hid or aid) else [{"tone": "ok", "text": "Forma non disponibile per questo campionato nei dati gratuiti."}] * 2,
             "attese": [testo_classifica(tabs, hid), testo_classifica(tabs, aid)] if tabs else [{"tone": "ok", "text": "Classifica non disponibile nei dati gratuiti."}] * 2,
             "prec": prec, "ctx": ctx, "flags": [], "last5": l5, "h2h": h2h, "stats": [],
             "markets": [[x["c"], x["p"], x["q"], 1 if x["qm"] else 0] for x in mercati], "tip": tip,
             "xg_mercato": [lh, la], "fattori": [], "foto": r["_foto"],
-            "_ctx": {"sh": sh, "sa": sa, "pos_h": pos.get(hid), "pos_a": pos.get(aid), "raccolte": raccolte,
+            "_ctx": {"riposo": [rh, ra], "sh": sh, "sa": sa, "pos_h": pos.get(hid), "pos_a": pos.get(aid), "raccolte": raccolte,
                      "gol": [next((rr.get("goalsFor") for rr in (tabs or {}).get("TOTAL", []) if (rr.get("team") or {}).get("id") == x), None) for x in (hid, aid)]},
         })
     # 3 partite FREE: le piu importanti tra oggi e domani non ancora iniziate
@@ -367,11 +384,13 @@ def genera():
     for k, nome, paese, flag, code, _ in LEAGUES:
         if k in presenti:
             out["leagues"].append({"k": k, "name": nome, "country": paese, "flag": flag})
-        tabs = classifiche.get(code) if code else None
+        tabs = classifiche.get(code) if code else classifiche.get("ES_" + k)
         if tabs:
             conv = lambda rows: [{"team": nome_fd(r.get("team")), "pg": r.get("playedGames", 0), "v": r.get("won", 0), "n": r.get("draw", 0), "p": r.get("lost", 0),
                                   "gf": r.get("goalsFor", 0), "gs": r.get("goalsAgainst", 0), "pt": r.get("points", 0)} for r in rows]
             out["standings"][k] = {"generale": conv(tabs.get("TOTAL", [])), "casa": conv(tabs.get("HOME", [])), "trasferta": conv(tabs.get("AWAY", []))}
+            if not tabs.get("HOME"):
+                out["standings"][k]["solo_generale"] = True
         sc = (jload(os.path.join(FD, f"{code}_scorers.json"), {}) or {}).get("scorers", []) if code else []
         if sc:
             out.setdefault("scorers", {})[k] = [{"n": (r.get("player") or {}).get("name", "?"), "t": nome_fd(r.get("team")), "g": r.get("goals") or 0, "a": r.get("assists") or 0,
@@ -392,12 +411,14 @@ def genera():
 
 
 NOTIZIE = os.path.join(DATA, "notizie", "notizie.json")
+ESPN = os.path.join(DATA, "espn", "squadre.json")
 
 
 def applica_fattori(d):
     """Ricalcola gol attesi, mercati e consigli delle partite non iniziate con i fattori (per ora: notizie su indisponibili).
     Base = lettura delle quote; ogni fattore pesa secondo fattori.py e la somma per squadra ha un tetto. Restituisce quante partite cambiano."""
     notizie = jload(NOTIZIE, {}) or {}
+    espn = (jload(ESPN, {}) or {}).get("squadre", {})
     marc = d.get("scorers") or {}
     cambi = 0
     for m in d.get("matches", []):
@@ -410,20 +431,32 @@ def applica_fattori(d):
             ko = datetime.fromisoformat(m["ko"])
         except ValueError:
             foto, ko = None, None
-        tutti, tot = [], [0.0, 0.0]
-        for lato, (sq, lam) in enumerate(((m["h"], lh0), (m["a"], la0))):
+        tutti, tot, segnali, diffidati = [], [0.0, 0.0], [], []
+        for lato, sq in enumerate((m["h"], m["a"])):
             items = (notizie.get(sq) or {}).get("items", [])
-            gioc = [g for g in marc.get(m["lg"], []) if g["t"] == sq]
-            lista, t = FT.fattori_squadra(sq, lato, lam, items, gioc, (c.get("gol") or [None, None])[lato], foto, ko)
+            es = espn.get(sq) or {}
+            if es.get("rosa"):
+                gioc, gol = es["rosa"], sum(x["g"] for x in es["rosa"]) or None
+                squal = ES.squalificati(es)
+                diffidati += [{"chi": p["n"], "lato": lato, "gialli": p["gialli"]} for p in ES.diffidati(es) if p["g"] + p["a"] > 0 or p["tit"] >= 3]
+            else:
+                gioc, gol, squal = [g for g in marc.get(m["lg"], []) if g["t"] == sq], (c.get("gol") or [None, None])[lato], []
+            lista, t, sg = FT.fattori_squadra(sq, lato, items, gioc, gol, foto, ko, squal)
             tutti += lista
             tot[lato] = t
+            segnali += [dict(x, lato=lato) for x in sg]
+        rr = c.get("riposo") or [None, None]
+        if None not in rr and abs(rr[0] - rr[1]) >= 3:
+            segnali.append({"tipo": "riposo", "lato": 0 if rr[0] > rr[1] else 1, "titolo": f"{abs(rr[0] - rr[1])} giorni di riposo in più", "fonte": "", "link": "", "t": ""})
+        m["segnali"] = segnali[:6]
+        m["diffidati"] = diffidati[:8]
         nuovo = [round(lh0 * (1 + tot[0]), 3), round(la0 * (1 + tot[1]), 3)]
-        firma = zlib.crc32(json.dumps([tutti, nuovo], sort_keys=True).encode())
+        firma = zlib.crc32(json.dumps([tutti, nuovo, segnali], sort_keys=True).encode())
         if firma == m.get("_firma"):
             continue
         m["_firma"] = firma
         cambi += 1
-        m["fattori"] = [{k: f[k] for k in ("tipo", "chi", "lato", "quota", "affidabilita", "prezzo", "delta", "titolo", "fonte", "link", "t")} for f in tutti][:10]
+        m["fattori"] = [{k: f.get(k) for k in ("tipo", "chi", "lato", "quota", "affidabilita", "prezzo", "delta", "titolo", "fonte", "link", "t", "tetto")} for f in tutti][:10]
         lh, la = nuovo
         m["xg"] = nuovo
         mercati = M.calcola_mercati(lh, la, m["h"], m["a"], c.get("raccolte") or {})
@@ -439,8 +472,9 @@ def applica_fattori(d):
             if not f["delta"]:
                 continue
             sq = m["h"] if f["lato"] == 0 else m["a"]
-            righe.append(f"Notizia ({f['fonte'] or 'stampa'}): {f['chi']} {dict(squalifica='squalificato', infortunio='indisponibile', dubbio='in dubbio').get(f['tipo'], f['tipo'])}. "
-                         f"Gol attesi di {sq} corretti del {str(round(f['delta'] * 100, 1)).replace('.', ',')}%" + (" (notizia in parte già nelle quote)." if f["prezzo"] < 1 else "."))
+            righe.append((f"Squalifica: {f['chi']} ({f['titolo'].split(': ', 1)[-1]}). " if f.get("fonte_tipo") == "cartellini" else
+                          f"Notizia ({f['fonte'] or 'stampa'}): {f['chi']} {dict(squalifica='squalificato', infortunio='indisponibile', dubbio='in dubbio').get(f['tipo'], f['tipo'])}. ")
+                         + f"Gol attesi di {sq} corretti del {str(round(f['delta'] * 100, 1)).replace('.', ',')}%" + (" (in parte già nelle quote)." if f["prezzo"] < 1 else "."))
         for v in tip.values():
             if not (c.get("sh") and c.get("sa")):
                 v["perche"].append("Statistiche delle squadre non disponibili per questo campionato: il consiglio si basa solo sulle quote.")
@@ -490,7 +524,7 @@ def aggiorna_storico(d):
         if r is None or (r.get("st") == "NS" and m["st"] == "NS"):
             # finche la partita non inizia si tiene l'ultima versione del consiglio (quote piu recenti)
             r = {"date": m["date"], "lg": m["lg"], "h": m["h"], "a": m["a"], "st": m["st"], "g": m.get("g"), "mk": m.get("mk"), "p": m.get("p"),
-                 "nf": sum(1 for f in m.get("fattori", []) if f.get("delta")), "ver": FT.VERSIONE,
+                 "nf": sum(1 for f in m.get("fattori", []) if f.get("delta")), "ver": FT.VERSIONE, "segnali": [x["tipo"] for x in m.get("segnali", [])],
                  "tips": {k: {x: v[x] for x in ("c", "l", "p", "q", "qm")} for k, v in tip.items()}}
             st[m["id"]] = r
         if m["st"] in ("FT", "LIVE", "RINV"):

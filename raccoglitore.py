@@ -396,6 +396,10 @@ def giro_notizie(base="data", ore=48):
 
 
 if __name__ == "__main__":
+    if "--espn" in sys.argv:
+        import espn_dati
+        espn_dati.giro_espn()
+        sys.exit(0)
     if "--notizie" in sys.argv:
         if "--forza" in sys.argv or datetime.now(timezone.utc).minute < 10:
             giro_notizie()

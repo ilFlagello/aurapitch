@@ -38,6 +38,7 @@ jobs:
         run: |
           python raccoglitore.py
           python raccoglitore.py --notizie --forza
+          python raccoglitore.py --espn
           python genera_app.py
 
       - name: Aggiornamento durante il giorno (risultati e formazioni)

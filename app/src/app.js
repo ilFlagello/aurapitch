@@ -4,10 +4,10 @@
 import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import htm from "htm";
-import { LuActivity, LuCalculator, LuCalendar, LuChartColumn, LuCheck, LuChevronDown, LuChevronLeft, LuChevronRight, LuCircleCheck, LuCircleDot, LuCircleHelp, LuCircleX, LuClock, LuCopy, LuCrown, LuInfo, LuLock, LuMoon, LuNewspaper, LuPlay, LuPlus, LuShield, LuShieldCheck, LuShirt, LuSmartphone, LuSparkles, LuStar, LuSun, LuSwords, LuTrash2, LuTrendingUp, LuTriangleAlert, LuTrophy, LuUsers, LuX, LuZap } from "react-icons/lu";
+import { LuActivity, LuCalculator, LuCalendar, LuChartColumn, LuCheck, LuChevronDown, LuChevronLeft, LuChevronRight, LuChevronUp, LuCircleCheck, LuCircleDot, LuCircleHelp, LuCircleX, LuClock, LuCopy, LuCrown, LuInfo, LuLock, LuMoon, LuNewspaper, LuPlay, LuPlus, LuShield, LuShieldCheck, LuShirt, LuSmartphone, LuSparkles, LuStar, LuSun, LuSwords, LuTrash2, LuTrendingUp, LuTriangleAlert, LuTrophy, LuUsers, LuX, LuZap } from "react-icons/lu";
 
 const html = htm.bind(React.createElement);
-const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shield: LuShield, Sun: LuSun, Moon: LuMoon, HelpCircle: LuCircleHelp, X: LuX, ChevronLeft: LuChevronLeft, ChevronRight: LuChevronRight, ChevronDown: LuChevronDown, Lock: LuLock, Play: LuPlay, Crown: LuCrown, Zap: LuZap, Copy: LuCopy, Check: LuCheck, Plus: LuPlus, Trash2: LuTrash2, TrendingUp: LuTrendingUp, Swords: LuSwords, Users: LuUsers, Activity: LuActivity, Newspaper: LuNewspaper, Calculator: LuCalculator, BarChart3: LuChartColumn, AlertTriangle: LuTriangleAlert, Info: LuInfo, Star: LuStar, ShieldCheck: LuShieldCheck, CircleDot: LuCircleDot, Shirt: LuShirt, Smartphone: LuSmartphone, CheckCircle2: LuCircleCheck, XCircle: LuCircleX, Clock: LuClock };
+const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shield: LuShield, Sun: LuSun, Moon: LuMoon, HelpCircle: LuCircleHelp, X: LuX, ChevronLeft: LuChevronLeft, ChevronRight: LuChevronRight, ChevronDown: LuChevronDown, ChevronUp: LuChevronUp, Lock: LuLock, Play: LuPlay, Crown: LuCrown, Zap: LuZap, Copy: LuCopy, Check: LuCheck, Plus: LuPlus, Trash2: LuTrash2, TrendingUp: LuTrendingUp, Swords: LuSwords, Users: LuUsers, Activity: LuActivity, Newspaper: LuNewspaper, Calculator: LuCalculator, BarChart3: LuChartColumn, AlertTriangle: LuTriangleAlert, Info: LuInfo, Star: LuStar, ShieldCheck: LuShieldCheck, CircleDot: LuCircleDot, Shirt: LuShirt, Smartphone: LuSmartphone, CheckCircle2: LuCircleCheck, XCircle: LuCircleX, Clock: LuClock };
 
   /* ---------- utilità ---------- */
   const store = {
@@ -83,30 +83,83 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
   }
 
   /* ---------- logica schedina ---------- */
+  // codici dei mercati (stessa logica di mercati.py): 1, X, 2, 1X, O2.5, U3.5, GG, NG, MG1-3, HO0.5 (casa segna oltre 0,5), AU0.5, CS2-1, combo "1+O1.5", PARI, DISPARI
+  const LEGACY = { "Over 2.5": "O2.5", "Under 2.5": "U2.5" };
+  const norm = (c) => LEGACY[c] || c;
+  const nf = (x) => String(x).replace(".", ",");
+  function evalCode(c, h, a) {
+    if (c.includes("+")) return c.split("+").every((x) => evalCode(x, h, a));
+    const t = h + a;
+    if (["1", "X", "2", "1X", "X2", "12"].includes(c)) return c.includes(h > a ? "1" : h === a ? "X" : "2");
+    if (c === "GG") return h > 0 && a > 0;
+    if (c === "NG") return h === 0 || a === 0;
+    if (c === "PARI") return t % 2 === 0;
+    if (c === "DISPARI") return t % 2 === 1;
+    if (c.startsWith("CS")) { const [x, y] = c.slice(2).split("-").map(Number); return h === x && a === y; }
+    if (c.startsWith("MG")) { const [x, y] = c.slice(2).split("-").map(Number); return t >= x && t <= y; }
+    if (/^[HA][OU]/.test(c)) { const g = c[0] === "H" ? h : a, n = parseFloat(c.slice(2)); return c[1] === "O" ? g > n : g < n; }
+    if (/^[OU]/.test(c)) { const n = parseFloat(c.slice(1)); return c[0] === "O" ? t > n : t < n; }
+    return null;
+  }
+  function mLabel(m, c, short) {
+    c = norm(c);
+    if (c.includes("+")) return c.split("+").map((x) => mLabel(m, x, true)).join(" + ");
+    if (c === "1") return short ? "1" : "1 (" + m.h + ")";
+    if (c === "2") return short ? "2" : "2 (" + m.a + ")";
+    if (c === "X") return short ? "X" : "X (pareggio)";
+    if (["1X", "X2", "12"].includes(c)) return c;
+    if (c === "GG") return short ? "Goal" : "Goal (segnano entrambe)";
+    if (c === "NG") return "No Goal";
+    if (c === "PARI" || c === "DISPARI") return "Somma gol " + c.toLowerCase();
+    if (c.startsWith("CS")) return "Esatto " + c.slice(2);
+    if (c.startsWith("MG")) return "Multigol " + c.slice(2);
+    if (c === "HO0.5") return m.h + " segna";
+    if (c === "AO0.5") return m.a + " segna";
+    if (c === "HO1.5") return m.h + " almeno 2 gol";
+    if (c === "AO1.5") return m.a + " almeno 2 gol";
+    if (c === "AU0.5") return m.h + " non subisce";
+    if (c === "HU0.5") return m.a + " non subisce";
+    if (/^[OU]/.test(c)) return (c[0] === "O" ? "Over " : "Under ") + nf(c.slice(1));
+    return c;
+  }
+  const GROUPS = ["Esito finale", "Doppia chance", "Under/Over", "Goal/No Goal", "Multigol", "Gol squadra", "Combo", "Risultato esatto", "Pari/Dispari"];
+  function mGroup(c) {
+    if (c.includes("+")) return "Combo";
+    if (["1", "X", "2"].includes(c)) return "Esito finale";
+    if (["1X", "X2", "12"].includes(c)) return "Doppia chance";
+    if (c === "GG" || c === "NG") return "Goal/No Goal";
+    if (c === "PARI" || c === "DISPARI") return "Pari/Dispari";
+    if (c.startsWith("CS")) return "Risultato esatto";
+    if (c.startsWith("MG")) return "Multigol";
+    if (/^[HA][OU]/.test(c)) return "Gol squadra";
+    return "Under/Over";
+  }
   function options(m) {
+    if (m.markets) return m.markets.map(([c, p, q, qm]) => ({ k: c, p, q, stima: !qm }));
     const [p1, px, p2] = m.p, o = m.odds, po = m.po, mk = m.mk;
-    // doppia chance: quota "equa" ricavata dalle probabilita delle quote (senza margine), minimo 1,01
+    // dati vecchi senza mercati: doppia chance con quota "equa" ricavata dalle probabilita, minimo 1,01
     const dc = (a, b) => Math.max(1.01, 1 / (mk[a] + mk[b]));
     return [
       { k: "1", p: p1, q: o["1"] }, { k: "X", p: px, q: o["X"] }, { k: "2", p: p2, q: o["2"] },
       { k: "1X", p: p1 + px, q: dc(0, 1), stima: true }, { k: "X2", p: px + p2, q: dc(1, 2), stima: true },
       { k: "12", p: p1 + p2, q: dc(0, 2), stima: true },
-      { k: "Over 2.5", p: po, q: o["O"] }, { k: "Under 2.5", p: 1 - po, q: o["U"] },
+      { k: "O2.5", p: po, q: o["O"] }, { k: "U2.5", p: 1 - po, q: o["U"] },
     ].filter((x) => x.q);
   }
   function hit(m, k) {
-    if (m.st !== "FT") return null;
-    const r = m.res, g = m.g[0] + m.g[1];
-    return { "1": r === 0, X: r === 1, "2": r === 2, "1X": r !== 2, X2: r !== 0, "12": r !== 1, "Over 2.5": g > 2, "Under 2.5": g < 3 }[k];
+    if (m.st !== "FT" || !m.g) return null;
+    return evalCode(norm(k), m.g[0], m.g[1]);
   }
   function buildSlip(matches, prof) {
     const legs = [];
     for (const m of matches) {
-      const opts = options(m);
+      const opts = options(m).filter((o) => !/^CS|PARI|DISPARI/.test(o.k));
+      const tip = m.tip || {};
       let best = null;
-      if (prof === 0) best = opts.filter((o) => ["1X", "X2", "12", "Under 2.5", "Over 2.5"].includes(o.k) && o.p >= 0.7 && o.q >= 1.2).sort((a, b) => b.p - a.p)[0];
-      if (prof === 1) best = opts.filter((o) => ["1", "2"].includes(o.k) && o.p >= 0.5).sort((a, b) => b.p - a.p)[0];
-      if (prof === 2) best = opts.filter((o) => o.q >= 2 && o.q <= 4).sort((a, b) => b.p * b.q - a.p * a.q)[0];
+      const fromTip = (t) => t && opts.find((o) => o.k === t.c);
+      if (prof === 0) best = fromTip(tip.prudente) || opts.filter((o) => ["1X", "X2", "12", "U2.5", "O2.5", "O1.5", "U3.5"].includes(o.k) && o.p >= 0.7 && o.q >= 1.2).sort((a, b) => b.p - a.p)[0];
+      if (prof === 1) best = fromTip(tip.consiglio) || opts.filter((o) => ["1", "2"].includes(o.k) && o.p >= 0.5).sort((a, b) => b.p - a.p)[0];
+      if (prof === 2) best = fromTip(tip.coraggiosa) || opts.filter((o) => o.q >= 2 && o.q <= 4).sort((a, b) => b.p * b.q - a.p * a.q)[0];
       if (best) legs.push({ m, ...best });
     }
     const n = [4, 5, 4][prof];
@@ -171,6 +224,43 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
           <span className=${"px-3 py-2 rounded-full border text-xs font-semibold text-center shadow-sm " + TONE.warn}>Sblocca con PRO o guarda 1 video (15 minuti gratis)</span></button></div></div>`;
   }
 
+    /* ---- consiglio IA motivato e tutti i mercati ---- */
+    function TipView({ m }) {
+      const { mySlip, addLeg } = React.useContext(Ctx);
+      const [why, setWhy] = useState("consiglio");
+      const [grp, setGrp] = useState(null);
+      const inSlip = mySlip.find((x) => x.id === m.id);
+      const tip = m.tip || {};
+      const AddBtn = ({ c }) => { const on = inSlip && norm(inSlip.k) === c; return html`<button aria-label="Aggiungi alla schedina" onClick=${(e) => { e.stopPropagation(); addLeg(m, c); }}
+        className=${"w-8 h-8 rounded-full flex items-center justify-center shrink-0 border " + (on ? TONE.good : C.ch + " border-transparent " + C.tx)}>${on ? html`<${Ic.Check} size=${14} />` : html`<${Ic.Plus} size=${14} />`}</button>`; };
+      const Card = ({ k }) => { const t = tip[k]; if (!t) return null; const o = why === k, main = k === "consiglio";
+        return html`<div className=${C.card + " p-4 " + (main ? "ring-1 ring-sky-200 dark:ring-sky-500/40" : "")}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick=${() => setWhy(o ? null : k)}>
+            ${main && html`<span className=${"w-9 h-9 rounded-xl flex items-center justify-center border shrink-0 " + TONE.info}><${Ic.Sparkles} size=${17} /></span>`}
+            <div className="flex-1 min-w-0"><div className=${C.lab}>${t.titolo}</div>
+              <div className=${(main ? "text-base " : "text-sm ") + "font-semibold leading-tight " + C.tx}>${mLabel(m, t.c)}</div>
+              <div className=${"text-xs tabular-nums " + C.mu}>Probabilità ${pct(t.p)}% - quota ${t.qm ? "media" : "stimata"} ${odd(t.q)}</div></div>
+            <${AddBtn} c=${t.c} /></div>
+          <button onClick=${() => setWhy(o ? null : k)} className="mt-2 text-xs font-semibold text-[#0A84FF] flex items-center gap-1">${o ? "Nascondi motivazione" : "Perché questo consiglio?"}<${o ? Ic.ChevronUp : Ic.ChevronDown} size=${13} /></button>
+          ${o && html`<div className="mt-2 space-y-1.5 text-sm leading-relaxed">
+            ${t.perche.map((x) => html`<div key=${x} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-2 shrink-0 " + DOT.good}></span><span className=${C.tx}>${x}</span></div>`)}
+            ${(t.contro || []).map((x) => html`<div key=${x} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-2 shrink-0 " + DOT.warn}></span><span className=${C.tx}><b>Da tenere d'occhio:</b> ${x}</span></div>`)}</div>`}</div>`; };
+      const opts = options(m);
+      const groups = GROUPS.map((g) => [g, opts.filter((o) => mGroup(o.k) === g)]).filter(([, l]) => l.length);
+      return html`<${React.Fragment}>
+        ${tip.consiglio ? html`<${Card} k="consiglio" /><div className="grid gap-2"><${Card} k="prudente" /><${Card} k="coraggiosa" /></div>`
+          : html`<div className=${C.card + " p-4 text-sm " + C.tx}>Nessun consiglio: per questa partita mancano quote sufficienti per stimare i mercati.</div>`}
+        <div className=${C.lab + " pt-1"}>Tutti i mercati - tocca un gruppo</div>
+        <div className=${C.card + " px-4 py-1"}>${groups.map(([g, l], i) => { const o = grp === g; return html`<div key=${g} className=${i ? "border-t " + C.bd : ""}>
+          <button onClick=${() => setGrp(o ? null : g)} className=${"w-full flex items-center py-3 text-sm font-semibold " + C.tx}><span className="flex-1 text-left">${g}</span><span className=${"text-xs font-normal mr-2 " + C.mu}>${l.length}</span><${o ? Ic.ChevronUp : Ic.ChevronDown} size=${16} className=${C.mu} /></button>
+          ${o && html`<div className="pb-2">${l.map((x) => html`<div key=${x.k} className="flex items-center gap-2 py-1.5">
+            <span className=${"flex-1 text-sm leading-tight " + C.tx}>${mLabel(m, x.k)}</span>
+            <span className=${"text-xs tabular-nums w-10 text-right " + C.mu}>${pct(x.p)}%</span>
+            <span className=${"text-sm font-semibold tabular-nums w-12 text-right " + C.tx}>${odd(x.q)}</span><${AddBtn} c=${x.k} /></div>`)}</div>`}</div>`; })}</div>
+        <p className=${"text-[11px] " + C.mu}>Probabilità calcolate dalle quote medie dei bookmaker (modello dei gol attesi). Quota "media" = raccolta dai bookmaker; quota "stimata" = calcolata dalla probabilità con un margine tipico del 6%, quella reale può variare. Il consiglio sceglie il mercato dove probabilità e statistiche delle squadre vanno d'accordo: non è una garanzia.</p>
+      <//>`;
+    }
+
     /* ---- scheda partita ---- */
     function MatchView({ m }) {
       const { D, lg, unlocked, setOpen, mt, setMt, mySlip, addLeg } = React.useContext(Ctx);
@@ -214,7 +304,7 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
             <div className=${C.lab + " pt-1"}>Aggiungi alla tua schedina</div>
             <div className="flex flex-wrap gap-1.5">${opts.filter((o) => !o.stima).map((o) => html`<button key=${o.k} onClick=${() => addLeg(m, o.k)}
               className=${"inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border " + (inSlip && inSlip.k === o.k ? TONE.good : C.ch + " " + C.tx + " border-transparent")}>
-              ${inSlip && inSlip.k === o.k ? html`<${Ic.Check} size=${12} />` : html`<${Ic.Plus} size=${12} />`}${o.k}<span className=${"font-normal " + C.mu}>${odd(o.q)}</span></button>`)}</div></div>
+              ${inSlip && inSlip.k === o.k ? html`<${Ic.Check} size=${12} />` : html`<${Ic.Plus} size=${12} />`}${mLabel(m, o.k, true)}<span className=${"font-normal " + C.mu}>${odd(o.q)}</span></button>`)}</div></div>
           <div className=${C.lab}>Lettura in 10 secondi - tocca per aprire</div>
           <${Gate} m=${m} title="Lettura IA: forma reale, attese, precedenti, contesto">
             <div className="grid grid-cols-2 gap-2">${tiles.map((t, i) => { const o = pOpen === i; return html`<button key=${t.k} onClick=${() => setPOpen(o ? null : i)} className=${C.card + " p-3 text-left " + (o ? "col-span-2" : "")}>
@@ -225,9 +315,7 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
           <//><//>`}
 
         ${mt === 1 && html`<${Gate} m=${m} title="Analisi IA: probabilità, gol attesi e consiglio">
-          <div className=${C.card + " p-4 space-y-2"}><div className="flex items-center gap-2"><span className=${"w-9 h-9 rounded-xl flex items-center justify-center border " + TONE.info}><${Ic.Sparkles} size=${17} /></span>
-            <div><div className=${"text-sm font-semibold " + C.tx}>Consiglio IA</div><div className=${"text-xs " + C.mu}>Nessun consiglio per questa partita</div></div></div>
-            <p className=${"text-sm " + C.tx}>Il consiglio compare solo quando l'IA ha un'informazione che le quote non hanno ancora assorbito: formazione ufficiale, infortunio dell'ultima ora, notizia dei giornali locali. Per questa partita non ce ne sono: le quote sono già la stima migliore.</p></div>
+          <${TipView} m=${m} />
           <div className=${C.card + " p-4 space-y-2"}><div className=${C.lab}>Laboratorio: IA contro quote</div>
             <div className="overflow-x-auto"><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}><th className="text-left font-medium py-1">Esito</th><th className="text-right font-medium">IA</th><th className="text-right font-medium">Quote</th><th className="text-right font-medium">${D.demo ? "Bet365" : "Media"}</th><th className="text-right font-medium">Migliore</th></tr></thead>
               <tbody>${[["1", m.p[0], m.mk[0], m.odds["1"], m.max["1"]], ["X", m.p[1], m.mk[1], m.odds["X"], m.max["X"]], ["2", m.p[2], m.mk[2], m.odds["2"], m.max["2"]],
@@ -235,8 +323,8 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
                 <td className="py-1.5 font-semibold">${r[0]}</td><td className="text-right">${pct(r[1])}%</td><td className=${"text-right " + C.mu}>${pct(r[2])}%</td><td className="text-right">${odd(r[3])}</td><td className=${"text-right " + C.mu}>${odd(r[4])}</td></tr>`)}</tbody></table></div>
             <p className=${"text-[11px] " + C.mu}>${D.demo ? "\"Quote\" è la probabilità ricavata dalla quota togliendo il margine del bookmaker. Nel test su oltre 18.000 partite gli scarti tra IA e quote non hanno dato un vantaggio affidabile: per questo l'IA non li trasforma in consigli."
               : "Per ora l'IA usa come base la quota media dei bookmaker, perché nei test è la stima più precisa: se ne discosterà solo quando arriveranno formazioni ufficiali e notizie. \"Migliore\" è la quota più alta tra i bookmaker."}</p></div>
-          ${m.xg[0] != null && html`<div className=${C.card + " p-4 grid grid-cols-3 gap-2 text-center"}>
-            ${[["Gol attesi", (m.xg[0] || 0).toFixed(2).replace(".", ",") + " - " + (m.xg[1] || 0).toFixed(2).replace(".", ",")], ["Elo casa", m.elo[0] || "-"], ["Elo ospiti", m.elo[1] || "-"]].map(([a, b]) => html`<div key=${a} className=${"rounded-xl p-2 " + C.ch}>
+          ${m.xg[0] != null && html`<div className=${C.card + " p-4 grid grid-cols-2 gap-2 text-center"}>
+            ${[["Gol attesi " + m.h, (m.xg[0] || 0).toFixed(2).replace(".", ",")], ["Gol attesi " + m.a, (m.xg[1] || 0).toFixed(2).replace(".", ",")], ...(m.elo[0] ? [["Elo casa", m.elo[0]], ["Elo ospiti", m.elo[1]]] : [])].map(([a, b]) => html`<div key=${a} className=${"rounded-xl p-2 " + C.ch}>
               <div className=${"text-base font-semibold tabular-nums " + C.tx}>${b}</div><div className=${"text-[10px] " + C.mu}>${a}</div></div>`)}</div>`}<//>`}
 
         ${mt === 2 && html`<${React.Fragment}>
@@ -328,12 +416,12 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
       }
       const tot = legs.reduce((a, l) => a * l.q, 1), prob = legs.reduce((a, l) => a * l.p, 1);
       const done = legs.filter((l) => hit(l.m, l.k) !== null), won = done.filter((l) => hit(l.m, l.k));
-      const mine = mySlip.map((x) => ({ ...x, m: byId[x.id] })).filter((x) => x.m).map((x) => ({ ...x, ...options(x.m).find((o) => o.k === x.k) }));
+      const mine = mySlip.map((x) => ({ ...x, m: byId[x.id] })).filter((x) => x.m).map((x) => ({ ...x, ...options(x.m).find((o) => o.k === norm(x.k)) }));
       const mTot = mine.reduce((a, l) => a * (l.q || 1), 1), mProb = mine.reduce((a, l) => a * (l.p || 1), 1);
-      const text = (ls, wa) => (wa ? "*Schedina AuraPitch*\n" : "") + ls.map((l) => (wa ? "- " : "") + `${l.m.h} - ${l.m.a}: ${wa ? "*" + l.k + "*" : l.k} @ ${odd(l.q)}`).join("\n") + `\nQuota totale ${odd(ls.reduce((a, l) => a * l.q, 1))}`;
+      const text = (ls, wa) => (wa ? "*Schedina AuraPitch*\n" : "") + ls.map((l) => (wa ? "- " : "") + `${l.m.h} - ${l.m.a}: ${wa ? "*" + mLabel(l.m, l.k, true) + "*" : mLabel(l.m, l.k, true)} @ ${odd(l.q)}`).join("\n") + `\nQuota totale ${odd(ls.reduce((a, l) => a * l.q, 1))}`;
       const LegRow = ({ l, onDel }) => { const h = hit(l.m, l.k); return html`<div className=${"flex items-center gap-2 py-2 border-t first:border-t-0 " + C.bd}>
-        <div className="flex-1 min-w-0"><div className=${"text-sm truncate " + C.tx}>${l.m.h} - ${l.m.a}</div><div className=${"text-[11px] " + C.mu}>${lg(l.m.lg).name} - IA ${pct(l.p)}%${l.stima ? " - quota stimata senza margine" : ""}${l.shielded ? " - protetta" : ""}</div></div>
-        <span className=${"text-sm font-semibold " + C.tx}>${l.k}</span><span className=${"text-sm tabular-nums w-11 text-right " + C.mu}>${odd(l.q)}</span>
+        <div className="flex-1 min-w-0"><div className=${"text-sm truncate " + C.tx}>${l.m.h} - ${l.m.a}</div><div className=${"text-[11px] " + C.mu}>${lg(l.m.lg).name} - IA ${pct(l.p)}%${l.stima ? " - quota stimata" : ""}${l.shielded ? " - protetta" : ""}</div></div>
+        <span className=${"text-sm font-semibold text-right max-w-[45%] leading-tight " + C.tx}>${mLabel(l.m, l.k, true)}</span><span className=${"text-sm tabular-nums w-11 text-right " + C.mu}>${odd(l.q)}</span>
         ${h === null ? null : h ? html`<${Ic.CheckCircle2} size=${17} className="text-emerald-500" />` : html`<${Ic.XCircle} size=${17} className="text-rose-500" />`}
         ${onDel && html`<button aria-label="Rimuovi" onClick=${onDel} className=${C.mu}><${Ic.Trash2} size=${15} /></button>`}</div>`; };
       return html`<div className="px-4 space-y-3">
@@ -347,7 +435,7 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
           <div className="flex justify-between text-sm"><span className=${C.mu}>Probabilità che passi, secondo l'IA</span><b className=${"tabular-nums " + C.tx}>${(prob * 100).toFixed(1).replace(".", ",")}%</b></div>
           ${done.length > 0 && html`<div className=${"text-xs font-semibold " + (won.length === done.length ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>Verifica sulla giornata: ${won.length} su ${done.length} esiti corretti${won.length === done.length ? ", schedina vinta" : ""}.</div>`}
           ${weak && html`<div className=${"rounded-xl border p-3 text-sm " + TONE.bad}><div className="font-semibold flex items-center gap-1.5"><${Ic.AlertTriangle} size=${14} />Anello debole</div>
-            <div>${shield ? "Protetto dallo Scudo IA: la gamba più fragile è passata all'esito più probabile della stessa partita." : `${weak.m.h} - ${weak.m.a}, ${weak.k} (IA ${pct(weak.p)}%) è la gamba più fragile.`}</div>
+            <div>${shield ? "Protetto dallo Scudo IA: la gamba più fragile è passata all'esito più probabile della stessa partita." : `${weak.m.h} - ${weak.m.a}, ${mLabel(weak.m, weak.k, true)} (IA ${pct(weak.p)}%) è la gamba più fragile.`}</div>
             <button onClick=${() => setShield(!shield)} className=${"mt-2 inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full " + (shield ? TONE.good + " border" : C.on)}><${Ic.ShieldCheck} size=${13} />${shield ? "Scudo IA attivo" : "Scudo IA: proteggi"}</button></div>`}
           <div className="grid grid-cols-2 gap-2 pt-1">
             <button onClick=${() => doCopy(text(legs, false))} className=${"py-2.5 rounded-xl border text-sm font-semibold flex items-center justify-center gap-1.5 " + TONE.good}><${Ic.Copy} size=${15} />Copia</button>

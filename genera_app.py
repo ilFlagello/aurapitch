@@ -15,6 +15,8 @@ import re
 import sys
 import unicodedata
 import zlib
+
+import mercati as M
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -316,15 +318,29 @@ def genera():
         else:
             ctx = {"tone": "ok", "text": "Giorni di riposo non disponibili per questo campionato."}
         tabs = classifiche.get(code) if code else None
+        # mercati e consiglio IA motivato
+        lh, la = M.gol_attesi(q["mk"], q["mo"])
+        raccolte = {c: v for c, v in (("1", q["odds"]["1"]), ("X", q["odds"]["X"]), ("2", q["odds"]["2"]), ("O2.5", q["odds"]["O"]), ("U2.5", q["odds"]["U"])) if v}
+        mercati = M.calcola_mercati(lh, la, h, a, raccolte)
+        sh = M.statistiche([z for z in per_team.get(hid, []) if z["t"] < t0]) if hid else None
+        sa = M.statistiche([z for z in per_team.get(aid, []) if z["t"] < t0]) if aid else None
+        pos = {}
+        for i, rr in enumerate((tabs or {}).get("TOTAL", [])):
+            pos[(rr.get("team") or {}).get("id")] = rr.get("position", i + 1)
+        tip = M.scegli(mercati, h, a, sh, sa, {"pos_h": pos.get(hid), "pos_a": pos.get(aid)}, q["nb"])
+        if not (sh and sa):
+            for v in tip.values():
+                v["perche"].append("Statistiche delle squadre non disponibili per questo campionato: il consiglio si basa solo sulle quote.")
         mid = f"{k}-{m_fd['id'] if m_fd else zlib.crc32((h + '|' + a + '|' + loc.date().isoformat()).encode())}"
         out["matches"].append({
             "id": mid, "fd": m_fd["id"] if m_fd else None, "lg": k, "date": loc.strftime("%Y-%m-%d"), "time": loc.strftime("%H:%M"), "ko": t0.isoformat(),
             "h": h, "a": a, "st": st, "g": g, "res": (None if g is None else (0 if g[0] > g[1] else 1 if g[0] == g[1] else 2)), "free": False,
             "p": q["mk"], "mk": q["mk"], "po": q["mo"] if q["mo"] is not None else 0.5, "mo": q["mo"] if q["mo"] is not None else 0.5,
-            "odds": q["odds"], "max": q["max"], "nb": q["nb"], "xg": [None, None], "elo": [None, None],
+            "odds": q["odds"], "max": q["max"], "nb": q["nb"], "xg": [lh, la], "elo": [None, None],
             "forma": [testo_forma(l5[0]), testo_forma(l5[1])] if code else [{"tone": "ok", "text": "Forma non disponibile per questo campionato nei dati gratuiti."}] * 2,
             "attese": [testo_classifica(tabs, hid), testo_classifica(tabs, aid)] if tabs else [{"tone": "ok", "text": "Classifica non disponibile nei dati gratuiti."}] * 2,
             "prec": prec, "ctx": ctx, "flags": [], "last5": l5, "h2h": h2h, "stats": [],
+            "markets": [[x["c"], x["p"], x["q"], 1 if x["qm"] else 0] for x in mercati], "tip": tip,
         })
     # 3 partite FREE: le piu importanti tra oggi e domani non ancora iniziate
     cand = [m for m in out["matches"] if m["st"] == "NS" and m["date"] in (oggi.isoformat(), (oggi + timedelta(days=1)).isoformat())]

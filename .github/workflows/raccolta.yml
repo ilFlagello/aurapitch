@@ -46,6 +46,7 @@ jobs:
         run: |
           python raccoglitore.py --formazioni
           python raccoglitore.py --aggiorna
+          python raccoglitore.py --prepartita
           python raccoglitore.py --notizie
           python genera_app.py --live
 

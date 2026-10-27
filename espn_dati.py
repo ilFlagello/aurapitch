@@ -172,6 +172,22 @@ def giro_espn(base="data", ore=48):
             out["squadre"][nome] = r
         except Exception as e:  # noqa: BLE001
             print(f"ESPN {nome}: errore {e}")
+    out["risultati_lega"] = {}
+    for k in ("I2",):
+        evs = []
+        for dd in (-2, -1, 0):
+            giorno = (ora + timedelta(days=dd)).strftime("%Y%m%d")
+            try:
+                for ev in get(f"{SITE}{ESPN_LG[k]}/scoreboard?dates={giorno}").get("events", []):
+                    c = ev["competitions"][0]
+                    h = next(x for x in c["competitors"] if x["homeAway"] == "home")
+                    a = next(x for x in c["competitors"] if x["homeAway"] == "away")
+                    t = ev["status"]["type"]
+                    evs.append({"t": ev["date"], "h": h["team"]["displayName"], "a": a["team"]["displayName"], "st": t["state"], "fine": t.get("completed", False),
+                                "g": [int(h.get("score") or 0), int(a.get("score") or 0)]})
+            except Exception as e:  # noqa: BLE001
+                print(f"ESPN risultati {k} {giorno}: {e}")
+        out["risultati_lega"][k] = evs
     for k in ("I2",):
         try:
             out["classifiche"][k] = classifica_espn(ESPN_LG[k])

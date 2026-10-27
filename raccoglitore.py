@@ -44,7 +44,7 @@ AF_BASE = "https://v3.football.api-sports.io"
 FD_BASE = "https://api.football-data.org/v4"
 # football-data.org (piano gratuito, 10 richieste al minuto): risultati, classifiche, precedenti
 FD_COMPS = {"SA": "Serie A", "CL": "Champions League", "PL": "Premier League", "PD": "LaLiga", "BL1": "Bundesliga"}
-SCORES_ODDS_API = ["Serie B"]  # campionati senza football-data: risultati da The Odds API
+SCORES_ODDS_API = []  # i risultati della Serie B ora arrivano da ESPN (gratis): crediti risparmiati per le quote pre-partita  # campionati senza football-data: risultati da The Odds API
 ODDS_BASE = "https://api.the-odds-api.com/v4"
 AF_RISERVA = 5  # richieste API-Football da lasciare sempre libere
 TZ = "Europe/Rome"
@@ -395,7 +395,87 @@ def giro_notizie(base="data", ore=48):
     print(f"Notizie: {len(squadre)} squadre controllate, {nuove} titoli nuovi")
 
 
+LEGA_APP = {"I1": "Serie A", "I2": "Serie B", "CL": "Champions League", "E0": "Premier League", "SP1": "LaLiga", "D1": "Bundesliga"}
+CREDITI_GIORNO = 14  # stima prudente dei crediti The Odds API usati dal giro del mattino
+
+
+def giro_prepartita(base="data", da_min=15, a_min=70):
+    """Seconda fotografia delle quote 15-70 minuti prima del calcio d'inizio (dopo le formazioni ufficiali).
+    Nei test su 17.508 partite le quote vicine al calcio d'inizio sono le piu precise in assoluto.
+    Parte solo se avanzano crediti: tiene da parte quelli per il giro del mattino fino a fine mese."""
+    import espn_dati as ES
+    if not os.environ.get("ODDS_API_KEY"):
+        return
+    try:
+        with open(os.path.join("app", "data", "giornata.json"), encoding="utf-8") as f:
+            gio = json.load(f)
+    except (OSError, ValueError):
+        return
+    ora = datetime.now(timezone.utc)
+    vicine = {}
+    for m in gio.get("matches", []):
+        try:
+            mins = (datetime.fromisoformat(m["ko"]) - ora).total_seconds() / 60
+        except (KeyError, ValueError):
+            continue
+        if m.get("st") == "NS" and da_min <= mins <= a_min and m.get("lg") in LEGA_APP:
+            vicine.setdefault(m["lg"], []).append(m)
+    if not vicine:
+        return
+    stato_path = os.path.join(base, "prepartita_stato.json")
+    try:
+        with open(stato_path, encoding="utf-8") as f:
+            stato = json.load(f)
+    except (OSError, ValueError):
+        stato = {}
+    sports, h = odds_api("/sports")  # gratis: serve per i crediti rimasti e le chiavi dei campionati
+    if not sports:
+        return
+    rimasti = int(h.get("x-requests-remaining", "0") or 0)
+    import calendar
+    giorni = calendar.monthrange(ora.year, ora.month)[1] - ora.day + 1
+    riserva = giorni * CREDITI_GIORNO + 10
+    per_titolo = {x["title"]: x["key"] for x in sports}
+    chiavi = {lg["nome"]: per_titolo.get(lg["odds_title"], lg["odds_key"]) for lg in LEAGUES}
+    cart = os.path.join(base, ora.strftime("%Y-%m-%d"))
+    path = os.path.join(cart, "prepartita.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            righe = json.load(f)
+    except (OSError, ValueError):
+        righe = []
+    for k, ms in vicine.items():
+        nome = LEGA_APP[k]
+        ultimo = stato.get(k)
+        if ultimo and (ora - datetime.fromisoformat(ultimo)).total_seconds() < 50 * 60:
+            continue
+        if rimasti - 2 < riserva:
+            print(f"Pre-partita {nome}: saltata, crediti rimasti {rimasti} (riserva per il mattino fino a fine mese: {riserva})")
+            continue
+        ev, h2 = odds_api(f"/sports/{chiavi.get(nome)}/odds", regions="eu", markets="h2h,totals", oddsFormat="decimal", dateFormat="iso")
+        rimasti = int(h2.get("x-requests-remaining", rimasti) or rimasti)
+        stato[k] = ora.isoformat()
+        for m in ms:
+            best, bs = None, 0
+            for e in ev or []:
+                try:
+                    dt = abs((datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")) - datetime.fromisoformat(m["ko"])).total_seconds())
+                except (KeyError, ValueError):
+                    continue
+                sc = ES.sim(m["h"], [e["home_team"]]) + ES.sim(m["a"], [e["away_team"]])
+                if dt <= 3 * 3600 and sc > bs:
+                    best, bs = e, sc
+            if best and bs >= 1.3:
+                righe.append({"id": m["id"], "t": ora.isoformat(), **{f"oa_{a}": b for a, b in riassunto(media_oddsapi(best)).items()}})
+        print(f"Pre-partita {nome}: {len(ms)} partite, crediti rimasti {rimasti}")
+    salva(cart, "prepartita.json", righe)
+    salva(base, "prepartita_stato.json", stato)
+
+
 if __name__ == "__main__":
+    if "--prepartita" in sys.argv:
+        giro_prepartita()
+        sys.exit(0)
     if "--espn" in sys.argv:
         import espn_dati
         espn_dati.giro_espn()

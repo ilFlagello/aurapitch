@@ -336,6 +336,17 @@ def genera():
                     st, g = "FT", [int(sc[0]), int(sc[1])]
                 except (TypeError, ValueError):
                     pass
+            for e in ((esd.get("risultati_lega") or {}).get(k) or []):  # Serie B: risultati da ESPN
+                try:
+                    vicino = abs((utc(e["t"].replace("Z", "+00:00")) - r["_t"]).total_seconds()) < 6 * 3600
+                except ValueError:
+                    vicino = False
+                if vicino and ES.sim(h, [e["h"]]) + ES.sim(a, [e["a"]]) >= 1.3:
+                    if e["st"] == "post" and e["fine"]:
+                        st, g = "FT", e["g"]
+                    elif e["st"] == "in":
+                        st, g = "LIVE", e["g"]
+                    break
         t0 = r["_t"]
         l5 = [ultime5(per_team, hid, t0), ultime5(per_team, aid, t0)] if (code or hid or aid) else [[], []]
         prec, h2h = precedenti(m_fd["id"], hid, aid) if m_fd else ({"tone": "ok", "text": "Precedenti non disponibili per questo campionato nei dati gratuiti."}, [])
@@ -406,12 +417,45 @@ def genera():
     for v in out["standings"].values():
         squadre |= {r["team"] for r in v["generale"]}
     out["teams"] = sorted(squadre)
+    aggiorna_prepartita(out)
     applica_fattori(out)
     return out
 
 
 NOTIZIE = os.path.join(DATA, "notizie", "notizie.json")
 ESPN = os.path.join(DATA, "espn", "squadre.json")
+
+
+def aggiorna_prepartita(d):
+    """Quote prese 15-70 minuti prima del calcio d'inizio: diventano la nuova base (piu precise di quelle del mattino)."""
+    righe = []
+    oggi = datetime.now(timezone.utc)
+    for dd in (-1, 0):
+        righe += jload(os.path.join(DATA, (oggi + timedelta(days=dd)).strftime("%Y-%m-%d"), "prepartita.json"), []) or []
+    ultime = {}
+    for r in righe:
+        if r["id"] not in ultime or r["t"] > ultime[r["id"]]["t"]:
+            ultime[r["id"]] = r
+    n = 0
+    for m in d.get("matches", []):
+        r = ultime.get(m["id"])
+        if not r or m.get("st") != "NS" or m.get("prepartita") == r["t"]:
+            continue
+        q = quote_di(r)
+        if not q:
+            continue
+        m.setdefault("mk_mattino", m["mk"])
+        m.setdefault("mo_mattino", m["mo"])
+        m["mk"], m["mo"] = q["mk"], (q["mo"] if q["mo"] is not None else m["mo"])
+        m["odds"], m["max"], m["nb"] = q["odds"], q["max"], q["nb"] or m.get("nb")
+        m["xg_mercato"] = list(M.gol_attesi(m["mk"], m["mo"]))
+        c = m.get("_ctx") or {}
+        c["raccolte"] = {cc: v for cc, v in (("1", q["odds"]["1"]), ("X", q["odds"]["X"]), ("2", q["odds"]["2"]), ("O2.5", q["odds"]["O"]), ("U2.5", q["odds"]["U"])) if v}
+        m["foto"] = r["t"]
+        m["prepartita"] = r["t"]
+        m.pop("_firma", None)
+        n += 1
+    return n
 
 
 def applica_fattori(d):
@@ -433,7 +477,8 @@ def applica_fattori(d):
         c = m["_ctx"]
         lh0, la0 = m.get("xg_mercato") or m["xg"]
         try:
-            foto = datetime.fromisoformat(m.get("foto", "2000-01-01") + "T06:00:00+00:00")
+            f0 = m.get("foto", "2000-01-01")
+            foto = datetime.fromisoformat(f0 if "T" in f0 else f0 + "T06:00:00+00:00")
             ko = datetime.fromisoformat(m["ko"])
         except ValueError:
             foto, ko = None, None
@@ -510,9 +555,10 @@ def aggiorna_live():
     d["generato"] = datetime.now(timezone.utc).astimezone(ROME).strftime("%d/%m/%Y %H:%M")
     d["label"] = f"aggiornati il {d['generato'][:5]} alle {d['generato'][-5:]}"
     print(f"Partite aggiornate: {cambi}")
+    npre = aggiorna_prepartita(d)
     nf = applica_fattori(d)
-    print(f"Partite ricalcolate con le notizie: {nf}")
-    return d if (cambi or nf) else None
+    print(f"Quote pre-partita applicate: {npre}; partite ricalcolate: {nf}")
+    return d if (cambi or nf or npre) else None
 
 
 STORICO_IN = os.path.join(DATA, "consigli.json")

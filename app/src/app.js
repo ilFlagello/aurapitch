@@ -266,7 +266,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           const gia = (m.fattori || []).filter((f) => f.chi === r.n).reduce((x, f) => x + (f.delta || 0), 0);
           const giaNotizia = gia < 0;
           // la formazione conferma: si aggiunge solo la parte non ancora applicata dalle notizie
-          const delta = Math.min(0, -quota * (1 - PESI.sostituto) * (inPanca ? PESI.panchina : PESI.assente) - gia);
+          // se le quote sono state aggiornate dopo l'uscita delle formazioni, il mercato le conosce gia: pesano il 25%
+          const prezzo = m.prepartita && (new Date(m.ko) - new Date(m.prepartita)) / 60000 <= 70 ? 0.25 : 1;
+          const delta = Math.min(0, -quota * (1 - PESI.sostituto) * (inPanca ? PESI.panchina : PESI.assente) * prezzo - gia);
           out.push({ n: r.n, side: j, panca: inPanca, delta, giaNotizia, testo: `${r.n} (${t}, ${r.g} gol e ${r.a} assist in campionato) ${inPanca ? "parte dalla panchina" : "non è tra i convocati"}.` });
         }
       });
@@ -682,7 +684,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           ${sm && sm.st !== "NS" && html`<${StatsCard} sm=${sm} m=${m} />`}
           <div className=${C.card + " p-4 space-y-3"}><div className="flex justify-between items-baseline"><span className=${C.lab}>Probabilità dalle quote</span><span className=${"text-[11px] " + C.mu}>Over 2.5: <b className=${C.tx}>${pct(m.mo)}%</b></span></div>
             <${ProbBar} p=${m.mk} />
-            ${!D.demo && m.nb ? html`<div className=${"text-[11px] " + C.mu}>Quota media di ${m.nb} bookmaker.</div>` : null}
+            ${!D.demo && m.nb ? html`<div className=${"text-[11px] " + C.mu}>Quota media di ${m.nb} bookmaker${m.prepartita ? ", aggiornata alle " + new Date(m.prepartita).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }) + " (prima del calcio d'inizio)" : ", fotografata al mattino"}.</div>` : null}
+            ${m.mk_mattino && html`<div className=${"text-[12px] rounded-lg p-2 " + C.ch + " " + C.tx}><b>Movimento delle quote</b> dal mattino: ${["1", "X", "2"].map((e, i) => { const dd = m.mk[i] - m.mk_mattino[i]; return html`<span key=${e} className="mr-2 whitespace-nowrap tabular-nums">${e} ${pct(m.mk_mattino[i])}% → <b>${pct(m.mk[i])}%</b>${Math.abs(dd) >= 0.02 ? html`<span className=${dd > 0 ? " text-emerald-600 dark:text-emerald-300" : " text-rose-600 dark:text-rose-300"}> ${dd > 0 ? "▲" : "▼"}</span>` : ""}</span>`; })}
+              <div className=${"text-[11px] " + C.mu}>Le quote vicine al calcio d'inizio sono le più precise: contengono formazioni e notizie dell'ultima ora.</div></div>`}
             <div className=${C.lab + " pt-1"}>Aggiungi alla tua schedina</div>
             <div className="flex flex-wrap gap-1.5">${opts.filter((o) => !o.stima).map((o) => html`<button key=${o.k} onClick=${() => addLeg(m, o.k)}
               className=${"inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border " + (inSlip && inSlip.k === o.k ? TONE.good : C.ch + " " + C.tx + " border-transparent")}>

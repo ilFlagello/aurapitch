@@ -162,10 +162,80 @@ def giro_arbitri(base="data", giorni=3):
                     out.append({"lg": k, "t": ev["date"], "h": h, "a": a, "nome": nome})
             except Exception as e:  # noqa: BLE001
                 print(f"ESPN arbitri {k} {ev.get('id')}: {e}")
+    try:
+        out += arbitri_da_notizie(base, out)
+    except Exception as e:  # noqa: BLE001
+        print(f"Arbitri dalle notizie: errore {e}")
     os.makedirs(os.path.join(base, "espn"), exist_ok=True)
     with open(os.path.join(base, "espn", "arbitri.json"), "w", encoding="utf-8") as f:
         json.dump({"agg": ora.isoformat(), "partite": out}, f, ensure_ascii=False, separators=(",", ":"))
     print(f"ESPN: arbitri designati trovati {len(out)}")
+
+
+PAROLE_ARB = {"it": ("arbitro", "arbitra", "arbitrer", "designaz", "fischietto", "direttore di gara"), "en": ("referee", "official"),
+              "es": ("arbitro", "colegiado", "arbitrara", "designacion"), "de": ("schiedsrichter", "pfeift", "unparteiische")}
+Q_ARB = {"it": "arbitro", "en": "referee", "es": "árbitro", "de": "Schiedsrichter"}
+
+
+def arbitri_da_notizie(base, gia, giorni=4):
+    """Arbitro designato letto dai titoli delle notizie (es. "Roma-Cagliari, arbitra Feliciani").
+    Si accettano solo cognomi di arbitri gia presenti nello storico, e solo in titoli che parlano di arbitri."""
+    import re
+    import urllib.parse
+    import fattori as FT
+    try:
+        with open(os.path.join("app", "data", "giornata.json"), encoding="utf-8") as f:
+            gio = json.load(f)
+        with open(os.path.join(base, "arbitri.json"), encoding="utf-8") as f:
+            noti = json.load(f)
+    except (OSError, ValueError):
+        return []
+    cognomi = {}
+    for c, v in noti.items():
+        cg = c.split()[-1]
+        if len(cg) >= 4 and v.get("n", 0) >= 3:
+            cognomi.setdefault(v.get("lega"), {})[cg] = v["nome"]
+    ora = datetime.now(timezone.utc)
+    out = []
+    for m in gio.get("matches", []):
+        try:
+            ko = datetime.fromisoformat(m["ko"])
+        except (KeyError, ValueError):
+            continue
+        if m.get("st") != "NS" or m.get("arbitro") or not timedelta(0) <= ko - ora <= timedelta(days=giorni):
+            continue
+        if arbitro_designato(gia, m["lg"], m["h"], m["a"], ko):
+            continue
+        lingua = FT.LINGUA_LEGA.get(m["lg"], "it")
+        hl, gl, ceid, _ = FT.LINGUE[lingua]
+        pulito = lambda s: re.sub(r"\b(fc|ac|as|ssc|cf|afc|1907|1909|calcio)\b", "", s, flags=re.I).strip()
+        q = f'"{pulito(m["h"])}" "{pulito(m["a"])}" {Q_ARB[lingua]} when:5d'
+        try:
+            req = urllib.request.Request("https://news.google.com/rss/search?" + urllib.parse.urlencode({"q": q, "hl": hl, "gl": gl, "ceid": ceid}),
+                                         headers={"User-Agent": "Mozilla/5.0 (AuraPitch beta)"})
+            with urllib.request.urlopen(req, timeout=20) as r:
+                titoli = [x["titolo"] for x in FT.leggi_rss(r.read().decode("utf-8", "replace"))]
+        except Exception as e:  # noqa: BLE001
+            print(f"Notizie arbitro {m['h']}-{m['a']}: {e}")
+            continue
+        time.sleep(1)
+        lega_cod = {"I2": "I1"}.get(m["lg"], m["lg"])
+        nomi = cognomi.get(lega_cod) or {k: v for d in cognomi.values() for k, v in d.items()}
+        voti = {}
+        for t in titoli:
+            p = FT.piano(t)
+            if not any(w in p for w in PAROLE_ARB[lingua]):
+                continue
+            if not any(re.search(r"\b" + re.escape(w) + r"\b", p) for w in toks(m["h"]) + toks(m["a"]) if len(w) >= 3):
+                continue
+            for cg, nome in nomi.items():
+                if re.search(r"\b" + re.escape(cg) + r"\b", p):
+                    voti[nome] = voti.get(nome, 0) + 1
+        if voti:
+            nome = max(voti, key=voti.get)
+            out.append({"lg": m["lg"], "t": m["ko"], "h": m["h"], "a": m["a"], "nome": nome, "fonte": "notizie"})
+    print(f"Arbitri dalle notizie: {len(out)}")
+    return out
 
 
 def arbitro_designato(elenco, lg, h, a, ko):

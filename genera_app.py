@@ -370,7 +370,7 @@ def genera():
     print(f"Arbitri con statistiche: {len(refs)}")
     designati = (jload(os.path.join(DATA, "espn", "arbitri.json"), {}) or {}).get("partite", [])
     with open(ARBITRI, "w", encoding="utf-8") as f:  # per gli aggiornamenti durante il giorno (arbitri designati dopo il mattino)
-        json.dump({c: {"nome": v["nome"], "n": v["n"], "ratio": v["ratio"], "media": v["media"]} for c, v in refs.items()}, f, ensure_ascii=False, separators=(",", ":"))
+        json.dump({c: {"nome": v["nome"], "n": v["n"], "ratio": v["ratio"], "media": v["media"], "lega": v.get("lega")} for c, v in refs.items()}, f, ensure_ascii=False, separators=(",", ":"))
 
     xg_lega = {k: jload(os.path.join(FD, f"understat_{k}.json"), []) or [] for k in ("I1", "E0", "SP1", "D1")}
 

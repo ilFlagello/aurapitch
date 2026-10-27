@@ -1,0 +1,6 @@
+4e54a5 https://site.web.api.espn.com/apis/common/v3/sports/soccer/athletes/181836
+f0b689 https://site.web.api.espn.com/apis/common/v3/sports/soccer/athletes/181836/overview
+04549f https://site.web.api.espn.com/apis/common/v3/sports/soccer/athletes/181836/stats
+18ceb9 https://site.web.api.espn.com/apis/common/v3/sports/soccer/athletes/181836/statisticslog
+26ebd1 https://sports.core.api.espn.com/v2/sports/soccer/athletes/181836/statisticslog
+a12cf6 https://site.api.espn.com/apis/site/v2/sports/soccer/ita.1/athletes/181836

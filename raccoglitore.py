@@ -245,6 +245,7 @@ def giro_completo(base="data"):
 
     scrivi_csv(cart, partite)
     giro_fd(base, completo=True)
+    scarica_stagione_fd(base)
     print(f"Fatto. Richieste API-Football rimaste oggi: {BUDGET.af_rimaste}; crediti The Odds API rimasti: {BUDGET.odds_rimasti}")
 
 
@@ -397,6 +398,41 @@ def giro_notizie(base="data", ore=48):
 
 LEGA_APP = {"I1": "Serie A", "I2": "Serie B", "CL": "Champions League", "E0": "Premier League", "SP1": "LaLiga", "D1": "Bundesliga"}
 CREDITI_GIORNO = 14  # stima prudente dei crediti The Odds API usati dal giro del mattino
+
+
+def scarica_stagione_fd(base="data"):
+    """CSV della stagione in corso da Football-Data.co.uk: cartellini e angoli per partita (per i mercati Cartellini e Calci d'angolo)."""
+    oggi = datetime.now(timezone.utc)
+    s0 = stagione(oggi)
+    cod = f"{s0 % 100:02d}{(s0 + 1) % 100:02d}"
+    os.makedirs(os.path.join(base, "fd"), exist_ok=True)
+    for div in ("I1", "I2", "E0", "SP1", "D1"):
+        try:
+            req = urllib.request.Request(f"https://www.football-data.co.uk/mmz4281/{cod}/{div}.csv", headers={"User-Agent": "Mozilla/5.0 (AuraPitch beta)"})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                raw = r.read()
+            with open(os.path.join(base, "fd", f"stagione_{div}.csv"), "wb") as f:
+                f.write(raw)
+        except (urllib.error.URLError, OSError) as e:
+            print(f"Football-Data stagione {div}: {e}")
+    print(f"Football-Data: stagione {cod} scaricata (cartellini e angoli)")
+    # Understat: gol attesi (xG) della stagione in corso, per la lettura "fortuna o merito"
+    import codecs, gzip as gz, re as _re
+    for lg, div in (("Serie_A", "I1"), ("EPL", "E0"), ("La_liga", "SP1"), ("Bundesliga", "D1")):
+        dati = None
+        try:
+            req = urllib.request.Request(f"https://understat.com/getLeagueData/{lg}/{s0}", headers={"User-Agent": "Mozilla/5.0 (AuraPitch beta)", "X-Requested-With": "XMLHttpRequest", "Referer": f"https://understat.com/league/{lg}/{s0}"})
+            with urllib.request.urlopen(req, timeout=30) as r:
+                raw = r.read()
+            if raw[:2] == b"\x1f\x8b":
+                raw = gz.decompress(raw)
+            dati = json.loads(raw.decode("utf-8")).get("dates")
+        except (urllib.error.URLError, OSError, ValueError) as e:
+            print(f"Understat {lg}: {e}")
+        if dati:
+            salva(os.path.join(base, "fd"), f"understat_{div}.json", [{"t": p["datetime"], "h": p["h"]["title"], "a": p["a"]["title"], "hg": int(p["goals"]["h"]), "ag": int(p["goals"]["a"]),
+                                                                      "hx": float(p["xG"]["h"]), "ax": float(p["xG"]["a"])} for p in dati if p.get("isResult")])
+    print("Understat: xG della stagione scaricati")
 
 
 def giro_prepartita(base="data", da_min=15, a_min=70):

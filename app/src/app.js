@@ -90,6 +90,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   const norm = (c) => LEGACY[c] || c;
   const nf = (x) => String(x).replace(".", ",");
   function evalCode(c, h, a) {
+    if (/^[KC][OU]\d/.test(c)) return null; // cartellini e angoli: non verificabili dal solo risultato
     if (c.includes("+")) return c.split("+").every((x) => evalCode(x, h, a));
     const t = h + a;
     if (["1", "X", "2", "1X", "X2", "12"].includes(c)) return c.includes(h > a ? "1" : h === a ? "X" : "2");
@@ -105,6 +106,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   }
   function mLabel(m, c, short) {
     c = norm(c);
+    if (/^[KC][OU]\d/.test(c)) return (c[0] === "K" ? "Cartellini " : "Angoli ") + (c[1] === "O" ? "Over " : "Under ") + nf(c.slice(2));
     if (c.includes("+")) return c.split("+").map((x) => mLabel(m, x, true)).join(" + ");
     if (c === "1") return short ? "1" : "1 (" + m.h + ")";
     if (c === "2") return short ? "2" : "2 (" + m.a + ")";
@@ -124,8 +126,10 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     if (/^[OU]/.test(c)) return (c[0] === "O" ? "Over " : "Under ") + nf(c.slice(1));
     return c;
   }
-  const GROUPS = ["Esito finale", "Doppia chance", "Under/Over", "Goal/No Goal", "Multigol", "Gol squadra", "Combo", "Risultato esatto", "Pari/Dispari"];
+  const GROUPS = ["Esito finale", "Doppia chance", "Under/Over", "Goal/No Goal", "Multigol", "Gol squadra", "Combo", "Cartellini", "Calci d'angolo", "Risultato esatto", "Pari/Dispari"];
   function mGroup(c) {
+    if (/^K[OU]\d/.test(c)) return "Cartellini";
+    if (/^C[OU]\d/.test(c)) return "Calci d'angolo";
     if (c.includes("+")) return "Combo";
     if (["1", "X", "2"].includes(c)) return "Esito finale";
     if (["1X", "X2", "12"].includes(c)) return "Doppia chance";
@@ -135,6 +139,12 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     if (c.startsWith("MG")) return "Multigol";
     if (/^[HA][OU]/.test(c)) return "Gol squadra";
     return "Under/Over";
+  }
+  function leggiXg(x) {
+    const att = x.gf - x.xf, dif = x.xs - x.gs;
+    const a = att >= 2 ? "Segna più di quanto crea: rendimento sopra le occasioni, in parte fortuna o un attaccante in stato di grazia." : att <= -2 ? "Crea più di quanto segna: imprecisione o sfortuna, i gol possono arrivare." : "Gol in linea con le occasioni create.";
+    const d = dif >= 2 ? " Subisce meno di quanto concede: portiere decisivo o fortuna." : dif <= -2 ? " Subisce più di quanto concede: in difesa paga oltre i demeriti." : "";
+    return a + d;
   }
   function options(m) {
     if (m.markets) return m.markets.map(([c, p, q, qm]) => ({ k: c, p, q, stima: !qm }));
@@ -490,6 +500,37 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <div className=${"text-[11px] " + C.mu}>Probabilità ricalcolate su punteggio, minuto ed espulsioni, partendo dai gol attesi prima della partita (il numero piccolo è la differenza rispetto al pre-partita).${reds[0] + reds[1] ? " Espulsioni considerate: " + reds[0] + " - " + reds[1] + "." : ""}</div></div>`;
     }
 
+    /* ---- meteo al calcio d'inizio (Open-Meteo, gratuito) ---- */
+    const meteoCache = {};
+    function MeteoCard({ m, sm }) {
+      const [w, setW] = useState(null);
+      const citta = sm && sm.stadio ? sm.stadio.split(",").slice(-1)[0].trim() : null;
+      useEffect(() => {
+        const ko = new Date(m.ko), ore = (ko - Date.now()) / 3600000;
+        if (!citta || m.st !== "NS" || ore > 7 * 24 || ore < -2) return;
+        const key = citta + m.ko;
+        if (meteoCache[key]) { setW(meteoCache[key]); return; }
+        (async () => {
+          try {
+            const g = await (await fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=it&name=" + encodeURIComponent(citta))).json();
+            const p = g.results && g.results[0];
+            if (!p) return;
+            const f = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p.latitude}&longitude=${p.longitude}&hourly=temperature_2m,precipitation,wind_speed_10m&timezone=UTC&forecast_days=8`)).json();
+            const h = m.ko.slice(0, 13);
+            const i = (f.hourly.time || []).findIndex((t) => t.slice(0, 13) === h);
+            if (i < 0) return;
+            const x = { citta: p.name, t: f.hourly.temperature_2m[i], pioggia: f.hourly.precipitation[i], vento: f.hourly.wind_speed_10m[i] };
+            meteoCache[key] = x; setW(x);
+          } catch (e) { /* meteo non disponibile */ }
+        })();
+      }, [citta, m.ko, m.st]);
+      if (!w) return null;
+      const forte = w.pioggia >= 2 || w.vento >= 30;
+      return html`<div className=${C.card + " p-4 space-y-1"}><div className=${C.lab}>Meteo al calcio d'inizio</div>
+        <div className=${"text-sm " + C.tx}>${w.citta}: <b>${Math.round(w.t)}°</b>, pioggia ${nf(w.pioggia)} mm, vento ${Math.round(w.vento)} km/h</div>
+        <div className=${"text-[11px] " + C.mu}>${forte ? "Pioggia forte o vento sostenuto abbassano un po' i gol: le quote di solito lo tengono già in conto, quindi per ora il meteo non cambia le probabilità." : "Condizioni normali: nessun effetto atteso sui gol."} Fonte: Open-Meteo.</div></div>`;
+    }
+
     /* ---- fattori: come l'IA si discosta dalle quote ---- */
     function FattoriCard({ m }) {
       const [open, setOpen] = useState(false);
@@ -651,7 +692,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const pos = (t) => (S ? S.generale.findIndex((r) => r.team === t) + 1 : 0);
       const inSlip = mySlip.find((x) => x.id === m.id);
       const tiles = [
-        { k: "Forma", i: Ic.TrendingUp, tone: m.forma.some((f) => f.tone === "warn") ? "warn" : m.forma.some((f) => f.tone === "good") ? "good" : "ok", body: html`<div className="space-y-1.5">${m.forma.map((f, j) => html`<div key=${j} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 " + DOT[f.tone]}></span><span><b>${j ? m.a : m.h}:</b> ${f.text}</span></div>`)}</div>` },
+        { k: "Forma", i: Ic.TrendingUp, tone: m.forma.some((f) => f.tone === "warn") ? "warn" : m.forma.some((f) => f.tone === "good") ? "good" : "ok", body: html`<div className="space-y-1.5">${m.forma.map((f, j) => html`<div key=${j} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 " + DOT[f.tone]}></span><span><b>${j ? m.a : m.h}:</b> ${f.text}</span></div>`)}
+          ${(m.xgf || []).some(Boolean) && html`<div className=${"pt-1.5 mt-1 border-t " + C.bd}><div className=${C.lab + " mb-1"}>Fortuna o merito? (gol attesi xG)</div>${(m.xgf || []).map((x, j) => x && html`<div key=${"x" + j} className="text-[13px] mb-1"><b>${j ? m.a : m.h}</b>, ultime ${x.n}: ${x.gf} gol fatti con ${nf(x.xf)} xG creati, ${x.gs} subiti con ${nf(x.xs)} xG concessi. ${leggiXg(x)}</div>`)}</div>`}</div>` },
         { k: "Classifica vs attese", i: Ic.BarChart3, tone: m.attese.some((f) => f.tone !== "ok") ? "info" : "ok", body: html`<div className="space-y-1.5">${m.attese.map((f, j) => html`<div key=${j} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 " + DOT[f.tone]}></span><span><b>${j ? m.a : m.h}:</b> ${f.text}</span></div>`)}</div>` },
         { k: "Precedenti", i: Ic.Swords, tone: m.prec.tone, body: m.prec.text },
         { k: "Contesto", i: Ic.Clock, tone: m.ctx.tone, body: m.ctx.text },
@@ -703,6 +745,10 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         ${mt === 3 && html`<${Gate} m=${m} title="Analisi IA: probabilità, gol attesi e consiglio">
           <${TipView} m=${m} sm=${sm} />
           <${FattoriCard} m=${m} />
+          ${m.cart && html`<div className=${C.card + " p-4 space-y-1.5"}><div className=${C.lab}>Cartellini e calci d'angolo attesi</div>
+            ${[["K", "Cartellini"], ["C", "Calci d'angolo"]].filter(([k]) => m.cart[k]).map(([k, l]) => { const x = m.cart[k]; return html`<div key=${k} className=${"text-sm " + C.tx}><b>${l}: ${nf(x.attesi)}</b> <span className=${C.mu}>(media del campionato ${nf(x.media_lega)}; ${m.h} ${nf(x.casa[0])} fatti e ${nf(x.casa[1])} subiti a partita, ${m.a} ${nf(x.ospite[0])} e ${nf(x.ospite[1])})</span></div>`; })}
+            <div className=${"text-[11px] " + C.mu}>Modello verificato su 7 campionati dal 2012: rispetto alla sola media del campionato sbaglia l'1,6% in meno sui cartellini e lo 0,4% sugli angoli. Le partite equilibrate hanno più cartellini. I mercati sono in "Tutti i mercati", con quota stimata.</div></div>`}
+          <${MeteoCard} m=${m} sm=${sm} />
           <div className=${C.card + " p-4 space-y-2"}><div className=${C.lab}>Laboratorio: IA contro quote</div>
             <div className="overflow-x-auto"><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}><th className="text-left font-medium py-1">Esito</th><th className="text-right font-medium">IA</th><th className="text-right font-medium">Quote</th><th className="text-right font-medium">${D.demo ? "Bet365" : "Media"}</th><th className="text-right font-medium">Migliore</th></tr></thead>
               <tbody>${[["1", m.p[0], m.mk[0], m.odds["1"], m.max["1"]], ["X", m.p[1], m.mk[1], m.odds["X"], m.max["X"]], ["2", m.p[2], m.mk[2], m.odds["2"], m.max["2"]],

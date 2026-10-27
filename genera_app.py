@@ -17,6 +17,7 @@ import sys
 import unicodedata
 import zlib
 
+import cartellini as CK
 import espn_dati as ES
 import fattori as FT
 import mercati as M
@@ -290,6 +291,34 @@ def genera():
     for nome, es in (esd.get("squadre") or {}).items():
         if es.get("lg") == "I2" and es.get("risultati"):
             per_team["es:" + nome] = [{"t": utc(x["t"].replace("Z", "+00:00") if x["t"].endswith("Z") else x["t"]), "avv": x["avv"], "casa": x["casa"], "gf": x["gf"], "gs": x["gs"]} for x in es["risultati"]]
+    medie_ck = {k: CK.medie_stagione(os.path.join(FD, f"stagione_{k}.csv")) for k in ("I1", "I2", "E0", "SP1", "D1")}
+
+    xg_lega = {k: jload(os.path.join(FD, f"understat_{k}.json"), []) or [] for k in ("I1", "E0", "SP1", "D1")}
+
+    def lettura_xg(k, nome, prima):
+        """Ultime 6 partite: gol fatti/subiti contro gol attesi (xG). Distingue merito e fortuna."""
+        ps = xg_lega.get(k) or []
+        if not ps:
+            return None
+        squadre = {p["h"] for p in ps} | {p["a"] for p in ps}
+        best = max(squadre, key=lambda t: ES.sim(nome, [t]), default=None)
+        if not best or ES.sim(nome, [best]) < 0.8:
+            return None
+        mie = sorted((p for p in ps if best in (p["h"], p["a"]) and p["t"] < prima.strftime("%Y-%m-%d %H:%M:%S")), key=lambda p: p["t"])[-6:]
+        if len(mie) < 3:
+            return None
+        gf = sum(p["hg"] if p["h"] == best else p["ag"] for p in mie)
+        gs = sum(p["ag"] if p["h"] == best else p["hg"] for p in mie)
+        xf = sum(p["hx"] if p["h"] == best else p["ax"] for p in mie)
+        xs = sum(p["ax"] if p["h"] == best else p["hx"] for p in mie)
+        return {"n": len(mie), "gf": gf, "gs": gs, "xf": round(xf, 1), "xs": round(xs, 1)}
+
+    def nome_csv(k, nome):
+        med = medie_ck.get(k)
+        if not med:
+            return None
+        best = max(med["squadre"], key=lambda t: ES.sim(nome, [t]), default=None)
+        return best if best and ES.sim(nome, [best]) >= 0.8 else None
     cl2 = (esd.get("classifiche") or {}).get("I2")
     if cl2:
         nostri = [n for n, es in (esd.get("squadre") or {}).items() if es.get("lg") == "I2"]
@@ -371,6 +400,8 @@ def genera():
         if not (sh and sa):
             for v in tip.values():
                 v["perche"].append("Statistiche delle squadre non disponibili per questo campionato: il consiglio si basa solo sulle quote.")
+        extra, cart = CK.mercati(medie_ck.get(k), nome_csv(k, h), nome_csv(k, a), q["mk"][0], q["mk"][2]) if k in medie_ck else (None, None)
+        extra = extra or []
         mid = f"{k}-{m_fd['id'] if m_fd else zlib.crc32((h + '|' + a + '|' + loc.date().isoformat()).encode())}"
         out["matches"].append({
             "id": mid, "fd": m_fd["id"] if m_fd else None, "lg": k, "date": loc.strftime("%Y-%m-%d"), "time": loc.strftime("%H:%M"), "ko": t0.isoformat(),
@@ -380,8 +411,9 @@ def genera():
             "forma": [testo_forma(l5[0]), testo_forma(l5[1])] if (code or hid or aid) else [{"tone": "ok", "text": "Forma non disponibile per questo campionato nei dati gratuiti."}] * 2,
             "attese": [testo_classifica(tabs, hid), testo_classifica(tabs, aid)] if tabs else [{"tone": "ok", "text": "Classifica non disponibile nei dati gratuiti."}] * 2,
             "prec": prec, "ctx": ctx, "flags": [], "last5": l5, "h2h": h2h, "stats": [],
-            "markets": [[x["c"], x["p"], x["q"], 1 if x["qm"] else 0] for x in mercati], "tip": tip,
-            "xg_mercato": [lh, la], "fattori": [], "foto": r["_foto"],
+            "markets": [[x["c"], x["p"], x["q"], 1 if x["qm"] else 0] for x in mercati] + extra, "tip": tip,
+            "xg_mercato": [lh, la], "fattori": [], "foto": r["_foto"], "_extra": extra, "cart": cart,
+            "xgf": [lettura_xg(k, h, t0), lettura_xg(k, a, t0)] if k in xg_lega else None,
             "_ctx": {"riposo": [rh, ra], "sh": sh, "sa": sa, "pos_h": pos.get(hid), "pos_a": pos.get(aid), "raccolte": raccolte,
                      "gol": [next((rr.get("goalsFor") for rr in (tabs or {}).get("TOTAL", []) if (rr.get("team") or {}).get("id") == x), None) for x in (hid, aid)]},
         })
@@ -530,7 +562,7 @@ def applica_fattori(d):
             if not (c.get("sh") and c.get("sa")):
                 v["perche"].append("Statistiche delle squadre non disponibili per questo campionato: il consiglio si basa solo sulle quote.")
             v["perche"] += righe
-        m["markets"] = [[x["c"], x["p"], x["q"], 1 if x["qm"] else 0] for x in mercati]
+        m["markets"] = [[x["c"], x["p"], x["q"], 1 if x["qm"] else 0] for x in mercati] + (m.get("_extra") or [])
         m["tip"] = tip
     return cambi
 

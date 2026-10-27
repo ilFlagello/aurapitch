@@ -91,6 +91,11 @@ def odds_api(path, **params):
     body, h = get(f"{ODDS_BASE}{path}?{urllib.parse.urlencode(params)}")
     if "x-requests-remaining" in h:
         BUDGET.odds_rimasti = h["x-requests-remaining"]
+        try:  # registro dei crediti: serve a verificare che la fotografia pre-partita stia nel piano gratuito
+            with open(os.path.join("data", "crediti_quote.json"), "w", encoding="utf-8") as f:
+                json.dump({"rimasti": int(h["x-requests-remaining"]), "usati": int(h.get("x-requests-used", 0) or 0), "t": datetime.now(timezone.utc).isoformat()}, f)
+        except (OSError, ValueError):
+            pass
     return body, h
 
 

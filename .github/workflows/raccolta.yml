@@ -33,6 +33,8 @@ jobs:
       FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main   # sempre l'ultima versione dei dati (non quella del momento in cui il giro e stato messo in coda)
 
       - uses: actions/setup-python@v5
         with:

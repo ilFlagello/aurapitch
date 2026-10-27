@@ -1,12 +1,8 @@
-Esecuzione: 2026-10-27T12:21Z
+Esecuzione: 2026-10-27T12:23Z
 Token: ok
-Creo sottodominio ilflagello: ok
-Creo sottodominio aurapitch-ilflagello: errore: 10036 Account already has an associated subdomain.
-Creo sottodominio aurapitch-ilflagello-18728: errore: 10036 Account already has an associated subdomain.
-Sottodominio: 
-Creo archivio KV: ok
+Sottodominio: ilflagello
 Archivio KV: presente
 Carico il servizio: ok
 Attivo indirizzo workers.dev: ok
 Controllo ogni minuto: ok
-Prova https://aurapitch-push..workers.dev/vapid: HTTP 000
+Prova https://aurapitch-push.ilflagello.workers.dev/vapid: HTTP 200

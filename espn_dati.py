@@ -204,7 +204,7 @@ def arbitri_da_notizie(base, gia, giorni=4):
             ko = datetime.fromisoformat(m["ko"])
         except (KeyError, ValueError):
             continue
-        if m.get("st") != "NS" or m.get("arbitro") or not timedelta(0) <= ko - ora <= timedelta(days=giorni):
+        if m.get("st") != "NS" or not timedelta(0) <= ko - ora <= timedelta(days=giorni):
             continue
         if arbitro_designato(gia, m["lg"], m["h"], m["a"], ko):
             continue

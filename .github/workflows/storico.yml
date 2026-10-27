@@ -1,0 +1,16 @@
+# Scarica gli archivi storici per i test dell'algoritmo (a mano: Actions -> Archivi storici -> Run workflow)
+name: Archivi storici
+on: { workflow_dispatch: {} }
+permissions: { contents: write }
+jobs:
+  scarica:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: python strumenti/scarica_storico.py | tee storico/esito.txt
+      - run: |
+          git config user.name "aurapitch-raccolta"; git config user.email "aurapitch-raccolta@users.noreply.github.com"
+          git add storico && git commit -m "Archivi storici per i test" && git pull --rebase && git push

@@ -69,7 +69,8 @@ function stato(ev) {
   const c = ev.competitions[0], t = ev.status.type;
   const h = c.competitors.find((x) => x.homeAway === "home"), a = c.competitors.find((x) => x.homeAway === "away");
   const goals = (c.details || []).filter((d) => d.scoringPlay).map((d) => ({ min: (d.clock && d.clock.displayValue) || "", chi: ((d.athletesInvolved || [])[0] || {}).displayName || "", og: d.ownGoal, pen: d.penaltyKick }));
-  return { st: t.state, g: [Number(h.score || 0), Number(a.score || 0)], clock: ev.status.displayClock || "", goals };
+  const rossi = (c.details || []).filter((d) => d.redCard).map((d) => ({ min: (d.clock && d.clock.displayValue) || "", chi: ((d.athletesInvolved || [])[0] || {}).displayName || "", casa: (d.team || {}).id === h.team.id }));
+  return { st: t.state, half: t.name === "STATUS_HALFTIME", g: [Number(h.score || 0), Number(a.score || 0)], clock: ev.status.displayClock || "", goals, rossi };
 }
 async function controlla(env) {
   const subs = (await env.KV.get("subs", "json")) || {};
@@ -92,16 +93,21 @@ async function controlla(env) {
     const ev = eventi[k];
     if (!ev) { if (old[k]) nuovo[k] = old[k]; continue; }
     const s = stato(ev), o = old[k];
-    nuovo[k] = { st: s.st, g: s.g };
+    nuovo[k] = { st: s.st, g: s.g, half: s.half, rossi: s.rossi.length };
     if (!o) continue; // prima volta che la vediamo: nessun avviso
     const nomi = `${f.h} ${s.g[0]} - ${s.g[1]} ${f.a}`;
-    let m = null;
-    if (o.st === "pre" && s.st === "in") m = { title: "Calcio d'inizio", body: `${f.h} - ${f.a}` };
-    else if (s.st === "in" && (s.g[0] !== o.g[0] || s.g[1] !== o.g[1])) {
+    const push = (title, body) => msgs.push({ ids, msg: { title, body, tag: k + "|" + title + "|" + body.length, url: "./" } });
+    if (o.st === "pre" && s.st === "in") push("Calcio d'inizio", `${f.h} - ${f.a}`);
+    if (s.st !== "pre" && (s.g[0] !== o.g[0] || s.g[1] !== o.g[1])) {
+      const piu = s.g[0] + s.g[1] > o.g[0] + o.g[1];
       const last = s.goals[s.goals.length - 1];
-      m = { title: s.g[0] + s.g[1] > o.g[0] + o.g[1] ? "Gol!" : "Gol annullato", body: nomi + (last && s.g[0] + s.g[1] > o.g[0] + o.g[1] ? ` - ${last.min} ${last.chi}${last.pen ? " (rigore)" : ""}${last.og ? " (autogol)" : ""}` : "") };
-    } else if (o.st === "in" && s.st === "post") m = { title: "Finale", body: nomi };
-    if (m) msgs.push({ ids, msg: { ...m, tag: k, url: "./" } });
+      push(piu ? "Gol!" : "Gol annullato", nomi + (last && piu ? ` - ${last.min} ${last.chi}${last.pen ? " (rigore)" : ""}${last.og ? " (autogol)" : ""}` : ""));
+    }
+    if (s.rossi.length > (o.rossi || 0)) {
+      for (const r of s.rossi.slice(o.rossi || 0)) push("Espulsione", `${r.chi} (${r.casa ? f.h : f.a}) al ${r.min} - ${nomi}`);
+    }
+    if (!o.half && s.half) push("Fine primo tempo", nomi);
+    if (o.st === "in" && s.st === "post") push("Finale", nomi);
   }
   if (JSON.stringify(nuovo) !== JSON.stringify(old)) await env.KV.put("state", JSON.stringify(nuovo));
   if (!msgs.length) return "nessuna novità";
@@ -173,6 +179,15 @@ export default {
       if (!id || !subs[id]) return json({ ok: false, err: "iscrizione non trovata" }, 404);
       const st = await invia(env, await vapid(env), subs[id].sub, { title: "AuraPitch", body: "Notifiche attive: ti avviso di gol e risultati delle tue preferite.", tag: "test", url: "./" });
       return json({ ok: st < 300, status: st });
+    }
+    if (url.pathname === "/diagnosi") {
+      // controllo senza dati sensibili: quante iscrizioni, quali partite seguite, ultimo stato visto
+      const subs = (await env.KV.get("subs", "json")) || {};
+      const state = (await env.KV.get("state", "json")) || {};
+      return json({
+        iscrizioni: Object.values(subs).map((x) => ({ servizio: new URL(x.sub.endpoint).host, seguite: (x.follow || []).map((f) => `${f.h}-${f.a} (${f.lgE}/${f.eid})`), aggiornata: new Date(x.t).toISOString() })),
+        stato_partite: state, orologio: (await env.KV.get("orologio", "json")) || null, vapid: !!(await env.KV.get("vapid")),
+      });
     }
     if (url.pathname === "/stato") return json({ orologio: (await env.KV.get("orologio", "json")) || null, token: !!env.GH_TOKEN });
     if (url.pathname === "/") return json({ ok: true, servizio: "AuraPitch notifiche" });

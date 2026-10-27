@@ -149,6 +149,80 @@ def nome_fd(team):
     return (team or {}).get("shortName") or (team or {}).get("name") or "?"
 
 
+def arbitro_di(m):
+    for r in (m or {}).get("referees") or []:
+        if r.get("type") in (None, "REFEREE") and r.get("name"):
+            return r["name"]
+    return None
+
+
+def storia_arbitri(fdp):
+    """Cartellini e falli di ogni partita con il nome dell'arbitro: Premier League dall'archivio storico (dal 2012),
+    gli altri campionati dalla stagione in corso e da quella precedente (arbitro da football-data.org, cartellini e falli da Football-Data.co.uk)."""
+    import gzip
+    righe = []
+    def num(x):
+        try:
+            return float(x)
+        except (TypeError, ValueError):
+            return None
+    def dt(x):
+        for f in ("%d/%m/%Y", "%d/%m/%y"):
+            try:
+                return datetime.strptime(x, f)
+            except (TypeError, ValueError):
+                pass
+        return None
+    # indice delle partite football-data.org con arbitro: (codice, giorno) -> [(casa, ospite, arbitro)]
+    idx = {}
+    prev = {}
+    for code in ("SA", "PL", "PD", "BL1"):
+        prev[code] = (jload(os.path.join(FD, f"{code}_matches_prev.json"), {}) or {}).get("matches", [])
+    for m in list(fdp.values()) + [dict(x, _code=c) for c, xs in prev.items() for x in xs]:
+        a = arbitro_di(m)
+        if not a or not m.get("utcDate"):
+            continue
+        g = m["utcDate"][:10]
+        idx.setdefault((m.get("_code"), g), []).append((nome_fd(m.get("homeTeam")), nome_fd(m.get("awayTeam")), a))
+    def cerca(code, giorno, h, a):
+        best, bs = None, 1.5
+        for dd in (0, -1, 1):
+            g = (giorno + timedelta(days=dd)).strftime("%Y-%m-%d")
+            for hh, aa, ar in idx.get((code, g), []):
+                sc = ES.sim(h, [hh]) + ES.sim(a, [aa])
+                if sc > bs:
+                    best, bs = ar, sc
+        return best
+    def aggiungi(r, lega, code):
+        y = [num(r.get(c)) for c in ("HY", "AY", "HR", "AR")]
+        f = [num(r.get(c)) for c in ("HF", "AF")]
+        if None in y:
+            return
+        g = dt(r.get("Date"))
+        if not g:
+            return
+        arb = r.get("Referee") or (cerca(code, g, r.get("HomeTeam"), r.get("AwayTeam")) if code else None)
+        if arb:
+            righe.append({"t": g, "arbitro": arb, "lega": lega, "K": sum(y), "F": (f[0] + f[1]) if None not in f else None})
+    codici = {"I1": "SA", "E0": "PL", "SP1": "PD", "D1": "BL1"}
+    try:  # archivio storico (stagioni passate)
+        with gzip.open(os.path.join("storico", "fd_partite.csv.gz"), "rt", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                if r["Div"] in codici and (r.get("Referee") or r["Season"] >= "2526"):
+                    aggiungi(r, r["Div"], codici[r["Div"]] if not r.get("Referee") else None)
+    except OSError:
+        pass
+    for k, code in codici.items():  # stagione in corso
+        try:
+            with open(os.path.join(FD, f"stagione_{k}.csv"), encoding="utf-8-sig", errors="replace") as f:
+                for r in csv.DictReader(f):
+                    aggiungi(r, k, code)
+        except OSError:
+            pass
+    righe.sort(key=lambda r: r["t"])
+    return CK.arbitri(righe)
+
+
 def carica_fd():
     partite, classifiche = {}, {}
     for _, _, _, _, code, _ in LEAGUES:
@@ -292,6 +366,8 @@ def genera():
         if es.get("lg") == "I2" and es.get("risultati"):
             per_team["es:" + nome] = [{"t": utc(x["t"].replace("Z", "+00:00") if x["t"].endswith("Z") else x["t"]), "avv": x["avv"], "casa": x["casa"], "gf": x["gf"], "gs": x["gs"]} for x in es["risultati"]]
     medie_ck = {k: CK.medie_stagione(os.path.join(FD, f"stagione_{k}.csv")) for k in ("I1", "I2", "E0", "SP1", "D1")}
+    refs, _ = storia_arbitri(fdp)
+    print(f"Arbitri con statistiche: {len(refs)}")
 
     xg_lega = {k: jload(os.path.join(FD, f"understat_{k}.json"), []) or [] for k in ("I1", "E0", "SP1", "D1")}
 
@@ -400,7 +476,16 @@ def genera():
         if not (sh and sa):
             for v in tip.values():
                 v["perche"].append("Statistiche delle squadre non disponibili per questo campionato: il consiglio si basa solo sulle quote.")
-        extra, cart = CK.mercati(medie_ck.get(k), nome_csv(k, h), nome_csv(k, a), q["mk"][0], q["mk"][2]) if k in medie_ck else (None, None)
+        arb_nome = arbitro_di(m_fd) if m_fd else None
+        arb = refs.get(CK.chiave_arbitro(arb_nome)) if arb_nome else None
+        extra, cart = CK.mercati(medie_ck.get(k), nome_csv(k, h), nome_csv(k, a), q["mk"][0], q["mk"][2], arb) if k in medie_ck else (None, None)
+        arbitro = None
+        if arb_nome:
+            lgm = (medie_ck.get(k) or {}).get("lega") or {}
+            arbitro = {"nome": arb_nome, "n": arb["n"] if arb else 0,
+                       "media": {kk: round(v, 2) for kk, v in (arb["media"] if arb else {}).items() if v is not None},
+                       "ratio": {kk: round(v, 3) for kk, v in (arb["ratio"] if arb else {}).items()},
+                       "lega": {kk: round(lgm[kk], 2) for kk in ("K", "F") if lgm.get(kk)}}
         extra = extra or []
         mid = f"{k}-{m_fd['id'] if m_fd else zlib.crc32((h + '|' + a + '|' + loc.date().isoformat()).encode())}"
         out["matches"].append({
@@ -412,7 +497,7 @@ def genera():
             "attese": [testo_classifica(tabs, hid), testo_classifica(tabs, aid)] if tabs else [{"tone": "ok", "text": "Classifica non disponibile nei dati gratuiti."}] * 2,
             "prec": prec, "ctx": ctx, "flags": [], "last5": l5, "h2h": h2h, "stats": [],
             "markets": [[x["c"], x["p"], x["q"], 1 if x["qm"] else 0] for x in mercati] + extra, "tip": tip,
-            "xg_mercato": [lh, la], "fattori": [], "foto": r["_foto"], "_extra": extra, "cart": cart,
+            "xg_mercato": [lh, la], "fattori": [], "foto": r["_foto"], "_extra": extra, "cart": cart, "arbitro": arbitro,
             "xgf": [lettura_xg(k, h, t0), lettura_xg(k, a, t0)] if k in xg_lega else None,
             "_ctx": {"riposo": [rh, ra], "sh": sh, "sa": sa, "pos_h": pos.get(hid), "pos_a": pos.get(aid), "raccolte": raccolte,
                      "gol": [next((rr.get("goalsFor") for rr in (tabs or {}).get("TOTAL", []) if (rr.get("team") or {}).get("id") == x), None) for x in (hid, aid)]},

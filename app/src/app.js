@@ -93,7 +93,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   const norm = (c) => LEGACY[c] || c;
   const nf = (x) => String(x).replace(".", ",");
   function evalCode(c, h, a) {
-    if (/^[KC][OU]\d/.test(c)) return null; // cartellini e angoli: non verificabili dal solo risultato
+    if (/^[KCF][OU]\d/.test(c)) return null; // cartellini, angoli e falli: non verificabili dal solo risultato
     if (c.includes("+")) return c.split("+").every((x) => evalCode(x, h, a));
     const t = h + a;
     if (["1", "X", "2", "1X", "X2", "12"].includes(c)) return c.includes(h > a ? "1" : h === a ? "X" : "2");
@@ -109,7 +109,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   }
   function mLabel(m, c, short) {
     c = norm(c);
-    if (/^[KC][OU]\d/.test(c)) return (c[0] === "K" ? "Cartellini " : "Angoli ") + (c[1] === "O" ? "Over " : "Under ") + nf(c.slice(2));
+    if (/^[KCF][OU]\d/.test(c)) return ({ K: "Cartellini ", C: "Angoli ", F: "Falli " })[c[0]] + (c[1] === "O" ? "Over " : "Under ") + nf(c.slice(2));
     if (c.includes("+")) return c.split("+").map((x) => mLabel(m, x, true)).join(" + ");
     if (c === "1") return short ? "1" : "1 (" + m.h + ")";
     if (c === "2") return short ? "2" : "2 (" + m.a + ")";
@@ -129,10 +129,11 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     if (/^[OU]/.test(c)) return (c[0] === "O" ? "Over " : "Under ") + nf(c.slice(1));
     return c;
   }
-  const GROUPS = ["Esito finale", "Doppia chance", "Under/Over", "Goal/No Goal", "Multigol", "Gol squadra", "Combo", "Cartellini", "Calci d'angolo", "Risultato esatto", "Pari/Dispari"];
+  const GROUPS = ["Esito finale", "Doppia chance", "Under/Over", "Goal/No Goal", "Multigol", "Gol squadra", "Combo", "Cartellini", "Falli", "Calci d'angolo", "Risultato esatto", "Pari/Dispari"];
   function mGroup(c) {
     if (/^K[OU]\d/.test(c)) return "Cartellini";
     if (/^C[OU]\d/.test(c)) return "Calci d'angolo";
+    if (/^F[OU]\d/.test(c)) return "Falli";
     if (c.includes("+")) return "Combo";
     if (["1", "X", "2"].includes(c)) return "Esito finale";
     if (["1X", "X2", "12"].includes(c)) return "Doppia chance";
@@ -370,18 +371,67 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       if (rec.length) fr.push("Recupero: " + rec.join(", ") + ".");
       return fr.join(" ");
     }
+    /* resoconto in righe ordinate (etichetta a sinistra, contenuto a destra) */
+    function righeResoconto(sm, m) {
+      if (sm.st === "NS") return [];
+      const nome = (j) => (j === 0 ? m.h : m.a);
+      const ev = sm.eventi;
+      const gol = ev.filter((e) => /gol|rigore$|autogol/.test(e.k) && !/sbagliato|parato/.test(e.k));
+      const R = [[sm.st === "LIVE" ? "In corso" : "Finale", `${m.h} ${sm.g[0]} - ${sm.g[1]} ${m.a}${sm.st === "LIVE" && sm.clock ? " (" + sm.clock + ")" : ""}`]];
+      R.push(["Gol", gol.length ? gol.map((e) => `${e.min} ${e.a.split(" ").slice(-1)[0]}${e.k === "rigore" ? " (rig.)" : e.k === "autogol" ? " (aut.)" : ""}, ${nome(e.side)}`).join("\n") : "Nessuno"]);
+      const assist = gol.filter((e) => e.b && e.k === "gol");
+      if (assist.length) R.push(["Assist", assist.map((e) => `${e.b} (per ${e.a.split(" ").slice(-1)[0]})`).join("\n")]);
+      const rossi = ev.filter((e) => e.k === "rosso");
+      if (rossi.length) R.push(["Espulsi", rossi.map((e) => `${e.min} ${e.a.split(" ").slice(-1)[0]}, ${nome(e.side)}`).join("\n")]);
+      const gi = ev.filter((e) => e.k === "giallo");
+      if (gi.length) R.push(["Ammoniti", `${gi.length}: ${gi.filter((e) => e.side === 0).length} ${m.h}, ${gi.filter((e) => e.side === 1).length} ${m.a}`]);
+      const st = Object.fromEntries(sm.statistiche.map((r) => [r[0], r]));
+      if (st["Possesso palla"]) R.push(["Possesso", `${Math.round(st["Possesso palla"][1])}% - ${Math.round(st["Possesso palla"][2])}%`]);
+      if (st["Tiri"]) R.push(["Tiri (in porta)", `${st["Tiri"][1]} (${st["Tiri in porta"] ? st["Tiri in porta"][1] : "-"}) - ${st["Tiri"][2]} (${st["Tiri in porta"] ? st["Tiri in porta"][2] : "-"})`]);
+      const rec = Object.entries(sm.recupero).map(([p, v]) => `${p === "1" ? "1° tempo" : p === "2" ? "2° tempo" : "suppl."} +${v}'`);
+      if (rec.length) R.push(["Recupero", rec.join(", ")]);
+      return R;
+    }
+    function Resoconto({ sm, m }) {
+      const R = righeResoconto(sm, m);
+      if (!R.length) return html`<div className=${C.card + " p-4 text-[15px] " + C.mu}>La partita non è ancora iniziata: la cronaca parte con le formazioni ufficiali e il calcio d'inizio.</div>`;
+      return html`<div className=${C.card + " px-4 pt-4 pb-1"}><div className=${C.lab + " mb-2"}>Resoconto</div>
+        ${R.map(([l, v], i) => html`<div key=${l} className=${"flex gap-4 py-2.5 " + (i ? "border-t " + C.bd : "")}>
+          <span className=${"w-24 shrink-0 text-[13px] font-semibold " + C.mu}>${l}</span>
+          <span className=${"flex-1 text-[14px] leading-relaxed whitespace-pre-line " + C.tx + (i === 0 ? " font-bold" : "")}>${v}</span></div>`)}</div>`;
+    }
+    /* eventi della partita in stile FotMob: casa a sinistra, ospite a destra, minuto al centro, separatori per intervallo e fine */
     function KeyEvents({ sm, m }) {
-      const [subs, setSubs] = useState(false);
-      const ev = sm.eventi.filter((e) => subs || e.k !== "cambio");
-      const nSub = sm.eventi.filter((e) => e.k === "cambio").length;
-      return html`<div className=${C.card + " p-4 space-y-2"}>
-        <div className="flex items-center"><span className=${C.lab + " flex-1"}>Momenti chiave</span>${sm.stadio && html`<span className=${"text-[11px] truncate max-w-[55%] " + C.mu}>${sm.stadio}</span>`}</div>
-        <p className=${"text-sm leading-relaxed " + C.tx}>${riassunto(sm, m)}</p>
-        ${ev.length > 0 && html`<div className="space-y-1 pt-1">${ev.map((e, i) => html`<div key=${i} className=${"flex items-center gap-2 text-sm " + (e.side === 1 ? "flex-row-reverse text-right" : "")}>
-          <span className=${"w-12 shrink-0 text-xs font-semibold tabular-nums " + C.mu + (e.side === 1 ? " text-right" : "")}>${e.min}</span><${EvIcon} k=${e.k} />
-          <span className=${"min-w-0 " + C.tx}>${e.k === "cambio" ? html`<span className="text-emerald-600 dark:text-emerald-300">${e.a}</span> <span className=${C.mu}>per ${e.b}</span>`
-            : html`<b>${e.a}</b>${e.b && /gol|rigore$/.test(e.k) && e.k !== "rigore" ? html`<span className=${C.mu}> assist ${e.b}</span>` : ""}${e.k === "rigore" ? html`<span className=${C.mu}> (rigore)</span>` : ""}${e.k === "autogol" ? html`<span className=${C.mu}> (autogol)</span>` : ""}${/sbagliato|parato/.test(e.k) ? html`<span className=${C.mu}> (${e.k})</span>` : ""}`}</span></div>`)}</div>`}
-        ${nSub > 0 && html`<button onClick=${() => setSubs(!subs)} className="text-xs font-semibold text-[#00985F] dark:text-[#3DDC97]">${subs ? "Nascondi le sostituzioni" : `Mostra le sostituzioni (${nSub})`}</button>`}</div>`;
+      const ev = sm.eventi.slice().reverse();
+      if (!ev.length) return null;
+      const Linea = ({ testo }) => html`<div className="flex items-center gap-3 py-3"><span className=${"flex-1 border-t " + C.bd}></span>
+        <span className=${"text-[12px] font-bold uppercase tracking-wide " + C.mu}>${testo}</span><span className=${"flex-1 border-t " + C.bd}></span></div>`;
+      const Contenuto = ({ e, dx }) => {
+        const nomeCorto = (n) => { const p = String(n || "").split(" "); return p.length > 1 && p.slice(-1)[0].length > 2 ? p.slice(-1)[0] : n; };
+        let titolo, sotto;
+        if (e.k === "cambio") { titolo = html`<span className=${C.acc}>${nomeCorto(e.a)}</span>`; sotto = html`<span>Esce ${nomeCorto(e.b)}</span>`; }
+        else if (/gol|rigore$|autogol/.test(e.k) && !/sbagliato|parato/.test(e.k)) { titolo = html`<b>${nomeCorto(e.a)}</b>`; sotto = e.k === "rigore" ? "Rigore" : e.k === "autogol" ? "Autogol" : e.b ? "Assist: " + nomeCorto(e.b) : null; }
+        else if (e.k === "giallo") { titolo = html`<span>${nomeCorto(e.a)}</span>`; sotto = "Ammonizione"; }
+        else if (e.k === "rosso") { titolo = html`<b>${nomeCorto(e.a)}</b>`; sotto = "Espulsione"; }
+        else { titolo = html`<span>${e.a}</span>`; sotto = e.k; }
+        return html`<div className=${"flex items-center gap-2.5 min-w-0 " + (dx ? "" : "flex-row-reverse text-right")}>
+          <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-black/[0.05] dark:bg-white/[0.07]"><${EvIcon} k=${e.k} /></span>
+          <span className="min-w-0"><span className=${"block text-[14px] leading-tight truncate " + C.tx}>${titolo}</span>${sotto && html`<span className=${"block text-[12px] leading-tight mt-0.5 truncate " + C.mu}>${sotto}</span>`}</span></div>`;
+      };
+      return html`<div className=${C.card + " px-4 pt-4 pb-2"}>
+        <div className="flex items-center mb-1"><span className=${C.lab + " flex-1"}>Eventi</span>${sm.stadio && html`<span className=${"text-[12px] truncate max-w-[55%] " + C.mu}>${sm.stadio}</span>`}</div>
+        ${sm.st === "FT" && html`<${Linea} testo=${"Fine " + sm.g[0] + " - " + sm.g[1]} />`}
+        ${ev.map((e, i) => {
+          if (e.k === "intervallo") return html`<${Linea} key=${i} testo=${"Intervallo" + (e.score ? " " + e.score[0] + " - " + e.score[1] : "")} />`;
+          if (e.k === "fine") return null;
+          const gol = /gol|rigore$|autogol/.test(e.k) && !/sbagliato|parato/.test(e.k);
+          return html`<div key=${i} className="grid items-center py-2.5" style=${{ gridTemplateColumns: "minmax(0,1fr) 64px minmax(0,1fr)" }}>
+            <div className="min-w-0">${e.side === 0 && html`<${Contenuto} e=${e} />`}</div>
+            <div className="flex flex-col items-center gap-1"><span className=${"text-[12px] font-bold tabular-nums px-2 py-0.5 rounded-full " + C.ch + " " + C.tx}>${e.min}</span>
+              ${gol && e.score && html`<span className=${"text-[12px] font-bold tabular-nums " + C.acc}>${e.score[0]} - ${e.score[1]}</span>`}</div>
+            <div className="min-w-0">${e.side === 1 && html`<${Contenuto} e=${e} dx=${true} />`}</div></div>`;
+        })}
+        <${Linea} testo="Calcio d'inizio" /></div>`;
     }
     function StatsCard({ sm, m }) {
       const [all, setAll] = useState(false);
@@ -399,16 +449,56 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const [f, setF] = useState(0);
       const [n, setN] = useState(40);
       const list = sm.cronaca.filter((c) => c.text && (!f || KEY_T.test(c.type) || /^Gol!|Fine|Inizia|recupero/.test(c.text)));
-      const tone = (t) => (/goal|penalty---scored|own-goal/.test(t) ? TONE.good : /red-card/.test(t) ? TONE.bad : /yellow-card/.test(t) ? TONE.warn : /substitution/.test(t) ? TONE.info : "");
+      const tipo = (c) => (/goal|penalty---scored|own-goal/.test(c.type) || /^Gol!/.test(c.text) ? "gol" : /red-card/.test(c.type) ? "rosso" : /yellow-card/.test(c.type) ? "giallo"
+        : /substitution/.test(c.type) ? "cambio" : /^(Fine|Inizia)/.test(c.text) ? "sep" : /shot-on-target|woodwork|penalty/.test(c.type) ? "tiro" : "");
+      const barra = { gol: "bg-[#00985F] dark:bg-[#3DDC97]", rosso: "bg-[#E5484D]", giallo: "bg-amber-400", cambio: "bg-sky-500", tiro: "bg-black/20 dark:bg-white/25" };
+      const sepLab = (t) => { const sc = /(\d+),\s[^,]+?\s(\d+)/.exec(t); const r = sc ? " " + sc[1] + " - " + sc[2] : "";
+        return /^Fine primo tempo/.test(t) ? "Intervallo" + r : /^Inizia il secondo tempo/.test(t) ? "Secondo tempo" : /^Inizia il primo tempo/.test(t) ? "Calcio d'inizio" : /^Inizia/.test(t) ? "Supplementari" : "Fine" + r; };
+      const voce = (c) => { const t = c.text; const i = t.indexOf(". "); return i > 0 && i < 40 && /^(Gol!|Tiro|Rigore|Sostituzione|Ammonito|Espulso|Calcio d'angolo|Fuorigioco)/.test(t) ? [t.slice(0, i + 1), t.slice(i + 2)] : [null, t]; };
+      let ultimoSep = null;
       return html`<${React.Fragment}>
-        <div className=${C.card + " p-4"}><div className=${C.lab + " mb-1"}>Resoconto</div><p className=${"text-sm leading-relaxed " + C.tx}>${riassunto(sm, m) || "La partita non è ancora iniziata: la cronaca scritta parte con le formazioni ufficiali e il calcio d'inizio."}</p></div>
+        <${Resoconto} sm=${sm} m=${m} />
         <${Seg} items=${["Tutta la cronaca", "Solo momenti chiave"]} val=${f} set=${setF} />
-        <div className=${C.card + " px-4 py-1"}>${list.length ? list.slice(0, n).map((c, i) => html`<div key=${c.i} className=${"flex gap-3 py-2.5 " + (i ? "border-t " + C.bd : "")}>
-          <span className=${"w-11 shrink-0 text-xs font-semibold tabular-nums pt-0.5 " + C.mu}>${c.min}</span>
-          <span className=${"flex-1 text-sm leading-relaxed " + C.tx + (tone(c.type) ? " rounded-lg border px-2 py-1 -my-1 " + tone(c.type) : "")}>${c.text}</span></div>`)
-          : html`<div className=${"py-3 text-sm " + C.mu}>Nessun commento ancora.</div>`}</div>
-        ${list.length > n && html`<button onClick=${() => setN(n + 60)} className=${"w-full py-2.5 rounded-xl text-sm font-semibold " + C.ch + " " + C.tx}>Mostra altri commenti</button>`}
-        <p className=${"text-[11px] " + C.mu}>Cronaca minuto per minuto tradotta automaticamente in italiano${sm.st === "LIVE" ? ", aggiornata ogni 20 secondi" : ""}.</p><//>`;
+        <div className=${C.card + " px-4 py-1"}>${list.length ? list.slice(0, n).map((c, i) => {
+          const k = tipo(c);
+          if (k === "sep") { const lab = sepLab(c.text); if (lab === ultimoSep) return null; ultimoSep = lab;
+            return html`<div key=${c.i} className="flex items-center gap-3 py-3.5"><span className=${"flex-1 border-t " + C.bd}></span><span className=${"text-[12px] font-bold uppercase tracking-wide text-center " + C.mu}>${lab}</span><span className=${"flex-1 border-t " + C.bd}></span></div>`; }
+          ultimoSep = null;
+          const [tit, corpo] = voce(c);
+          return html`<div key=${c.i} className=${"flex gap-3 py-3.5 " + (i ? "border-t " + C.bd : "")}>
+            <span className=${"w-12 shrink-0 text-[13px] font-bold tabular-nums pt-0.5 " + (k === "gol" ? C.acc : C.tx)}>${c.min}</span>
+            ${barra[k] ? html`<span className=${"w-[3px] rounded-full shrink-0 " + barra[k]}></span>` : null}
+            <span className=${"flex-1 text-[15px] leading-[1.55] " + C.tx}>${tit && html`<b className="block mb-0.5">${tit}</b>`}<span className=${k ? "" : C.mu}>${corpo}</span></span></div>`;
+        }) : html`<div className=${"py-4 text-[15px] " + C.mu}>Nessun commento ancora.</div>`}</div>
+        ${list.length > n && html`<button onClick=${() => setN(n + 60)} className=${"w-full py-3 rounded-[14px] text-[14px] font-semibold " + C.ch + " " + C.tx}>Mostra altri commenti</button>`}
+        <p className=${"text-[12px] " + C.mu}>Cronaca minuto per minuto tradotta automaticamente in italiano${sm.st === "LIVE" ? ", aggiornata ogni 20 secondi" : ""}.</p><//>`;
+    }
+    /* informazioni partita (come FotMob): data, competizione, stadio, arbitro */
+    function InfoCard({ m, sm, L }) {
+      const righe = [["Data", new Date(m.ko).toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }) + ", " + (m.time || "")], ["Competizione", L.name]];
+      if (sm && sm.stadio) righe.push(["Stadio", sm.stadio]);
+      if (m.arbitro) righe.push(["Arbitro", m.arbitro.nome]);
+      return html`<div className=${C.card + " px-4 pt-4 pb-1"}><div className=${C.lab + " mb-1"}>Info partita</div>${righe.map(([l, v], i) => html`<div key=${l} className=${"flex gap-4 py-2.5 " + (i ? "border-t " + C.bd : "")}>
+        <span className=${"w-28 shrink-0 text-[13px] font-semibold " + C.mu}>${l}</span><span className=${"flex-1 text-[14px] capitalize-first " + C.tx}>${v}</span></div>`)}</div>`;
+    }
+    /* arbitro: severita rispetto al campionato ed effetto su cartellini e falli */
+    function ArbitroCard({ m }) {
+      const a = m.arbitro;
+      if (!a) return html`<div className=${C.card + " p-4 space-y-1"}><div className=${C.lab}>Arbitro</div><div className=${"text-[14px] " + C.mu}>Non ancora designato o non disponibile per questo campionato. Di solito la designazione esce 2-3 giorni prima.</div></div>`;
+      const giud = (r) => (r == null ? null : r >= 1.1 ? ["severo", TONE.bad] : r <= 0.9 ? ["permissivo", TONE.good] : ["nella media", TONE.ok]);
+      const g = giud(a.ratio && a.ratio.K);
+      const riga = (lab, k) => a.media && a.media[k] != null && html`<div className=${"flex items-center gap-3 py-2.5 border-t " + C.bd}>
+        <span className=${"flex-1 text-[14px] " + C.tx}>${lab} a partita</span>
+        <span className=${"text-[14px] font-bold tabular-nums " + C.tx}>${nf(a.media[k].toFixed(1))}</span>
+        <span className=${"text-[12px] w-28 text-right " + C.mu}>${a.lega && a.lega[k] ? "campionato " + nf(a.lega[k].toFixed(1)) : ""}</span></div>`;
+      const ck = m.cart || {};
+      return html`<div className=${C.card + " px-4 pt-4 pb-3"}>
+        <div className="flex items-center gap-2"><span className=${C.lab + " flex-1"}>Arbitro</span>${g && a.n >= 3 && html`<span className=${"text-[12px] font-bold px-2.5 py-0.5 rounded-full border " + g[1]}>${g[0]}</span>`}</div>
+        <div className=${"text-[17px] font-bold mt-1 " + C.tx}>${a.nome}</div>
+        <div className=${"text-[12px] mb-2 " + C.mu}>${a.n ? a.n + " partite nei dati (le più recenti pesano di più)" : "Nessuna partita nei dati: si usa la media del campionato"}</div>
+        ${riga("Cartellini", "K")}${riga("Falli", "F")}
+        ${(ck.K || ck.F) && html`<div className=${"text-[13px] mt-2 rounded-xl p-3 " + C.ch + " " + C.tx}>Con questo arbitro: ${ck.K ? html`cartellini attesi <b>${nf(ck.K.attesi)}</b> (senza arbitro ${nf(ck.K.senza_arbitro)})` : ""}${ck.K && ck.F ? ", " : ""}${ck.F ? html`falli attesi <b>${nf(ck.F.attesi)}</b> (${nf(ck.F.senza_arbitro)})` : ""}.</div>`}
+        <div className=${"text-[11px] mt-2 " + C.mu}>Verificato su 13.000 partite di Premier League e Championship: tenere conto dell'arbitro riduce l'errore dello 0,7% sui cartellini e dell'1,1-1,4% sui falli.</div></div>`;
     }
     function Badges({ p }) {
       const s = p.st || {};
@@ -719,6 +809,15 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         { k: "Classifica vs attese", i: Ic.BarChart3, tone: m.attese.some((f) => f.tone !== "ok") ? "info" : "ok", body: html`<div className="space-y-1.5">${m.attese.map((f, j) => html`<div key=${j} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 " + DOT[f.tone]}></span><span><b>${j ? m.a : m.h}:</b> ${f.text}</span></div>`)}</div>` },
         { k: "Precedenti", i: Ic.Swords, tone: m.prec.tone, body: m.prec.text },
         { k: "Contesto", i: Ic.Clock, tone: m.ctx.tone, body: m.ctx.text },
+        { k: "Fattore campo", i: Ic.Shield, tone: "ok", body: (() => {
+          if (!S || S.solo_generale || !S.casa || !S.casa.length) return "Rendimento in casa e in trasferta non disponibile per questo campionato.";
+          const rh = S.casa.find((r) => r.team === m.h), ra = S.trasferta.find((r) => r.team === m.a);
+          const tot = S.casa.reduce((x, r) => [x[0] + r.v, x[1] + r.pg], [0, 0]);
+          const ppg = (r) => (r && r.pg ? nf((r.pt / r.pg).toFixed(2)) : "-");
+          return html`<div className="space-y-1.5">${rh && html`<div><b>${m.h} in casa:</b> ${rh.v} vittorie, ${rh.n} pareggi, ${rh.p} sconfitte, ${rh.gf}-${rh.gs} gol, ${ppg(rh)} punti a partita.</div>`}
+            ${ra && html`<div><b>${m.a} in trasferta:</b> ${ra.v} vittorie, ${ra.n} pareggi, ${ra.p} sconfitte, ${ra.gf}-${ra.gs} gol, ${ppg(ra)} punti a partita.</div>`}
+            ${tot[1] > 0 && html`<div className=${C.mu}>In questo campionato vince la squadra di casa nel ${Math.round((tot[0] / tot[1]) * 100)}% delle partite. Le quote tengono già conto del fattore campo: nei test su 16.000 partite il rendimento casa/trasferta della singola squadra non migliora la previsione.</div>`}</div>`;
+        })() },
         { k: "Formazioni", i: Ic.Users, tone: (m.fattori || []).some((f) => f.delta) ? "warn" : "ok", body: ((m.fattori || []).filter((f) => f.delta).length ? "Indisponibili segnalati: " + m.fattori.filter((f) => f.delta).map((f) => f.chi + " (" + (f.lato ? m.a : m.h) + ")").join(", ") + ". " : "Nessun indisponibile importante segnalato da notizie e cartellini. ") + "Le formazioni ufficiali compaiono nella sezione Formazioni circa un'ora prima del calcio d'inizio." },
         { k: "Quote", i: Ic.Calculator, tone: "ok", body: `Favorito per le quote: ${["casa", "pareggio", "ospiti"][m.mk.indexOf(Math.max(...m.mk))]}. Le quote riassumono già forma, classifica e precedenti: la lettura qui sopra spiega il perché.` },
       ];
@@ -765,13 +864,15 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
                 <span className=${"flex-1 text-[13px] font-semibold leading-tight " + C.tx}>${t.k}</span><span className=${"w-2 h-2 rounded-full " + DOT[t.tone]}></span></div>
               ${o && html`<div className=${"text-sm mt-2 leading-relaxed " + C.tx}>${t.body}</div>`}</button>`; })}</div>
             ${m.flags.length > 0 && html`<div className="flex flex-wrap gap-1.5">${m.flags.map((f) => html`<span key=${f.text} className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + TONE[f.tone]}>${f.text}</span>`)}</div>`}
-          <//><//>`}
+          <//>
+          <${InfoCard} m=${m} sm=${sm} L=${L} /><//>`}
 
         ${mt === 3 && html`<${Gate} m=${m} title="Analisi IA: probabilità, gol attesi e consiglio">
           <${TipView} m=${m} sm=${sm} />
           <${FattoriCard} m=${m} />
-          ${m.cart && html`<div className=${C.card + " p-4 space-y-1.5"}><div className=${C.lab}>Cartellini e calci d'angolo attesi</div>
-            ${[["K", "Cartellini"], ["C", "Calci d'angolo"]].filter(([k]) => m.cart[k]).map(([k, l]) => { const x = m.cart[k]; return html`<div key=${k} className=${"text-sm " + C.tx}><b>${l}: ${nf(x.attesi)}</b> <span className=${C.mu}>(media del campionato ${nf(x.media_lega)}; ${m.h} ${nf(x.casa[0])} fatti e ${nf(x.casa[1])} subiti a partita, ${m.a} ${nf(x.ospite[0])} e ${nf(x.ospite[1])})</span></div>`; })}
+          <${ArbitroCard} m=${m} />
+          ${m.cart && html`<div className=${C.card + " p-4 space-y-1.5"}><div className=${C.lab}>Cartellini, falli e angoli attesi</div>
+            ${[["K", "Cartellini"], ["F", "Falli"], ["C", "Calci d'angolo"]].filter(([k]) => m.cart[k]).map(([k, l]) => { const x = m.cart[k]; return html`<div key=${k} className=${"text-sm " + C.tx}><b>${l}: ${nf(x.attesi)}</b> <span className=${C.mu}>(media del campionato ${nf(x.media_lega)}; ${m.h} ${nf(x.casa[0])} fatti e ${nf(x.casa[1])} subiti a partita, ${m.a} ${nf(x.ospite[0])} e ${nf(x.ospite[1])})</span></div>`; })}
             <div className=${"text-[11px] " + C.mu}>Modello verificato su 7 campionati dal 2012: rispetto alla sola media del campionato sbaglia l'1,6% in meno sui cartellini e lo 0,4% sugli angoli. Le partite equilibrate hanno più cartellini. I mercati sono in "Tutti i mercati", con quota stimata.</div></div>`}
           <${MeteoCard} m=${m} sm=${sm} />
           <div className=${C.card + " p-4 space-y-2"}><div className=${C.lab}>Laboratorio: IA contro quote</div>

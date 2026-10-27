@@ -285,6 +285,10 @@ def giro_fd(base="data", completo=True, max_h2h=40):
             st = fd(f"/competitions/{code}/standings")
             if st:
                 salva(cart, f"{code}_standings.json", st)
+            if code in ("SA", "PL", "PD", "BL1"):  # stagione precedente: serve solo per lo storico degli arbitri
+                pv = fd(f"/competitions/{code}/matches", season=stagione(oggi) - 1)
+                if pv:
+                    salva(cart, f"{code}_matches_prev.json", pv)
             sc = fd(f"/competitions/{code}/scorers", limit=30)
             if sc:
                 salva(cart, f"{code}_scorers.json", sc)

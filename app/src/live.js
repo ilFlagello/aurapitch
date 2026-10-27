@@ -248,9 +248,12 @@ export function parseSummary(s) {
   const eventi = (s.keyEvents || []).map((e) => {
     const tt = (e.type && e.type.type) || "";
     let k = KEY[tt] || (/goal/.test(tt) && e.scoringPlay ? "gol" : null);
+    const SEP = { halftime: "intervallo", "end-regular-time": "fine", "full-time": "fine", "end-extra-time": "fine" };
+    if (!k && SEP[tt]) k = SEP[tt];
     if (!k) return null;
     const ps = (e.participants || []).map((p) => p.athlete && p.athlete.displayName).filter(Boolean);
-    return { k, min: (e.clock && e.clock.displayValue) || "", side: e.team ? side[e.team.id] : null, a: ps[0] || "", b: ps[1] || "", text: itText(e.text || "") };
+    const sc = /(\d+),\s[^,]+?\s(\d+)\./.exec(e.text || ""); // punteggio scritto nel testo ("... Inter Milan 0, Fiorentina 1.")
+    return { k, min: (e.clock && e.clock.displayValue) || "", side: e.team ? side[e.team.id] : null, a: ps[0] || "", b: ps[1] || "", text: itText(e.text || ""), score: sc ? [Number(sc[1]), Number(sc[2])] : null };
   }).filter(Boolean);
   const stats = (s.boxscore && s.boxscore.teams) || [];
   const sv = (j, n) => { const tm = stats.find((x) => side[x.team.id] === j); const z = tm && tm.statistics.find((q) => q.name === n); return z ? Number(z.displayValue) : null; };

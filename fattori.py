@@ -30,7 +30,7 @@ PAROLE = {
     "infortunio": ["infortun", "lesione", "stiramento", "frattura", "ko ", " out ", "fermo ai box", "stop per", "indisponibil", "injur", "ruled out",
                    "sidelined", "hamstring", "lesion", "baja", "verletz", "fällt aus", "fehlt"],
     "rientro": ["recupera", "rientra", "torna a disposizione", "torna in gruppo", "convocato", "back in training", "returns", "available again", "recuperado", "vuelve", "zurück", "comeback"],
-    "assenza": ["non convocat", "fuori dai convocati", "esclus", "salta la", "salta il", "out of the squad", "will miss", "misses", "se pierde", "verpasst"],
+    "assenza": ["non convocat", "salter", "non ci sar", "non potr", "assent", "ai box", "forfait", "out per", "out contro", "stagione finita", "fuori dai convocati", "esclus", "salta la", "salta il", "out of the squad", "will miss", "misses", "se pierde", "verpasst"],
     "smentita": ["smentit", "nessun infortunio", "sta bene", "non preoccupa", "fit to play", "no injury"],
 }
 LINGUE = {
@@ -84,6 +84,17 @@ def _cognome_in(nome, titolo):
     return f" {parti[-1]} " in tp or (len(parti) > 2 and f" {parti[-2]} " in tp)
 
 
+def frase_di(nome, titolo):
+    """Il pezzo di titolo che parla del giocatore: la parola chiave deve stare vicino al suo nome
+    (in "Allegri squalificato, Varela titolare" la squalifica non e di Varela)."""
+    pezzi = [p for p in re.split(r"\s*[,;:|.!?\u2013\u2014]\s*|\s+-\s+", titolo) if p.strip()]
+    for i, p in enumerate(pezzi):
+        if _cognome_in(nome, p):
+            # se il pezzo e solo il nome ("Rabiot: out contro il Bologna") si guarda anche il pezzo dopo
+            return p + (" " + pezzi[i + 1] if len(p.split()) <= 3 and i + 1 < len(pezzi) else "")
+    return titolo
+
+
 def classifica(titolo):
     t = " " + piano(titolo) + " "
     if any(k in t for k in PAROLE["smentita"]):
@@ -103,10 +114,10 @@ def fattori_squadra(squadra, lato, lam, notizie, marcatori, gol_squadra, foto_ut
         t = datetime.fromisoformat(n["t"])
         if ko_utc and t > ko_utc:
             continue
-        tipo = classifica(n["titolo"])
         for g in marcatori:
             if not _cognome_in(g["n"], n["titolo"]):
                 continue
+            tipo = classifica(frase_di(g["n"], n["titolo"]))
             if not gol_squadra:  # gol della squadra non noti: stima prudente dai marcatori in elenco
                 gol_squadra = max(sum(x["g"] for x in marcatori) * 1.4, max(x.get("pg") or 0 for x in marcatori) * 1.3, 1)
             quota = min(QUOTA_MAX, (g["g"] + ASSIST * g["a"]) / max(gol_squadra, g["g"] + g["a"], 1))

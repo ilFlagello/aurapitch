@@ -421,6 +421,12 @@ def applica_fattori(d):
     espn = (jload(ESPN, {}) or {}).get("squadre", {})
     marc = d.get("scorers") or {}
     cambi = 0
+    prossima = {}  # prima partita non iniziata di ogni squadra: e li che si sconta una squalifica
+    for m in d.get("matches", []):
+        if m.get("st") == "NS":
+            for sq in (m["h"], m["a"]):
+                if sq not in prossima or m["ko"] < prossima[sq]:
+                    prossima[sq] = m["ko"]
     for m in d.get("matches", []):
         if m.get("st") != "NS" or "_ctx" not in m:
             continue
@@ -437,7 +443,7 @@ def applica_fattori(d):
             es = espn.get(sq) or {}
             if es.get("rosa"):
                 gioc, gol = es["rosa"], sum(x["g"] for x in es["rosa"]) or None
-                squal = ES.squalificati(es)
+                squal = ES.squalificati(es) if prossima.get(sq) == m["ko"] else []
                 diffidati += [{"chi": p["n"], "lato": lato, "gialli": p["gialli"]} for p in ES.diffidati(es) if p["g"] + p["a"] > 0 or p["tit"] >= 3]
             else:
                 gioc, gol, squal = [g for g in marc.get(m["lg"], []) if g["t"] == sq], (c.get("gol") or [None, None])[lato], []

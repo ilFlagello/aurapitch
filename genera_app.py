@@ -333,11 +333,11 @@ def curiosita(lst, nome):
     over = sum(1 for z in u6 if z["gf"] + z["gs"] >= 3)
     goal = sum(1 for z in u6 if z["gf"] > 0 and z["gs"] > 0)
     if over >= 5:
-        out.append((over, f"In {over} delle ultime 6 partite di {nome} ci sono stati almeno 3 gol."))
+        out.append((over, f"In tutte le ultime 6 partite di {nome} ci sono stati almeno 3 gol." if over == 6 else f"In {over} delle ultime 6 partite di {nome} ci sono stati almeno 3 gol."))
     elif over <= 1:
         out.append((5, f"Nessuna delle ultime 6 partite di {nome} ha avuto 3 gol o più." if over == 0 else f"Solo una delle ultime 6 partite di {nome} ha avuto 3 gol o più."))
     if goal >= 5:
-        out.append((goal - 0.5, f"Hanno segnato entrambe le squadre in {goal} delle ultime 6 partite di {nome}."))
+        out.append((goal - 0.5, f"Hanno segnato entrambe le squadre in tutte le ultime 6 partite di {nome}." if goal == 6 else f"Hanno segnato entrambe le squadre in {goal} delle ultime 6 partite di {nome}."))
     return out
 
 

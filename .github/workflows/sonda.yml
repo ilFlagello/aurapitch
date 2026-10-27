@@ -7,27 +7,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Prova ESPN
+      - name: Prova ESPN 2
         run: |
-          mkdir -p sonda
-          B=https://site.api.espn.com/apis/site/v2/sports/soccer
-          for L in ita.1 ita.2 eng.1 esp.1 ger.1 uefa.champions; do
-            curl -s -D sonda/h_$L.txt -H "Origin: https://ilflagello.github.io" "$B/$L/scoreboard?dates=20261025" -o sonda/sb_$L.json || true
-          done
-          curl -s "$B/ita.1/scoreboard" -o sonda/sb_today.json
-          ID=$(python3 -c "import json;d=json.load(open('sonda/sb_ita.1.json'));print(d['events'][0]['id'])")
-          curl -s "$B/ita.1/summary?event=$ID" -o sonda/summary.json
-          PID=$(python3 -c "
-          import json;d=json.load(open('sonda/summary.json'))
-          r=d.get('rosters',[{}])[0].get('roster',[])
-          print(r[0]['athlete']['id'] if r else '')")
-          echo "player $PID"
-          for U in "https://site.web.api.espn.com/apis/common/v3/sports/soccer/athletes/$PID" "https://site.web.api.espn.com/apis/common/v3/sports/soccer/athletes/$PID/overview" "https://site.web.api.espn.com/apis/common/v3/sports/soccer/athletes/$PID/stats" "https://site.web.api.espn.com/apis/common/v3/sports/soccer/athletes/$PID/statisticslog" "https://sports.core.api.espn.com/v2/sports/soccer/athletes/$PID/statisticslog" "https://site.api.espn.com/apis/site/v2/sports/soccer/ita.1/athletes/$PID"; do
-            N=$(echo "$U" | md5sum | cut -c1-6); echo "$N $U" >> sonda/athlete_urls.txt
-            curl -s -D sonda/ah_$N.txt "$U" -o sonda/a_$N.json || true
-          done
-          ls -la sonda
+          mkdir -p sonda2
+          curl -s "https://sports.core.api.espn.com/v2/sports/soccer/leagues/ita.1/seasons/2024/types/1/athletes/181836/statistics/1?lang=en&region=us" -o sonda2/core_stats.json
+          curl -s "https://sports.core.api.espn.com/v2/sports/soccer/leagues/ita.1/seasons/2024/teams/112?lang=en&region=us" -o sonda2/core_team.json
+          curl -s -D sonda2/core_h.txt "https://sports.core.api.espn.com/v2/sports/soccer/leagues/ita.1/seasons/2024/types/1/athletes/181836/statistics/1?lang=en&region=us" -o /dev/null
+          curl -s "https://site.web.api.espn.com/apis/common/v3/sports/soccer/athletes/181836/stats?season=2024&league=ita.1" -o sonda2/stats_2024.json
+          curl -s "https://site.web.api.espn.com/apis/common/v3/sports/soccer/athletes/362137/overview" -o sonda2/ov_field.json
+          ls -la sonda2
       - name: Salva
         run: |
           git config user.name "aurapitch-raccolta"; git config user.email "aurapitch-raccolta@users.noreply.github.com"
-          git add sonda && git commit -m "Sonda fonti live" && git push
+          git add sonda2 && git commit -m "Sonda 2" && git push

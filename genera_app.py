@@ -9,6 +9,7 @@ risultati di Serie B da The Odds API). Usa solo la libreria standard di Python.
 """
 import csv
 import glob
+import math
 import json
 import os
 import re
@@ -111,19 +112,29 @@ def carica_quote():
     return list(migliori.values())
 
 
+def togli_margine(quote):
+    """Probabilita senza il margine del bookmaker, metodo "potenza" (v0.3: nei test batte la divisione proporzionale,
+    perche corregge la tendenza delle quote a sopravvalutare gli sfavoriti)."""
+    inv = [1 / x for x in quote]
+    k = 1.0
+    for _ in range(50):
+        s = sum(v ** k for v in inv)
+        ds = sum(math.log(v) * v ** k for v in inv)
+        k -= (s - 1) / ds
+    p = [v ** k for v in inv]
+    return [v / sum(p) for v in p]
+
+
 def quote_di(r):
     src = "oa_" if r.get("oa_quota_media_1") else "af_"
     q = {e: fnum(r.get(f"{src}quota_media_{e}")) for e in ("1", "X", "2", "Over 2.5", "Under 2.5")}
     mx = {e: fnum(r.get(f"{src}quota_max_{e}")) for e in ("1", "X", "2", "Over 2.5", "Under 2.5")}
     if not all(q[e] for e in ("1", "X", "2")):
         return None
-    inv = [1 / q[e] for e in ("1", "X", "2")]
-    s = sum(inv)
-    mk = [round(v / s, 4) for v in inv]
+    mk = [round(v, 4) for v in togli_margine([q[e] for e in ("1", "X", "2")])]
     mo = None
     if q["Over 2.5"] and q["Under 2.5"]:
-        io = 1 / q["Over 2.5"], 1 / q["Under 2.5"]
-        mo = round(io[0] / sum(io), 4)
+        mo = round(togli_margine([q["Over 2.5"], q["Under 2.5"]])[0], 4)
     nb = fnum(r.get(f"{src}bookmaker_1"))
     return {"mk": mk, "mo": mo, "odds": {"1": q["1"], "X": q["X"], "2": q["2"], "O": q["Over 2.5"], "U": q["Under 2.5"]},
             "max": {"1": mx["1"], "X": mx["X"], "2": mx["2"], "O": mx["Over 2.5"], "U": mx["Under 2.5"]}, "nb": int(nb) if nb else None}

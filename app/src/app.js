@@ -232,6 +232,38 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       if (x == null || y == null) return null;
       return side === 1 ? [105 - x * 1.05, y * 0.68] : [x * 1.05, 68 - y * 0.68];
     }
+    /* titolari importanti assenti: i migliori marcatori della squadra confrontati con la formazione ufficiale */
+    const toks = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/[\s-]+/).filter((t) => t.length > 2);
+    function stesso(sc, p) {
+      const a = toks(sc), b = toks(p.name), l = toks(p.last);
+      return (l.length && l.every((t) => a.includes(t))) || (a.length && b.includes(a[a.length - 1]));
+    }
+    function assenze(m, sm, D) {
+      if (!sm || sm.st === "FT" || !D || !D.scorers || !D.scorers[m.lg]) return [];
+      const out = [];
+      [m.h, m.a].forEach((t, j) => {
+        const f = sm.formazioni[j];
+        if (!f) return;
+        const tit = f.lines.flat(), panca = f.bench;
+        const top = D.scorers[m.lg].filter((r) => r.t === t && r.g + r.a >= 2).sort((x, y) => y.g + y.a - (x.g + x.a)).slice(0, 3);
+        for (const r of top) {
+          if (tit.some((p) => stesso(r.n, p))) continue;
+          const inPanca = panca.some((p) => stesso(r.n, p));
+          out.push({ n: r.n, side: j, panca: inPanca, testo: `${r.n} (${t}, ${r.g} gol e ${r.a} assist in campionato) ${inPanca ? "parte dalla panchina" : "non è tra i convocati"}.` });
+        }
+      });
+      return out;
+    }
+    function AssenzeCard({ m, sm }) {
+      const { D } = React.useContext(Ctx);
+      const al = assenze(m, sm, D);
+      if (!sm || !sm.formazioni[0]) return null;
+      return html`<div className=${C.card + " p-4 space-y-1.5"}><div className="flex items-center gap-2"><span className=${"w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border " + (al.length ? TONE.warn : TONE.good)}><${Ic.Users} size=${15} /></span>
+        <span className=${"flex-1 text-sm font-semibold " + C.tx}>${al.length ? "Assenze pesanti nelle formazioni" : "Formazioni ufficiali: nessuna assenza pesante"}</span></div>
+        ${al.map((x) => html`<div key=${x.n} className=${"text-sm " + C.tx}>${x.testo}</div>`)}
+        ${!al.length && html`<div className=${"text-xs " + C.mu}>I migliori marcatori e assistman delle due squadre sono titolari.</div>`}
+        <div className=${"text-[11px] " + C.mu}>Le quote reagiscono alle formazioni in pochi minuti: guarda se la quota è già cambiata prima di giocare.</div></div>`;
+    }
     function LiveAction({ sm, m }) {
       const [open, setOpen] = useState(false);
       const plays = sm.cronaca.filter((c) => c.x != null && c.side != null).slice(0, 6);
@@ -505,8 +537,11 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
 
     /* ---- consiglio IA motivato e tutti i mercati ---- */
     function TipView({ m, sm }) {
-      const { mySlip, addLeg } = React.useContext(Ctx);
+      const { D } = React.useContext(Ctx);
+      const { mySlip, addLeg, aff } = React.useContext(Ctx);
       const [why, setWhy] = useState("consiglio");
+      const affid = (c, p) => { const rows = aff && aff.mercati && aff.mercati[c]; const r = rows && rows.find((x) => p >= x[0] && p < x[1]);
+        return r ? `Affidabilità verificata: su ${r[2].toLocaleString("it-IT")} partite di prova (${aff.stagioni}), quando questa giocata era stimata tra il ${Math.round(r[0] * 100)}% e il ${Math.round(r[1] * 100)}% è passata il ${Math.round(r[4] * 100)}% delle volte (stima media ${Math.round(r[3] * 100)}%).` : null; };
       const [grp, setGrp] = useState(null);
       const inSlip = mySlip.find((x) => x.id === m.id);
       const tip = m.tip || {};
@@ -523,7 +558,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           <button onClick=${() => setWhy(o ? null : k)} className="mt-2 text-xs font-semibold text-[#0A84FF] flex items-center gap-1">${o ? "Nascondi motivazione" : "Perché questo consiglio?"}<${o ? Ic.ChevronUp : Ic.ChevronDown} size=${13} /></button>
           ${o && html`<div className="mt-2 space-y-1.5 text-sm leading-relaxed">
             ${t.perche.map((x) => html`<div key=${x} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-2 shrink-0 " + DOT.good}></span><span className=${C.tx}>${x}</span></div>`)}
-            ${(t.contro || []).map((x) => html`<div key=${x} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-2 shrink-0 " + DOT.warn}></span><span className=${C.tx}><b>Da tenere d'occhio:</b> ${x}</span></div>`)}</div>`}</div>`; };
+            ${(t.contro || []).map((x) => html`<div key=${x} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-2 shrink-0 " + DOT.warn}></span><span className=${C.tx}><b>Da tenere d'occhio:</b> ${x}</span></div>`)}
+            ${affid(t.c, t.p) && html`<div className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-2 shrink-0 " + DOT.info}></span><span className=${C.tx}>${affid(t.c, t.p)}</span></div>`}
+            ${(() => { const al = assenze(m, sm, D); return al.length > 0 && al.map((x) => html`<div key=${x.n} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-2 shrink-0 " + DOT.warn}></span><span className=${C.tx}><b>Formazione:</b> ${x.testo}</span></div>`); })()}</div>`}</div>`; };
       const opts = options(m);
       const groups = GROUPS.map((g) => [g, opts.filter((o) => mGroup(o.k) === g)]).filter(([, l]) => l.length);
       return html`<${React.Fragment}>
@@ -588,6 +625,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <div onTouchStart=${onTS} onTouchEnd=${onTE} className="space-y-3 min-h-[50vh]">
 
         ${mt === 0 && html`<${React.Fragment}>
+          ${sm && sm.st !== "FT" && html`<${AssenzeCard} m=${m} sm=${sm} />`}
           ${sm && sm.st === "LIVE" && html`<${LiveAction} sm=${sm} m=${m} />`}
           ${sm && sm.st !== "NS" && html`<${KeyEvents} sm=${sm} m=${m} />`}
           ${sm && sm.st !== "NS" && html`<${StatsCard} sm=${sm} m=${m} />`}
@@ -788,6 +826,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const [toast, setToast] = useState("");
     const [team, setTeam] = useState(null);
     const [stor, setStor] = useState(null);
+    const [aff, setAff] = useState(null);
     const [favM, setFavM] = useState(store.get("favM", []));
     const [avvisi, setAvvisi] = useState(store.get("avvisi", true));
     const prev = useRef(null);
@@ -798,6 +837,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
 
     useEffect(() => {
       fetch("data/push.json").then((r) => (r.ok ? r.json() : null)).then((x) => x && setPushUrl(x.url)).catch(() => {});
+      fetch("data/affidabilita.json").then((r) => (r.ok ? r.json() : null)).then(setAff).catch(() => {});
       fetch("data/storico.json").then((r) => (r.ok ? r.json() : null)).then(setStor).catch(() => {});
       fetch("data/giornata.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).then((d) => { setD(d); if (d.today && (d.days || []).some((x) => x.k === d.today)) setDay(d.today); })
         .catch(() => setErr("Non riesco a leggere i dati delle partite. Controlla la connessione e ricarica la pagina."));
@@ -964,7 +1004,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const views = { partite: home, campionati: html`<${LeaguesView} />`, schedina: html`<${SlipView} />`, club: html`<${ClubView} />` };
     const DOCK = [["partite", "Partite", Ic.Calendar], ["campionati", "Campionati", Ic.Trophy], ["schedina", "Schedina IA", Ic.Sparkles], ["club", "Il Mio Club", Ic.Shield]];
 
-    const ctx = { D, byId, lg, pro, unlocked, goMatch, setOpen, mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, favM, toggleFavM };
+    const ctx = { D, byId, lg, pro, unlocked, goMatch, setOpen, mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
     return html`<${Ctx.Provider} value=${ctx}><div className="min-h-screen pb-28">
       ${header}
       <main className="max-w-[480px] mx-auto">${guideBox}${team ? html`<${TeamView} key=${team.name} />` : open_m ? html`<${MatchView} key=${open_m.id} m=${open_m} />` : views[tab]}</main>

@@ -10,7 +10,8 @@ Solo libreria standard di Python.
 import math
 
 MAXG = 10
-RHO = -0.08
+RHO = -0.12   # v0.3: scelto sul passato (2006-2015) e verificato su 2016-2026
+DELTA = 0.06  # v0.3: meno partite in cui una squadra resta a zero gol (il Poisson puro le sovrastima)
 MARGINE = 0.06  # margine tipico dei bookmaker, usato per la "quota stimata" dei mercati senza quota raccolta
 
 
@@ -28,6 +29,9 @@ def matrice(lh, la):
     m[0][1] *= 1 + lh * RHO
     m[1][0] *= 1 + la * RHO
     m[1][1] *= 1 - RHO
+    for k in range(MAXG + 1):
+        m[0][k] *= 1 - DELTA
+        m[k][0] *= 1 - DELTA
     s = sum(map(sum, m))
     return [[v / s for v in r] for r in m]
 

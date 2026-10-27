@@ -310,6 +310,14 @@ def giro_espn(base="data", ore=48):
             out["squadre"][nome] = r
         except Exception as e:  # noqa: BLE001
             print(f"ESPN {nome}: errore {e}")
+    # colori ufficiali delle maglie di tutte le squadre dei campionati (per l'aura delle partite nell'app)
+    out["colori"] = {}
+    for k, lg in ESPN_LG.items():
+        try:
+            tt = elenco.get(k) or [t["team"] for t in get(f"{SITE}{lg}/teams")["sports"][0]["leagues"][0]["teams"]]
+            out["colori"][k] = [{x: t.get(x) for x in ("displayName", "shortDisplayName", "name", "location", "color", "alternateColor")} for t in tt]
+        except Exception as e:  # noqa: BLE001
+            print(f"ESPN colori {k}: {e}")
     out["risultati_lega"] = {}
     for k in ("I2",):
         evs = []

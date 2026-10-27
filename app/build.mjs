@@ -40,6 +40,8 @@ const min = await esbuild.transform(css, { loader: "css", minify: true });
 fs.writeFileSync(path.join(OUT, "app.css"), min.code);
 
 for (const f of ["index.html", "manifest.webmanifest", "sw.js", "icon.svg", "icon-180.png", "icon-192.png", "icon-512.png"]) fs.copyFileSync(path.join(ROOT, f), path.join(OUT, f));
+fs.mkdirSync(path.join(OUT, "fonts"), { recursive: true });
+for (const f of fs.readdirSync(path.join(ROOT, "fonts"))) fs.copyFileSync(path.join(ROOT, "fonts", f), path.join(OUT, "fonts", f));
 fs.mkdirSync(path.join(OUT, "data"), { recursive: true });
 for (const f of fs.readdirSync(path.join(ROOT, "data"))) fs.copyFileSync(path.join(ROOT, "data", f), path.join(OUT, "data", f));
 const kb = (f) => (fs.statSync(path.join(OUT, f)).size / 1024).toFixed(0) + " KB";

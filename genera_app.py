@@ -295,6 +295,73 @@ def storico(partite):
     return per_team
 
 
+def curiosita(lst, nome):
+    """Frasi statistiche sulle serie in corso di una squadra (dalla piu recente indietro), con un punteggio per scegliere le piu forti."""
+    out = []
+    if len(lst) < 5:
+        return out
+    r = list(reversed(lst))
+    def serie(f):
+        n = 0
+        for z in r:
+            if not f(z):
+                break
+            n += 1
+        return n
+    v = serie(lambda z: z["gf"] > z["gs"])
+    imb = serie(lambda z: z["gf"] >= z["gs"])
+    nov = serie(lambda z: z["gf"] <= z["gs"])
+    seg = serie(lambda z: z["gf"] > 0)
+    cs = serie(lambda z: z["gs"] == 0)
+    nos = serie(lambda z: z["gf"] == 0)
+    sc = serie(lambda z: z["gf"] < z["gs"])
+    if v >= 3:
+        out.append((v * 1.2, f"{nome} ha vinto le ultime {v} partite."))
+    elif imb >= 5:
+        out.append((imb, f"{nome} non perde da {imb} partite."))
+    if sc >= 3:
+        out.append((sc * 1.2, f"{nome} ha perso le ultime {sc} partite."))
+    elif nov >= 5:
+        out.append((nov, f"{nome} non vince da {nov} partite."))
+    if cs >= 3:
+        out.append((cs * 1.3, f"{nome} non subisce gol da {cs} partite."))
+    if nos >= 2:
+        out.append((nos * 1.6, f"{nome} non segna da {nos} partite."))
+    elif seg >= 8:
+        out.append((seg * 0.7, f"{nome} segna da {seg} partite di fila."))
+    u6 = r[:6]
+    over = sum(1 for z in u6 if z["gf"] + z["gs"] >= 3)
+    goal = sum(1 for z in u6 if z["gf"] > 0 and z["gs"] > 0)
+    if over >= 5:
+        out.append((over, f"In {over} delle ultime 6 partite di {nome} ci sono stati almeno 3 gol."))
+    elif over <= 1:
+        out.append((5, f"Nessuna delle ultime 6 partite di {nome} ha avuto 3 gol o più." if over == 0 else f"Solo una delle ultime 6 partite di {nome} ha avuto 3 gol o più."))
+    if goal >= 5:
+        out.append((goal - 0.5, f"Hanno segnato entrambe le squadre in {goal} delle ultime 6 partite di {nome}."))
+    return out
+
+
+def curiosita_partita(per_team, hid, aid, h, a, t0):
+    """Le 4 curiosita piu forti: squadra di casa sulle partite in casa, ospite in trasferta, piu le serie generali."""
+    tutte = []
+    for tid, nome, casa in ((hid, h, True), (aid, a, False)):
+        lst = [z for z in per_team.get(tid, []) if z["t"] < t0] if tid else []
+        tutte += curiosita(lst, nome)
+        sede = [z for z in lst if z["casa"] == casa][-6:]
+        if len(sede) >= 5:
+            vs = sum(1 for z in sede if z["gf"] > z["gs"])
+            ps = sum(1 for z in sede if z["gf"] < z["gs"])
+            dove = "in casa" if casa else "in trasferta"
+            if vs >= 5:
+                tutte.append((vs + 1, f"{nome} ha vinto {vs} delle ultime {len(sede)} partite {dove}."))
+            elif ps >= 4:
+                tutte.append((ps + 1, f"{nome} ha perso {ps} delle ultime {len(sede)} partite {dove}."))
+            elif vs == 0:
+                tutte.append((5, f"{nome} non ha vinto nessuna delle ultime {len(sede)} partite {dove}."))
+    tutte.sort(key=lambda x: -x[0])
+    return [t for _, t in tutte[:4]]
+
+
 def ultime5(per_team, tid, prima):
     lst = [z for z in per_team.get(tid, []) if z["t"] < prima][-5:]
     return [{"data": z["t"].astimezone(ROME).strftime("%d/%m/%y"), "avv": z["avv"], "casa": z["casa"], "ris": f"{z['gf']}-{z['gs']}",
@@ -369,6 +436,7 @@ def genera():
     refs, _ = storia_arbitri(fdp)
     print(f"Arbitri con statistiche: {len(refs)}")
     designati = (jload(os.path.join(DATA, "espn", "arbitri.json"), {}) or {}).get("partite", [])
+    colori_es = esd.get("colori") or {}
     with open(ARBITRI, "w", encoding="utf-8") as f:  # per gli aggiornamenti durante il giorno (arbitri designati dopo il mattino)
         json.dump({c: {"nome": v["nome"], "n": v["n"], "ratio": v["ratio"], "media": v["media"], "lega": v.get("lega")} for c, v in refs.items()}, f, ensure_ascii=False, separators=(",", ":"))
 
@@ -496,6 +564,8 @@ def genera():
             "markets": [[x["c"], x["p"], x["q"], 1 if x["qm"] else 0] for x in mercati] + extra, "tip": tip,
             "xg_mercato": [lh, la], "fattori": [], "foto": r["_foto"], "_extra": extra, "cart": cart, "arbitro": arbitro,
             "xgf": [lettura_xg(k, h, t0), lettura_xg(k, a, t0)] if k in xg_lega else None,
+            "curiosita": curiosita_partita(per_team, hid, aid, h, a, t0) if (hid or aid) else [],
+            "col": colori_partita(colori_es.get(k), h, a),
             "_ctx": {"riposo": [rh, ra], "sh": sh, "sa": sa, "pos_h": pos.get(hid), "pos_a": pos.get(aid), "raccolte": raccolte,
                      "gol": [next((rr.get("goalsFor") for rr in (tabs or {}).get("TOTAL", []) if (rr.get("team") or {}).get("id") == x), None) for x in (hid, aid)]},
         })
@@ -539,6 +609,15 @@ def genera():
 NOTIZIE = os.path.join(DATA, "notizie", "notizie.json")
 ESPN = os.path.join(DATA, "espn", "squadre.json")
 ARBITRI = os.path.join(DATA, "arbitri.json")
+
+
+def colori_partita(elenco, h, a):
+    """Colori di maglia (principale, alternativo) delle due squadre da ESPN, o None."""
+    out = []
+    for n in (h, a):
+        t = ES.trova_squadra(elenco or [], n)
+        out.append(["#" + t["color"], "#" + (t.get("alternateColor") or "ffffff")] if t and t.get("color") else None)
+    return out if any(out) else None
 
 
 def scheda_arbitro(nome, arb, lega):

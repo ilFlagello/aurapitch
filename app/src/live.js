@@ -278,6 +278,10 @@ export function parseSummary(s) {
     if (pout) pout.minOut = e.min;
   }
   const clock = t.state === "in" ? (t.name === "STATUS_HALFTIME" ? "Intervallo" : st.displayClock || "") : "";
+  // voti AuraPitch: calcolati dalle statistiche della partita (solo a partita iniziata)
+  const gg = teams.map((c) => (c.score != null ? Number(c.score) : 0));
+  const ora = t.state === "post" ? 90 : Math.max(1, minuto(clock));
+  if (t.state !== "pre") formazioni.forEach((f, j) => { if (f) f.all.forEach((p) => { const v = votoGiocatore(p, gg[j], gg[1 - j], ora, t.state === "post"); if (v != null) p.voto = v; }); });
   return {
     st: t.state === "in" ? "LIVE" : t.state === "post" ? "FT" : "NS", clock, detail: t.shortDetail || "",
     g: teams.map((c) => (c.score != null ? Number(c.score) : null)), colors: teams.map((c) => "#" + (c.team.color || "8E8E93")),
@@ -285,6 +289,56 @@ export function parseSummary(s) {
     eventi, statistiche, formazioni, cronaca: commentary.filter((c, i, a) => !(i && a[i - 1].text === c.text && a[i - 1].min === c.min)).reverse(), recupero,
     stadio: s.gameInfo && s.gameInfo.venue ? [s.gameInfo.venue.fullName, s.gameInfo.venue.address && s.gameInfo.venue.address.city].filter(Boolean).join(", ") : "",
   };
+}
+
+/* Voto AuraPitch (da 3 a 10): base 6, piu gol, assist, tiri, falli subiti; meno cartellini, falli, autogol;
+   portieri e difensori pesati sui gol subiti; risultato della squadra; pochi minuti = voto vicino a 6. */
+export function votoGiocatore(p, gf, gs, ora, finita) {
+  const s = p.st || {};
+  const dentro = p.starter || p.inn;
+  if (!dentro) return null;
+  const mi = (x) => { const r = /(\d+)'(?:\+(\d+))?/.exec(x || ""); return r ? Number(r[1]) : null; };
+  const da = p.starter ? 0 : mi(p.minIn) ?? ora;
+  const a = p.out ? mi(p.minOut) ?? ora : ora;
+  const min = Math.max(0, a - da);
+  if (min < 10 && !(s.totalGoals || s.goalAssists || s.redCards)) return null;
+  const n = (k) => Number(s[k] || 0);
+  let v = 6 + 1.0 * n("totalGoals") + 0.7 * n("goalAssists") + 0.25 * Math.max(0, n("shotsOnTarget") - n("totalGoals")) + 0.05 * Math.max(0, n("totalShots") - n("shotsOnTarget"))
+    + 0.1 * n("foulsSuffered") - 0.1 * n("foulsCommitted") - 0.4 * n("yellowCards") - 1.5 * n("redCards") - 1.0 * n("ownGoals") - 0.05 * n("offsides");
+  const ruoloP = String(p.pos || "");
+  if (ruoloP === "G") v += 0.3 * n("saves") - 0.35 * gs + (gs === 0 && min >= 60 ? 0.6 : 0);
+  else if (/^(D|CB|CD|LB|RB|SW|LWB|RWB|CD-L|CD-R)/.test(ruoloP)) v += -0.15 * gs + (gs === 0 && min >= 60 ? 0.4 : 0);
+  if (finita) v += gf > gs ? 0.3 : gf < gs ? -0.2 : 0;
+  if (min < 30) v = 6 + (v - 6) * Math.max(0.5, min / 30);
+  return Math.round(Math.max(3, Math.min(10, v)) * 10) / 10;
+}
+
+/* Andamento della partita: pressione offensiva minuto per minuto dalla cronaca (tiri, angoli, gol), smussata.
+   Positivo = squadra di casa, negativo = ospite. */
+export function andamento(cronaca, finoA) {
+  const P = { goal: 1.4, "goal---header": 1.4, "goal---free-kick": 1.4, "penalty---scored": 1.2, "shot-on-target": 1.0, "shot-hit-woodwork": 0.9, "shot-off-target": 0.6, "shot-blocked": 0.5, "corner-awarded": 0.5, "penalty---saved": 1.0, "penalty---missed": 0.8, offside: 0.2 };
+  const fine = Math.max(45, finoA || 90);
+  const raw = new Array(fine + 2).fill(0);
+  const gol = [];
+  for (const c of cronaca || []) {
+    if (c.side == null) continue;
+    const r = /(\d+)'(?:\+(\d+))?/.exec(c.min || "");
+    if (!r) continue;
+    const m = Math.min(fine, Number(r[1]));
+    const w = P[c.type] || (/^goal/.test(c.type) ? 1.4 : c.type === "foul" ? 0.12 : 0);
+    if (!w) continue;
+    // fallo: punizione per la squadra che lo subisce
+    const lato = c.type === "foul" ? 1 - c.side : c.side;
+    raw[m] += lato === 0 ? w : -w;
+    if (/^goal|penalty---scored/.test(c.type) && !/own/.test(c.type)) gol.push({ m, side: c.side });
+  }
+  const out = [];
+  for (let i = 1; i <= fine; i++) {
+    let x = 0, wt = 0;
+    for (let d = -5; d <= 5; d++) { const k = Math.exp(-(d * d) / 8); const j = i + d; if (j >= 0 && j < raw.length) { x += raw[j] * k; } wt += k; }
+    out.push(x / wt * 3);
+  }
+  return { punti: out, gol };
 }
 
 export function useSummary(lgE, eid, live) {

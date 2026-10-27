@@ -4,11 +4,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import htm from "htm";
-import { useLiveScores, useSummary, loadPlayer, loadCareer, ruolo, findTeam, loadTeam, minuto, ESPN_LG } from "./live.js";
+import { useLiveScores, useSummary, loadPlayer, loadCareer, ruolo, findTeam, loadTeam, minuto, ESPN_LG, andamento } from "./live.js";
 import { LuActivity, LuCalculator, LuCalendar, LuChartColumn, LuCheck, LuChevronDown, LuChevronLeft, LuChevronRight, LuChevronUp, LuCircleCheck, LuCircleDot, LuCircleHelp, LuCircleX, LuClock, LuCopy, LuCrown, LuInfo, LuLock, LuMoon, LuNewspaper, LuPlay, LuPlus, LuRepeat, LuShield, LuShieldCheck, LuShirt, LuSmartphone, LuSparkles, LuStar, LuSun, LuSwords, LuTrash2, LuTrendingUp, LuTriangleAlert, LuTrophy, LuUsers, LuX, LuZap } from "react-icons/lu";
 
 const html = htm.bind(React.createElement);
 const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shield: LuShield, Sun: LuSun, Moon: LuMoon, HelpCircle: LuCircleHelp, X: LuX, ChevronLeft: LuChevronLeft, ChevronRight: LuChevronRight, ChevronDown: LuChevronDown, ChevronUp: LuChevronUp, Lock: LuLock, Play: LuPlay, Crown: LuCrown, Zap: LuZap, Copy: LuCopy, Check: LuCheck, Plus: LuPlus, Trash2: LuTrash2, TrendingUp: LuTrendingUp, Swords: LuSwords, Users: LuUsers, Activity: LuActivity, Newspaper: LuNewspaper, Calculator: LuCalculator, BarChart3: LuChartColumn, AlertTriangle: LuTriangleAlert, Info: LuInfo, Star: LuStar, ShieldCheck: LuShieldCheck, CircleDot: LuCircleDot, Shirt: LuShirt, Smartphone: LuSmartphone, CheckCircle2: LuCircleCheck, XCircle: LuCircleX, Clock: LuClock, Repeat: LuRepeat };
+Ic.BallIn = ({ size = 14, c = "#17152B" }) => html`<svg width=${size} height=${size} viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#fff" /><path d="M12 7.2l3.3 2.4-1.3 3.9h-4l-1.3-3.9z" fill=${c} /><path d="M12 2v5.2M15.3 9.6l4.6-1.8M14 13.5l2.6 4.3M10 13.5l-2.6 4.3M8.7 9.6L4.1 7.8" stroke=${c} strokeWidth="1.2" fill="none" /></svg>`;
 Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${size} viewBox="0 0 24 24" className=${className} aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor" /><path d="M12 7.2l3.3 2.4-1.3 3.9h-4l-1.3-3.9z" fill="#fff" /><path d="M12 2v5.2M15.3 9.6l4.6-1.8M14 13.5l2.6 4.3M10 13.5l-2.6 4.3M8.7 9.6L4.1 7.8" stroke="#fff" strokeWidth="1.2" fill="none" /></svg>`;
 
   /* ---------- utilità ---------- */
@@ -20,18 +21,19 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   const odd = (x) => (x == null ? "-" : Number(x).toFixed(2).replace(".", ","));
   const hs = (s) => [...String(s)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
   const mmss = (s) => String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
-  /* stile ispirato a FotMob: sfondo scuro, card piene senza bordi, un solo colore d'accento (verde), titoli in grassetto */
+  /* Identità AuraPitch: nebbia lilla (#EFEEF5) e notte (#0E0C18), inchiostro #17152B, accento viola "aura" #5B2EE6 / #A58BFF,
+     diretta corallo #FF3D5A. Il colore forte lo portano le squadre (colori di maglia veri) nell'aura delle probabilità. */
   const C = {
-    card: "bg-white dark:bg-[#1A1A1A] rounded-[14px]",
-    tx: "text-[#111111] dark:text-white",
-    mu: "text-[#6B6B6B] dark:text-[#9B9B9B]",
-    bd: "border-black/[0.07] dark:border-white/[0.07]",
-    ch: "bg-black/[0.05] dark:bg-white/[0.07]",
-    seg: "bg-white text-[#111111] shadow-sm dark:bg-[#2E2E2E] dark:text-white",
-    on: "bg-[#00985F] text-white dark:bg-[#3DDC97] dark:text-[#0F0F0F]",
-    lab: "text-[15px] font-bold tracking-tight text-[#111111] dark:text-white",
-    acc: "text-[#00985F] dark:text-[#3DDC97]",
-    live: "text-[#E5484D]",
+    card: "bg-white dark:bg-[#191626] rounded-[20px]",
+    tx: "text-[#17152B] dark:text-[#F4F2FF]",
+    mu: "text-[#6E6A85] dark:text-[#9A95B3]",
+    bd: "border-[#17152B]/[0.07] dark:border-white/[0.07]",
+    ch: "bg-[#17152B]/[0.05] dark:bg-white/[0.07]",
+    seg: "bg-[#17152B] text-white dark:bg-[#F4F2FF] dark:text-[#17152B]",
+    on: "bg-[#5B2EE6] text-white dark:bg-[#A58BFF] dark:text-[#0E0C18]",
+    lab: "text-[17px] font-semibold tracking-[-0.01em] text-[#17152B] dark:text-[#F4F2FF]",
+    acc: "text-[#5B2EE6] dark:text-[#A58BFF]",
+    live: "text-[#FF3D5A]",
   };
   const TONE = {
     good: "bg-emerald-50 text-emerald-700 border-emerald-200/70 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30",
@@ -67,6 +69,33 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     if (TC[t]) return TC[t];
     const h = hs(t);
     return [`hsl(${h % 360} 55% 42%)`, `hsl(${(h >> 9) % 360} 30% 92%)`, "vhs"[h % 3]];
+  }
+  /* colore di maglia per l'aura: colori veri da ESPN (m.col) se ci sono, altrimenti quelli generici dello stemma.
+     Si evitano bianco puro e nero puro (poco visibili) e due squadre con lo stesso colore. */
+  const lum = (hex) => { const h = String(hex || "").replace("#", ""); if (h.length !== 6) return 0.5; const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const dist = (a, b) => { const p = (x) => [0, 2, 4].map((i) => parseInt(String(x).replace("#", "").slice(i, i + 2), 16) || 0); const [x, y] = [p(a), p(b)]; return Math.abs(x[0] - y[0]) + Math.abs(x[1] - y[1]) + Math.abs(x[2] - y[2]); };
+  function auraCol(m) {
+    const one = (j) => {
+      const c = (m.col && m.col[j]) || null;
+      if (c) { const [a, b] = c; return lum(a) > 0.86 || lum(a) < 0.05 ? (lum(b) > 0.86 || lum(b) < 0.05 ? (lum(a) > 0.86 ? "#A7A3BC" : "#3A3654") : b) : a; }
+      const t = teamColors(j ? m.a : m.h)[0];
+      return /^#/.test(t) && lum(t) > 0.86 ? "#A7A3BC" : t;
+    };
+    let h = one(0), a = one(1);
+    if (/^#/.test(h) && /^#/.test(a) && dist(h, a) < 90) { const alt = m.col && m.col[1] && m.col[1][1]; a = alt && dist(alt, h) >= 90 && lum(alt) <= 0.86 ? alt : "#A7A3BC"; }
+    return [h, a];
+  }
+  /* aura delle probabilità: 1 X 2 in proporzione, colore di casa, grigio pareggio, colore ospite */
+  function AuraLine({ m, p, h = 3, labels }) {
+    const P = p || m.mk || m.p;
+    const [ch, ca] = auraCol(m);
+    return html`<div className="w-full">
+      <div className="flex w-full gap-[3px]" style=${{ height: h }} aria-hidden="true">
+        <i className="block rounded-full" style=${{ width: pct(P[0]) + "%", background: ch }}></i>
+        <i className="block rounded-full bg-[#17152B]/[0.14] dark:bg-white/[0.18]" style=${{ width: pct(P[1]) + "%" }}></i>
+        <i className="block rounded-full" style=${{ width: pct(P[2]) + "%", background: ca }}></i></div>
+      ${labels && html`<div className=${"flex justify-between mt-1.5 text-[12px] " + C.mu}>
+        <span>${m.h} <b className=${"num text-[17px] font-bold " + C.tx}>${pct(P[0])}%</b></span><span>Pari <b className=${"num text-[17px] font-bold " + C.tx}>${pct(P[1])}%</b></span><span><b className=${"num text-[17px] font-bold " + C.tx}>${pct(P[2])}%</b> ${m.a}</span></div>`}</div>`;
   }
   function Crest({ t, size = 20 }) {
     const [a, b, k] = teamColors(t);
@@ -188,19 +217,20 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       <button key=${t} role="tab" aria-selected=${val === i} onClick=${() => set(i)}
         className=${"flex-1 px-2 py-1.5 rounded-full font-semibold leading-tight transition-colors " + (small ? "text-[12px] " : "text-[13px] ") + (val === i ? C.seg : C.mu)}>${t}</button>`)}</div>`;
   }
-  /* schede con sottolineatura (come FotMob), scorrevoli in orizzontale */
+  /* schede a pillola: la sezione attiva e piena color inchiostro, scorrevoli in orizzontale */
   function Tabs({ items, val, set, sticky }) {
-    return html`<div data-noswipe="1" className=${(sticky ? "sticky z-20 " : "") + "-mx-4 px-4 border-b " + C.bd} style=${sticky ? { top: "calc(env(safe-area-inset-top, 0px) + 56px)", background: "var(--bg)" } : null}>
-      <div className="flex gap-5 overflow-x-auto noscroll" role="tablist">${items.map((t, i) => html`<button key=${t} role="tab" aria-selected=${val === i} onClick=${() => set(i)}
-        className=${"relative shrink-0 py-3 text-[14px] font-semibold whitespace-nowrap transition-colors " + (val === i ? C.tx : C.mu)}>${t}
-        ${val === i && html`<span className="absolute left-0 right-0 -bottom-px h-[3px] rounded-full bg-[#00985F] dark:bg-[#3DDC97]"></span>`}</button>`)}</div></div>`;
+    const ref = useRef(null);
+    useEffect(() => { const el = ref.current && ref.current.children[val]; if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" }); }, [val]);
+    return html`<div data-noswipe="1" className=${(sticky ? "sticky z-20 " : "") + "-mx-4 px-4 py-2"} style=${sticky ? { top: "calc(env(safe-area-inset-top, 0px) + 56px)", background: "var(--bg)" } : null}>
+      <div ref=${ref} className="flex gap-1.5 overflow-x-auto noscroll" role="tablist">${items.map((t, i) => html`<button key=${t} role="tab" aria-selected=${val === i} onClick=${() => set(i)}
+        className=${"shrink-0 px-3.5 py-[7px] rounded-full text-[14px] font-semibold whitespace-nowrap transition-colors " + (val === i ? C.seg : C.mu + " hover:bg-[#17152B]/[0.05] dark:hover:bg-white/[0.06]")}>${t}</button>`)}</div></div>`;
   }
   function Chip({ on, children, onClick, cls }) {
     return html`<button onClick=${onClick} className=${"inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-semibold shrink-0 " + (on ? C.on : C.ch + " " + C.tx) + " " + (cls || "")}>${children}</button>`;
   }
   function Sheet({ onClose, children, title }) {
     return html`<div className="fixed inset-0 z-50 bg-black/40 flex items-end justify-center" onClick=${onClose}>
-      <div onClick=${(e) => e.stopPropagation()} className=${"w-full max-w-[480px] rounded-t-[22px] p-5 space-y-3 max-h-[88vh] overflow-y-auto bg-white dark:bg-[#1A1A1A] " + C.tx}
+      <div onClick=${(e) => e.stopPropagation()} className=${"w-full max-w-[480px] rounded-t-[22px] p-5 space-y-3 max-h-[88vh] overflow-y-auto bg-white dark:bg-[#191626] " + C.tx}
         style=${{ paddingBottom: "calc(20px + env(safe-area-inset-bottom, 0px))" }}>
         <div className="flex items-center"><div className="font-semibold flex-1">${title}</div><button aria-label="Chiudi" onClick=${onClose} className=${C.mu}><${Ic.X} size=${20} /></button></div>
         ${children}</div></div>`;
@@ -210,7 +240,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const f = P.indexOf(Math.max(...P));
     const p = P[f];
     return html`<span className=${"inline-flex items-center gap-1 rounded-full border tabular-nums font-bold shrink-0 " + (big ? "px-3 py-1 text-sm " : "px-2 py-0.5 text-[11px] ") + TONE[confTone(p)]}>
-      <span>${ESITI[f]}</span><span className=${unlocked ? "" : "blur-[4px] select-none"}>${pct(p)}%</span>${!unlocked && html`<${Ic.Lock} size=${10} className="opacity-60" />`}</span>`;
+      <span>${ESITI[f]}</span><span className=${"num " + (big ? "text-[16px] " : "text-[13px] ") + (unlocked ? "" : "blur-[4px] select-none")}>${pct(p)}%</span>${!unlocked && html`<${Ic.Lock} size=${10} className="opacity-60" />`}</span>`;
   }
   function Form({ list }) {
     return html`<div className="flex gap-1">${list.map((z, i) => html`<span key=${i} title=${z.avv + " " + z.ris}
@@ -225,21 +255,51 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       <div className=${"flex justify-between text-xs tabular-nums " + C.mu}><span>1 <b className=${C.tx}>${pct(p[0])}%</b></span><span>X <b className=${C.tx}>${pct(p[1])}%</b></span><span>2 <b className=${C.tx}>${pct(p[2])}%</b></span></div></div>`;
   }
 
+  /* marchio: anelli concentrici (l'aura) attorno al dischetto del centrocampo */
+  function Marchio({ size = 30 }) {
+    return html`<svg width=${size} height=${size} viewBox="0 0 512 512" aria-hidden="true" className="shrink-0">
+      <rect width="512" height="512" rx="128" fill="#17152B" />
+      <circle cx="256" cy="286" r="170" fill="none" stroke="#A58BFF" strokeWidth="14" opacity="0.3" />
+      <circle cx="256" cy="286" r="122" fill="none" stroke="#A58BFF" strokeWidth="18" opacity="0.55" />
+      <circle cx="256" cy="286" r="76" fill="none" stroke="#C9B9FF" strokeWidth="22" />
+      <line x1="72" y1="286" x2="440" y2="286" stroke="#F4F2FF" strokeWidth="14" opacity="0.85" /><circle cx="256" cy="286" r="30" fill="#F4F2FF" /></svg>`;
+  }
+  /* giorni: numero grande in stile tabellone, giorno della settimana sopra */
+  function Giorni({ days, day, setDay, demo }) {
+    const GS = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
+    const ref = useRef(null);
+    useEffect(() => { const el = ref.current && ref.current.querySelector("[aria-selected=true]"); if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest", inline: "center" }); }, [day]);
+    const btn = (on) => "shrink-0 w-[58px] h-[60px] rounded-[16px] flex flex-col items-center justify-center " + (on ? C.seg : "bg-white dark:bg-[#191626] " + C.tx);
+    return html`<div ref=${ref} data-noswipe="1" className="-mx-4 px-4 flex gap-1.5 overflow-x-auto noscroll" role="tablist">
+      <button role="tab" aria-selected=${day === "all"} onClick=${() => setDay("all")} className=${btn(day === "all")}>
+        <span className="text-[13px] font-semibold">${demo ? "Giornata" : "Tutte"}</span></button>
+      ${days.map((d) => { const dt = new Date(d.k + "T12:00:00"); const on = day === d.k; return html`<button key=${d.k} role="tab" aria-selected=${on} onClick=${() => setDay(d.k)} className=${btn(on)}>
+        <span className=${"text-[11px] font-semibold " + (on ? "opacity-80" : "opacity-60")}>${d.label === "Oggi" || d.label === "Domani" ? d.label : GS[dt.getDay()]}</span>
+        <span className="num text-[24px] font-bold leading-none mt-0.5">${dt.getDate()}</span></button>`; })}</div>`;
+  }
+
   const Ctx = React.createContext(null);
 
-    /* ---- riga partita ---- */
+    /* ---- riga partita: orario a sinistra, squadre una sopra l'altra, punteggi in colonna, aura delle probabilita sotto ---- */
     function Row({ m, i }) {
     const { goMatch, unlocked } = React.useContext(Ctx);
+    const fin = m.st === "FT" && m.g;
     const vince = (j) => m.g && m.g[j] > m.g[1 - j];
-    const centro = m.st === "NS" ? html`<span className=${"text-[14px] font-semibold tabular-nums " + C.tx}>${m.time || "-"}</span>`
+    const live = m.st === "LIVE";
+    const left = m.st === "NS" ? html`<span className=${"num text-[19px] font-bold leading-none " + C.tx}>${m.time || "-"}</span>`
       : m.st === "RINV" ? html`<span className=${"text-[11px] font-semibold " + C.mu}>Rinviata</span>`
-      : html`<span className=${"text-[15px] font-bold tabular-nums whitespace-nowrap " + (m.st === "LIVE" ? C.live : C.tx)}>${m.g ? m.g[0] + " - " + m.g[1] : "-"}</span>
-        <span className=${"text-[10px] font-semibold leading-none mt-0.5 " + (m.st === "LIVE" ? C.live : C.mu)}>${m.st === "LIVE" ? m.clock || "LIVE" : "Finale"}</span>`;
-    return html`<button onClick=${() => goMatch(m.id)} style=${{ gridTemplateColumns: "minmax(0,1fr) 56px minmax(0,1fr) 66px" }} className=${"w-full grid items-center gap-1.5 pl-2 pr-3 py-3 text-left " + (i ? "border-t " + C.bd : "")}>
-      <span className="flex items-center justify-end gap-2 min-w-0"><span className=${"text-[14px] truncate text-right " + C.tx + (vince(0) ? " font-bold" : "")}>${m.h}</span><${Crest} t=${m.h} size=${20} /></span>
-      <span className="flex flex-col items-center justify-center">${centro}</span>
-      <span className="flex items-center gap-2 min-w-0"><${Crest} t=${m.a} size=${20} /><span className=${"text-[14px] truncate " + C.tx + (vince(1) ? " font-bold" : "")}>${m.a}</span></span>
-      <span className="flex flex-col items-end gap-0.5">${m.free && html`<span className=${"text-[9px] font-bold tracking-wider " + C.acc}>FREE</span>`}<${FavPill} m=${m} unlocked=${unlocked(m)} /></span></button>`;
+      : live ? html`<span className="flex items-center gap-1 text-[#FF3D5A]"><i className="pulse block w-1.5 h-1.5 rounded-full bg-[#FF3D5A]"></i><span className="num text-[18px] font-bold leading-none">${m.clock && /\d/.test(m.clock) ? m.clock.replace(/'.*/, "'") : m.clock || "Live"}</span></span>`
+      : html`<span className=${"text-[12px] font-semibold " + C.mu}>Finale</span>`;
+    const team = (j) => html`<span className="flex items-center gap-2 min-w-0"><${Crest} t=${j ? m.a : m.h} size=${18} />
+      <span className=${"text-[15px] truncate " + (fin && !vince(j) ? C.mu : C.tx) + (vince(j) ? " font-semibold" : "")}>${j ? m.a : m.h}</span></span>`;
+    const gol = (j) => html`<span className=${"num text-[20px] font-bold leading-[22px] text-right " + (live ? "text-[#FF3D5A]" : fin && !vince(j) ? C.mu : C.tx)}>${m.g ? m.g[j] : ""}</span>`;
+    return html`<button onClick=${() => goMatch(m.id)} className=${"w-full text-left px-4 pt-3 pb-2.5 " + (i ? "border-t " + C.bd : "")}>
+      <span className="grid items-center gap-x-3 gap-y-1.5" style=${{ gridTemplateColumns: "50px minmax(0,1fr) 22px 62px" }}>
+        <span className="row-span-2 flex items-center">${left}</span>
+        ${team(0)}${gol(0)}
+        <span className="row-span-2 flex flex-col items-end justify-center gap-1">${m.free && html`<span className=${"text-[10px] font-bold " + C.acc}>Gratis</span>`}<${FavPill} m=${m} unlocked=${unlocked(m)} /></span>
+        ${team(1)}${gol(1)}
+        <span></span><span className="col-span-2 pt-1"><${AuraLine} m=${m} /></span></span></button>`;
   }
 
     /* ---- gate PRO ---- */
@@ -348,9 +408,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     function EvIcon({ k }) {
       if (k === "giallo") return html`<span className="inline-block w-2.5 h-3.5 rounded-[2px] bg-amber-400"></span>`;
       if (k === "rosso") return html`<span className="inline-block w-2.5 h-3.5 rounded-[2px] bg-rose-500"></span>`;
-      if (k === "cambio") return html`<${Ic.Repeat} size=${14} className="text-sky-500" />`;
+      if (k === "cambio") return html`<${Ic.Repeat} size=${13} className="text-[#6E6A85] dark:text-[#9A95B3]" />`;
       if (/sbagliato|parato/.test(k)) return html`<${Ic.XCircle} size=${14} className="text-rose-500" />`;
-      return html`<${Ic.Ball} size=${14} className=${k === "autogol" ? "text-rose-500" : "text-emerald-600 dark:text-emerald-300"} />`;
+      return html`<${Ic.Ball} size=${14} className=${k === "autogol" ? "text-rose-500" : "text-[#17152B] dark:text-[#F4F2FF]"} />`;
     }
     function riassunto(sm, m) {
       const g = sm.g, ev = sm.eventi;
@@ -401,49 +461,63 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           <span className=${"flex-1 text-[14px] leading-relaxed whitespace-pre-line " + C.tx + (i === 0 ? " font-bold" : "")}>${v}</span></div>`)}</div>`;
     }
     /* eventi della partita in stile FotMob: casa a sinistra, ospite a destra, minuto al centro, separatori per intervallo e fine */
+    /* Eventi: una "spina" verticale al centro con i minuti; casa a sinistra, ospite a destra.
+       I gol sono in evidenza con il colore della squadra e il punteggio; cambi e cartellini più discreti. */
     function KeyEvents({ sm, m }) {
-      const ev = sm.eventi.slice().reverse();
-      if (!ev.length) return null;
-      const Linea = ({ testo }) => html`<div className="flex items-center gap-3 py-3"><span className=${"flex-1 border-t " + C.bd}></span>
-        <span className=${"text-[12px] font-bold uppercase tracking-wide " + C.mu}>${testo}</span><span className=${"flex-1 border-t " + C.bd}></span></div>`;
-      const Contenuto = ({ e, dx }) => {
-        const nomeCorto = (n) => { const p = String(n || "").split(" "); return p.length > 1 && p.slice(-1)[0].length > 2 ? p.slice(-1)[0] : n; };
-        let titolo, sotto;
-        if (e.k === "cambio") { titolo = html`<span className=${C.acc}>${nomeCorto(e.a)}</span>`; sotto = html`<span>Esce ${nomeCorto(e.b)}</span>`; }
-        else if (/gol|rigore$|autogol/.test(e.k) && !/sbagliato|parato/.test(e.k)) { titolo = html`<b>${nomeCorto(e.a)}</b>`; sotto = e.k === "rigore" ? "Rigore" : e.k === "autogol" ? "Autogol" : e.b ? "Assist: " + nomeCorto(e.b) : null; }
-        else if (e.k === "giallo") { titolo = html`<span>${nomeCorto(e.a)}</span>`; sotto = "Ammonizione"; }
-        else if (e.k === "rosso") { titolo = html`<b>${nomeCorto(e.a)}</b>`; sotto = "Espulsione"; }
-        else { titolo = html`<span>${e.a}</span>`; sotto = e.k; }
-        return html`<div className=${"flex items-center gap-2.5 min-w-0 " + (dx ? "" : "flex-row-reverse text-right")}>
-          <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-black/[0.05] dark:bg-white/[0.07]"><${EvIcon} k=${e.k} /></span>
-          <span className="min-w-0"><span className=${"block text-[14px] leading-tight truncate " + C.tx}>${titolo}</span>${sotto && html`<span className=${"block text-[12px] leading-tight mt-0.5 truncate " + C.mu}>${sotto}</span>`}</span></div>`;
-      };
-      return html`<div className=${C.card + " px-4 pt-4 pb-2"}>
-        <div className="flex items-center mb-1"><span className=${C.lab + " flex-1"}>Eventi</span>${sm.stadio && html`<span className=${"text-[12px] truncate max-w-[55%] " + C.mu}>${sm.stadio}</span>`}</div>
-        ${sm.st === "FT" && html`<${Linea} testo=${"Fine " + sm.g[0] + " - " + sm.g[1]} />`}
-        ${ev.map((e, i) => {
-          if (e.k === "intervallo") return html`<${Linea} key=${i} testo=${"Intervallo" + (e.score ? " " + e.score[0] + " - " + e.score[1] : "")} />`;
-          if (e.k === "fine") return null;
-          const gol = /gol|rigore$|autogol/.test(e.k) && !/sbagliato|parato/.test(e.k);
-          return html`<div key=${i} className="grid items-center py-2.5" style=${{ gridTemplateColumns: "minmax(0,1fr) 64px minmax(0,1fr)" }}>
-            <div className="min-w-0">${e.side === 0 && html`<${Contenuto} e=${e} />`}</div>
-            <div className="flex flex-col items-center gap-1"><span className=${"text-[12px] font-bold tabular-nums px-2 py-0.5 rounded-full " + C.ch + " " + C.tx}>${e.min}</span>
-              ${gol && e.score && html`<span className=${"text-[12px] font-bold tabular-nums " + C.acc}>${e.score[0]} - ${e.score[1]}</span>`}</div>
-            <div className="min-w-0">${e.side === 1 && html`<${Contenuto} e=${e} dx=${true} />`}</div></div>`;
-        })}
-        <${Linea} testo="Calcio d'inizio" /></div>`;
+      const [cambi, setCambi] = useState(false);
+      const col = auraCol(m);
+      const tutti = sm.eventi.slice().reverse();
+      const ev = tutti.filter((e) => cambi || e.k !== "cambio");
+      const nCambi = tutti.filter((e) => e.k === "cambio").length;
+      if (!tutti.length) return null;
+      const nomeCorto = (n) => { const p = String(n || "").split(" "); return p.length > 1 && p.slice(-1)[0].length > 2 ? p.slice(-1)[0] : n; };
+      const Tappa = ({ testo }) => html`<div className="relative flex justify-center py-2.5"><span className=${"relative z-10 px-3 py-1 rounded-full text-[12px] font-semibold bg-white dark:bg-[#191626] border " + C.bd + " " + C.mu}>${testo}</span></div>`;
+      return html`<div className=${C.card + " px-4 pt-4 pb-3"}>
+        <div className="flex items-center mb-1 gap-2"><span className=${C.lab + " flex-1"}>Eventi</span>
+          ${nCambi > 0 && html`<button onClick=${() => setCambi(!cambi)} className=${"text-[12px] font-semibold px-2.5 py-1 rounded-full " + (cambi ? C.seg : C.ch + " " + C.tx)}>${cambi ? "Nascondi cambi" : "Mostra cambi (" + nCambi + ")"}</button>`}</div>
+        <div className="relative">
+          <span aria-hidden="true" className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-[2px] rounded-full bg-[#17152B]/[0.08] dark:bg-white/[0.08]"></span>
+          ${sm.st === "FT" && html`<${Tappa} testo=${"Fine, " + sm.g[0] + "-" + sm.g[1]} />`}
+          ${ev.map((e, i) => {
+            if (e.k === "intervallo") return html`<${Tappa} key=${i} testo=${"Intervallo" + (e.score ? ", " + e.score[0] + "-" + e.score[1] : "")} />`;
+            if (e.k === "fine") return null;
+            const gol = /gol|rigore$|autogol/.test(e.k) && !/sbagliato|parato/.test(e.k);
+            const dx = e.side === 1, c = col[e.side] || "#888";
+            let titolo, sotto;
+            if (e.k === "cambio") { titolo = nomeCorto(e.a); sotto = "per " + nomeCorto(e.b); }
+            else if (gol) { titolo = nomeCorto(e.a); sotto = e.k === "rigore" ? "Rigore" : e.k === "autogol" ? "Autogol" : e.b ? "Assist di " + nomeCorto(e.b) : "Gol"; }
+            else if (e.k === "giallo") { titolo = nomeCorto(e.a); sotto = "Ammonito"; }
+            else if (e.k === "rosso") { titolo = nomeCorto(e.a); sotto = "Espulso"; }
+            else { titolo = e.a; sotto = e.k; }
+            const lato = html`<div className=${"min-w-0 flex items-center gap-2.5 " + (dx ? "" : "flex-row-reverse text-right")}>
+              <span className=${"rounded-full flex items-center justify-center shrink-0 " + (gol ? "w-8 h-8" : "w-6 h-6")} style=${{ background: gol ? c : "transparent", color: gol ? "#fff" : undefined }}>
+                ${gol ? html`<${Ic.BallIn} size=${18} c=${c} />` : html`<${EvIcon} k=${e.k} />`}</span>
+              <span className="min-w-0"><span className=${"block leading-tight truncate " + (gol ? "text-[16px] font-bold " : e.k === "cambio" ? "text-[13px] " : "text-[14px] font-medium ") + C.tx}>${titolo}</span>
+                <span className=${"block text-[12px] leading-tight mt-0.5 truncate " + C.mu}>${sotto}</span></span></div>`;
+            return html`<div key=${i} className=${"relative grid items-center " + (gol ? "py-3" : e.k === "cambio" ? "py-1.5" : "py-2")} style=${{ gridTemplateColumns: "minmax(0,1fr) 62px minmax(0,1fr)" }}>
+              <div className="min-w-0">${e.side === 0 && lato}</div>
+              <div className="relative z-10 flex flex-col items-center">
+                <span className=${"num px-1.5 bg-white dark:bg-[#191626] leading-none " + (gol ? "text-[19px] font-bold " + C.tx : "text-[16px] font-semibold " + C.mu)}>${e.min}</span>
+                ${gol && e.score && html`<span className=${"num mt-1 text-[15px] font-bold px-2 py-0.5 rounded-md " + C.seg}>${e.score[0]}-${e.score[1]}</span>`}</div>
+              <div className="min-w-0">${e.side === 1 && lato}</div></div>`;
+          })}
+          <${Tappa} testo="Calcio d'inizio" /></div></div>`;
     }
     function StatsCard({ sm, m }) {
       const [all, setAll] = useState(false);
       if (!sm.statistiche.length) return null;
+      const [ch, ca] = auraCol(m);
       const rows = all ? sm.statistiche : sm.statistiche.slice(0, 6);
       const fmt = (v, u) => (u === "%" ? Math.round(v) + "%" : v);
-      return html`<div className=${C.card + " p-4 space-y-3"}>
-        <div className=${"flex justify-between text-xs font-semibold " + C.mu}><span className="flex items-center gap-1.5"><${Crest} t=${m.h} size=${14} />${m.h}</span><span className=${C.lab}>Statistiche</span><span className="flex items-center gap-1.5">${m.a}<${Crest} t=${m.a} size=${14} /></span></div>
-        ${rows.map(([l, a, b, u]) => html`<div key=${l}><div className="flex justify-between text-sm tabular-nums"><span className=${"font-semibold " + (a >= b ? C.tx : C.mu)}>${fmt(a, u)}</span><span className=${"text-xs " + C.mu}>${l}</span><span className=${"font-semibold " + (b >= a ? C.tx : C.mu)}>${fmt(b, u)}</span></div>
-          <div className="flex gap-1 mt-1"><div className=${"flex-1 h-1.5 rounded-full flex justify-end " + C.ch}><div className="h-1.5 rounded-full bg-emerald-300 dark:bg-emerald-500/70" style=${{ width: (a / (a + b || 1)) * 100 + "%" }}></div></div>
-            <div className=${"flex-1 h-1.5 rounded-full " + C.ch}><div className="h-1.5 rounded-full bg-sky-300 dark:bg-sky-500/70" style=${{ width: (b / (a + b || 1)) * 100 + "%" }}></div></div></div></div>`)}
-        ${sm.statistiche.length > 6 && html`<button onClick=${() => setAll(!all)} className="text-xs font-semibold text-[#00985F] dark:text-[#3DDC97]">${all ? "Mostra meno" : "Tutte le statistiche"}</button>`}</div>`;
+      const Val = ({ v, u, top, c }) => html`<span className=${"num text-[18px] font-bold leading-none px-1.5 py-[3px] rounded-md min-w-[34px] text-center " + (top ? "text-white" : C.mu)} style=${top ? { background: c } : null}>${fmt(v, u)}</span>`;
+      return html`<div className=${C.card + " p-4"}>
+        <div className="flex items-center gap-2 mb-3"><span className=${C.lab + " flex-1"}>Statistiche</span>
+          <span className="flex items-center gap-1"><i className="block w-2.5 h-2.5 rounded-full" style=${{ background: ch }}></i><span className=${"text-[12px] " + C.mu}>${m.h}</span></span>
+          <span className="flex items-center gap-1 ml-2"><i className="block w-2.5 h-2.5 rounded-full" style=${{ background: ca }}></i><span className=${"text-[12px] " + C.mu}>${m.a}</span></span></div>
+        <div className="space-y-3.5">${rows.map(([l, a, b, u]) => { const t = a + b || 1; return html`<div key=${l}>
+          <div className="flex items-center justify-between"><${Val} v=${a} u=${u} top=${a > b} c=${ch} /><span className=${"text-[13px] font-medium " + C.tx}>${l}</span><${Val} v=${b} u=${u} top=${b > a} c=${ca} /></div>
+          <div className="flex gap-[3px] mt-2 h-[5px]"><i className="block rounded-full" style=${{ width: (a / t) * 100 + "%", background: ch, opacity: a >= b ? 1 : 0.45 }}></i><i className="block rounded-full" style=${{ width: (b / t) * 100 + "%", background: ca, opacity: b >= a ? 1 : 0.45 }}></i></div></div>`; })}</div>
+        ${sm.statistiche.length > 6 && html`<button onClick=${() => setAll(!all)} className=${"mt-3 text-[13px] font-semibold " + C.acc}>${all ? "Mostra meno" : "Tutte le statistiche"}</button>`}</div>`;
     }
     function Cronaca({ sm, m }) {
       const [f, setF] = useState(0);
@@ -451,7 +525,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const list = sm.cronaca.filter((c) => c.text && (!f || KEY_T.test(c.type) || /^Gol!|Fine|Inizia|recupero/.test(c.text)));
       const tipo = (c) => (/goal|penalty---scored|own-goal/.test(c.type) || /^Gol!/.test(c.text) ? "gol" : /red-card/.test(c.type) ? "rosso" : /yellow-card/.test(c.type) ? "giallo"
         : /substitution/.test(c.type) ? "cambio" : /^(Fine|Inizia)/.test(c.text) ? "sep" : /shot-on-target|woodwork|penalty/.test(c.type) ? "tiro" : "");
-      const barra = { gol: "bg-[#00985F] dark:bg-[#3DDC97]", rosso: "bg-[#E5484D]", giallo: "bg-amber-400", cambio: "bg-sky-500", tiro: "bg-black/20 dark:bg-white/25" };
+      const barra = { gol: "bg-[#5B2EE6] dark:bg-[#A58BFF]", rosso: "bg-[#FF3D5A]", giallo: "bg-amber-400", cambio: "bg-[#6E6A85]/50", tiro: "bg-black/20 dark:bg-white/25" };
       const sepLab = (t) => { const sc = /(\d+),\s[^,]+?\s(\d+)/.exec(t); const r = sc ? " " + sc[1] + " - " + sc[2] : "";
         return /^Fine primo tempo/.test(t) ? "Intervallo" + r : /^Inizia il secondo tempo/.test(t) ? "Secondo tempo" : /^Inizia il primo tempo/.test(t) ? "Calcio d'inizio" : /^Inizia/.test(t) ? "Supplementari" : "Fine" + r; };
       const voce = (c) => { const t = c.text; const i = t.indexOf(". "); return i > 0 && i < 40 && /^(Gol!|Tiro|Rigore|Sostituzione|Ammonito|Espulso|Calcio d'angolo|Fuorigioco)/.test(t) ? [t.slice(0, i + 1), t.slice(i + 2)] : [null, t]; };
@@ -515,15 +589,16 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       if (!F[0] && !F[1]) return html`<div className=${C.card + " p-4 flex gap-3"}><span className=${"w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border " + TONE.ok}><${Ic.Shirt} size=${17} /></span>
         <div><div className=${"text-sm font-semibold " + C.tx}>Formazioni non ancora ufficiali</div><p className=${"text-sm " + C.mu}>Escono circa un'ora prima del calcio d'inizio: compariranno qui da sole, sul campo.</p></div></div>`;
       const Tok = ({ p, col }) => html`<button onClick=${() => onPlayer(p)} className="flex flex-col items-center w-[19%] min-w-0">
-        <span className="relative"><span className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white border-2 border-white/80 shadow" style=${{ background: col }}>${p.num}</span><${Badges} p=${p} /></span>
-        <span className="mt-0.5 text-[10px] font-semibold text-white leading-tight truncate max-w-full drop-shadow">${p.last}</span></button>`;
+        <span className="relative"><span className="num w-[34px] h-[34px] rounded-full flex items-center justify-center text-[16px] font-bold text-white" style=${{ background: col, boxShadow: "0 0 0 2px rgba(255,255,255,0.85), 0 6px 16px -4px " + col }}>${p.num}</span><${Badges} p=${p} />
+          ${p.voto != null && html`<span className="absolute -top-1.5 -left-3"><${VotoChip} v=${p.voto} /></span>`}</span>
+        <span className="mt-1 text-[11px] font-semibold text-white leading-tight truncate max-w-full">${p.last}</span></button>`;
       const half = (j) => { const f = F[j]; if (!f) return html`<div className="h-1/2"></div>`; const lines = j === 0 ? f.lines.map((l) => l.slice().reverse()) : f.lines.slice().reverse();
         return html`<div className="flex flex-col justify-around h-1/2 py-2">${lines.map((l, i) => html`<div key=${i} className="flex justify-around">${l.map((p) => html`<${Tok} key=${p.id} p=${p} col=${sm.colors[j]} />`)}</div>`)}</div>`; };
       return html`<${React.Fragment}>
         <div className=${C.card + " p-3"}>
           <div className=${"flex justify-between text-xs font-semibold mb-2 " + C.tx}><span className="flex items-center gap-1.5"><${Crest} t=${m.h} size=${14} />${m.h} <span className=${C.mu}>${F[0] ? F[0].formation : ""}</span></span></div>
-          <div className="relative rounded-xl overflow-hidden" style=${{ background: "#3f8f5a", aspectRatio: "68 / 105" }}>
-            <svg viewBox="0 0 68 105" className="absolute inset-0 w-full h-full" preserveAspectRatio="none"><g fill="none" stroke="#fff" strokeOpacity="0.5" strokeWidth="0.35">
+          <div className="relative rounded-[16px] overflow-hidden" style=${{ background: "repeating-linear-gradient(180deg, #1F1B38 0 9.5%, #241F42 9.5% 19%)", aspectRatio: "68 / 105" }}>
+            <svg viewBox="0 0 68 105" className="absolute inset-0 w-full h-full" preserveAspectRatio="none"><g fill="none" stroke="#B7A6FF" strokeOpacity="0.35" strokeWidth="0.35">
               <rect x="0.5" y="0.5" width="67" height="104" /><line x1="0" y1="52.5" x2="68" y2="52.5" /><circle cx="34" cy="52.5" r="9.15" />
               <rect x="13.84" y="0.5" width="40.32" height="16.5" /><rect x="13.84" y="88" width="40.32" height="16.5" /><rect x="24.84" y="0.5" width="18.32" height="5.5" /><rect x="24.84" y="99" width="18.32" height="5.5" /></g></svg>
             <div className="absolute inset-0 flex flex-col">${half(0)}${half(1)}</div></div>
@@ -531,7 +606,92 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           <p className=${"text-[11px] mt-1 " + C.mu}>Tocca un giocatore per vedere partita, stagione e carriera.</p></div>
         <div className=${C.card + " p-4"}><div className=${C.lab + " mb-2"}>Panchina</div>
           <div className="grid grid-cols-2 gap-x-3">${[0, 1].map((j) => html`<div key=${j} className="space-y-1 min-w-0">${(F[j] ? F[j].bench : []).map((p) => html`<button key=${p.id} onClick=${() => onPlayer(p)} className=${"w-full flex items-center gap-1.5 text-left text-[13px] " + C.tx}>
-            <span className=${"w-5 text-[11px] tabular-nums " + C.mu}>${p.num}</span><span className=${"truncate flex-1 " + (p.inn ? "font-semibold" : "")}>${p.short}</span>${p.inn && html`<span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-300 shrink-0">${p.minIn || "in"}</span>`}</button>`)}</div>`)}</div></div><//>`;
+            <span className=${"num w-5 text-[14px] " + C.mu}>${p.num}</span><span className=${"truncate flex-1 py-0.5 " + (p.inn ? "font-semibold" : "")}>${p.short}</span>${p.inn && html`<span className=${"num text-[14px] shrink-0 " + C.acc}>${p.minIn || "in"}</span>`}${p.voto != null && html`<${VotoChip} v=${p.voto} />`}</button>`)}</div>`)}</div>
+          <p className=${"text-[11px] mt-3 " + C.mu}>Voti AuraPitch: calcolati dalle statistiche della partita (gol, assist, tiri, falli, cartellini, parate, gol subiti, risultato). Partono da 6.</p></div><//>`;
+    }
+    /* voto: numero in stile tabellone su una pastiglia; viola = ottimo, verde acqua = buono, lilla = nella media, corallo = insufficiente */
+    const tonoVoto = (v) => (v >= 7.5 ? "#5B2EE6" : v >= 6.6 ? "#0F9D84" : v >= 5.8 ? "#8A84A3" : "#FF3D5A");
+    function VotoChip({ v, big }) {
+      return html`<span className=${"num inline-flex items-center justify-center rounded-[6px] text-white font-bold leading-none shrink-0 " + (big ? "text-[20px] px-2 py-1 min-w-[42px]" : "text-[13px] px-1 py-[2px] min-w-[28px]")} style=${{ background: tonoVoto(v) }}>${v.toFixed(1).replace(".", ",")}</span>`;
+    }
+    /* migliori in campo: i 3 voti più alti, il primo in grande */
+    function Migliori({ sm, m, onPlayer }) {
+      const col = auraCol(m);
+      const tutti = [0, 1].flatMap((j) => (sm.formazioni[j] ? sm.formazioni[j].all.filter((p) => p.voto != null).map((p) => ({ p, j })) : []));
+      if (tutti.length < 6) return null;
+      tutti.sort((a, b) => b.p.voto - a.p.voto);
+      const [top, ...altri] = tutti.slice(0, 4);
+      const riga = (x) => { const st = x.p.st || {}; return [st.totalGoals ? st.totalGoals + (st.totalGoals > 1 ? " gol" : " gol") : null, st.goalAssists ? st.goalAssists + " assist" : null, st.saves ? st.saves + " parate" : null, st.shotsOnTarget ? st.shotsOnTarget + " tiri in porta" : null].filter(Boolean).slice(0, 2).join(", ") || (x.j ? m.a : m.h); };
+      return html`<div className=${C.card + " p-4"}>
+        <div className="flex items-baseline mb-3"><span className=${C.lab + " flex-1"}>${sm.st === "FT" ? "Migliore in campo" : "Migliori finora"}</span><span className=${"text-[12px] " + C.mu}>Voti AuraPitch</span></div>
+        <button onClick=${() => onPlayer(top.p, top.j)} className="w-full flex items-center gap-3 text-left">
+          <span className="num w-12 h-12 rounded-full flex items-center justify-center text-[20px] font-bold text-white shrink-0" style=${{ background: col[top.j], boxShadow: "0 8px 22px -6px " + col[top.j] }}>${top.p.num}</span>
+          <span className="flex-1 min-w-0"><span className=${"block text-[17px] font-bold truncate " + C.tx}>${top.p.name}</span><span className=${"block text-[13px] truncate " + C.mu}>${riga(top)}</span></span>
+          <${VotoChip} v=${top.p.voto} big=${true} /></button>
+        <div className=${"mt-3 pt-2 border-t space-y-1 " + C.bd}>${altri.map((x) => html`<button key=${x.p.id} onClick=${() => onPlayer(x.p, x.j)} className="w-full flex items-center gap-2.5 py-1.5 text-left">
+          <i className="block w-2 h-2 rounded-full shrink-0" style=${{ background: col[x.j] }}></i><span className=${"flex-1 text-[14px] truncate " + C.tx}>${x.p.name}</span><span className=${"text-[12px] truncate max-w-[40%] " + C.mu}>${riga(x)}</span><${VotoChip} v=${x.p.voto} /></button>`)}</div></div>`;
+    }
+    /* andamento: chi spinge minuto per minuto. Onda sopra = casa, sotto = ospite, nel colore delle squadre; i gol sono segnati */
+    function Andamento({ sm, m }) {
+      const fino = sm.st === "FT" ? Math.max(90, ...sm.cronaca.map((c) => minuto(c.min))) : Math.max(1, minuto(sm.clock || ""));
+      const { punti, gol } = React.useMemo(() => andamento(sm.cronaca, fino), [sm, fino]);
+      if (sm.cronaca.length < 8 || punti.length < 5) return null;
+      const [ch, ca] = auraCol(m);
+      const W = 300, H = 110, Y = H / 2, N = Math.max(90, fino);
+      const mx = Math.max(1.2, ...punti.map(Math.abs));
+      const X = (i) => (i / N) * W;
+      const area = (sgn) => "M0," + Y + " " + punti.map((v, i) => "L" + X(i + 1).toFixed(1) + "," + (Y - (sgn > 0 ? Math.max(0, v) : Math.min(0, v)) / mx * (Y - 8)).toFixed(1)).join(" ") + " L" + X(punti.length).toFixed(1) + "," + Y + " Z";
+      const dom = punti.reduce((a, v) => a + v, 0);
+      return html`<div className=${C.card + " p-4"}>
+        <div className="flex items-baseline mb-2"><span className=${C.lab + " flex-1"}>Andamento</span><span className=${"text-[12px] " + C.mu}>${Math.abs(dom) < punti.length * 0.08 ? "Partita equilibrata" : "Ha spinto di più " + (dom > 0 ? m.h : m.a)}</span></div>
+        <svg viewBox=${"0 0 " + W + " " + H} className="w-full h-[120px]" preserveAspectRatio="none" role="img" aria-label="Andamento della partita minuto per minuto">
+          <rect x="0" y="0" width=${X(45)} height=${H} fill="currentColor" className="text-[#17152B]/[0.025] dark:text-white/[0.03]" />
+          <line x1=${X(45)} y1="0" x2=${X(45)} y2=${H} stroke="currentColor" className=${C.mu} strokeOpacity="0.35" strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
+          <path d=${area(1)} fill=${ch} fillOpacity="0.85" />
+          <path d=${area(-1)} fill=${ca} fillOpacity="0.85" />
+          <line x1="0" y1=${Y} x2=${W} y2=${Y} stroke="currentColor" className=${C.mu} strokeOpacity="0.4" vectorEffect="non-scaling-stroke" />
+        </svg>
+        <div className="relative h-5 -mt-1">${gol.map((g, i) => html`<span key=${i} className="absolute -translate-x-1/2" style=${{ left: (g.m / N) * 100 + "%", top: 0 }}><${Ic.BallIn} size=${14} c=${g.side ? ca : ch} /></span>`)}</div>
+        <div className=${"flex justify-between num text-[14px] " + C.mu}><span>0'</span><span>45'</span><span>${N}'</span></div>
+        <div className=${"flex gap-4 mt-2 text-[12px] " + C.mu}><span className="flex items-center gap-1.5"><i className="block w-2.5 h-2.5 rounded-full" style=${{ background: ch }}></i>${m.h} in attacco</span><span className="flex items-center gap-1.5"><i className="block w-2.5 h-2.5 rounded-full" style=${{ background: ca }}></i>${m.a} in attacco</span></div></div>`;
+    }
+    /* curiosità: serie in corso delle due squadre (dati della stagione) */
+    function Curiosita({ m }) {
+      const L = m.curiosita || [];
+      if (!L.length) return null;
+      const col = auraCol(m);
+      return html`<div className=${C.card + " p-4"}><div className=${C.lab + " mb-2"}>Curiosità</div>
+        <div className="space-y-2.5">${L.map((t, i) => { const j = t.startsWith(m.a) ? 1 : t.startsWith(m.h) ? 0 : t.includes(m.a) && !t.includes(m.h) ? 1 : 0; return html`<div key=${i} className="flex gap-3 items-start">
+          <i className="block w-[3px] self-stretch rounded-full shrink-0" style=${{ background: col[j] }}></i><span className=${"text-[15px] leading-snug " + C.tx}>${t}</span></div>`; })}</div></div>`;
+    }
+    /* sondaggio "chi vince?": voto del pubblico confrontato con quote e IA */
+    function Sondaggio({ m }) {
+      const { pushUrl } = React.useContext(Ctx);
+      const [v, setV] = useState(null);
+      const [mio, setMio] = useState(store.get("voto:" + m.id, null));
+      const aperto = m.st === "NS";
+      useEffect(() => { if (!pushUrl) return; fetch(pushUrl + "/voti?id=" + encodeURIComponent(m.id)).then((r) => (r.ok ? r.json() : null)).then((x) => x && x.ok && setV(x.v)).catch(() => {}); }, [pushUrl, m.id]);
+      if (!pushUrl || (!aperto && (!v || v[0] + v[1] + v[2] === 0))) return null;
+      const vota = (s) => {
+        let chi = store.get("chi", null); if (!chi) { chi = Array.from({ length: 16 }, () => "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]).join(""); store.set("chi", chi); }
+        setMio(s); store.set("voto:" + m.id, s);
+        const nv = (v || [0, 0, 0]).slice(); if (mio != null) nv[mio] = Math.max(0, nv[mio] - 1); nv[s] += 1; setV(nv);
+        fetch(pushUrl + "/voto", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: m.id, s, chi }) }).then((r) => r.json()).then((x) => x && x.ok && setV(x.v)).catch(() => {});
+      };
+      const tot = v ? v[0] + v[1] + v[2] : 0;
+      const col = auraCol(m);
+      const nomi = [m.h, "Pareggio", m.a];
+      const cc = [col[0], "#8A84A3", col[1]];
+      return html`<div className=${C.card + " p-4"}>
+        <div className="flex items-baseline mb-3"><span className=${C.lab + " flex-1"}>Chi vince secondo te?</span>${tot > 0 && html`<span className=${"text-[12px] " + C.mu}>${tot} ${tot === 1 ? "voto" : "voti"}</span>`}</div>
+        ${mio == null && aperto ? html`<div className="grid grid-cols-3 gap-2">${nomi.map((n, i) => html`<button key=${i} onClick=${() => vota(i)} className=${"rounded-[14px] py-3 px-2 text-[14px] font-semibold leading-tight " + C.ch + " " + C.tx}>
+            <span className="block num text-[22px] font-bold mb-0.5" style=${{ color: i === 1 ? undefined : cc[i] }}>${["1", "X", "2"][i]}</span><span className="block truncate">${n}</span></button>`)}</div>
+            <p className=${"text-[12px] mt-2 " + C.mu}>Vota per vedere cosa pensano gli altri tifosi.</p>`
+          : html`<div className="space-y-2.5">${nomi.map((n, i) => { const q = tot ? v[i] / tot : 0; return html`<div key=${i}>
+              <div className="flex items-baseline text-[14px]"><span className=${"flex-1 truncate " + C.tx + (mio === i ? " font-semibold" : "")}>${n}${mio === i ? " (il tuo voto)" : ""}</span><span className=${"num text-[18px] font-bold " + C.tx}>${Math.round(q * 100)}%</span></div>
+              <div className=${"h-[6px] rounded-full mt-1 " + C.ch}><div className="h-[6px] rounded-full" style=${{ width: q * 100 + "%", background: cc[i] }}></div></div></div>`; })}
+            <div className=${"text-[12px] pt-1 " + C.mu}>Le quote dicono: ${m.h} ${pct(m.mk[0])}%, pareggio ${pct(m.mk[1])}%, ${m.a} ${pct(m.mk[2])}%.${aperto ? " Puoi cambiare voto fino al calcio d'inizio." : " Votazione chiusa."}</div>
+            ${aperto && html`<div className="flex gap-2">${nomi.map((n, i) => mio !== i && html`<button key=${i} onClick=${() => vota(i)} className=${"text-[12px] font-semibold px-2.5 py-1 rounded-full " + C.ch + " " + C.tx}>Vota ${["1", "X", "2"][i]}</button>`)}</div>`}</div>`}</div>`;
     }
     const ST_IT = [["totalGoals", "Gol"], ["goalAssists", "Assist"], ["totalShots", "Tiri"], ["shotsOnTarget", "Tiri in porta"], ["foulsCommitted", "Falli fatti"], ["foulsSuffered", "Falli subiti"], ["offsides", "Fuorigioco"], ["yellowCards", "Gialli"], ["redCards", "Rossi"], ["saves", "Parate"], ["goalsConceded", "Gol subiti"], ["shotsFaced", "Tiri subiti"], ["ownGoals", "Autogol"]];
     function PlayerSheet({ p, side, m, col, onClose, noMatch }) {
@@ -652,9 +812,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           ${att.map((f, i) => html`<div key=${i} className=${"text-sm rounded-xl p-2.5 " + C.ch + " " + C.tx}>
             <div><b>${f.chi}</b> (${f.lato ? m.a : m.h}) ${TIPO[f.tipo] || f.tipo}: gol attesi ${String(Math.round(f.delta * 1000) / 10).replace(".", ",")}%</div>
             <div className=${"text-[11px] " + C.mu}>Peso nei gol della squadra ${Math.round(f.quota * 100)}% x scoperto dal sostituto 50% x affidabilità ${Math.round(f.affidabilita * 100)}%${f.prezzo < 1 ? " x 25% perché già nota al mercato" : ""}${f.tetto ? ", ridotto dal tetto del 15%" : ""}.</div>
-            ${f.link ? html`<a href=${f.link} target="_blank" rel="noopener" className="text-[11px] text-[#00985F] dark:text-[#3DDC97]">${f.fonte || "Fonte"}: ${f.titolo}</a>` : html`<div className=${"text-[11px] " + C.mu}>${f.titolo}</div>`}</div>`)}
+            ${f.link ? html`<a href=${f.link} target="_blank" rel="noopener" className="text-[11px] text-[#5B2EE6] dark:text-[#A58BFF]">${f.fonte || "Fonte"}: ${f.titolo}</a>` : html`<div className=${"text-[11px] " + C.mu}>${f.titolo}</div>`}</div>`)}
           ${(m.segnali || []).length > 0 && html`<div className=${"text-[11px] font-semibold " + C.mu}>Segnali registrati (peso zero, in attesa di misura)</div>${m.segnali.map((x, i) => html`<div key=${"s" + i} className=${"text-[12px] " + C.tx}>
-            ${x.tipo === "allenatore" ? html`Cambio in panchina (${x.lato ? m.a : m.h}): ${x.link ? html`<a href=${x.link} target="_blank" rel="noopener" className="text-[#00985F] dark:text-[#3DDC97]">${x.titolo}</a>` : x.titolo}` : html`Riposo: ${x.lato ? m.a : m.h} ha ${x.titolo}.`}</div>`)}
+            ${x.tipo === "allenatore" ? html`Cambio in panchina (${x.lato ? m.a : m.h}): ${x.link ? html`<a href=${x.link} target="_blank" rel="noopener" className="text-[#5B2EE6] dark:text-[#A58BFF]">${x.titolo}</a>` : x.titolo}` : html`Riposo: ${x.lato ? m.a : m.h} ha ${x.titolo}.`}</div>`)}
             <div className=${"text-[11px] " + C.mu}>Cambio di allenatore e giorni di riposo vengono registrati ma non pesano: nei test il riposo non ha migliorato le quote e il "rimbalzo" del nuovo allenatore è in gran parte già nel prezzo. Lo storico dirà se meritano un peso.</div>`}
           ${(m.diffidati || []).length > 0 && html`<div className=${"text-[12px] " + C.tx}><b>Diffidati</b> (alla prossima ammonizione saltano la partita dopo): ${m.diffidati.map((x) => x.chi + " (" + (x.lato ? m.a : m.h) + ")").join(", ")}.</div>`}
           ${info.length > 0 && html`<div className=${"text-[11px] font-semibold " + C.mu}>Notizie lette ma senza effetto sulle probabilità</div>${info.map((f, i) => html`<a key=${"i" + i} href=${f.link} target="_blank" rel="noopener" className=${"block text-[12px] " + C.tx}>${f.chi}: ${TIPO[f.tipo] || f.tipo} <span className=${C.mu}>- ${f.fonte}</span></a>`)}`}
@@ -669,7 +829,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const R = stor.riass, nomi = { consiglio: "Consiglio", prudente: "Prudente", coraggiosa: "Coraggiosa" };
       const tot = R.consiglio ? R.consiglio.n : 0;
       return html`<div className=${C.card + " p-4 space-y-2"}>
-        <div className="flex items-center"><span className=${C.lab + " flex-1"}>Storico consigli IA - ultimi ${stor.giorni} giorni</span><${Ic.BarChart3} size=${15} className=${C.mu} /></div>
+        <div className="flex items-center"><span className=${C.lab + " flex-1"}>Storico consigli IA, ultimi ${stor.giorni} giorni</span><${Ic.BarChart3} size=${15} className=${C.mu} /></div>
         ${!tot ? html`<p className=${"text-sm " + C.mu}>Lo storico parte da oggi: ogni consiglio viene salvato prima del calcio d'inizio e verificato a fine partita, senza ritocchi. Torna tra qualche giorno.</p>`
           : html`<${React.Fragment}>
             <div className=${"grid grid-cols-[1.3fr_1fr_0.8fr_0.8fr] text-[11px] font-medium " + C.mu}><span>Profilo</span><span className="text-right">Presi</span><span className="text-right">Attesi</span><span className="text-right">Resa</span></div>
@@ -679,7 +839,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
             <p className=${"text-[11px] " + C.mu}>"Attesi" è quanti consigli ci si aspettava di prendere sommando le probabilità: se "Presi" gli resta vicino, le probabilità sono oneste. "Resa" è il guadagno in unità puntando 1 su ogni consiglio alla quota mostrata (stimata dove manca quella media).</p>
             ${stor.taratura && html`<div className=${"text-[11px] rounded-lg p-2 " + C.ch + " " + C.tx}>${stor.taratura.n ? html`<b>Taratura dei fattori:</b> su ${stor.taratura.n} partite in cui l'IA ha corretto le quote, errore medio quote ${String(stor.taratura.errore_quote).replace(".", ",")} contro IA ${String(stor.taratura.errore_ia).replace(".", ",")} (più basso è meglio).`
               : html`<b>Taratura dei fattori:</b> le correzioni dell'IA (notizie e formazioni) vengono registrate partita per partita; con abbastanza partite si misura se migliorano le quote e si ritarano i pesi.`}</div>`}
-            <button onClick=${() => setOpen(!open)} className="text-xs font-semibold text-[#00985F] dark:text-[#3DDC97]">${open ? "Nascondi le partite" : "Vedi partita per partita"}</button>
+            <button onClick=${() => setOpen(!open)} className="text-xs font-semibold text-[#5B2EE6] dark:text-[#A58BFF]">${open ? "Nascondi le partite" : "Vedi partita per partita"}</button>
             ${open && html`<div className="space-y-1.5">${stor.lista.map((v, i) => html`<div key=${i} className=${"text-sm border-t pt-1.5 " + C.bd}>
               <div className=${"flex justify-between " + C.tx}><span className="truncate">${v.h} - ${v.a}</span><b className="tabular-nums">${v.g ? v.g[0] + "-" + v.g[1] : ""}</b></div>
               <div className="flex flex-wrap gap-1 mt-1">${Object.keys(nomi).filter((k) => v.tips[k]).map((k) => html`<span key=${k} className=${"text-[11px] px-2 py-0.5 rounded-full border " + (v.esiti[k] ? TONE.good : TONE.bad)}>${mLabel({ h: v.h, a: v.a }, v.tips[k].c, true)}</span>`)}</div></div>`)}</div>`}<//>`}</div>`;
@@ -708,7 +868,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const form = d ? d.risultati.slice(0, 5).reverse().map((r) => ({ esito: r.esito, avv: r.avv, ris: r.g.join("-") })) : [];
       const RUOLI = ["Portiere", "Difensore", "Centrocampista", "Attaccante"];
       return html`<div className="px-4 space-y-3">
-        <button onClick=${() => setTeam(null)} className="flex items-center gap-1 text-sm font-medium text-[#00985F] dark:text-[#3DDC97]"><${Ic.ChevronLeft} size=${18} />Indietro</button>
+        <button onClick=${() => setTeam(null)} className="flex items-center gap-1 text-sm font-medium text-[#5B2EE6] dark:text-[#A58BFF]"><${Ic.ChevronLeft} size=${18} />Indietro</button>
         <div className=${C.card + " p-4 flex items-center gap-3"}><${Crest} t=${team.name} size=${52} />
           <div className="flex-1 min-w-0"><div className=${"text-xl font-semibold truncate " + C.tx}>${team.name}</div>
             ${form.length > 0 && html`<div className="mt-1.5"><${Form} list=${form} /></div>`}</div></div>
@@ -747,14 +907,14 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const AddBtn = ({ c }) => { const on = inSlip && norm(inSlip.k) === c; return html`<button aria-label="Aggiungi alla schedina" onClick=${(e) => { e.stopPropagation(); addLeg(m, c); }}
         className=${"w-8 h-8 rounded-full flex items-center justify-center shrink-0 border " + (on ? TONE.good : C.ch + " border-transparent " + C.tx)}>${on ? html`<${Ic.Check} size=${14} />` : html`<${Ic.Plus} size=${14} />`}</button>`; };
       const Card = ({ k }) => { const t = tip[k]; if (!t) return null; const o = why === k, main = k === "consiglio";
-        return html`<div className=${C.card + " p-4 " + (main ? "ring-1 ring-sky-200 dark:ring-sky-500/40" : "")}>
+        return html`<div className=${C.card + " p-4 " + (main ? "ring-2 ring-[#5B2EE6]/30 dark:ring-[#A58BFF]/40" : "")}>
           <div className="flex items-center gap-3 cursor-pointer" onClick=${() => setWhy(o ? null : k)}>
             ${main && html`<span className=${"w-9 h-9 rounded-xl flex items-center justify-center border shrink-0 " + TONE.info}><${Ic.Sparkles} size=${17} /></span>`}
             <div className="flex-1 min-w-0"><div className=${C.lab}>${t.titolo}</div>
               <div className=${(main ? "text-base " : "text-sm ") + "font-semibold leading-tight " + C.tx}>${mLabel(m, t.c)}</div>
               <div className=${"text-xs tabular-nums " + C.mu}>Probabilità ${pct(t.p)}% - quota ${t.qm ? "media" : "stimata"} ${odd(t.q)}</div></div>
             <${AddBtn} c=${t.c} /></div>
-          <button onClick=${() => setWhy(o ? null : k)} className="mt-2 text-xs font-semibold text-[#00985F] dark:text-[#3DDC97] flex items-center gap-1">${o ? "Nascondi motivazione" : "Perché questo consiglio?"}<${o ? Ic.ChevronUp : Ic.ChevronDown} size=${13} /></button>
+          <button onClick=${() => setWhy(o ? null : k)} className="mt-2 text-xs font-semibold text-[#5B2EE6] dark:text-[#A58BFF] flex items-center gap-1">${o ? "Nascondi motivazione" : "Perché questo consiglio?"}<${o ? Ic.ChevronUp : Ic.ChevronDown} size=${13} /></button>
           ${o && html`<div className="mt-2 space-y-1.5 text-sm leading-relaxed">
             ${t.perche.map((x) => html`<div key=${x} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-2 shrink-0 " + DOT.good}></span><span className=${C.tx}>${x}</span></div>`)}
             ${(t.contro || []).map((x) => html`<div key=${x} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-2 shrink-0 " + DOT.warn}></span><span className=${C.tx}><b>Da tenere d'occhio:</b> ${x}</span></div>`)}
@@ -822,42 +982,53 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         { k: "Quote", i: Ic.Calculator, tone: "ok", body: `Favorito per le quote: ${["casa", "pareggio", "ospiti"][m.mk.indexOf(Math.max(...m.mk))]}. Le quote riassumono già forma, classifica e precedenti: la lettura qui sopra spiega il perché.` },
       ];
       const opts = options(m);
+      const [ch, ca] = auraCol(m);
+      const gScore = m.g && m.st !== "NS";
+      const marcatori = (j) => sm ? sm.eventi.filter((e) => e.side === j && (/gol|rigore$|autogol/.test(e.k) && !/sbagliato|parato/.test(e.k) || e.k === "rosso")) : [];
       return html`<div className="px-4 space-y-3">
-        <button onClick=${() => setOpen(null)} className="flex items-center gap-1 text-sm font-semibold text-[#00985F] dark:text-[#3DDC97]"><${Ic.ChevronLeft} size=${18} />Partite</button>
-        <div className=${C.card + " p-4 pb-3"}>
-          <div className="flex items-center gap-2"><${Flag} k=${L.flag} w=${18} /><span className=${"text-xs " + C.mu}>${L.name}</span>
-            <span className=${"ml-auto text-xs " + C.mu}>${m.date.slice(8)}/${m.date.slice(5, 7)} ${m.time || ""}</span>
-            <button aria-label=${favM.includes(m.id) ? "Togli dalle preferite" : "Aggiungi alle preferite"} onClick=${() => toggleFavM(m.id)} className="ml-1 -mr-1 p-1">
-              <${Ic.Star} size=${18} className=${favM.includes(m.id) ? "text-amber-400 fill-amber-400" : C.mu} /></button></div>
-          <div className="flex items-start justify-between mt-4">
-            ${[m.h, m.a].map((t, j) => html`<button key=${t} onClick=${() => setTeam({ lgE: m.lgE || ESPN_LG[m.lg], id: j ? m.aid : m.hid, name: t })} className=${"flex flex-col items-center gap-1.5 w-28 " + (j ? "order-3" : "order-1")}><${Crest} t=${t} size=${54} />
-              <span className=${"text-[15px] font-bold text-center leading-tight " + C.tx}>${t}</span><span className=${"text-[11px] " + C.mu}>${pos(t) ? pos(t) + "° in classifica" : "Pagina squadra"}</span>
-              ${sm && sm.eventi.filter((e) => e.side === j && /gol|rigore$|autogol/.test(e.k) && !/sbagliato|parato/.test(e.k)).map((e, q) => html`<span key=${q} className=${"text-[11px] leading-tight text-center " + C.mu}>${e.a.split(" ").slice(-1)[0]} ${e.min}${e.k === "rigore" ? " (R)" : e.k === "autogol" ? " (AG)" : ""}</span>`)}
-              ${sm && sm.eventi.filter((e) => e.side === j && e.k === "rosso").map((e, q) => html`<span key=${"r" + q} className="text-[11px] leading-tight text-center flex items-center gap-1 text-[#E5484D]"><span className="inline-block w-1.5 h-2 rounded-[1px] bg-[#E5484D]"></span>${e.a.split(" ").slice(-1)[0]} ${e.min}</span>`)}</button>`)}
-            <div className="order-2 flex flex-col items-center pt-3"><div className=${"text-[34px] font-bold tabular-nums tracking-tight leading-none " + C.tx}>${m.g ? m.g[0] + " - " + m.g[1] : m.time}</div>
-              <div className=${"text-[13px] mt-1.5 font-semibold " + (m.st === "LIVE" ? C.live : C.mu)}>${m.st === "FT" ? "Finale" : m.st === "LIVE" ? (sm && sm.clock) || m.clock || "In corso" : m.st === "RINV" ? "Rinviata" : ""}</div></div></div>
-          <div className="flex items-center justify-center gap-2 mt-4"><${FavPill} m=${m} unlocked=${unlocked(m)} big=${true} pp=${pLive} />${pLive && html`<span className=${"text-[10px] font-semibold " + C.mu}>in diretta</span>`}
-            ${m.free && html`<span className=${"text-[10px] font-semibold px-2 py-0.5 rounded-full border " + TONE.good}>FREE oggi</span>`}
-            ${m.st === "FT" && unlocked(m) && html`<span className=${"text-xs " + (m.res === fav ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>${m.res === fav ? "Favorito rispettato" : "Sorpresa"}</span>`}</div></div>
+        <div className="flex items-center"><button onClick=${() => setOpen(null)} className=${"flex items-center gap-1 text-[15px] font-semibold " + C.acc}><${Ic.ChevronLeft} size=${20} />Partite</button>
+          <span className="flex-1"></span>
+          <button aria-label=${favM.includes(m.id) ? "Togli dalle preferite" : "Aggiungi alle preferite"} onClick=${() => toggleFavM(m.id)} className=${"w-9 h-9 rounded-full flex items-center justify-center bg-white dark:bg-[#191626]"}>
+            <${Ic.Star} size=${18} className=${favM.includes(m.id) ? "text-amber-400 fill-amber-400" : C.mu} /></button></div>
+        <div className=${C.card + " relative overflow-hidden"}>
+          <div aria-hidden="true" className="absolute inset-0 opacity-[0.22] dark:opacity-[0.3]" style=${{ background: `radial-gradient(90% 75% at 8% 0%, ${ch}, transparent 70%), radial-gradient(90% 75% at 92% 0%, ${ca}, transparent 70%)` }}></div>
+          <div className="relative p-4 pb-4">
+          <div className="flex items-center justify-center gap-2"><${Flag} k=${L.flag} w=${16} /><span className=${"text-[12px] font-medium " + C.mu}>${L.name}, ${new Date(m.date + "T12:00:00").toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" })}</span></div>
+          <div className="grid items-start mt-4" style=${{ gridTemplateColumns: "minmax(0,1fr) auto minmax(0,1fr)" }}>
+            ${[m.h, m.a].map((t, j) => html`<button key=${t} onClick=${() => setTeam({ lgE: m.lgE || ESPN_LG[m.lg], id: j ? m.aid : m.hid, name: t })} className=${"flex flex-col items-center gap-1.5 min-w-0 " + (j ? "order-3" : "order-1")}>
+              <span className="w-[62px] h-[62px] rounded-full flex items-center justify-center bg-white/70 dark:bg-white/[0.06]" style=${{ boxShadow: `0 0 0 3px ${j ? ca : ch}33, 0 10px 28px -8px ${j ? ca : ch}` }}><${Crest} t=${t} size=${40} /></span>
+              <span className=${"text-[15px] font-semibold text-center leading-tight " + C.tx}>${t}</span><span className=${"text-[11px] " + C.mu}>${pos(t) ? pos(t) + "° in classifica" : "Pagina squadra"}</span>
+              ${marcatori(j).map((e, q) => html`<span key=${q} className=${"text-[12px] leading-tight text-center flex items-center gap-1 " + (e.k === "rosso" ? "text-[#FF3D5A]" : C.mu)}>${e.k === "rosso" ? html`<i className="inline-block w-1.5 h-2 rounded-[1px] bg-[#FF3D5A]"></i>` : html`<${Ic.Ball} size=${10} />`}${e.a.split(" ").slice(-1)[0]} <span className="num text-[13px]">${e.min}</span>${e.k === "rigore" ? " (R)" : e.k === "autogol" ? " (AG)" : ""}</span>`)}</button>`)}
+            <div className="order-2 flex flex-col items-center px-2 pt-1">
+              <div className=${"num font-extrabold leading-none tracking-[0.02em] " + (m.st === "LIVE" ? "text-[#FF3D5A] " : C.tx + " ") + (gScore ? "text-[60px]" : "text-[44px] pt-2")}>${gScore ? m.g[0] + "–" + m.g[1] : m.time || "-"}</div>
+              <div className=${"text-[13px] mt-1.5 font-semibold flex items-center gap-1 " + (m.st === "LIVE" ? C.live : C.mu)}>${m.st === "LIVE" && html`<i className="pulse block w-1.5 h-1.5 rounded-full bg-[#FF3D5A]"></i>`}${m.st === "FT" ? "Finale" : m.st === "LIVE" ? (sm && sm.clock) || m.clock || "In corso" : m.st === "RINV" ? "Rinviata" : "Calcio d'inizio"}</div></div></div>
+          <div className="mt-5"><${AuraLine} m=${m} p=${pLive || m.mk} h=${6} labels=${true} /></div>
+          <div className="flex items-center justify-center flex-wrap gap-2 mt-3"><span className=${"text-[12px] " + C.mu}>${pLive ? "Probabilità in diretta" : "Probabilità dalle quote"}, favorito IA</span><${FavPill} m=${m} unlocked=${unlocked(m)} pp=${pLive} />
+            ${m.free && html`<span className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + TONE.good}>Gratis oggi</span>`}
+            ${m.st === "FT" && unlocked(m) && html`<span className=${"text-xs " + (m.res === fav ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>${m.res === fav ? "Favorito rispettato" : "Sorpresa"}</span>`}</div></div></div>
         <${Tabs} items=${TABS} val=${mt} set=${setMt} sticky=${true} />
         <div onTouchStart=${onTS} onTouchEnd=${onTE} className="space-y-3 min-h-[50vh]">
 
         ${mt === 0 && html`<${React.Fragment}>
           ${sm && sm.st === "NS" && html`<${AssenzeCard} m=${m} sm=${sm} />`}
           ${sm && sm.st === "LIVE" && html`<${LiveAction} sm=${sm} m=${m} />`}
+          ${sm && sm.st !== "NS" && html`<${Andamento} sm=${sm} m=${m} />`}
           ${sm && sm.st !== "NS" && html`<${KeyEvents} sm=${sm} m=${m} />`}
+          ${sm && sm.st !== "NS" && html`<${Migliori} sm=${sm} m=${m} onPlayer=${(p, j) => setPl({ p, side: j })} />`}
           ${sm && sm.st !== "NS" && html`<${StatsCard} sm=${sm} m=${m} />`}
+          ${m.st === "NS" && html`<${Sondaggio} m=${m} />`}
+          ${m.st === "NS" && html`<${Curiosita} m=${m} />`}
           ${sm && sm.st === "LIVE" && html`<${AssenzeCard} m=${m} sm=${sm} />`}
           <div className=${C.card + " p-4 space-y-3"}><div className="flex justify-between items-baseline"><span className=${C.lab}>Probabilità dalle quote</span><span className=${"text-[11px] " + C.mu}>Over 2.5: <b className=${C.tx}>${pct(m.mo)}%</b></span></div>
-            <${ProbBar} p=${m.mk} />
+            <${AuraLine} m=${m} h=${6} labels=${true} />
             ${!D.demo && m.nb ? html`<div className=${"text-[11px] " + C.mu}>Quota media di ${m.nb} bookmaker${m.prepartita ? ", aggiornata alle " + new Date(m.prepartita).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }) + " (prima del calcio d'inizio)" : ", fotografata al mattino"}.</div>` : null}
             ${m.mk_mattino && html`<div className=${"text-[12px] rounded-lg p-2 " + C.ch + " " + C.tx}><b>Movimento delle quote</b> dal mattino: ${["1", "X", "2"].map((e, i) => { const dd = m.mk[i] - m.mk_mattino[i]; return html`<span key=${e} className="mr-2 whitespace-nowrap tabular-nums">${e} ${pct(m.mk_mattino[i])}% → <b>${pct(m.mk[i])}%</b>${Math.abs(dd) >= 0.02 ? html`<span className=${dd > 0 ? " text-emerald-600 dark:text-emerald-300" : " text-rose-600 dark:text-rose-300"}> ${dd > 0 ? "▲" : "▼"}</span>` : ""}</span>`; })}
               <div className=${"text-[11px] " + C.mu}>Le quote vicine al calcio d'inizio sono le più precise: contengono formazioni e notizie dell'ultima ora.</div></div>`}
-            <div className=${C.lab + " pt-1"}>Aggiungi alla tua schedina</div>
+            <div className=${"text-[14px] font-semibold pt-1 " + C.tx}>Aggiungi alla tua schedina</div>
             <div className="flex flex-wrap gap-1.5">${opts.filter((o) => !o.stima).map((o) => html`<button key=${o.k} onClick=${() => addLeg(m, o.k)}
               className=${"inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border " + (inSlip && inSlip.k === o.k ? TONE.good : C.ch + " " + C.tx + " border-transparent")}>
               ${inSlip && inSlip.k === o.k ? html`<${Ic.Check} size=${12} />` : html`<${Ic.Plus} size=${12} />`}${mLabel(m, o.k, true)}<span className=${"font-normal " + C.mu}>${odd(o.q)}</span></button>`)}</div></div>
-          <div className=${C.lab}>Lettura in 10 secondi - tocca per aprire</div>
+          <div className="flex items-baseline pt-1"><span className=${C.lab + " flex-1"}>Lettura in 10 secondi</span><span className=${"text-[12px] " + C.mu}>Tocca una voce per aprirla</span></div>
           <${Gate} m=${m} title="Lettura IA: forma reale, attese, precedenti, contesto">
             <div className="grid grid-cols-2 gap-2">${tiles.map((t, i) => { const o = pOpen === i; return html`<button key=${t.k} onClick=${() => setPOpen(o ? null : i)} className=${C.card + " p-3 text-left " + (o ? "col-span-2" : "")}>
               <div className="flex items-center gap-2"><span className=${"w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border " + TONE[t.tone]}><${t.i} size=${15} /></span>
@@ -891,7 +1062,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           ${!(S && S.solo_generale) && html`<${Seg} items=${["Generale", "Solo Casa", "Solo Trasferta"]} val=${filt} set=${setFilt} />`}
           <div className=${C.card + " p-2 overflow-x-auto"}><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}>
             <th className="text-left font-medium p-1.5 w-6">#</th><th className="text-left font-medium">Squadra</th><th className="text-right font-medium">G</th><th className="text-right font-medium">V</th><th className="text-right font-medium">N</th><th className="text-right font-medium">P</th><th className="text-right font-medium">DR</th><th className="text-right font-medium pr-1.5">Pt</th></tr></thead>
-            <tbody>${st.map((r, i) => { const hl = r.team === m.h || r.team === m.a; return html`<tr key=${r.team} className=${hl ? "bg-emerald-50 dark:bg-emerald-500/15 font-semibold" : ""}>
+            <tbody>${st.map((r, i) => { const hl = r.team === m.h || r.team === m.a; return html`<tr key=${r.team} className=${hl ? "bg-[#5B2EE6]/[0.07] dark:bg-[#A58BFF]/[0.12] font-semibold" : ""}>
               <td className="p-1.5">${i + 1}</td><td><span className="flex items-center gap-1.5 min-w-0"><${Crest} t=${r.team} size=${14} /><span className="truncate">${r.team}</span></span></td>
               <td className=${"text-right " + C.mu}>${r.pg}</td><td className="text-right">${r.v}</td><td className="text-right">${r.n}</td><td className="text-right">${r.p}</td><td className="text-right">${r.gf - r.gs > 0 ? "+" : ""}${r.gf - r.gs}</td><td className="text-right pr-1.5 font-semibold">${r.pt}</td></tr>`; })}</tbody></table></div>
           <div className=${C.card + " p-4 space-y-2"}><div className=${C.lab}>Ultime 5</div>
@@ -920,7 +1091,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const L = lg(k);
       const st = D.standings[k] ? D.standings[k][["generale", "casa", "trasferta"][filt]] : [];
       const ms = D.matches.filter((m) => m.lg === k);
-      const zone = (i) => { const n = st.length; if (["I1", "E0", "SP1", "D1"].includes(k)) return i < 4 ? "bg-sky-400" : i >= n - 3 ? "bg-rose-400" : ""; return i < 2 ? "bg-emerald-400" : i >= n - 3 ? "bg-rose-400" : ""; };
+      const zone = (i) => { const n = st.length; if (["I1", "E0", "SP1", "D1"].includes(k)) return i < 4 ? "bg-[#5B2EE6] dark:bg-[#A58BFF]" : i >= n - 3 ? "bg-[#FF3D5A]" : ""; return i < 2 ? "bg-[#0F9D84]" : i >= n - 3 ? "bg-[#FF3D5A]" : ""; };
       return html`<div className="px-4 space-y-3">
         <div className="flex gap-2 overflow-x-auto noscroll -mx-4 px-4">${D.leagues.map((l) => html`<${Chip} key=${l.k} on=${k === l.k} onClick=${() => { setK(l.k); store.set("lgSel", l.k); }}><${Flag} k=${l.flag} w=${16} />${l.name}<//>`)}</div>
         <div className=${"flex items-center gap-2 text-sm font-semibold " + C.tx}><${Flag} k=${L.flag} w=${22} />${L.country} - ${L.name} 2026/27</div>
@@ -934,7 +1105,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         ${!(D.standings[k] && D.standings[k].solo_generale) && html`<${Seg} items=${["Generale", "Solo Casa", "Solo Trasferta"]} val=${filt} set=${setFilt} />`}
         <div className=${C.card + " p-2 overflow-x-auto"}><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}>
           <th className="text-left font-medium p-1.5 w-7">#</th><th className="text-left font-medium">Squadra</th><th className="text-right font-medium">G</th><th className="text-right font-medium">GF</th><th className="text-right font-medium">GS</th><th className="text-right font-medium pr-1.5">Pt</th></tr></thead>
-          <tbody>${st.map((r, i) => html`<tr key=${r.team} onClick=${() => ESPN_LG[k] && setTeam({ lgE: ESPN_LG[k], name: r.team })} className=${"cursor-pointer " + (r.team === fav ? "bg-emerald-50 dark:bg-emerald-500/15 font-semibold" : "")}>
+          <tbody>${st.map((r, i) => html`<tr key=${r.team} onClick=${() => ESPN_LG[k] && setTeam({ lgE: ESPN_LG[k], name: r.team })} className=${"cursor-pointer " + (r.team === fav ? "bg-[#5B2EE6]/[0.07] dark:bg-[#A58BFF]/[0.12] font-semibold" : "")}>
             <td className="p-1.5"><span className="flex items-center gap-1"><span className=${"w-1 h-4 rounded-full " + (zone(i) || "bg-transparent")}></span>${i + 1}</span></td>
             <td><span className="flex items-center gap-1.5 min-w-0"><${Crest} t=${r.team} size=${14} /><span className="truncate">${r.team}</span></span></td>
             <td className=${"text-right " + C.mu}>${r.pg}</td><td className="text-right">${r.gf}</td><td className="text-right">${r.gs}</td><td className="text-right pr-1.5 font-semibold">${r.pt}</td></tr>`)}</tbody></table></div>
@@ -994,7 +1165,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <div className=${C.lab}>Schedina IA</div>
         <div className="flex gap-2 overflow-x-auto noscroll -mx-4 px-4">${D.leagues.map((l) => html`<${Chip} key=${l.k} on=${!off.includes(l.k)} onClick=${() => { const nx = off.includes(l.k) ? off.filter((q) => q !== l.k) : [...off, l.k]; setOff(nx); store.set("slipOff", nx); }}><${Flag} k=${l.flag} w=${16} />${l.name}<//>`)}</div>
         <div className="grid grid-cols-3 gap-2">${["Zero Tachicardia", "Classica del Sabato", "Colpaccio da Bar"].map((p, i) => { const lk = i === 2 && !pro; return html`<button key=${p} onClick=${() => (lk ? setUnlock(true) : (setProf(i), setShield(false)))}
-          className=${C.card + " p-3 text-xs font-semibold text-center " + C.tx + (prof === i ? " ring-2 ring-emerald-300 dark:ring-emerald-500/60" : "")}>${p}${lk && html`<div className="text-[10px] mt-1 text-amber-600 dark:text-amber-300 flex items-center justify-center gap-1"><${Ic.Lock} size=${10} />PRO</div>`}</button>`; })}</div>
+          className=${C.card + " p-3 text-xs font-semibold text-center " + C.tx + (prof === i ? " ring-2 ring-[#5B2EE6] dark:ring-[#A58BFF]" : "")}>${p}${lk && html`<div className="text-[10px] mt-1 text-amber-600 dark:text-amber-300 flex items-center justify-center gap-1"><${Ic.Lock} size=${10} />PRO</div>`}</button>`; })}</div>
         <div className=${C.card + " px-4 py-2"}>${legs.length ? legs.map((l) => html`<${LegRow} key=${l.m.id} l=${l} />`) : html`<div className=${"py-3 text-sm " + C.mu}>Nessuna partita adatta a questo profilo nei campionati scelti.</div>`}</div>
         ${legs.length > 0 && html`<div className=${C.card + " p-4 space-y-2"}>
           <div className="flex justify-between text-sm"><span className=${C.mu}>${D.demo ? "Quota totale (Bet365)" : "Quota totale (quote medie)"}</span><b className=${"tabular-nums " + C.tx}>${odd(tot)}</b></div>
@@ -1076,7 +1247,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const apply = () => {
         const dark = theme === "dark" || (theme === "system" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
         document.documentElement.dataset.theme = dark ? "dark" : "light";
-        const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.content = dark ? "#0F0F0F" : "#F2F3F5";
+        const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.content = dark ? "#0E0C18" : "#EFEEF5";
       };
       apply(); store.set("theme", theme);
       const mq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
@@ -1194,9 +1365,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const header = html`<header className="sticky z-30" style=${{ top: "env(safe-area-inset-top, 0px)", background: "var(--bg)" }}>
       <div className="max-w-[480px] mx-auto px-4 h-14 flex items-center gap-2">
         <button onClick=${() => { setOpen(null); setTeam(null); setTab("partite"); }} className="flex items-center gap-2 mr-auto" aria-label="AuraPitch, vai alle partite">
-          <span className="w-8 h-8 rounded-[10px] flex items-center justify-center bg-[#00985F] dark:bg-[#3DDC97]"><${Ic.Activity} size=${18} className="text-white dark:text-[#0F0F0F]" /></span>
-          <span className=${"text-[20px] font-bold tracking-tight " + C.tx}>AuraPitch</span>
-          <span className=${"text-[10px] font-semibold px-1.5 py-0.5 rounded-md " + C.ch + " " + C.mu}>BETA</span></button>
+          <${Marchio} size=${30} />
+          <span className=${"num text-[25px] font-extrabold tracking-[0.01em] leading-none " + C.tx}>AuraPitch</span>
+          <span className=${"text-[10px] font-semibold px-1.5 py-0.5 rounded-md " + C.ch + " " + C.mu}>beta</span></button>
         <button onClick=${() => setUnlock(true)} className=${"text-[11px] font-semibold px-2.5 py-1 rounded-full border tabular-nums " + (pro ? TONE.warn : C.ch + " " + C.tx + " border-transparent")}>${sub ? "PRO" : left > 0 ? "PRO " + mmss(left) : "FREE"}</button>
         <button aria-label="Guida rapida" onClick=${() => setGuide(guide ? 0 : 1)} className=${"w-8 h-8 rounded-full flex items-center justify-center " + C.ch + " " + C.tx}><${Ic.HelpCircle} size=${15} /></button>
         <button aria-label="Profilo e impostazioni" onClick=${() => setProfile(true)} className=${"w-8 h-8 rounded-full text-[11px] font-semibold " + C.on}>${ini}</button>
@@ -1216,22 +1387,23 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <div className=${"text-[13px] flex-1 " + C.tx}>${D.demo ? html`Beta con <b>dati reali</b> della giornata ${D.label}. Le partite sono già giocate: puoi confrontare le letture dell'IA con i risultati.`
           : html`Beta con <b>dati reali</b>, ${D.label}: quote medie di decine di bookmaker, classifiche e risultati in diretta (ogni 30 secondi). Apri una partita e scorri col dito tra le sezioni.`}</div>
         <button aria-label="Chiudi avviso" onClick=${() => { setBanner(false); store.set("banner2", false); }} className=${C.mu}><${Ic.X} size=${16} /></button></div>`}
-      <${Tabs} items=${[D.demo ? "Tutta la giornata" : "Tutti", ...D.days.map((d) => d.label)]} val=${Math.max(0, [{ k: "all" }, ...D.days].findIndex((d) => d.k === day))} set=${(i) => setDay(i ? D.days[i - 1].k : "all")} />
-      <div className="flex gap-2"><button onClick=${() => setLiveOnly(liveOnly ? 0 : 1)} className=${"inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold " + (liveOnly ? "bg-[#E5484D] text-white" : C.ch + " " + C.tx)}>
-        <span className=${"w-2 h-2 rounded-full " + (liveOnly ? "bg-white" : "bg-[#E5484D]")}></span>Live${D.matches.some((m) => m.st === "LIVE") ? " (" + D.matches.filter((m) => m.st === "LIVE").length + ")" : ""}</button></div>
+      <${Giorni} days=${D.days} day=${day} setDay=${setDay} demo=${D.demo} />
+      <div className="flex items-center gap-2 pt-1"><span className=${"text-[22px] font-bold tracking-[-0.02em] flex-1 " + C.tx}>${day === "all" ? "Tutte le partite" : (D.days.find((d) => d.k === day) || {}).label === "Oggi" ? "Oggi" : new Date(day + "T12:00:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }).replace(/^./, (c) => c.toUpperCase())}</span>
+        <button onClick=${() => setLiveOnly(liveOnly ? 0 : 1)} aria-pressed=${!!liveOnly} className=${"inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold " + (liveOnly ? "bg-[#FF3D5A] text-white" : "bg-white dark:bg-[#191626] " + C.tx)}>
+        <span className=${"w-2 h-2 rounded-full " + (liveOnly ? "bg-white" : "bg-[#FF3D5A]" + (D.matches.some((m) => m.st === "LIVE") ? " pulse" : ""))}></span>In diretta${D.matches.some((m) => m.st === "LIVE") ? " " + D.matches.filter((m) => m.st === "LIVE").length : ""}</button></div>
       ${(() => { const fm = dayMatches.filter((m) => favM.includes(m.id) || m.h === fav || m.a === fav); return fm.length > 0 && html`<div className=${C.card + " overflow-hidden"}>
-        <div className="flex items-center gap-3 px-4 py-3"><${Ic.Star} size=${18} className="text-amber-400 fill-amber-400" /><span className=${"flex-1 text-[15px] font-bold " + C.tx}>Preferite</span><span className=${"text-xs " + C.mu}>${fm.length}</span></div>
-        <div className=${"border-t " + C.bd}>${fm.map((m, i) => html`<${Row} key=${m.id} m=${m} i=${i} />`)}</div></div>`; })()}
+        <div className="flex items-center gap-3 px-4 pt-3.5 pb-2.5"><${Ic.Star} size=${18} className="text-amber-400 fill-amber-400" /><span className=${"flex-1 text-[16px] font-semibold " + C.tx}>Preferite</span><span className=${"num text-[17px] font-bold " + C.mu}>${fm.length}</span></div>
+        <div>${fm.map((m, i) => html`<${Row} key=${m.id} m=${m} i=${i} />`)}</div></div>`; })()}
       ${D.leagues.map((l) => {
         const ms = dayMatches.filter((m) => m.lg === l.k);
         if (!ms.length) return null;
         const o = lgOpen.includes(l.k);
         const toggle = () => { const nx = o ? lgOpen.filter((q) => q !== l.k) : [...lgOpen, l.k]; setOpenL(nx); store.set("openL", nx); };
         return html`<div key=${l.k} className=${C.card + " overflow-hidden"}>
-          <button onClick=${toggle} aria-expanded=${o} className="w-full flex items-center gap-3 px-4 py-3"><${Flag} k=${l.flag} w=${22} />
-            <span className="flex-1 text-left leading-tight"><span className=${"block text-[15px] font-bold " + C.tx}>${l.name}</span><span className=${"block text-[11px] " + C.mu}>${l.country}</span></span><span className=${"text-xs font-semibold " + C.mu}>${ms.length}</span>
+          <button onClick=${toggle} aria-expanded=${o} className="w-full flex items-center gap-3 px-4 pt-3.5 pb-2.5"><${Flag} k=${l.flag} w=${22} />
+            <span className="flex-1 text-left leading-tight"><span className=${"block text-[16px] font-semibold tracking-[-0.01em] " + C.tx}>${l.name}</span><span className=${"block text-[12px] " + C.mu}>${l.country}${ms.some((m) => m.st === "LIVE") ? html`<span className="text-[#FF3D5A] font-semibold">, ${ms.filter((m) => m.st === "LIVE").length} in diretta</span>` : ""}</span></span><span className=${"num text-[17px] font-bold " + C.mu}>${ms.length}</span>
             <${Ic.ChevronDown} size=${16} className=${C.mu + " transition-transform " + (o ? "rotate-180" : "")} /></button>
-          ${o && html`<div className=${"border-t " + C.bd}>${ms.map((m, i) => html`<${Row} key=${m.id} m=${m} i=${i} />`)}</div>`}</div>`;
+          ${o && html`<div>${ms.map((m, i) => html`<${Row} key=${m.id} m=${m} i=${i} />`)}</div>`}</div>`;
       })}
       ${!dayMatches.length && html`<div className=${C.card + " p-6 text-center text-sm " + C.mu}>${liveOnly ? "Nessuna partita in corso in questo momento." : "Nessuna partita in questo giorno."}</div>`}
       <p className=${"text-[11px] text-center " + C.mu}>${D.demo ? "Dati: Football-Data.co.uk, ClubElo." : "Dati: quote da The Odds API; classifiche da football-data.org; diretta, cronaca e formazioni da ESPN."} Stemmi generici, non ufficiali.</p></div>`;
@@ -1240,15 +1412,14 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const views = { partite: home, campionati: html`<${LeaguesView} />`, schedina: html`<${SlipView} />`, club: html`<${ClubView} />` };
     const DOCK = [["partite", "Partite", Ic.Calendar], ["campionati", "Campionati", Ic.Trophy], ["schedina", "Schedina IA", Ic.Sparkles], ["club", "Il Mio Club", Ic.Shield]];
 
-    const ctx = { D, byId, lg, pro, unlocked, goMatch, setOpen, mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
+    const ctx = { pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen, mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
     return html`<${Ctx.Provider} value=${ctx}><div className="min-h-screen pb-28">
       ${header}
       <main className="max-w-[480px] mx-auto">${guideBox}${team ? html`<${TeamView} key=${team.name} />` : open_m ? html`<${MatchView} key=${open_m.id} m=${open_m} />` : views[tab]}</main>
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-black/[0.07] dark:border-white/[0.07] bg-white dark:bg-[#1A1A1A]"
-        style=${{ paddingBottom: "env(safe-area-inset-bottom, 0px)", paddingLeft: "env(safe-area-inset-left, 0px)", paddingRight: "env(safe-area-inset-right, 0px)" }}>
-        <div className="max-w-[480px] mx-auto grid grid-cols-4">${DOCK.map(([k, l, I]) => html`<button key=${k} onClick=${() => { setTab(k); setOpen(null); setTeam(null); window.scrollTo(0, 0); }}
-          aria-current=${tab === k && !open ? "page" : undefined}
-          className=${"flex flex-col items-center gap-1 pt-2 pb-1.5 text-[10px] font-semibold " + (tab === k && !open && !team ? C.acc : C.mu)}><${I} size=${23} strokeWidth=${tab === k && !open && !team ? 2.4 : 2} />${l}</button>`)}</div></nav>
+      <nav className="fixed inset-x-0 z-40" style=${{ bottom: "calc(10px + env(safe-area-inset-bottom, 0px))", paddingLeft: "calc(12px + env(safe-area-inset-left, 0px))", paddingRight: "calc(12px + env(safe-area-inset-right, 0px))" }}>
+        <div className="dock max-w-[456px] mx-auto rounded-[26px] p-1.5 grid grid-cols-4 gap-1">${DOCK.map(([k, l, I]) => { const on = tab === k && !open && !team; return html`<button key=${k} onClick=${() => { setTab(k); setOpen(null); setTeam(null); window.scrollTo(0, 0); }}
+          aria-current=${on ? "page" : undefined}
+          className=${"flex flex-col items-center gap-0.5 py-1.5 rounded-[20px] text-[11px] font-semibold transition-colors " + (on ? "bg-[#5B2EE6]/[0.1] text-[#5B2EE6] dark:bg-[#A58BFF]/[0.16] dark:text-[#A58BFF]" : C.mu)}><${I} size=${22} strokeWidth=${on ? 2.4 : 2} />${l}</button>`; })}</div></nav>
 
       ${unlock && html`<${Sheet} title="Sblocca AuraPitch PRO" onClose=${() => ad === null && setUnlock(false)}>
         ${ad !== null ? html`<div className="py-6 text-center space-y-3"><div className="text-sm font-semibold">Spot in corso</div>
@@ -1285,10 +1456,10 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <div className=${C.lab}>Notifiche con l'app chiusa</div>
         <div className=${"rounded-xl px-3 py-2.5 space-y-2 " + C.ch}>
           <div className=${"text-xs " + C.mu}>Calcio d'inizio, gol (con il marcatore) e finale delle partite con la stella e della squadra del cuore, anche con il telefono bloccato.</div>
-          <button onClick=${pushOn ? disattivaPush : attivaPush} className=${"w-full py-2.5 rounded-xl text-sm font-semibold " + (pushOn ? "bg-white dark:bg-[#2C2C2E] " + C.tx : C.on)}>${pushOn ? "Disattiva le notifiche" : "Attiva le notifiche"}</button>
+          <button onClick=${pushOn ? disattivaPush : attivaPush} className=${"w-full py-2.5 rounded-xl text-sm font-semibold " + (pushOn ? "bg-white dark:bg-[#2A2640] " + C.tx : C.on)}>${pushOn ? "Disattiva le notifiche" : "Attiva le notifiche"}</button>
           ${pushMsg && html`<div className=${"text-xs " + C.tx}>${pushMsg}</div>`}</div>
         <div className=${C.lab}>Squadra del cuore</div>
-        <div className=${"text-sm " + C.tx}>${fav} <button onClick=${() => { setProfile(false); setOpen(null); setTab("club"); }} className="text-[#00985F] dark:text-[#3DDC97] font-medium ml-1">Cambia</button></div>
+        <div className=${"text-sm " + C.tx}>${fav} <button onClick=${() => { setProfile(false); setOpen(null); setTab("club"); }} className="text-[#5B2EE6] dark:text-[#A58BFF] font-medium ml-1">Cambia</button></div>
         <div className=${C.lab}>Accesso</div>
         <div className="grid grid-cols-2 gap-2">${["Google", "Apple"].map((p) => html`<button key=${p} disabled className=${"py-2.5 rounded-xl text-sm font-semibold opacity-50 " + C.ch + " " + C.tx}>${p}</button>`)}</div>
         <p className=${"text-xs " + C.mu}>Nella beta i tuoi dati restano solo su questo dispositivo. L'accesso con Google e Apple arriverà con la versione pubblica.</p><//>`}
@@ -1297,8 +1468,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <p className=${"text-sm " + C.mu}>Il telefono non ha permesso la copia automatica: tieni premuto sul testo e scegli Copia.</p>
         <textarea readOnly value=${copyText} rows=${8} className=${"w-full rounded-xl p-3 text-sm " + C.ch + " " + C.tx} onFocus=${(e) => e.target.select()}></textarea><//>`}
 
-      ${toast && html`<div role="status" className="fixed left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-sm font-medium shadow-lg bg-[#1D1D1F] text-white dark:bg-white dark:text-black"
-        style=${{ bottom: "calc(84px + env(safe-area-inset-bottom, 0px))" }}>${toast}</div>`}
+      ${toast && html`<div role="status" className="fixed left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-sm font-medium shadow-lg bg-[#17152B] text-white dark:bg-white dark:text-black"
+        style=${{ bottom: "calc(96px + env(safe-area-inset-bottom, 0px))" }}>${toast}</div>`}
     </div><//>`;
   }
 

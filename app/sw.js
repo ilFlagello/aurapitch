@@ -1,7 +1,7 @@
 // AuraPitch - service worker: rende l'app installabile e utilizzabile anche con rete debole.
 // Strategia: i file dell'app dalla cache (aggiornati in background), i dati sempre prima dalla rete.
-const CACHE = "aurapitch-v16";
-const SHELL = ["./", "index.html", "app.js", "app.css", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png"];
+const CACHE = "aurapitch-v17";
+const SHELL = ["./", "index.html", "app.js", "app.css", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "fonts/figtree.woff2", "fonts/bigshoulders.woff2"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

@@ -4,26 +4,38 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>AuraPitch Beta</title>
 <meta name="description" content="AuraPitch: le partite di calcio lette in 10 secondi, con probabilità, forma reale, classifiche e schedina.">
-<meta name="theme-color" content="#F2F3F5">
+<meta name="theme-color" content="#EFEEF5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="AuraPitch">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preload" href="fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/bigshoulders.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="app.css">
 <style>
-/* Layout: app a colonna singola (max 480px) con dock fissa in basso; tema chiaro #F5F5F7 / scuro #000, pastelli tenui. */
-:root { --bg: #F2F3F5; --fg: #111111; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0F0F0F; --fg: #FFFFFF; color-scheme: dark; } }
-:root[data-theme="dark"] { --bg: #0F0F0F; --fg: #FFFFFF; color-scheme: dark; }
-body { background: var(--bg); color: var(--fg); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+/* Identità AuraPitch: nebbia lilla e inchiostro notte, accento viola "aura", colori veri delle squadre.
+   Testi in Figtree, numeri (punteggi, minuti, percentuali, quote) in Big Shoulders Display, come i tabelloni degli stadi. */
+@font-face { font-family: "Figtree"; src: url(fonts/figtree.woff2) format("woff2"); font-weight: 300 900; font-display: swap; unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215; }
+@font-face { font-family: "Figtree"; src: url(fonts/figtree-ext.woff2) format("woff2"); font-weight: 300 900; font-display: swap; unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Big Shoulders"; src: url(fonts/bigshoulders.woff2) format("woff2"); font-weight: 100 900; font-display: swap; }
+:root { --bg: #EFEEF5; --fg: #17152B; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0E0C18; --fg: #F4F2FF; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #0E0C18; --fg: #F4F2FF; color-scheme: dark; }
+:root[data-theme="light"] { --bg: #EFEEF5; --fg: #17152B; color-scheme: light; }
+body { background: var(--bg); color: var(--fg); font-family: "Figtree", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; -webkit-font-smoothing: antialiased; font-feature-settings: "tnum" 0; }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.num { font-family: "Big Shoulders", "Figtree", system-ui, sans-serif; font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
 button { cursor: pointer; }
-button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid #00985F; outline-offset: 2px; }
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid #7B5CFF; outline-offset: 2px; border-radius: 8px; }
 .noscroll::-webkit-scrollbar { display: none; }
 .noscroll { scrollbar-width: none; }
-#boot { padding: 48px 16px; text-align: center; color: #86868B; font-size: 14px; }
+.dock { background: rgba(255,255,255,0.86); -webkit-backdrop-filter: saturate(1.6) blur(18px); backdrop-filter: saturate(1.6) blur(18px); box-shadow: 0 8px 30px -12px rgba(23,21,43,0.28), 0 0 0 1px rgba(23,21,43,0.06); }
+:root[data-theme="dark"] .dock { background: rgba(25,22,38,0.86); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.07); }
+@keyframes respiro { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.8); } }
+.pulse { animation: respiro 1.6s ease-in-out infinite; }
+#boot { padding: 48px 16px; text-align: center; color: #6E6A85; font-size: 14px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 <div id="root"><div id="boot">Caricamento di AuraPitch...</div></div>

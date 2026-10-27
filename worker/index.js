@@ -189,6 +189,26 @@ export default {
         stato_partite: state, orologio: (await env.KV.get("orologio", "json")) || null, vapid: !!(await env.KV.get("vapid")),
       });
     }
+    // sondaggio "chi vince?": un voto per dispositivo (impronta anonima dal browser), chiuso al calcio d'inizio dall'app
+    if (url.pathname === "/voti") {
+      const id = String(url.searchParams.get("id") || "");
+      if (!/^[A-Za-z0-9_-]{1,40}$/.test(id)) return json({ ok: false }, 400);
+      return json({ ok: true, v: (await env.KV.get("v:" + id, "json")) || [0, 0, 0] });
+    }
+    if (url.pathname === "/voto" && req.method === "POST") {
+      const d = await req.json().catch(() => null);
+      const id = d && String(d.id || ""), s = d && Number(d.s), chi = d && String(d.chi || "");
+      if (!/^[A-Za-z0-9_-]{1,40}$/.test(id) || ![0, 1, 2].includes(s) || !/^[a-z0-9]{8,40}$/.test(chi)) return json({ ok: false }, 400);
+      const k = "v:" + id, kc = "vc:" + id + ":" + chi;
+      const v = (await env.KV.get(k, "json")) || [0, 0, 0];
+      const prima = await env.KV.get(kc);
+      if (prima !== null && Number(prima) === s) return json({ ok: true, v });
+      if (prima !== null) v[Number(prima)] = Math.max(0, v[Number(prima)] - 1);
+      v[s] += 1;
+      await env.KV.put(k, JSON.stringify(v), { expirationTtl: 60 * 60 * 24 * 21 });
+      await env.KV.put(kc, String(s), { expirationTtl: 60 * 60 * 24 * 21 });
+      return json({ ok: true, v });
+    }
     if (url.pathname === "/stato") return json({ orologio: (await env.KV.get("orologio", "json")) || null, token: !!env.GH_TOKEN });
     if (url.pathname === "/") return json({ ok: true, servizio: "AuraPitch notifiche" });
     return json({ ok: false }, 404);

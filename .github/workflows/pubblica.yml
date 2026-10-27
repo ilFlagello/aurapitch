@@ -7,7 +7,7 @@ on:
     branches: [main]
     paths: ["app/**", ".github/workflows/pubblica.yml"]
   workflow_run:                 # dopo ogni raccolta dati (i suoi salvataggi non fanno partire il push)
-    workflows: ["Raccolta dati AuraPitch"]
+    workflows: ["Raccolta dati AuraPitch", "Notifiche AuraPitch"]
     types: [completed]
   workflow_dispatch: {}
 

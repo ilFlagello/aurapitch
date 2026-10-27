@@ -1,0 +1,72 @@
+# AuraPitch - pubblica il servizio notifiche su Cloudflare Workers (gratuito).
+# Secrets richiesti: CLOUDFLARE_API_TOKEN (modello "Edit Cloudflare Workers"), CLOUDFLARE_ACCOUNT_ID.
+# Usa solo le API di Cloudflare (niente strumenti da installare). L'esito viene salvato in worker/stato.txt.
+name: Notifiche AuraPitch
+
+on:
+  push:
+    branches: [main]
+    paths: ["worker/**", ".github/workflows/notifiche.yml"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  pubblica:
+    runs-on: ubuntu-latest
+    env:
+      CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ACC: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      NOME: aurapitch-push
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pubblica il Worker
+        run: |
+          set +e
+          API=https://api.cloudflare.com/client/v4/accounts/$CF_ACC
+          H=(-H "Authorization: Bearer $CF_TOKEN")
+          log() { echo "$1" | tee -a worker/stato.txt; }
+          : > worker/stato.txt
+          log "Esecuzione: $(date -u +%Y-%m-%dT%H:%MZ)"
+          [ -z "$CF_TOKEN" ] && log "ERRORE: manca il secret CLOUDFLARE_API_TOKEN"
+          [ -z "$CF_ACC" ] && log "ERRORE: manca il secret CLOUDFLARE_ACCOUNT_ID"
+          ok() { python3 -c "import json,sys; d=json.load(sys.stdin); print('ok' if d.get('success') else 'errore: ' + '; '.join(str(e.get('code'))+' '+e.get('message','') for e in d.get('errors',[])))"; }
+          log "Token: $(curl -s "${H[@]}" https://api.cloudflare.com/client/v4/user/tokens/verify | ok)"
+          # sottodominio workers.dev
+          SUB=$(curl -s "${H[@]}" $API/workers/subdomain | python3 -c "import json,sys; d=json.load(sys.stdin); print((d.get('result') or {}).get('subdomain') or '')")
+          if [ -z "$SUB" ]; then
+            for P in ilflagello aurapitch-ilflagello aurapitch-ilflagello-$RANDOM; do
+              R=$(curl -s -X PUT "${H[@]}" -H "Content-Type: application/json" -d "{\"subdomain\":\"$P\"}" $API/workers/subdomain)
+              log "Creo sottodominio $P: $(echo "$R" | ok)"
+              echo "$R" | grep -q '"success":true' && SUB=$P && break
+            done
+          fi
+          log "Sottodominio: $SUB"
+          # archivio KV
+          KV=$(curl -s "${H[@]}" "$API/storage/kv/namespaces?per_page=100" | python3 -c "import json,sys; d=json.load(sys.stdin); print(next((n['id'] for n in d.get('result') or [] if n['title']=='aurapitch-push'), ''))")
+          if [ -z "$KV" ]; then
+            R=$(curl -s -X POST "${H[@]}" -H "Content-Type: application/json" -d '{"title":"aurapitch-push"}' $API/storage/kv/namespaces)
+            log "Creo archivio KV: $(echo "$R" | ok)"
+            KV=$(echo "$R" | python3 -c "import json,sys; print((json.load(sys.stdin).get('result') or {}).get('id',''))")
+          fi
+          log "Archivio KV: ${KV:+presente}"
+          # script
+          echo "{\"main_module\":\"index.js\",\"compatibility_date\":\"2024-11-01\",\"bindings\":[{\"type\":\"kv_namespace\",\"name\":\"KV\",\"namespace_id\":\"$KV\"}]}" > /tmp/meta.json
+          R=$(curl -s -X PUT "${H[@]}" -F "metadata=@/tmp/meta.json;type=application/json" -F "index.js=@worker/index.js;type=application/javascript+module" $API/workers/scripts/$NOME)
+          log "Carico il servizio: $(echo "$R" | ok)"
+          R=$(curl -s -X POST "${H[@]}" -H "Content-Type: application/json" -d '{"enabled":true}' $API/workers/scripts/$NOME/subdomain)
+          log "Attivo indirizzo workers.dev: $(echo "$R" | ok)"
+          R=$(curl -s -X PUT "${H[@]}" -H "Content-Type: application/json" -d '[{"cron":"* * * * *"}]' $API/workers/scripts/$NOME/schedules)
+          log "Controllo ogni minuto: $(echo "$R" | ok)"
+          URL="https://$NOME.$SUB.workers.dev"
+          for i in 1 2 3 4 5 6; do sleep 10; C=$(curl -s -o /dev/null -w "%{http_code}" $URL/vapid); [ "$C" = "200" ] && break; done
+          log "Prova $URL/vapid: HTTP $C"
+          if [ "$C" = "200" ]; then mkdir -p app/data; echo "{\"url\":\"$URL\"}" > app/data/push.json; fi
+          exit 0
+      - name: Salva l'esito
+        run: |
+          git config user.name "aurapitch-raccolta"; git config user.email "aurapitch-raccolta@users.noreply.github.com"
+          git add worker/stato.txt app/data/push.json 2>/dev/null || git add worker/stato.txt
+          git commit -m "Notifiche: esito pubblicazione" || true
+          git pull --rebase && git push

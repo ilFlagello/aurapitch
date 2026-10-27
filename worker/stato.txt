@@ -1,8 +1,8 @@
-Esecuzione: 2026-10-27T14:48Z
+Esecuzione: 2026-10-27T16:33Z
 Token: ok
 Sottodominio: ilflagello
 Archivio KV: presente
-Orologio della raccolta: manca il secret GH_DISPATCH_TOKEN
+Orologio della raccolta: token presente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
 Carico il servizio: ok
 Attivo indirizzo workers.dev: ok
 Controllo ogni minuto: ok

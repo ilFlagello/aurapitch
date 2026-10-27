@@ -20,10 +20,11 @@ COL = ["Div", "Date", "Time", "HomeTeam", "AwayTeam", "FTHG", "FTAG", "HTHG", "H
        "B365>2.5", "B365<2.5", "P>2.5", "P<2.5", "Avg>2.5", "Avg<2.5", "BbAv>2.5", "BbAv<2.5", "PC>2.5", "PC<2.5", "AvgC>2.5", "AvgC<2.5",
        "AHh", "PAHH", "PAHA", "AvgAHH", "AvgAHA"]
 righe = 0
-with gzip.open(os.path.join(OUT, "fd_partite.csv.gz"), "wt", encoding="utf-8", newline="") as f:
+SALTA_FD = os.path.exists(os.path.join(OUT, "fd_partite.csv.gz")) and os.environ.get("RIFAI_FD") != "1"
+with (open(os.devnull, "w") if SALTA_FD else gzip.open(os.path.join(OUT, "fd_partite.csv.gz"), "wt", encoding="utf-8", newline="")) as f:
     w = csv.writer(f)
     w.writerow(["Season"] + COL)
-    for anno in range(2012, 2026):
+    for anno in ([] if SALTA_FD else range(2012, 2026)):
         stag = f"{anno % 100:02d}{(anno + 1) % 100:02d}"
         for div in ("I1", "I2", "E0", "E1", "SP1", "D1", "F1"):
             try:
@@ -59,7 +60,10 @@ with gzip.open(os.path.join(OUT, "understat_xg.csv.gz"), "wt", encoding="utf-8",
                 try:  # formato nuovo: dati da un endpoint JSON
                     req = urllib.request.Request(f"https://understat.com/getLeagueData/{lg}/{anno}", headers=dict(UA, **{"X-Requested-With": "XMLHttpRequest", "Referer": f"https://understat.com/league/{lg}/{anno}"}))
                     with urllib.request.urlopen(req, timeout=40) as r:
-                        dati = json.loads(r.read().decode("utf-8")).get("dates")
+                        raw = r.read()
+                        if raw[:2] == b"\x1f\x8b":
+                            raw = gzip.decompress(raw)
+                        dati = json.loads(raw.decode("utf-8")).get("dates")
                 except Exception as e:  # noqa: BLE001
                     print("understat api", lg, anno, e)
             for p in dati or []:

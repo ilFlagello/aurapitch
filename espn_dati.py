@@ -168,10 +168,11 @@ def giro_arbitri(base="data", giorni=3):
         print(f"Arbitri dalle notizie: errore {e}")
     os.makedirs(os.path.join(base, "espn"), exist_ok=True)
     with open(os.path.join(base, "espn", "arbitri.json"), "w", encoding="utf-8") as f:
-        json.dump({"agg": ora.isoformat(), "partite": out}, f, ensure_ascii=False, separators=(",", ":"))
+        json.dump({"agg": ora.isoformat(), "partite": out, "diagnosi": DIAG}, f, ensure_ascii=False, separators=(",", ":"))
     print(f"ESPN: arbitri designati trovati {len(out)}")
 
 
+DIAG = {}
 PAROLE_ARB = {"it": ("arbitro", "arbitra", "arbitrer", "designaz", "fischietto", "direttore di gara"), "en": ("referee", "official"),
               "es": ("arbitro", "colegiado", "arbitrara", "designacion"), "de": ("schiedsrichter", "pfeift", "unparteiische")}
 Q_ARB = {"it": "arbitro", "en": "referee", "es": "árbitro", "de": "Schiedsrichter"}
@@ -197,6 +198,7 @@ def arbitri_da_notizie(base, gia, giorni=4):
             cognomi.setdefault(v.get("lega"), {})[cg] = v["nome"]
     ora = datetime.now(timezone.utc)
     out = []
+    DIAG.update({"cercate": 0, "errori": 0, "titoli": 0, "titoli_arbitro": 0, "scartate_ambigue": 0})
     for m in gio.get("matches", []):
         try:
             ko = datetime.fromisoformat(m["ko"])
@@ -217,7 +219,11 @@ def arbitri_da_notizie(base, gia, giorni=4):
                 titoli = [x["titolo"] for x in FT.leggi_rss(r.read().decode("utf-8", "replace"))]
         except Exception as e:  # noqa: BLE001
             print(f"Notizie arbitro {m['h']}-{m['a']}: {e}")
+            DIAG["errori"] += 1
+            DIAG["ultimo_errore"] = str(e)[:120]
             continue
+        DIAG["cercate"] += 1
+        DIAG["titoli"] += len(titoli)
         time.sleep(1)
         lega_cod = {"I2": "I1"}.get(m["lg"], m["lg"])
         nomi = cognomi.get(lega_cod) or {k: v for d in cognomi.values() for k, v in d.items()}
@@ -226,6 +232,7 @@ def arbitri_da_notizie(base, gia, giorni=4):
             p = FT.piano(t)
             if not any(w in p for w in PAROLE_ARB[lingua]):
                 continue
+            DIAG["titoli_arbitro"] += 1
             c = lambda nome: any(re.search(r"\b" + re.escape(w) + r"\b", p) for w in toks(nome) if len(w) >= 3)
             if not (c(m["h"]) and c(m["a"])):  # il titolo deve nominare entrambe le squadre
                 continue
@@ -238,7 +245,9 @@ def arbitri_da_notizie(base, gia, giorni=4):
     # lo stesso arbitro non dirige due partite a meno di 2 giorni di distanza: in quel caso il titolo era ambiguo, si scartano
     def t_(x):
         return datetime.fromisoformat(x["t"].replace("Z", "+00:00"))
+    n0 = len(out)
     out = [x for x in out if not any(y is not x and y["nome"] == x["nome"] and abs((t_(y) - t_(x)).total_seconds()) < 48 * 3600 for y in out + list(gia))]
+    DIAG["scartate_ambigue"] = n0 - len(out)
     print(f"Arbitri dalle notizie: {len(out)}")
     return out
 

@@ -116,6 +116,28 @@ async function controlla(env) {
   return `${msgs.length} avvisi inviati`;
 }
 
+/* ---------- orologio: avvia la raccolta dati su GitHub (gli avvii programmati di GitHub non partono) ----------
+   06:00 UTC giro completo; dalle 10:00 alle 23:50 UTC aggiornamento ogni 10 minuti. Serve il secret GH_TOKEN (permesso Actions: scrittura). */
+async function orologio(env) {
+  if (!env.GH_TOKEN) return "senza token";
+  const t = new Date();
+  const h = t.getUTCHours(), mi = t.getUTCMinutes();
+  let modo = null;
+  if (h === 6 && mi < 10) modo = "completo";
+  else if (h >= 10 && h <= 23) modo = "live";
+  if (!modo) return "fuori orario";
+  const slot = t.toISOString().slice(0, 14) + Math.floor(mi / 10);
+  const ultimo = (await env.KV.get("orologio", "json")) || {};
+  if (ultimo.slot === slot) return "gia avviato";
+  const r = await fetch("https://api.github.com/repos/ilFlagello/aurapitch/actions/workflows/raccolta.yml/dispatches", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + env.GH_TOKEN, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "aurapitch-orologio", "Content-Type": "application/json" },
+    body: JSON.stringify({ ref: "main", inputs: { modo } }),
+  });
+  await env.KV.put("orologio", JSON.stringify({ slot, modo, esito: r.status, t: t.toISOString() }));
+  return `${modo}: ${r.status}`;
+}
+
 async function sha(s) { return b64u(await crypto.subtle.digest("SHA-256", enc.encode(s))).slice(0, 22); }
 
 export default {
@@ -152,10 +174,11 @@ export default {
       const st = await invia(env, await vapid(env), subs[id].sub, { title: "AuraPitch", body: "Notifiche attive: ti avviso di gol e risultati delle tue preferite.", tag: "test", url: "./" });
       return json({ ok: st < 300, status: st });
     }
+    if (url.pathname === "/stato") return json({ orologio: (await env.KV.get("orologio", "json")) || null, token: !!env.GH_TOKEN });
     if (url.pathname === "/") return json({ ok: true, servizio: "AuraPitch notifiche" });
     return json({ ok: false }, 404);
   },
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(controlla(env));
+    ctx.waitUntil(Promise.all([controlla(env), orologio(env)]));
   },
 };

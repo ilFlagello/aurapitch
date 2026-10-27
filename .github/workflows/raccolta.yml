@@ -5,11 +5,16 @@
 
 name: Raccolta dati AuraPitch
 
+# Avvio: l'orologio del servizio Cloudflare (worker/index.js) chiama questo workflow alle 6:00 UTC (completo)
+# e ogni 10 minuti dalle 10 alle 23:50 UTC (live). Gli avvii programmati di GitHub non partivano.
 on:
-  schedule:
-    - cron: "0 6 * * *"          # giro completo ogni mattina
-    - cron: "*/10 10-23 * * *"   # risultati e stato partite ogni 10 minuti (la diretta vera la legge il telefono ogni 30 secondi) (e formazioni, se disponibili)
-  workflow_dispatch: {}          # pulsante "Run workflow" per lanciarlo a mano (giro completo)
+  workflow_dispatch:             # anche a mano: Actions -> Raccolta dati AuraPitch -> Run workflow
+    inputs:
+      modo:
+        description: "completo (mattino) oppure live (aggiornamento)"
+        default: completo
+        type: choice
+        options: [completo, live]
 
 permissions:
   contents: write                # serve per salvare i dati raccolti nell'archivio
@@ -34,7 +39,7 @@ jobs:
           python-version: "3.12"
 
       - name: Giro completo (quote, risultati, classifiche) e dati dell'app
-        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 6 * * *'
+        if: inputs.modo != 'live'
         run: |
           python raccoglitore.py
           python raccoglitore.py --notizie --forza
@@ -42,7 +47,7 @@ jobs:
           python genera_app.py
 
       - name: Aggiornamento durante il giorno (risultati e formazioni)
-        if: github.event.schedule == '*/10 10-23 * * *'
+        if: inputs.modo == 'live'
         run: |
           python raccoglitore.py --formazioni
           python raccoglitore.py --aggiorna

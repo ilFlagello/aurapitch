@@ -1,13 +1,15 @@
 /* AuraPitch beta - web app installabile.
    Si compila con build.mjs (esbuild + Tailwind): il risultato in dist/ non dipende da CDN esterni.
    Icone: set Lucide (pacchetto react-icons/lu). Dati: data/giornata.json. */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import htm from "htm";
-import { LuActivity, LuCalculator, LuCalendar, LuChartColumn, LuCheck, LuChevronDown, LuChevronLeft, LuChevronRight, LuChevronUp, LuCircleCheck, LuCircleDot, LuCircleHelp, LuCircleX, LuClock, LuCopy, LuCrown, LuInfo, LuLock, LuMoon, LuNewspaper, LuPlay, LuPlus, LuShield, LuShieldCheck, LuShirt, LuSmartphone, LuSparkles, LuStar, LuSun, LuSwords, LuTrash2, LuTrendingUp, LuTriangleAlert, LuTrophy, LuUsers, LuX, LuZap } from "react-icons/lu";
+import { useLiveScores, useSummary, loadPlayer, loadCareer, ruolo } from "./live.js";
+import { LuActivity, LuCalculator, LuCalendar, LuChartColumn, LuCheck, LuChevronDown, LuChevronLeft, LuChevronRight, LuChevronUp, LuCircleCheck, LuCircleDot, LuCircleHelp, LuCircleX, LuClock, LuCopy, LuCrown, LuInfo, LuLock, LuMoon, LuNewspaper, LuPlay, LuPlus, LuRepeat, LuShield, LuShieldCheck, LuShirt, LuSmartphone, LuSparkles, LuStar, LuSun, LuSwords, LuTrash2, LuTrendingUp, LuTriangleAlert, LuTrophy, LuUsers, LuX, LuZap } from "react-icons/lu";
 
 const html = htm.bind(React.createElement);
-const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shield: LuShield, Sun: LuSun, Moon: LuMoon, HelpCircle: LuCircleHelp, X: LuX, ChevronLeft: LuChevronLeft, ChevronRight: LuChevronRight, ChevronDown: LuChevronDown, ChevronUp: LuChevronUp, Lock: LuLock, Play: LuPlay, Crown: LuCrown, Zap: LuZap, Copy: LuCopy, Check: LuCheck, Plus: LuPlus, Trash2: LuTrash2, TrendingUp: LuTrendingUp, Swords: LuSwords, Users: LuUsers, Activity: LuActivity, Newspaper: LuNewspaper, Calculator: LuCalculator, BarChart3: LuChartColumn, AlertTriangle: LuTriangleAlert, Info: LuInfo, Star: LuStar, ShieldCheck: LuShieldCheck, CircleDot: LuCircleDot, Shirt: LuShirt, Smartphone: LuSmartphone, CheckCircle2: LuCircleCheck, XCircle: LuCircleX, Clock: LuClock };
+const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shield: LuShield, Sun: LuSun, Moon: LuMoon, HelpCircle: LuCircleHelp, X: LuX, ChevronLeft: LuChevronLeft, ChevronRight: LuChevronRight, ChevronDown: LuChevronDown, ChevronUp: LuChevronUp, Lock: LuLock, Play: LuPlay, Crown: LuCrown, Zap: LuZap, Copy: LuCopy, Check: LuCheck, Plus: LuPlus, Trash2: LuTrash2, TrendingUp: LuTrendingUp, Swords: LuSwords, Users: LuUsers, Activity: LuActivity, Newspaper: LuNewspaper, Calculator: LuCalculator, BarChart3: LuChartColumn, AlertTriangle: LuTriangleAlert, Info: LuInfo, Star: LuStar, ShieldCheck: LuShieldCheck, CircleDot: LuCircleDot, Shirt: LuShirt, Smartphone: LuSmartphone, CheckCircle2: LuCircleCheck, XCircle: LuCircleX, Clock: LuClock, Repeat: LuRepeat };
+Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${size} viewBox="0 0 24 24" className=${className} aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor" /><path d="M12 7.2l3.3 2.4-1.3 3.9h-4l-1.3-3.9z" fill="#fff" /><path d="M12 2v5.2M15.3 9.6l4.6-1.8M14 13.5l2.6 4.3M10 13.5l-2.6 4.3M8.7 9.6L4.1 7.8" stroke="#fff" strokeWidth="1.2" fill="none" /></svg>`;
 
   /* ---------- utilità ---------- */
   const store = {
@@ -207,7 +209,7 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
     function Row({ m, i }) {
     const { goMatch, unlocked } = React.useContext(Ctx);
     return html`<button onClick=${() => goMatch(m.id)} className=${"w-full flex items-center gap-3 px-4 py-2.5 text-left " + (i ? "border-t " + C.bd : "")}>
-      <div className=${"w-11 shrink-0 text-xs font-semibold tabular-nums " + (m.st === "LIVE" ? "text-rose-500" : C.mu)}>${m.st === "FT" ? "FT" : m.st === "LIVE" ? "LIVE" : m.st === "RINV" ? "Rinv." : m.time || "-"}</div>
+      <div className=${"w-11 shrink-0 text-xs font-semibold tabular-nums " + (m.st === "LIVE" ? "text-rose-500" : C.mu)}>${m.st === "FT" ? "FT" : m.st === "LIVE" ? (m.clock || "LIVE") : m.st === "RINV" ? "Rinv." : m.time || "-"}</div>
       <div className="flex-1 min-w-0 space-y-1">${[m.h, m.a].map((t, j) => html`<div key=${t} className="flex items-center gap-2"><${Crest} t=${t} size=${18} />
         <span className=${"text-[15px] truncate flex-1 " + C.tx + (m.g && m.g[j] > m.g[1 - j] ? " font-semibold" : "")}>${t}</span>
         <span className=${"text-[15px] font-semibold w-4 text-right tabular-nums " + C.tx}>${m.g ? m.g[j] : ""}</span></div>`)}</div>
@@ -223,6 +225,174 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
         <button onClick=${() => setUnlock(true)} className="absolute inset-0 flex items-center justify-center p-4 bg-white/30 dark:bg-black/30">
           <span className=${"px-3 py-2 rounded-full border text-xs font-semibold text-center shadow-sm " + TONE.warn}>Sblocca con PRO o guarda 1 video (15 minuti gratis)</span></button></div></div>`;
   }
+
+    /* ---- dati live: azione in campo, momenti chiave, statistiche, cronaca, formazioni, giocatore ---- */
+    const KEY_T = /goal|penalty|red-card|yellow-card|substitution|shot-on-target|woodwork|halftime|end-regular|own-goal|var/;
+    function trasf(side, x, y) {
+      if (x == null || y == null) return null;
+      return side === 1 ? [105 - x * 1.05, y * 0.68] : [x * 1.05, 68 - y * 0.68];
+    }
+    function LiveAction({ sm, m }) {
+      const [open, setOpen] = useState(false);
+      const plays = sm.cronaca.filter((c) => c.x != null && c.side != null).slice(0, 6);
+      const last = sm.cronaca.find((c) => c.text) || null;
+      return html`<div className=${C.card + " overflow-hidden"}>
+        <button onClick=${() => setOpen(!open)} className="w-full flex items-center gap-2 px-4 py-3">
+          <span className="relative flex w-2.5 h-2.5"><span className="absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75 animate-ping"></span><span className="relative inline-flex rounded-full w-2.5 h-2.5 bg-rose-500"></span></span>
+          <span className=${"flex-1 text-left text-sm font-semibold " + C.tx}>Azione in diretta</span>
+          <span className=${"text-xs tabular-nums " + C.mu}>${sm.clock}</span><${open ? Ic.ChevronUp : Ic.ChevronDown} size=${16} className=${C.mu} /></button>
+        ${open && html`<div className="px-4 pb-4 space-y-2">
+          <div className=${"flex justify-between text-[11px] font-semibold " + C.mu}><span>${m.h} attacca verso destra</span><span>${m.a} verso sinistra</span></div>
+          <svg viewBox="-2 -2 109 72" className="w-full rounded-xl" style=${{ background: "#3f8f5a" }}>
+            ${[0, 1, 2, 3, 4, 5, 6].map((i) => html`<rect key=${i} x=${i * 15} y="0" width="7.5" height="68" fill="#ffffff" opacity="0.04" />`)}
+            <g fill="none" stroke="#ffffff" strokeOpacity="0.7" strokeWidth="0.4">
+              <rect x="0" y="0" width="105" height="68" /><line x1="52.5" y1="0" x2="52.5" y2="68" /><circle cx="52.5" cy="34" r="9.15" />
+              <rect x="0" y="13.84" width="16.5" height="40.32" /><rect x="88.5" y="13.84" width="16.5" height="40.32" />
+              <rect x="0" y="24.84" width="5.5" height="18.32" /><rect x="99.5" y="24.84" width="5.5" height="18.32" />
+              <rect x="-1.5" y="30.34" width="1.5" height="7.32" /><rect x="105" y="30.34" width="1.5" height="7.32" /></g>
+            ${plays.slice().reverse().map((p, i, arr) => {
+              const a = trasf(p.side, p.x, p.y), b = trasf(p.side, p.x2, p.y2);
+              const lastOne = i === arr.length - 1, col = sm.colors[p.side] || "#fff";
+              return html`<g key=${p.i} opacity=${lastOne ? 1 : 0.35 + i * 0.1}>
+                ${b && html`<line x1=${a[0]} y1=${a[1]} x2=${b[0]} y2=${b[1]} stroke="#ffffff" strokeWidth="0.6" strokeDasharray="1.5 1" />`}
+                <circle cx=${a[0]} cy=${a[1]} r=${lastOne ? 2.4 : 1.5} fill=${col} stroke="#ffffff" strokeWidth="0.6" />
+                ${lastOne && html`<circle cx=${a[0]} cy=${a[1]} r="2.4" fill="none" stroke="#ffffff" strokeWidth="0.5"><animate attributeName="r" values="2.4;6;2.4" dur="1.6s" repeatCount="indefinite" /><animate attributeName="opacity" values="1;0;1" dur="1.6s" repeatCount="indefinite" /></circle>`}</g>`;
+            })}</svg>
+          ${last && html`<div className=${"text-sm " + C.tx}><b className="tabular-nums mr-1">${last.min}</b>${last.text}</div>`}
+          <div className=${"text-[11px] " + C.mu}>Le ultime azioni con la posizione in campo: il punto pulsante è la più recente. Si aggiorna ogni 20 secondi, con qualche secondo di ritardo sulla diretta.</div></div>`}</div>`;
+    }
+    function EvIcon({ k }) {
+      if (k === "giallo") return html`<span className="inline-block w-2.5 h-3.5 rounded-[2px] bg-amber-400"></span>`;
+      if (k === "rosso") return html`<span className="inline-block w-2.5 h-3.5 rounded-[2px] bg-rose-500"></span>`;
+      if (k === "cambio") return html`<${Ic.Repeat} size=${14} className="text-sky-500" />`;
+      if (/sbagliato|parato/.test(k)) return html`<${Ic.XCircle} size=${14} className="text-rose-500" />`;
+      return html`<${Ic.Ball} size=${14} className=${k === "autogol" ? "text-rose-500" : "text-emerald-600 dark:text-emerald-300"} />`;
+    }
+    function riassunto(sm, m) {
+      const g = sm.g, ev = sm.eventi;
+      const nome = (s) => (s === 0 ? m.h : m.a);
+      const gol = ev.filter((e) => /gol|rigore$|autogol/.test(e.k) && !/sbagliato|parato/.test(e.k));
+      const fr = [];
+      if (sm.st === "NS") return "";
+      fr.push(sm.st === "LIVE" ? `In corso (${sm.clock}): ${m.h} ${g[0]} - ${g[1]} ${m.a}.` : `Finale: ${m.h} ${g[0]} - ${g[1]} ${m.a}.`);
+      if (gol.length) fr.push("Gol: " + gol.map((e) => `${e.min} ${e.a}${e.k === "rigore" ? " su rigore" : e.k === "autogol" ? " (autogol)" : ""} per ${e.k === "autogol" ? nome(e.side) : nome(e.side)}${e.b && e.k === "gol" ? `, assist di ${e.b}` : ""}`).join("; ") + ".");
+      else fr.push("Nessun gol finora.");
+      const rossi = ev.filter((e) => e.k === "rosso");
+      if (rossi.length) fr.push("Espulsi: " + rossi.map((e) => `${e.a} (${nome(e.side)}, ${e.min})`).join(", ") + ".");
+      const gi = ev.filter((e) => e.k === "giallo");
+      if (gi.length) fr.push(`Ammoniti: ${gi.length} (${gi.filter((e) => e.side === 0).length} ${m.h}, ${gi.filter((e) => e.side === 1).length} ${m.a}).`);
+      const s = Object.fromEntries(sm.statistiche.map((r) => [r[0], r]));
+      if (s["Possesso palla"]) fr.push(`Possesso ${Math.round(s["Possesso palla"][1])}% - ${Math.round(s["Possesso palla"][2])}%, tiri ${s["Tiri"] ? s["Tiri"][1] + " - " + s["Tiri"][2] : "-"}${s["Tiri in porta"] ? " (in porta " + s["Tiri in porta"][1] + " - " + s["Tiri in porta"][2] + ")" : ""}.`);
+      const rec = Object.entries(sm.recupero).map(([p, v]) => `${p === "1" ? "primo tempo" : p === "2" ? "secondo tempo" : "supplementari"} +${v}`);
+      if (rec.length) fr.push("Recupero: " + rec.join(", ") + ".");
+      return fr.join(" ");
+    }
+    function KeyEvents({ sm, m }) {
+      const [subs, setSubs] = useState(false);
+      const ev = sm.eventi.filter((e) => subs || e.k !== "cambio");
+      const nSub = sm.eventi.filter((e) => e.k === "cambio").length;
+      return html`<div className=${C.card + " p-4 space-y-2"}>
+        <div className="flex items-center"><span className=${C.lab + " flex-1"}>Momenti chiave</span>${sm.stadio && html`<span className=${"text-[11px] truncate max-w-[55%] " + C.mu}>${sm.stadio}</span>`}</div>
+        <p className=${"text-sm leading-relaxed " + C.tx}>${riassunto(sm, m)}</p>
+        ${ev.length > 0 && html`<div className="space-y-1 pt-1">${ev.map((e, i) => html`<div key=${i} className=${"flex items-center gap-2 text-sm " + (e.side === 1 ? "flex-row-reverse text-right" : "")}>
+          <span className=${"w-12 shrink-0 text-xs font-semibold tabular-nums " + C.mu + (e.side === 1 ? " text-right" : "")}>${e.min}</span><${EvIcon} k=${e.k} />
+          <span className=${"min-w-0 " + C.tx}>${e.k === "cambio" ? html`<span className="text-emerald-600 dark:text-emerald-300">${e.a}</span> <span className=${C.mu}>per ${e.b}</span>`
+            : html`<b>${e.a}</b>${e.b && /gol|rigore$/.test(e.k) && e.k !== "rigore" ? html`<span className=${C.mu}> assist ${e.b}</span>` : ""}${e.k === "rigore" ? html`<span className=${C.mu}> (rigore)</span>` : ""}${e.k === "autogol" ? html`<span className=${C.mu}> (autogol)</span>` : ""}${/sbagliato|parato/.test(e.k) ? html`<span className=${C.mu}> (${e.k})</span>` : ""}`}</span></div>`)}</div>`}
+        ${nSub > 0 && html`<button onClick=${() => setSubs(!subs)} className="text-xs font-semibold text-[#0A84FF]">${subs ? "Nascondi le sostituzioni" : `Mostra le sostituzioni (${nSub})`}</button>`}</div>`;
+    }
+    function StatsCard({ sm, m }) {
+      const [all, setAll] = useState(false);
+      if (!sm.statistiche.length) return null;
+      const rows = all ? sm.statistiche : sm.statistiche.slice(0, 6);
+      const fmt = (v, u) => (u === "%" ? Math.round(v) + "%" : v);
+      return html`<div className=${C.card + " p-4 space-y-3"}>
+        <div className=${"flex justify-between text-xs font-semibold " + C.mu}><span className="flex items-center gap-1.5"><${Crest} t=${m.h} size=${14} />${m.h}</span><span className=${C.lab}>Statistiche</span><span className="flex items-center gap-1.5">${m.a}<${Crest} t=${m.a} size=${14} /></span></div>
+        ${rows.map(([l, a, b, u]) => html`<div key=${l}><div className="flex justify-between text-sm tabular-nums"><span className=${"font-semibold " + (a >= b ? C.tx : C.mu)}>${fmt(a, u)}</span><span className=${"text-xs " + C.mu}>${l}</span><span className=${"font-semibold " + (b >= a ? C.tx : C.mu)}>${fmt(b, u)}</span></div>
+          <div className="flex gap-1 mt-1"><div className=${"flex-1 h-1.5 rounded-full flex justify-end " + C.ch}><div className="h-1.5 rounded-full bg-emerald-300 dark:bg-emerald-500/70" style=${{ width: (a / (a + b || 1)) * 100 + "%" }}></div></div>
+            <div className=${"flex-1 h-1.5 rounded-full " + C.ch}><div className="h-1.5 rounded-full bg-sky-300 dark:bg-sky-500/70" style=${{ width: (b / (a + b || 1)) * 100 + "%" }}></div></div></div></div>`)}
+        ${sm.statistiche.length > 6 && html`<button onClick=${() => setAll(!all)} className="text-xs font-semibold text-[#0A84FF]">${all ? "Mostra meno" : "Tutte le statistiche"}</button>`}</div>`;
+    }
+    function Cronaca({ sm, m }) {
+      const [f, setF] = useState(0);
+      const [n, setN] = useState(40);
+      const list = sm.cronaca.filter((c) => c.text && (!f || KEY_T.test(c.type) || /^Gol!|Fine|Inizia|recupero/.test(c.text)));
+      const tone = (t) => (/goal|penalty---scored|own-goal/.test(t) ? TONE.good : /red-card/.test(t) ? TONE.bad : /yellow-card/.test(t) ? TONE.warn : /substitution/.test(t) ? TONE.info : "");
+      return html`<${React.Fragment}>
+        <div className=${C.card + " p-4"}><div className=${C.lab + " mb-1"}>Resoconto</div><p className=${"text-sm leading-relaxed " + C.tx}>${riassunto(sm, m) || "La partita non è ancora iniziata: la cronaca scritta parte con le formazioni ufficiali e il calcio d'inizio."}</p></div>
+        <${Seg} items=${["Tutta la cronaca", "Solo momenti chiave"]} val=${f} set=${setF} />
+        <div className=${C.card + " px-4 py-1"}>${list.length ? list.slice(0, n).map((c, i) => html`<div key=${c.i} className=${"flex gap-3 py-2.5 " + (i ? "border-t " + C.bd : "")}>
+          <span className=${"w-11 shrink-0 text-xs font-semibold tabular-nums pt-0.5 " + C.mu}>${c.min}</span>
+          <span className=${"flex-1 text-sm leading-relaxed " + C.tx + (tone(c.type) ? " rounded-lg border px-2 py-1 -my-1 " + tone(c.type) : "")}>${c.text}</span></div>`)
+          : html`<div className=${"py-3 text-sm " + C.mu}>Nessun commento ancora.</div>`}</div>
+        ${list.length > n && html`<button onClick=${() => setN(n + 60)} className=${"w-full py-2.5 rounded-xl text-sm font-semibold " + C.ch + " " + C.tx}>Mostra altri commenti</button>`}
+        <p className=${"text-[11px] " + C.mu}>Cronaca minuto per minuto tradotta automaticamente in italiano${sm.st === "LIVE" ? ", aggiornata ogni 20 secondi" : ""}.</p><//>`;
+    }
+    function Badges({ p }) {
+      const s = p.st || {};
+      const b = [];
+      for (let i = 0; i < (s.totalGoals || 0); i++) b.push(html`<${Ic.Ball} key=${"g" + i} size=${12} className="text-[#1D1D1F] bg-white rounded-full" />`);
+      if (s.goalAssists) b.push(html`<span key="a" className="text-[8px] font-bold px-1 rounded bg-sky-500 text-white">A${s.goalAssists > 1 ? s.goalAssists : ""}</span>`);
+      if (s.redCards) b.push(html`<span key="r" className="inline-block w-2 h-2.5 rounded-[1px] bg-rose-500"></span>`);
+      else if (s.yellowCards) b.push(html`<span key="y" className="inline-block w-2 h-2.5 rounded-[1px] bg-amber-400"></span>`);
+      if (p.out) b.push(html`<span key="o" className="text-[8px] font-bold px-1 rounded bg-black/60 text-white">${p.minOut || "out"}</span>`);
+      return b.length ? html`<span className="absolute -top-1.5 -right-3 flex gap-0.5 items-center">${b}</span>` : null;
+    }
+    function Lineups({ sm, m, onPlayer }) {
+      const F = sm.formazioni;
+      if (!F[0] && !F[1]) return html`<div className=${C.card + " p-4 flex gap-3"}><span className=${"w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border " + TONE.ok}><${Ic.Shirt} size=${17} /></span>
+        <div><div className=${"text-sm font-semibold " + C.tx}>Formazioni non ancora ufficiali</div><p className=${"text-sm " + C.mu}>Escono circa un'ora prima del calcio d'inizio: compariranno qui da sole, sul campo.</p></div></div>`;
+      const Tok = ({ p, col }) => html`<button onClick=${() => onPlayer(p)} className="flex flex-col items-center w-[19%] min-w-0">
+        <span className="relative"><span className="w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold text-white border-2 border-white/80 shadow" style=${{ background: col }}>${p.num}</span><${Badges} p=${p} /></span>
+        <span className="mt-0.5 text-[10px] font-semibold text-white leading-tight truncate max-w-full drop-shadow">${p.last}</span></button>`;
+      const half = (j) => { const f = F[j]; if (!f) return html`<div className="h-1/2"></div>`; const lines = j === 0 ? f.lines.map((l) => l.slice().reverse()) : f.lines.slice().reverse();
+        return html`<div className="flex flex-col justify-around h-1/2 py-2">${lines.map((l, i) => html`<div key=${i} className="flex justify-around">${l.map((p) => html`<${Tok} key=${p.id} p=${p} col=${sm.colors[j]} />`)}</div>`)}</div>`; };
+      return html`<${React.Fragment}>
+        <div className=${C.card + " p-3"}>
+          <div className=${"flex justify-between text-xs font-semibold mb-2 " + C.tx}><span className="flex items-center gap-1.5"><${Crest} t=${m.h} size=${14} />${m.h} <span className=${C.mu}>${F[0] ? F[0].formation : ""}</span></span></div>
+          <div className="relative rounded-xl overflow-hidden" style=${{ background: "#3f8f5a", aspectRatio: "68 / 105" }}>
+            <svg viewBox="0 0 68 105" className="absolute inset-0 w-full h-full" preserveAspectRatio="none"><g fill="none" stroke="#fff" strokeOpacity="0.5" strokeWidth="0.35">
+              <rect x="0.5" y="0.5" width="67" height="104" /><line x1="0" y1="52.5" x2="68" y2="52.5" /><circle cx="34" cy="52.5" r="9.15" />
+              <rect x="13.84" y="0.5" width="40.32" height="16.5" /><rect x="13.84" y="88" width="40.32" height="16.5" /><rect x="24.84" y="0.5" width="18.32" height="5.5" /><rect x="24.84" y="99" width="18.32" height="5.5" /></g></svg>
+            <div className="absolute inset-0 flex flex-col">${half(0)}${half(1)}</div></div>
+          <div className=${"flex justify-between text-xs font-semibold mt-2 " + C.tx}><span></span><span className="flex items-center gap-1.5"><span className=${C.mu}>${F[1] ? F[1].formation : ""}</span> ${m.a}<${Crest} t=${m.a} size=${14} /></span></div>
+          <p className=${"text-[11px] mt-1 " + C.mu}>Tocca un giocatore per vedere partita, stagione e carriera.</p></div>
+        <div className=${C.card + " p-4"}><div className=${C.lab + " mb-2"}>Panchina</div>
+          <div className="grid grid-cols-2 gap-x-3">${[0, 1].map((j) => html`<div key=${j} className="space-y-1 min-w-0">${(F[j] ? F[j].bench : []).map((p) => html`<button key=${p.id} onClick=${() => onPlayer(p)} className=${"w-full flex items-center gap-1.5 text-left text-[13px] " + C.tx}>
+            <span className=${"w-5 text-[11px] tabular-nums " + C.mu}>${p.num}</span><span className=${"truncate flex-1 " + (p.inn ? "font-semibold" : "")}>${p.short}</span>${p.inn && html`<span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-300 shrink-0">${p.minIn || "in"}</span>`}</button>`)}</div>`)}</div></div><//>`;
+    }
+    const ST_IT = [["totalGoals", "Gol"], ["goalAssists", "Assist"], ["totalShots", "Tiri"], ["shotsOnTarget", "Tiri in porta"], ["foulsCommitted", "Falli fatti"], ["foulsSuffered", "Falli subiti"], ["offsides", "Fuorigioco"], ["yellowCards", "Gialli"], ["redCards", "Rossi"], ["saves", "Parate"], ["goalsConceded", "Gol subiti"], ["shotsFaced", "Tiri subiti"], ["ownGoals", "Autogol"]];
+    function PlayerSheet({ p, side, m, col, onClose }) {
+      const [t, setT] = useState(0);
+      const [info, setInfo] = useState(null);
+      const [car, setCar] = useState(null);
+      const [err, setErr] = useState("");
+      useEffect(() => { loadPlayer(p.id).then(setInfo).catch(() => setErr("Profilo non raggiungibile ora.")); }, [p.id]);
+      useEffect(() => { if (t === 2 && car === null) loadCareer(p.id).then(setCar).catch(() => setCar([])); }, [t]);
+      const gk = ruolo(p.pos) === "Portiere";
+      const s = p.st || {};
+      const box = (l, v) => html`<div key=${l} className=${"rounded-xl p-2 text-center " + C.ch}><div className=${"text-base font-semibold tabular-nums " + C.tx}>${v == null || Number.isNaN(v) ? "-" : v}</div><div className=${"text-[10px] " + C.mu}>${l}</div></div>`;
+      const pr = info && info.prof;
+      const stato = p.starter ? (p.out ? `Titolare, uscito al ${p.minOut || "?"}` : "Titolare") : p.inn ? `Entrato al ${p.minIn || "?"}` : "In panchina";
+      return html`<${Sheet} title=${p.name} onClose=${onClose}>
+        <div className="flex items-center gap-3"><span className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold text-white shrink-0" style=${{ background: col || "#8E8E93" }}>${p.num || "-"}</span>
+          <div className="min-w-0"><div className=${"text-sm font-semibold " + C.tx}>${ruolo(p.pos)}${pr && pr.squadra ? " - " + pr.squadra : " - " + (side === 0 ? m.h : m.a)}</div>
+            <div className=${"text-xs " + C.mu}>${pr ? [pr.naz, pr.eta ? pr.eta + " anni" : "", pr.altezza].filter(Boolean).join(" - ") : err || "Caricamento del profilo..."}</div></div></div>
+        <${Seg} small=${true} items=${["Questa partita", "Stagione", "Carriera"]} val=${t} set=${setT} />
+        ${t === 0 && html`<${React.Fragment}><div className=${"text-xs " + C.mu}>${stato}</div>
+          <div className="grid grid-cols-4 gap-2">${ST_IT.filter(([k]) => (gk ? true : !["saves", "goalsConceded", "shotsFaced"].includes(k)) && (s[k] != null)).map(([k, l]) => box(l, s[k]))}</div><//>`}
+        ${t === 1 && html`<${React.Fragment}>${!info ? html`<div className=${"text-sm " + C.mu}>${err || "Caricamento..."}</div>` : !info.stagione.length ? html`<div className=${"text-sm " + C.mu}>Nessuna statistica per la stagione in corso.</div>`
+          : info.stagione.map((sp) => html`<div key=${sp.comp} className="space-y-1.5"><div className=${C.lab}>${sp.comp.replace(/(Italian|English|Spanish|German|French) /, "").replace("UEFA ", "")}</div>
+            <div className="grid grid-cols-4 gap-2">${(gk ? [["starts", "Presenze"], ["cleanSheet", "Porta inviolata"], ["saves", "Parate"], ["goalsConceded", "Gol subiti"]] : [["starts", "Da titolare"], ["totalGoals", "Gol"], ["goalAssists", "Assist"], ["totalShots", "Tiri"], ["shotsOnTarget", "In porta"], ["yellowCards", "Gialli"], ["redCards", "Rossi"], ["foulsSuffered", "Falli subiti"]]).map(([k, l]) => box(l, sp.v[k]))}</div></div>`)}
+          ${info && info.ultime.length > 0 && html`<div className="space-y-1"><div className=${C.lab}>Ultime partite</div>${info.ultime.slice(0, 5).map((u) => html`<div key=${u.id} className=${"flex items-center gap-2 text-sm " + C.tx}>
+            <span className=${"w-5 h-5 rounded text-[10px] font-bold flex items-center justify-center " + TONE[u.ev && u.ev.gameResult === "W" ? "good" : u.ev && u.ev.gameResult === "D" ? "warn" : "bad"]}>${u.ev ? { W: "V", D: "N", L: "P" }[u.ev.gameResult] || "-" : "-"}</span>
+            <span className="flex-1 truncate">${u.ev ? (u.ev.atVs === "@" ? "@ " : "vs ") + (u.ev.opponent && u.ev.opponent.displayName) : ""}</span><span className="tabular-nums font-semibold">${u.ev ? u.ev.score : ""}</span>
+            <span className=${"text-xs w-16 text-right " + C.mu}>${u.v.totalGoals && u.v.totalGoals !== "0" ? u.v.totalGoals + " gol " : ""}${u.v.goalAssists && u.v.goalAssists !== "0" ? u.v.goalAssists + " ass" : ""}</span></div>`)}</div>`}<//>`}
+        ${t === 2 && html`<${React.Fragment}>${car === null ? html`<div className=${"text-sm " + C.mu}>Caricamento della carriera...</div>` : !car.length ? html`<div className=${"text-sm " + C.mu}>Carriera non disponibile per questo giocatore.</div>`
+          : html`<div className="overflow-x-auto"><table className=${"w-full text-[13px] tabular-nums " + C.tx}><thead><tr className=${"text-[10px] " + C.mu}><th className="text-left font-medium py-1">Stagione</th><th className="text-left font-medium">Squadra</th><th className="text-right font-medium">Pres</th><th className="text-right font-medium">${gk ? "Inv" : "Gol"}</th><th className="text-right font-medium">${gk ? "Sub" : "Ass"}</th></tr></thead>
+            <tbody>${car.map((r, i) => html`<tr key=${i} className=${"border-t " + C.bd}><td className="py-1.5 pr-1">${r.stagione}</td><td className="pr-1"><div className="truncate max-w-[130px] font-semibold">${r.squadra}</div><div className=${"text-[10px] truncate max-w-[130px] " + C.mu}>${r.lega}</div></td>
+              <td className="text-right">${r.pres ?? "-"}</td><td className="text-right">${(gk ? r.cs : r.gol) ?? "-"}</td><td className="text-right">${(gk ? r.subiti : r.ass) ?? "-"}</td></tr>`)}</tbody></table></div>`}
+          <p className=${"text-[11px] " + C.mu}>Campionati e coppe stagione per stagione, dalle più recenti. Le amichevoli sono escluse.</p><//>`}<//>`;
+    }
 
     /* ---- consiglio IA motivato e tutti i mercati ---- */
     function TipView({ m }) {
@@ -268,6 +438,13 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
       const [pOpen, setPOpen] = useState(null);
       const [filt, setFilt] = useState(0);
       const [l5, setL5] = useState(null);
+      const [pl, setPl] = useState(null);
+      const { d: sm } = useSummary(m.lgE, m.eid, m.st === "LIVE");
+      const sw = useRef(null);
+      const TABS = ["Panoramica", "Cronaca", "Formazioni", "Analisi IA", "Classifiche"];
+      const onTS = (e) => { const t = e.touches[0]; sw.current = e.target.closest("[data-noswipe]") ? null : [t.clientX, t.clientY]; };
+      const onTE = (e) => { if (!sw.current) return; const t = e.changedTouches[0], dx = t.clientX - sw.current[0], dy = t.clientY - sw.current[1]; sw.current = null;
+        if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6) setMt(Math.max(0, Math.min(TABS.length - 1, mt + (dx < 0 ? 1 : -1)))); };
       const fav = m.p.indexOf(Math.max(...m.p));
       const S = D.standings[m.lg];
       const st = S ? S[["generale", "casa", "trasferta"][filt]] : [];
@@ -291,13 +468,17 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
             ${[m.h, m.a].map((t, j) => html`<div key=${t} className=${"flex flex-col items-center gap-1.5 w-28 " + (j ? "order-3" : "order-1")}><${Crest} t=${t} size=${44} />
               <span className=${"text-sm font-semibold text-center leading-tight " + C.tx}>${t}</span><span className=${"text-[11px] " + C.mu}>${pos(t) ? pos(t) + "° in classifica" : ""}</span></div>`)}
             <div className="order-2 flex flex-col items-center pt-2"><div className=${"text-3xl font-semibold tabular-nums " + C.tx}>${m.g ? m.g[0] + " - " + m.g[1] : m.time}</div>
-              <div className=${"text-xs mt-1 " + C.mu}>${m.st === "FT" ? "Finale" : m.st === "LIVE" ? "In corso" : m.st === "RINV" ? "Rinviata" : ""}</div></div></div>
+              <div className=${"text-xs mt-1 " + (m.st === "LIVE" ? "text-rose-500 font-semibold " : C.mu)}>${m.st === "FT" ? "Finale" : m.st === "LIVE" ? (sm && sm.clock) || m.clock || "In corso" : m.st === "RINV" ? "Rinviata" : ""}</div></div></div>
           <div className="flex items-center justify-center gap-2 mt-4"><${FavPill} m=${m} unlocked=${unlocked(m)} big=${true} />
             ${m.free && html`<span className=${"text-[10px] font-semibold px-2 py-0.5 rounded-full border " + TONE.good}>FREE oggi</span>`}
             ${m.st === "FT" && unlocked(m) && html`<span className=${"text-xs " + (m.res === fav ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>${m.res === fav ? "Favorito rispettato" : "Sorpresa"}</span>`}</div></div>
-        <${Seg} small=${true} items=${["Panoramica", "Analisi IA", "Classifiche", "Campo"]} val=${mt} set=${setMt} />
+        <div data-noswipe="1"><${Seg} small=${true} items=${TABS} val=${mt} set=${setMt} /></div>
+        <div onTouchStart=${onTS} onTouchEnd=${onTE} className="space-y-3 min-h-[50vh]">
 
         ${mt === 0 && html`<${React.Fragment}>
+          ${sm && sm.st === "LIVE" && html`<${LiveAction} sm=${sm} m=${m} />`}
+          ${sm && sm.st !== "NS" && html`<${KeyEvents} sm=${sm} m=${m} />`}
+          ${sm && sm.st !== "NS" && html`<${StatsCard} sm=${sm} m=${m} />`}
           <div className=${C.card + " p-4 space-y-3"}><div className="flex justify-between items-baseline"><span className=${C.lab}>Probabilità dalle quote</span><span className=${"text-[11px] " + C.mu}>Over 2.5: <b className=${C.tx}>${pct(m.mo)}%</b></span></div>
             <${ProbBar} p=${m.mk} />
             ${!D.demo && m.nb ? html`<div className=${"text-[11px] " + C.mu}>Quota media di ${m.nb} bookmaker.</div>` : null}
@@ -314,7 +495,7 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
             ${m.flags.length > 0 && html`<div className="flex flex-wrap gap-1.5">${m.flags.map((f) => html`<span key=${f.text} className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + TONE[f.tone]}>${f.text}</span>`)}</div>`}
           <//><//>`}
 
-        ${mt === 1 && html`<${Gate} m=${m} title="Analisi IA: probabilità, gol attesi e consiglio">
+        ${mt === 3 && html`<${Gate} m=${m} title="Analisi IA: probabilità, gol attesi e consiglio">
           <${TipView} m=${m} />
           <div className=${C.card + " p-4 space-y-2"}><div className=${C.lab}>Laboratorio: IA contro quote</div>
             <div className="overflow-x-auto"><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}><th className="text-left font-medium py-1">Esito</th><th className="text-right font-medium">IA</th><th className="text-right font-medium">Quote</th><th className="text-right font-medium">${D.demo ? "Bet365" : "Media"}</th><th className="text-right font-medium">Migliore</th></tr></thead>
@@ -327,7 +508,7 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
             ${[["Gol attesi " + m.h, (m.xg[0] || 0).toFixed(2).replace(".", ",")], ["Gol attesi " + m.a, (m.xg[1] || 0).toFixed(2).replace(".", ",")], ...(m.elo[0] ? [["Elo casa", m.elo[0]], ["Elo ospiti", m.elo[1]]] : [])].map(([a, b]) => html`<div key=${a} className=${"rounded-xl p-2 " + C.ch}>
               <div className=${"text-base font-semibold tabular-nums " + C.tx}>${b}</div><div className=${"text-[10px] " + C.mu}>${a}</div></div>`)}</div>`}<//>`}
 
-        ${mt === 2 && html`<${React.Fragment}>
+        ${mt === 4 && html`<${React.Fragment}>
           <div className=${"flex items-center gap-2 text-sm font-semibold " + C.tx}><${Flag} k=${L.flag} />Classifica ${L.name}</div>
           <${Seg} items=${["Generale", "Solo Casa", "Solo Trasferta"]} val=${filt} set=${setFilt} />
           <div className=${C.card + " p-2 overflow-x-auto"}><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}>
@@ -344,15 +525,11 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
               : html`<div className=${"text-sm " + C.mu}>${D.demo ? "Nessun precedente negli ultimi 8 anni." : "Nessun precedente nei dati disponibili."}</div>`}</div>
           ${!S && html`<div className=${C.card + " p-4 text-sm " + C.mu}>Classifica, ultime 5 e precedenti non sono disponibili per questo campionato nella fonte dati gratuita.</div>`}<//>`}
 
-        ${mt === 3 && html`<${React.Fragment}>
-          <div className=${C.card + " p-4 space-y-3"}><div className="flex justify-between"><span className=${C.lab}>Statistiche partita</span><span className=${"text-[11px] " + C.mu}>dati reali</span></div>
-            <div className=${"flex justify-between text-xs font-semibold " + C.mu}><span className="flex items-center gap-1.5"><${Crest} t=${m.h} size=${14} />${m.h}</span><span className="flex items-center gap-1.5">${m.a}<${Crest} t=${m.a} size=${14} /></span></div>
-            ${m.stats.length ? m.stats.map(([l, a, b]) => html`<div key=${l}><div className="flex justify-between text-sm tabular-nums"><span className=${"font-semibold " + (a >= b ? C.tx : C.mu)}>${a}</span><span className=${"text-xs " + C.mu}>${l}</span><span className=${"font-semibold " + (b >= a ? C.tx : C.mu)}>${b}</span></div>
-              <div className="flex gap-1 mt-1"><div className=${"flex-1 h-1.5 rounded-full flex justify-end " + C.ch}><div className="h-1.5 rounded-full bg-emerald-300 dark:bg-emerald-500/70" style=${{ width: (a / (a + b || 1)) * 100 + "%" }}></div></div>
-                <div className=${"flex-1 h-1.5 rounded-full " + C.ch}><div className="h-1.5 rounded-full bg-sky-300 dark:bg-sky-500/70" style=${{ width: (b / (a + b || 1)) * 100 + "%" }}></div></div></div></div>`)
-              : html`<div className=${"text-sm " + C.mu}>${D.demo ? "Statistiche disponibili a fine partita." : "Tiri, angoli e falli non sono inclusi nella fonte dati gratuita: arriveranno con API-Football."}</div>`}</div>
-          <div className=${C.card + " p-4 flex gap-3"}><span className=${"w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border " + TONE.ok}><${Ic.Shirt} size=${17} /></span>
-            <div><div className=${"text-sm font-semibold " + C.tx}>Formazioni e campo</div><p className=${"text-sm " + C.mu}>Campo con i titolari, assenti, panchina e ballottaggi arriveranno con la raccolta dati quotidiana: le formazioni ufficiali escono 20-40 minuti prima del calcio d'inizio.</p></div></div><//>`}
+        ${mt === 1 && (sm ? html`<${Cronaca} sm=${sm} m=${m} />` : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${m.eid ? "Caricamento della cronaca..." : "La cronaca scritta compare quando la partita è collegata alla diretta: di solito dal giorno della partita, con le formazioni ufficiali."}</div>`)}
+
+        ${mt === 2 && (sm ? html`<${Lineups} sm=${sm} m=${m} onPlayer=${(p) => setPl({ p, side: sm.formazioni[0] && sm.formazioni[0].all.includes(p) ? 0 : 1 })} />` : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${m.eid ? "Caricamento delle formazioni..." : "Le formazioni compaiono il giorno della partita, circa un'ora prima del calcio d'inizio."}</div>`)}
+        </div>
+        ${pl && html`<${PlayerSheet} p=${pl.p} side=${pl.side} col=${sm && sm.colors[pl.side]} m=${m} onClose=${() => setPl(null)} />`}
       </div>`;
     }
 
@@ -456,7 +633,15 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
 
   /* ---------- app ---------- */
   function App() {
-    const [D, setD] = useState(null);
+    const [Draw, setD] = useState(null);
+    const live = useLiveScores(Draw ? Draw.matches : null);
+    const D = React.useMemo(() => Draw && { ...Draw, matches: Draw.matches.map((m) => {
+      const l = live[m.id];
+      if (!l) return m;
+      const ok = l.st === "LIVE" || l.st === "FT" || (l.st === "RINV" && m.st !== "FT");
+      const g = ok && l.g ? l.g : m.g;
+      return { ...m, eid: l.eid, lgE: l.lgE, clock: l.clock, ...(ok ? { st: l.st, g, res: g ? (g[0] > g[1] ? 0 : g[0] === g[1] ? 1 : 2) : m.res } : {}) };
+    }) }, [Draw, live]);
     const [err, setErr] = useState("");
     const [theme, setTheme] = useState(store.get("theme", "system"));
     const [tab, setTab] = useState("partite");
@@ -535,7 +720,7 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
         <button aria-label="Profilo e impostazioni" onClick=${() => setProfile(true)} className=${"w-8 h-8 rounded-full text-[11px] font-semibold " + C.on}>${ini}</button>
       </div></header>`;
 
-    const steps = ["Partite: tocca un campionato per aprirlo. La pillola a destra dice il favorito e la sua probabilità.", "Tocca una partita: Panoramica, Analisi IA, Classifiche e Campo. Le card si aprono al tocco.",
+    const steps = ["Partite: tocca un campionato per aprirlo. La pillola a destra dice il favorito e la sua probabilità.", "Tocca una partita: Panoramica, Cronaca, Formazioni, Analisi IA e Classifiche. Scorri col dito a destra o a sinistra per cambiare sezione.",
       "Le analisi IA sono libere sulle partite FREE; sulle altre si sbloccano con PRO o con un video da 15 minuti.", "In Schedina IA scegli un profilo o costruisci la tua schedina dalle partite."];
     const guideBox = guide > 0 && html`<div className=${"mx-4 mb-3 p-3 rounded-2xl border text-sm flex items-start gap-2 " + TONE.info}>
       <div className="flex-1"><b>Guida ${guide}/4.</b> ${steps[guide - 1]}</div>
@@ -547,7 +732,7 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
     const home = html`<div className="px-4 space-y-3">
       ${banner && html`<div className=${C.card + " p-3 flex gap-3 items-start"}><${Ic.Info} size=${16} className="text-sky-500 shrink-0 mt-0.5" />
         <div className=${"text-[13px] flex-1 " + C.tx}>${D.demo ? html`Beta con <b>dati reali</b> della giornata ${D.label}. Le partite sono già giocate: puoi confrontare le letture dell'IA con i risultati.`
-          : html`Beta con <b>dati reali</b>, ${D.label}: quote medie di decine di bookmaker, risultati e classifiche. Si aggiorna da sola ogni mattina e durante le partite.`}</div>
+          : html`Beta con <b>dati reali</b>, ${D.label}: quote medie di decine di bookmaker, classifiche e risultati in diretta (ogni 30 secondi). Apri una partita e scorri col dito tra le sezioni.`}</div>
         <button aria-label="Chiudi avviso" onClick=${() => { setBanner(false); store.set("banner2", false); }} className=${C.mu}><${Ic.X} size=${16} /></button></div>`}
       <div className="flex gap-2 overflow-x-auto noscroll -mx-4 px-4">${[{ k: "all", label: D.demo ? "Tutta la giornata" : "Tutti i giorni" }, ...D.days].map((d) => html`<${Chip} key=${d.k} on=${day === d.k} onClick=${() => setDay(d.k)}>${d.label}<//>`)}</div>
       <div className="w-40"><${Seg} items=${["Tutte", "Live"]} val=${liveOnly} set=${setLiveOnly} /></div>
@@ -563,7 +748,7 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
           ${o && html`<div className=${"border-t " + C.bd}>${ms.map((m, i) => html`<${Row} key=${m.id} m=${m} i=${i} />`)}</div>`}</div>`;
       })}
       ${!dayMatches.length && html`<div className=${C.card + " p-6 text-center text-sm " + C.mu}>${liveOnly ? "Nessuna partita in corso in questo momento." : "Nessuna partita in questo giorno."}</div>`}
-      <p className=${"text-[11px] text-center " + C.mu}>${D.demo ? "Dati: Football-Data.co.uk, ClubElo." : "Dati: quote da The Odds API; risultati e classifiche da football-data.org."} Stemmi generici, non ufficiali.</p></div>`;
+      <p className=${"text-[11px] text-center " + C.mu}>${D.demo ? "Dati: Football-Data.co.uk, ClubElo." : "Dati: quote da The Odds API; classifiche da football-data.org; diretta, cronaca e formazioni da ESPN."} Stemmi generici, non ufficiali.</p></div>`;
 
     const open_m = open && byId[open];
     const views = { partite: home, campionati: html`<${LeaguesView} />`, schedina: html`<${SlipView} />`, club: html`<${ClubView} />` };

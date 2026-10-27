@@ -8,7 +8,7 @@ name: Raccolta dati AuraPitch
 on:
   schedule:
     - cron: "0 6 * * *"          # giro completo ogni mattina
-    - cron: "*/30 10-22 * * *"   # risultati e stato partite ogni 30 minuti (e formazioni, se disponibili)
+    - cron: "*/10 10-23 * * *"   # risultati e stato partite ogni 10 minuti (la diretta vera la legge il telefono ogni 30 secondi) (e formazioni, se disponibili)
   workflow_dispatch: {}          # pulsante "Run workflow" per lanciarlo a mano (giro completo)
 
 permissions:
@@ -40,7 +40,7 @@ jobs:
           python genera_app.py
 
       - name: Aggiornamento durante il giorno (risultati e formazioni)
-        if: github.event.schedule == '*/30 10-22 * * *'
+        if: github.event.schedule == '*/10 10-23 * * *'
         run: |
           python raccoglitore.py --formazioni
           python raccoglitore.py --aggiorna

@@ -1,0 +1,26 @@
+# Prova temporanea delle fonti (si cancella dopo)
+name: Sonda fonti live
+on: { workflow_dispatch: {} }
+permissions: { contents: write }
+jobs:
+  sonda:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prova
+        env: { FOOTBALL_DATA_KEY: "${{ secrets.FOOTBALL_DATA_KEY }}" }
+        run: |
+          mkdir -p sonda3; cd sonda3
+          S=https://site.api.espn.com/apis/site/v2/sports/soccer
+          curl -s "$S/ita.1/teams/110/schedule" -o sched.json
+          curl -s "$S/ita.1/teams/110/schedule?fixture=true" -o sched_fix.json
+          curl -s "$S/ita.1/teams/110/roster" -o roster.json
+          curl -s "$S/ita.1/teams/110" -o team.json
+          curl -s "https://sports.core.api.espn.com/v2/sports/soccer/leagues/ita.1/seasons/2026/types/1/leaders?lang=en&region=us" -o leaders.json
+          curl -s "https://site.web.api.espn.com/apis/site/v2/sports/soccer/ita.1/statistics" -o stats_web.json
+          curl -s -H "X-Auth-Token: $FOOTBALL_DATA_KEY" "https://api.football-data.org/v4/competitions/SA/scorers?limit=20" -o fd_scorers.json
+          ls -la
+      - name: Salva
+        run: |
+          git config user.name "aurapitch-raccolta"; git config user.email "aurapitch-raccolta@users.noreply.github.com"
+          git add sonda3 && git commit -m "Sonda 3" && git push

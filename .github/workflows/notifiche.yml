@@ -54,7 +54,7 @@ jobs:
           fi
           log "Archivio KV: ${KV:+presente}"
           export KV
-          log "Orologio della raccolta: ${GH_DISPATCH:+token presente}${GH_DISPATCH:-manca il secret GH_DISPATCH_TOKEN}"
+          if [ -n "$GH_DISPATCH" ]; then log "Orologio della raccolta: token presente"; else log "Orologio della raccolta: manca il secret GH_DISPATCH_TOKEN"; fi
           # script
           python3 - <<'PY'
           import json, os

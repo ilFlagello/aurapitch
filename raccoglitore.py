@@ -346,7 +346,60 @@ def scrivi_csv(cart, partite):
             w.writerow({k: ("; ".join(v) if isinstance(v, list) else v) for k, v in r.items()})
 
 
+def giro_notizie(base="data", ore=48):
+    """Notizie su infortuni, squalifiche e dubbi delle squadre che giocano nelle prossime 48 ore.
+    Fonte: Google News RSS (feed pubblico). Si salvano solo titolo, fonte, data e link."""
+    import fattori as FT
+    try:
+        with open(os.path.join("app", "data", "giornata.json"), encoding="utf-8") as f:
+            gio = json.load(f)
+    except (OSError, ValueError):
+        print("Notizie: file dell'app non trovato, salto.")
+        return
+    ora = datetime.now(timezone.utc)
+    squadre = {}
+    for m in gio.get("matches", []):
+        try:
+            ko = datetime.fromisoformat(m["ko"])
+        except (KeyError, ValueError):
+            continue
+        if m.get("st") == "NS" and timedelta(hours=-1) <= ko - ora <= timedelta(hours=ore):
+            squadre[m["h"]] = m["lg"]
+            squadre[m["a"]] = m["lg"]
+    path = os.path.join(base, "notizie", "notizie.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            arch = json.load(f)
+    except (OSError, ValueError):
+        arch = {}
+    limite = (ora - timedelta(days=5)).isoformat()
+    nuove = 0
+    for sq, lg in squadre.items():
+        try:
+            req = urllib.request.Request(FT.url_notizie(sq, lg), headers={"User-Agent": "Mozilla/5.0 (AuraPitch beta; lettura titoli RSS)"})
+            with urllib.request.urlopen(req, timeout=20) as r:
+                items = FT.leggi_rss(r.read().decode("utf-8", "replace"))
+        except (urllib.error.URLError, OSError, ValueError) as e:
+            print(f"Notizie {sq}: errore {e}")
+            continue
+        old = {x["link"]: x for x in (arch.get(sq) or {}).get("items", [])}
+        for x in items:
+            if x["link"] not in old:
+                nuove += 1
+            old[x["link"]] = x
+        tenute = sorted((x for x in old.values() if (x.get("t") or "") >= limite), key=lambda x: x.get("t") or "", reverse=True)[:20]
+        arch[sq] = {"lg": lg, "agg": ora.isoformat(), "items": tenute}
+        time.sleep(1.0)
+    arch = {k: v for k, v in arch.items() if v.get("agg", "") >= limite}
+    salva(os.path.dirname(path), "notizie.json", arch)
+    print(f"Notizie: {len(squadre)} squadre controllate, {nuove} titoli nuovi")
+
+
 if __name__ == "__main__":
+    if "--notizie" in sys.argv:
+        if "--forza" in sys.argv or datetime.now(timezone.utc).minute < 10:
+            giro_notizie()
+        sys.exit(0)
     if "--formazioni" in sys.argv:
         giro_formazioni()
     elif "--aggiorna" in sys.argv:

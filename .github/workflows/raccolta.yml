@@ -37,6 +37,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 6 * * *'
         run: |
           python raccoglitore.py
+          python raccoglitore.py --notizie --forza
           python genera_app.py
 
       - name: Aggiornamento durante il giorno (risultati e formazioni)
@@ -44,6 +45,7 @@ jobs:
         run: |
           python raccoglitore.py --formazioni
           python raccoglitore.py --aggiorna
+          python raccoglitore.py --notizie
           python genera_app.py --live
 
       - name: Salva i dati nell'archivio

@@ -232,6 +232,18 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       if (x == null || y == null) return null;
       return side === 1 ? [105 - x * 1.05, y * 0.68] : [x * 1.05, 68 - y * 0.68];
     }
+    /* stessi pesi di fattori.py (versione fattori-1) */
+    const PESI = { sostituto: 0.5, assente: 1.0, panchina: 0.6, assist: 0.5, quotaMax: 0.4, tetto: 0.15 };
+    function prob1x2(lh, la) {
+      const ph = pois(lh), pa = pois(la), rho = -0.12, dl = 0.06; let p = [0, 0, 0], tot = 0;
+      for (let i = 0; i <= 8; i++) for (let j = 0; j <= 8; j++) {
+        let w = ph[i] * pa[j];
+        if (i === 0 && j === 0) w *= 1 - lh * la * rho; else if (i === 0 && j === 1) w *= 1 + lh * rho; else if (i === 1 && j === 0) w *= 1 + la * rho; else if (i === 1 && j === 1) w *= 1 - rho;
+        if (i === 0) w *= 1 - dl; if (j === 0) w *= 1 - dl;
+        tot += w; p[i > j ? 0 : i === j ? 1 : 2] += w;
+      }
+      return p.map((x) => x / tot);
+    }
     /* titolari importanti assenti: i migliori marcatori della squadra confrontati con la formazione ufficiale */
     const toks = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/[\s-]+/).filter((t) => t.length > 2);
     function stesso(sc, p) {
@@ -249,7 +261,13 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         for (const r of top) {
           if (tit.some((p) => stesso(r.n, p))) continue;
           const inPanca = panca.some((p) => stesso(r.n, p));
-          out.push({ n: r.n, side: j, panca: inPanca, testo: `${r.n} (${t}, ${r.g} gol e ${r.a} assist in campionato) ${inPanca ? "parte dalla panchina" : "non è tra i convocati"}.` });
+          const gf = ((D.standings[m.lg] || {}).generale || []).find((x) => x.team === t);
+          const quota = Math.min(PESI.quotaMax, (r.g + PESI.assist * r.a) / Math.max(gf ? gf.gf : (r.g + r.a) * 3, r.g + r.a, 1));
+          const gia = (m.fattori || []).filter((f) => f.chi === r.n).reduce((x, f) => x + (f.delta || 0), 0);
+          const giaNotizia = gia < 0;
+          // la formazione conferma: si aggiunge solo la parte non ancora applicata dalle notizie
+          const delta = Math.min(0, -quota * (1 - PESI.sostituto) * (inPanca ? PESI.panchina : PESI.assente) - gia);
+          out.push({ n: r.n, side: j, panca: inPanca, delta, giaNotizia, testo: `${r.n} (${t}, ${r.g} gol e ${r.a} assist in campionato) ${inPanca ? "parte dalla panchina" : "non è tra i convocati"}.` });
         }
       });
       return out;
@@ -258,10 +276,16 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const { D } = React.useContext(Ctx);
       const al = assenze(m, sm, D);
       if (!sm || !sm.formazioni[0]) return null;
+      const tot = [0, 1].map((j) => Math.max(-PESI.tetto, al.filter((x) => x.side === j).reduce((s, x) => s + x.delta, 0)));
+      const xg = m.xg && m.xg[0] != null ? m.xg : null;
+      const nuovo = xg && m.st === "NS" && (tot[0] || tot[1]) ? prob1x2(xg[0] * (1 + tot[0]), xg[1] * (1 + tot[1])) : null;
+      const prima = xg ? prob1x2(xg[0], xg[1]) : null;
       return html`<div className=${C.card + " p-4 space-y-1.5"}><div className="flex items-center gap-2"><span className=${"w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border " + (al.length ? TONE.warn : TONE.good)}><${Ic.Users} size=${15} /></span>
         <span className=${"flex-1 text-sm font-semibold " + C.tx}>${al.length ? "Assenze pesanti nelle formazioni" : "Formazioni ufficiali: nessuna assenza pesante"}</span></div>
         ${al.map((x) => html`<div key=${x.n} className=${"text-sm " + C.tx}>${x.testo}</div>`)}
         ${!al.length && html`<div className=${"text-xs " + C.mu}>I migliori marcatori e assistman delle due squadre sono titolari.</div>`}
+        ${nuovo && html`<div className=${"rounded-xl p-2.5 text-sm " + C.ch + " " + C.tx}><b>Con queste formazioni l'IA stima:</b> ${["1", "X", "2"].map((e, i) => html`<span key=${e} className="mr-2 tabular-nums whitespace-nowrap">${e} ${pct(nuovo[i])}% <span className=${"text-xs " + C.mu}>(era ${pct(prima[i])}%)</span></span>`)}
+          <div className=${"text-[11px] mt-1 " + C.mu}>Gol attesi corretti: ${m.h} ${Math.round(tot[0] * 100)}%, ${m.a} ${Math.round(tot[1] * 100)}% (peso del giocatore nei gol della squadra, metà coperta dal sostituto, tetto 15%).</div></div>`}
         <div className=${"text-[11px] " + C.mu}>Le quote reagiscono alle formazioni in pochi minuti: guarda se la quota è già cambiata prima di giocare.</div></div>`;
     }
     function LiveAction({ sm, m }) {
@@ -464,6 +488,27 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <div className=${"text-[11px] " + C.mu}>Probabilità ricalcolate su punteggio, minuto ed espulsioni, partendo dai gol attesi prima della partita (il numero piccolo è la differenza rispetto al pre-partita).${reds[0] + reds[1] ? " Espulsioni considerate: " + reds[0] + " - " + reds[1] + "." : ""}</div></div>`;
     }
 
+    /* ---- fattori: come l'IA si discosta dalle quote ---- */
+    function FattoriCard({ m }) {
+      const [open, setOpen] = useState(false);
+      const fs = m.fattori || [];
+      const att = fs.filter((f) => f.delta), info = fs.filter((f) => !f.delta);
+      const xm = m.xg_mercato || m.xg;
+      const TIPO = { infortunio: "indisponibile", squalifica: "squalificato", dubbio: "in dubbio", rientro: "rientra", smentita: "smentita", notizia: "notizia" };
+      const nf = (x) => (x == null ? "-" : Number(x).toFixed(2).replace(".", ","));
+      return html`<div className=${C.card + " p-4 space-y-2"}>
+        <button onClick=${() => setOpen(!open)} className="w-full flex items-center gap-2 text-left"><span className=${C.lab + " flex-1"}>Fattori dell'IA</span>
+          <span className=${"text-xs " + C.mu}>${att.length ? att.length + " correzion" + (att.length === 1 ? "e" : "i") : "nessuna correzione"}</span><${open ? Ic.ChevronUp : Ic.ChevronDown} size=${15} className=${C.mu} /></button>
+        <div className=${"text-sm " + C.tx}>Gol attesi: ${m.h} <b>${nf(m.xg[0])}</b>, ${m.a} <b>${nf(m.xg[1])}</b>${att.length ? html` <span className=${C.mu}>(dalle quote ${nf(xm[0])} e ${nf(xm[1])})</span>` : html` <span className=${C.mu}>(uguali alla lettura delle quote)</span>`}</div>
+        ${open && html`<div className="space-y-2 pt-1">
+          ${att.map((f, i) => html`<div key=${i} className=${"text-sm rounded-xl p-2.5 " + C.ch + " " + C.tx}>
+            <div><b>${f.chi}</b> (${f.lato ? m.a : m.h}) ${TIPO[f.tipo] || f.tipo}: gol attesi ${Math.round(f.delta * 1000) / 10}%</div>
+            <div className=${"text-[11px] " + C.mu}>Peso nei gol della squadra ${Math.round(f.quota * 100)}% x scoperto dal sostituto 50% x affidabilità ${Math.round(f.affidabilita * 100)}%${f.prezzo < 1 ? " x 25% perché notizia già nelle quote" : ""}${f.tetto ? ", ridotto dal tetto del 15%" : ""}.</div>
+            ${f.link && html`<a href=${f.link} target="_blank" rel="noopener" className="text-[11px] text-[#0A84FF]">${f.fonte || "Fonte"}: ${f.titolo}</a>`}</div>`)}
+          ${info.length > 0 && html`<div className=${"text-[11px] font-semibold " + C.mu}>Notizie lette ma senza effetto sulle probabilità</div>${info.map((f, i) => html`<a key=${"i" + i} href=${f.link} target="_blank" rel="noopener" className=${"block text-[12px] " + C.tx}>${f.chi}: ${TIPO[f.tipo] || f.tipo} <span className=${C.mu}>- ${f.fonte}</span></a>`)}`}
+          <p className=${"text-[11px] " + C.mu}>Base: le quote dei bookmaker, che nei test su 55.000 partite sono la stima più precisa. Ogni informazione nuova (notizie su infortuni e squalifiche, formazioni ufficiali) corregge i gol attesi con un peso dichiarato e un tetto del 15% per squadra, per non sbilanciare il risultato. Ogni correzione viene registrata e misurata: i pesi si ritarano sui risultati.</p></div>`}</div>`;
+    }
+
     /* ---- storico dei consigli ---- */
     function StoricoCard() {
       const { stor } = React.useContext(Ctx);
@@ -480,6 +525,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
               <span className="font-semibold">${nomi[k]}</span><span className="text-right">${r.vinti}/${r.n} <span className=${"text-xs " + C.mu}>${Math.round((r.vinti / r.n) * 100)}%</span></span>
               <span className=${"text-right " + C.mu}>${String(r.attesa).replace(".", ",")}</span><span className=${"text-right font-semibold " + (r.resa >= 0 ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>${r.resa >= 0 ? "+" : ""}${String(r.resa).replace(".", ",")}</span></div>`; })}
             <p className=${"text-[11px] " + C.mu}>"Attesi" è quanti consigli ci si aspettava di prendere sommando le probabilità: se "Presi" gli resta vicino, le probabilità sono oneste. "Resa" è il guadagno in unità puntando 1 su ogni consiglio alla quota mostrata (stimata dove manca quella media).</p>
+            ${stor.taratura && html`<div className=${"text-[11px] rounded-lg p-2 " + C.ch + " " + C.tx}>${stor.taratura.n ? html`<b>Taratura dei fattori:</b> su ${stor.taratura.n} partite in cui l'IA ha corretto le quote, errore medio quote ${String(stor.taratura.errore_quote).replace(".", ",")} contro IA ${String(stor.taratura.errore_ia).replace(".", ",")} (più basso è meglio).`
+              : html`<b>Taratura dei fattori:</b> le correzioni dell'IA (notizie e formazioni) vengono registrate partita per partita; con abbastanza partite si misura se migliorano le quote e si ritarano i pesi.`}</div>`}
             <button onClick=${() => setOpen(!open)} className="text-xs font-semibold text-[#0A84FF]">${open ? "Nascondi le partite" : "Vedi partita per partita"}</button>
             ${open && html`<div className="space-y-1.5">${stor.lista.map((v, i) => html`<div key=${i} className=${"text-sm border-t pt-1.5 " + C.bd}>
               <div className=${"flex justify-between " + C.tx}><span className="truncate">${v.h} - ${v.a}</span><b className="tabular-nums">${v.g ? v.g[0] + "-" + v.g[1] : ""}</b></div>
@@ -647,6 +694,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
 
         ${mt === 3 && html`<${Gate} m=${m} title="Analisi IA: probabilità, gol attesi e consiglio">
           <${TipView} m=${m} sm=${sm} />
+          <${FattoriCard} m=${m} />
           <div className=${C.card + " p-4 space-y-2"}><div className=${C.lab}>Laboratorio: IA contro quote</div>
             <div className="overflow-x-auto"><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}><th className="text-left font-medium py-1">Esito</th><th className="text-right font-medium">IA</th><th className="text-right font-medium">Quote</th><th className="text-right font-medium">${D.demo ? "Bet365" : "Media"}</th><th className="text-right font-medium">Migliore</th></tr></thead>
               <tbody>${[["1", m.p[0], m.mk[0], m.odds["1"], m.max["1"]], ["X", m.p[1], m.mk[1], m.odds["X"], m.max["X"]], ["2", m.p[2], m.mk[2], m.odds["2"], m.max["2"]],

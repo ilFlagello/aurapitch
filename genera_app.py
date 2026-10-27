@@ -17,6 +17,7 @@ import sys
 import unicodedata
 import zlib
 
+import fattori as FT
 import mercati as M
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -352,6 +353,9 @@ def genera():
             "attese": [testo_classifica(tabs, hid), testo_classifica(tabs, aid)] if tabs else [{"tone": "ok", "text": "Classifica non disponibile nei dati gratuiti."}] * 2,
             "prec": prec, "ctx": ctx, "flags": [], "last5": l5, "h2h": h2h, "stats": [],
             "markets": [[x["c"], x["p"], x["q"], 1 if x["qm"] else 0] for x in mercati], "tip": tip,
+            "xg_mercato": [lh, la], "fattori": [], "foto": r["_foto"],
+            "_ctx": {"sh": sh, "sa": sa, "pos_h": pos.get(hid), "pos_a": pos.get(aid), "raccolte": raccolte,
+                     "gol": [next((rr.get("goalsFor") for rr in (tabs or {}).get("TOTAL", []) if (rr.get("team") or {}).get("id") == x), None) for x in (hid, aid)]},
         })
     # 3 partite FREE: le piu importanti tra oggi e domani non ancora iniziate
     cand = [m for m in out["matches"] if m["st"] == "NS" and m["date"] in (oggi.isoformat(), (oggi + timedelta(days=1)).isoformat())]
@@ -383,7 +387,67 @@ def genera():
     for v in out["standings"].values():
         squadre |= {r["team"] for r in v["generale"]}
     out["teams"] = sorted(squadre)
+    applica_fattori(out)
     return out
+
+
+NOTIZIE = os.path.join(DATA, "notizie", "notizie.json")
+
+
+def applica_fattori(d):
+    """Ricalcola gol attesi, mercati e consigli delle partite non iniziate con i fattori (per ora: notizie su indisponibili).
+    Base = lettura delle quote; ogni fattore pesa secondo fattori.py e la somma per squadra ha un tetto. Restituisce quante partite cambiano."""
+    notizie = jload(NOTIZIE, {}) or {}
+    marc = d.get("scorers") or {}
+    cambi = 0
+    for m in d.get("matches", []):
+        if m.get("st") != "NS" or "_ctx" not in m:
+            continue
+        c = m["_ctx"]
+        lh0, la0 = m.get("xg_mercato") or m["xg"]
+        try:
+            foto = datetime.fromisoformat(m.get("foto", "2000-01-01") + "T06:00:00+00:00")
+            ko = datetime.fromisoformat(m["ko"])
+        except ValueError:
+            foto, ko = None, None
+        tutti, tot = [], [0.0, 0.0]
+        for lato, (sq, lam) in enumerate(((m["h"], lh0), (m["a"], la0))):
+            items = (notizie.get(sq) or {}).get("items", [])
+            gioc = [g for g in marc.get(m["lg"], []) if g["t"] == sq]
+            lista, t = FT.fattori_squadra(sq, lato, lam, items, gioc, (c.get("gol") or [None, None])[lato], foto, ko)
+            tutti += lista
+            tot[lato] = t
+        nuovo = [round(lh0 * (1 + tot[0]), 3), round(la0 * (1 + tot[1]), 3)]
+        firma = zlib.crc32(json.dumps([tutti, nuovo], sort_keys=True).encode())
+        if firma == m.get("_firma"):
+            continue
+        m["_firma"] = firma
+        cambi += 1
+        m["fattori"] = [{k: f[k] for k in ("tipo", "chi", "lato", "quota", "affidabilita", "prezzo", "delta", "titolo", "fonte", "link", "t")} for f in tutti][:10]
+        lh, la = nuovo
+        m["xg"] = nuovo
+        mercati = M.calcola_mercati(lh, la, m["h"], m["a"], c.get("raccolte") or {})
+        pm = {x["c"]: x["p"] for x in mercati}
+        if any(f["delta"] for f in tutti):
+            m["p"] = [round(pm.get("1", 0), 4), round(pm.get("X", 0), 4), round(pm.get("2", 0), 4)]
+            m["po"] = round(pm.get("O2.5", 0.5), 4)
+        else:
+            m["p"], m["po"] = m["mk"], m["mo"]
+        tip = M.scegli(mercati, m["h"], m["a"], c.get("sh"), c.get("sa"), {"pos_h": c.get("pos_h"), "pos_a": c.get("pos_a")}, m.get("nb"))
+        righe = []
+        for f in tutti:
+            if not f["delta"]:
+                continue
+            sq = m["h"] if f["lato"] == 0 else m["a"]
+            righe.append(f"Notizia ({f['fonte'] or 'stampa'}): {f['chi']} {dict(squalifica='squalificato', infortunio='indisponibile', dubbio='in dubbio').get(f['tipo'], f['tipo'])}. "
+                         f"Gol attesi di {sq} corretti del {str(round(f['delta'] * 100, 1)).replace('.', ',')}%" + (" (notizia in parte già nelle quote)." if f["prezzo"] < 1 else "."))
+        for v in tip.values():
+            if not (c.get("sh") and c.get("sa")):
+                v["perche"].append("Statistiche delle squadre non disponibili per questo campionato: il consiglio si basa solo sulle quote.")
+            v["perche"] += righe
+        m["markets"] = [[x["c"], x["p"], x["q"], 1 if x["qm"] else 0] for x in mercati]
+        m["tip"] = tip
+    return cambi
 
 
 def aggiorna_live():
@@ -406,7 +470,9 @@ def aggiorna_live():
     d["generato"] = datetime.now(timezone.utc).astimezone(ROME).strftime("%d/%m/%Y %H:%M")
     d["label"] = f"aggiornati il {d['generato'][:5]} alle {d['generato'][-5:]}"
     print(f"Partite aggiornate: {cambi}")
-    return d if cambi else None
+    nf = applica_fattori(d)
+    print(f"Partite ricalcolate con le notizie: {nf}")
+    return d if (cambi or nf) else None
 
 
 STORICO_IN = os.path.join(DATA, "consigli.json")
@@ -423,7 +489,8 @@ def aggiorna_storico(d):
         r = st.get(m["id"])
         if r is None or (r.get("st") == "NS" and m["st"] == "NS"):
             # finche la partita non inizia si tiene l'ultima versione del consiglio (quote piu recenti)
-            r = {"date": m["date"], "lg": m["lg"], "h": m["h"], "a": m["a"], "st": m["st"], "g": m.get("g"),
+            r = {"date": m["date"], "lg": m["lg"], "h": m["h"], "a": m["a"], "st": m["st"], "g": m.get("g"), "mk": m.get("mk"), "p": m.get("p"),
+                 "nf": sum(1 for f in m.get("fattori", []) if f.get("delta")), "ver": FT.VERSIONE,
                  "tips": {k: {x: v[x] for x in ("c", "l", "p", "q", "qm")} for k, v in tip.items()}}
             st[m["id"]] = r
         if m["st"] in ("FT", "LIVE", "RINV"):
@@ -444,7 +511,16 @@ def aggiorna_storico(d):
         vinti = sum(v["esiti"][k] for v in z)
         riass[k] = {"n": len(z), "vinti": vinti, "attesa": round(sum(v["tips"][k]["p"] for v in z), 1),
                     "resa": round(sum((v["tips"][k]["q"] - 1) if v["esiti"][k] else -1 for v in z), 2)}
-    out = {"generato": datetime.now(timezone.utc).astimezone(ROME).strftime("%d/%m/%Y %H:%M"), "giorni": 30, "riass": riass,
+    # taratura dei fattori: sulle partite in cui l'IA ha corretto le quote, chi ha sbagliato meno? (log-loss sull'esito 1X2)
+    def ll(p, g):
+        e = 0 if g[0] > g[1] else 1 if g[0] == g[1] else 2
+        return -math.log(max(1e-9, p[e]))
+    corr = [v for v in chiuse if v.get("nf") and v.get("mk") and v.get("p") and v.get("g")]
+    taratura = {"versione": FT.VERSIONE, "n": len(corr), "pesi": {"sostituto": FT.SOSTITUTO, "affidabilita": FT.AFFIDABILITA, "gia_nelle_quote": FT.GIA_NELLE_QUOTE, "tetto": FT.TETTO}}
+    if corr:
+        taratura["errore_quote"] = round(sum(ll(v["mk"], v["g"]) for v in corr) / len(corr), 4)
+        taratura["errore_ia"] = round(sum(ll(v["p"], v["g"]) for v in corr) / len(corr), 4)
+    out = {"generato": datetime.now(timezone.utc).astimezone(ROME).strftime("%d/%m/%Y %H:%M"), "giorni": 30, "riass": riass, "taratura": taratura,
            "lista": [{"date": v["date"], "lg": v["lg"], "h": v["h"], "a": v["a"], "g": v["g"], "tips": v["tips"], "esiti": v["esiti"]} for v in rec[:60]]}
     with open(STORICO_OUT, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))

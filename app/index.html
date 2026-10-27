@@ -1,0 +1,27 @@
+<meta charset="utf-8">
+<title>AuraPitch Beta</title>
+<meta name="description" content="AuraPitch: le partite di calcio lette in 10 secondi, con probabilità, forma reale, classifiche e schedina.">
+<meta name="theme-color" content="#F5F5F7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AuraPitch">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="app.css">
+<style>
+/* Layout: app a colonna singola (max 480px) con dock fissa in basso; tema chiaro #F5F5F7 / scuro #000, pastelli tenui. */
+:root { --bg: #F5F5F7; --fg: #1D1D1F; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #000000; --fg: #F5F5F7; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #000000; --fg: #F5F5F7; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+button { cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid #0A84FF; outline-offset: 2px; }
+.noscroll::-webkit-scrollbar { display: none; }
+.noscroll { scrollbar-width: none; }
+#boot { padding: 48px 16px; text-align: center; color: #86868B; font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+<div id="root"><div id="boot">Caricamento di AuraPitch...</div></div>
+<script src="app.js" defer></script>

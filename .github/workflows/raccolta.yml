@@ -1,0 +1,57 @@
+# AuraPitch - raccolta dati automatica (GitHub Actions)
+# Va copiato nell'archivio GitHub come: .github/workflows/raccolta.yml
+# Insieme a raccoglitore.py nella cartella principale dell'archivio.
+# Le chiavi vanno in: Settings -> Secrets and variables -> Actions -> New repository secret
+#   API_FOOTBALL_KEY  e  ODDS_API_KEY
+# Orari in UTC (ora italiana = UTC+1 d'inverno, UTC+2 d'estate).
+
+name: Raccolta dati AuraPitch
+
+on:
+  schedule:
+    - cron: "0 6 * * *"          # giro completo ogni mattina
+    - cron: "*/30 10-22 * * *"   # formazioni ufficiali ogni 30 minuti, dalle 11 alle 23:30 italiane (inverno)
+  workflow_dispatch: {}          # pulsante "Run workflow" per lanciarlo a mano
+
+permissions:
+  contents: write                # serve per salvare i dati raccolti nell'archivio
+
+concurrency:
+  group: raccolta
+  cancel-in-progress: false
+
+jobs:
+  raccolta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Giro completo (partite, infortuni, quote e quota media)
+        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 6 * * *'
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python raccoglitore.py
+
+      - name: Formazioni delle partite in arrivo
+        if: github.event.schedule == '*/30 10-22 * * *'
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: python raccoglitore.py --formazioni
+
+      - name: Salva i dati nell'archivio
+        run: |
+          git config user.name "aurapitch-raccolta"
+          git config user.email "aurapitch-raccolta@users.noreply.github.com"
+          if [ -d data ]; then git add data; fi
+          if git diff --cached --quiet; then
+            echo "Nessun dato nuovo"
+          else
+            git commit -m "Dati $(date -u +%Y-%m-%d_%H%M)"
+            git push
+          fi

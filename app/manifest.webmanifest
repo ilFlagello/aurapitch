@@ -1,0 +1,16 @@
+{
+  "name": "AuraPitch",
+  "short_name": "AuraPitch",
+  "description": "Le partite di calcio lette in 10 secondi: probabilità, forma reale, classifiche e schedina.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F5F5F7",
+  "theme_color": "#F5F5F7",
+  "lang": "it",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

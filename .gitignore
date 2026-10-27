@@ -3,3 +3,4 @@ app/dist/
 __pycache__/
 data/**/*_af_*.json
 data/**/*_oddsapi_*.json
+data/fd/

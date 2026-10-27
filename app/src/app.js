@@ -154,7 +154,7 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
     function Row({ m, i }) {
     const { goMatch, unlocked } = React.useContext(Ctx);
     return html`<button onClick=${() => goMatch(m.id)} className=${"w-full flex items-center gap-3 px-4 py-2.5 text-left " + (i ? "border-t " + C.bd : "")}>
-      <div className=${"w-11 shrink-0 text-xs font-semibold tabular-nums " + (m.st === "LIVE" ? "text-rose-500" : C.mu)}>${m.st === "FT" ? "FT" : m.time || "-"}</div>
+      <div className=${"w-11 shrink-0 text-xs font-semibold tabular-nums " + (m.st === "LIVE" ? "text-rose-500" : C.mu)}>${m.st === "FT" ? "FT" : m.st === "LIVE" ? "LIVE" : m.st === "RINV" ? "Rinv." : m.time || "-"}</div>
       <div className="flex-1 min-w-0 space-y-1">${[m.h, m.a].map((t, j) => html`<div key=${t} className="flex items-center gap-2"><${Crest} t=${t} size=${18} />
         <span className=${"text-[15px] truncate flex-1 " + C.tx + (m.g && m.g[j] > m.g[1 - j] ? " font-semibold" : "")}>${t}</span>
         <span className=${"text-[15px] font-semibold w-4 text-right tabular-nums " + C.tx}>${m.g ? m.g[j] : ""}</span></div>`)}</div>
@@ -179,8 +179,9 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
       const [filt, setFilt] = useState(0);
       const [l5, setL5] = useState(null);
       const fav = m.p.indexOf(Math.max(...m.p));
-      const st = D.standings[m.lg][["generale", "casa", "trasferta"][filt]];
-      const pos = (t) => D.standings[m.lg].generale.findIndex((r) => r.team === t) + 1;
+      const S = D.standings[m.lg];
+      const st = S ? S[["generale", "casa", "trasferta"][filt]] : [];
+      const pos = (t) => (S ? S.generale.findIndex((r) => r.team === t) + 1 : 0);
       const inSlip = mySlip.find((x) => x.id === m.id);
       const tiles = [
         { k: "Forma", i: Ic.TrendingUp, tone: m.forma.some((f) => f.tone === "warn") ? "warn" : m.forma.some((f) => f.tone === "good") ? "good" : "ok", body: html`<div className="space-y-1.5">${m.forma.map((f, j) => html`<div key=${j} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 " + DOT[f.tone]}></span><span><b>${j ? m.a : m.h}:</b> ${f.text}</span></div>`)}</div>` },
@@ -200,7 +201,7 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
             ${[m.h, m.a].map((t, j) => html`<div key=${t} className=${"flex flex-col items-center gap-1.5 w-28 " + (j ? "order-3" : "order-1")}><${Crest} t=${t} size=${44} />
               <span className=${"text-sm font-semibold text-center leading-tight " + C.tx}>${t}</span><span className=${"text-[11px] " + C.mu}>${pos(t) ? pos(t) + "° in classifica" : ""}</span></div>`)}
             <div className="order-2 flex flex-col items-center pt-2"><div className=${"text-3xl font-semibold tabular-nums " + C.tx}>${m.g ? m.g[0] + " - " + m.g[1] : m.time}</div>
-              <div className=${"text-xs mt-1 " + C.mu}>${m.st === "FT" ? "Finale" : ""}</div></div></div>
+              <div className=${"text-xs mt-1 " + C.mu}>${m.st === "FT" ? "Finale" : m.st === "LIVE" ? "In corso" : m.st === "RINV" ? "Rinviata" : ""}</div></div></div>
           <div className="flex items-center justify-center gap-2 mt-4"><${FavPill} m=${m} unlocked=${unlocked(m)} big=${true} />
             ${m.free && html`<span className=${"text-[10px] font-semibold px-2 py-0.5 rounded-full border " + TONE.good}>FREE oggi</span>`}
             ${m.st === "FT" && unlocked(m) && html`<span className=${"text-xs " + (m.res === fav ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>${m.res === fav ? "Favorito rispettato" : "Sorpresa"}</span>`}</div></div>
@@ -209,6 +210,7 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
         ${mt === 0 && html`<${React.Fragment}>
           <div className=${C.card + " p-4 space-y-3"}><div className="flex justify-between items-baseline"><span className=${C.lab}>Probabilità dalle quote</span><span className=${"text-[11px] " + C.mu}>Over 2.5: <b className=${C.tx}>${pct(m.mo)}%</b></span></div>
             <${ProbBar} p=${m.mk} />
+            ${!D.demo && m.nb ? html`<div className=${"text-[11px] " + C.mu}>Quota media di ${m.nb} bookmaker.</div>` : null}
             <div className=${C.lab + " pt-1"}>Aggiungi alla tua schedina</div>
             <div className="flex flex-wrap gap-1.5">${opts.filter((o) => !o.stima).map((o) => html`<button key=${o.k} onClick=${() => addLeg(m, o.k)}
               className=${"inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border " + (inSlip && inSlip.k === o.k ? TONE.good : C.ch + " " + C.tx + " border-transparent")}>
@@ -227,14 +229,15 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
             <div><div className=${"text-sm font-semibold " + C.tx}>Consiglio IA</div><div className=${"text-xs " + C.mu}>Nessun consiglio per questa partita</div></div></div>
             <p className=${"text-sm " + C.tx}>Il consiglio compare solo quando l'IA ha un'informazione che le quote non hanno ancora assorbito: formazione ufficiale, infortunio dell'ultima ora, notizia dei giornali locali. Per questa partita non ce ne sono: le quote sono già la stima migliore.</p></div>
           <div className=${C.card + " p-4 space-y-2"}><div className=${C.lab}>Laboratorio: IA contro quote</div>
-            <div className="overflow-x-auto"><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}><th className="text-left font-medium py-1">Esito</th><th className="text-right font-medium">IA</th><th className="text-right font-medium">Quote</th><th className="text-right font-medium">Bet365</th><th className="text-right font-medium">Migliore</th></tr></thead>
+            <div className="overflow-x-auto"><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}><th className="text-left font-medium py-1">Esito</th><th className="text-right font-medium">IA</th><th className="text-right font-medium">Quote</th><th className="text-right font-medium">${D.demo ? "Bet365" : "Media"}</th><th className="text-right font-medium">Migliore</th></tr></thead>
               <tbody>${[["1", m.p[0], m.mk[0], m.odds["1"], m.max["1"]], ["X", m.p[1], m.mk[1], m.odds["X"], m.max["X"]], ["2", m.p[2], m.mk[2], m.odds["2"], m.max["2"]],
                 ["Over 2.5", m.po, m.mo, m.odds.O, m.max.O], ["Under 2.5", 1 - m.po, 1 - m.mo, m.odds.U, m.max.U]].map((r) => html`<tr key=${r[0]} className=${"border-t " + C.bd}>
                 <td className="py-1.5 font-semibold">${r[0]}</td><td className="text-right">${pct(r[1])}%</td><td className=${"text-right " + C.mu}>${pct(r[2])}%</td><td className="text-right">${odd(r[3])}</td><td className=${"text-right " + C.mu}>${odd(r[4])}</td></tr>`)}</tbody></table></div>
-            <p className=${"text-[11px] " + C.mu}>"Quote" è la probabilità ricavata dalla quota togliendo il margine del bookmaker. Nel test su oltre 18.000 partite gli scarti tra IA e quote non hanno dato un vantaggio affidabile: per questo l'IA non li trasforma in consigli.</p></div>
-          <div className=${C.card + " p-4 grid grid-cols-3 gap-2 text-center"}>
+            <p className=${"text-[11px] " + C.mu}>${D.demo ? "\"Quote\" è la probabilità ricavata dalla quota togliendo il margine del bookmaker. Nel test su oltre 18.000 partite gli scarti tra IA e quote non hanno dato un vantaggio affidabile: per questo l'IA non li trasforma in consigli."
+              : "Per ora l'IA usa come base la quota media dei bookmaker, perché nei test è la stima più precisa: se ne discosterà solo quando arriveranno formazioni ufficiali e notizie. \"Migliore\" è la quota più alta tra i bookmaker."}</p></div>
+          ${m.xg[0] != null && html`<div className=${C.card + " p-4 grid grid-cols-3 gap-2 text-center"}>
             ${[["Gol attesi", (m.xg[0] || 0).toFixed(2).replace(".", ",") + " - " + (m.xg[1] || 0).toFixed(2).replace(".", ",")], ["Elo casa", m.elo[0] || "-"], ["Elo ospiti", m.elo[1] || "-"]].map(([a, b]) => html`<div key=${a} className=${"rounded-xl p-2 " + C.ch}>
-              <div className=${"text-base font-semibold tabular-nums " + C.tx}>${b}</div><div className=${"text-[10px] " + C.mu}>${a}</div></div>`)}</div><//>`}
+              <div className=${"text-base font-semibold tabular-nums " + C.tx}>${b}</div><div className=${"text-[10px] " + C.mu}>${a}</div></div>`)}</div>`}<//>`}
 
         ${mt === 2 && html`<${React.Fragment}>
           <div className=${"flex items-center gap-2 text-sm font-semibold " + C.tx}><${Flag} k=${L.flag} />Classifica ${L.name}</div>
@@ -250,7 +253,8 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
               ${l5 === j && html`<div className="mt-2 space-y-1">${m.last5[j].slice().reverse().map((z, q) => html`<div key=${q} className=${"flex justify-between text-xs " + C.tx}><span className=${C.mu}>${z.data}</span><span className="flex-1 px-2 truncate">${z.casa ? "vs" : "@"} ${z.avv}</span><span className="font-semibold tabular-nums">${z.ris}</span></div>`)}</div>`}</div>`)}</div>
           <div className=${C.card + " p-4"}><div className=${C.lab + " mb-2"}>Scontri diretti</div>
             ${m.h2h.length ? m.h2h.map((z, q) => html`<div key=${q} className=${"flex justify-between text-sm py-1 tabular-nums " + C.tx}><span className=${C.mu + " w-16"}>${z.data}</span><span className="flex-1 text-right pr-2 truncate">${z.casa}</span><b>${z.ris}</b><span className="flex-1 pl-2 truncate">${z.ospite}</span></div>`)
-              : html`<div className=${"text-sm " + C.mu}>Nessun precedente negli ultimi 8 anni.</div>`}</div><//>`}
+              : html`<div className=${"text-sm " + C.mu}>${D.demo ? "Nessun precedente negli ultimi 8 anni." : "Nessun precedente nei dati disponibili."}</div>`}</div>
+          ${!S && html`<div className=${C.card + " p-4 text-sm " + C.mu}>Classifica, ultime 5 e precedenti non sono disponibili per questo campionato nella fonte dati gratuita.</div>`}<//>`}
 
         ${mt === 3 && html`<${React.Fragment}>
           <div className=${C.card + " p-4 space-y-3"}><div className="flex justify-between"><span className=${C.lab}>Statistiche partita</span><span className=${"text-[11px] " + C.mu}>dati reali</span></div>
@@ -258,7 +262,7 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
             ${m.stats.length ? m.stats.map(([l, a, b]) => html`<div key=${l}><div className="flex justify-between text-sm tabular-nums"><span className=${"font-semibold " + (a >= b ? C.tx : C.mu)}>${a}</span><span className=${"text-xs " + C.mu}>${l}</span><span className=${"font-semibold " + (b >= a ? C.tx : C.mu)}>${b}</span></div>
               <div className="flex gap-1 mt-1"><div className=${"flex-1 h-1.5 rounded-full flex justify-end " + C.ch}><div className="h-1.5 rounded-full bg-emerald-300 dark:bg-emerald-500/70" style=${{ width: (a / (a + b || 1)) * 100 + "%" }}></div></div>
                 <div className=${"flex-1 h-1.5 rounded-full " + C.ch}><div className="h-1.5 rounded-full bg-sky-300 dark:bg-sky-500/70" style=${{ width: (b / (a + b || 1)) * 100 + "%" }}></div></div></div></div>`)
-              : html`<div className=${"text-sm " + C.mu}>Statistiche disponibili a fine partita.</div>`}</div>
+              : html`<div className=${"text-sm " + C.mu}>${D.demo ? "Statistiche disponibili a fine partita." : "Tiri, angoli e falli non sono inclusi nella fonte dati gratuita: arriveranno con API-Football."}</div>`}</div>
           <div className=${C.card + " p-4 flex gap-3"}><span className=${"w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border " + TONE.ok}><${Ic.Shirt} size=${17} /></span>
             <div><div className=${"text-sm font-semibold " + C.tx}>Formazioni e campo</div><p className=${"text-sm " + C.mu}>Campo con i titolari, assenti, panchina e ballottaggi arriveranno con la raccolta dati quotidiana: le formazioni ufficiali escono 20-40 minuti prima del calcio d'inizio.</p></div></div><//>`}
       </div>`;
@@ -267,10 +271,10 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
     /* ---- campionati ---- */
     function LeaguesView() {
       const { D, lg, fav } = React.useContext(Ctx);
-      const [k, setK] = useState(store.get("lgSel", D.leagues[0].k));
+      const [k, setK] = useState(() => { const s0 = store.get("lgSel", null); return D.leagues.some((l) => l.k === s0) ? s0 : D.leagues[0].k; });
       const [filt, setFilt] = useState(0);
       const L = lg(k);
-      const st = D.standings[k][["generale", "casa", "trasferta"][filt]];
+      const st = D.standings[k] ? D.standings[k][["generale", "casa", "trasferta"][filt]] : [];
       const ms = D.matches.filter((m) => m.lg === k);
       const zone = (i) => { const n = st.length; if (["I1", "E0", "SP1", "D1"].includes(k)) return i < 4 ? "bg-sky-400" : i >= n - 3 ? "bg-rose-400" : ""; return i < 2 ? "bg-emerald-400" : i >= n - 3 ? "bg-rose-400" : ""; };
       return html`<div className="px-4 space-y-3">
@@ -283,7 +287,8 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
             <td className="p-1.5"><span className="flex items-center gap-1"><span className=${"w-1 h-4 rounded-full " + (zone(i) || "bg-transparent")}></span>${i + 1}</span></td>
             <td><span className="flex items-center gap-1.5 min-w-0"><${Crest} t=${r.team} size=${14} /><span className="truncate">${r.team}</span></span></td>
             <td className=${"text-right " + C.mu}>${r.pg}</td><td className="text-right">${r.gf}</td><td className="text-right">${r.gs}</td><td className="text-right pr-1.5 font-semibold">${r.pt}</td></tr>`)}</tbody></table></div>
-        <div className=${C.lab}>Partite della giornata</div>
+        ${!st.length && html`<div className=${C.card + " p-4 text-sm " + C.mu}>Classifica non disponibile per questo campionato nella fonte dati gratuita.</div>`}
+        <div className=${C.lab}>${D.demo ? "Partite della giornata" : "Partite in programma"}</div>
         <div className=${C.card + " overflow-hidden"}>${ms.map((m, i) => html`<${Row} key=${m.id} m=${m} i=${i} />`)}</div></div>`;
     }
 
@@ -305,7 +310,7 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
           : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${fav} non gioca in questa giornata.</div>`}
         <div className=${C.card + " p-4 space-y-2"}><label htmlFor="fav" className=${C.lab}>Cambia squadra</label>
           <select id="fav" value=${fav} onChange=${(e) => { setFav(e.target.value); store.set("fav", e.target.value); }} className=${"w-full rounded-xl px-3 py-2 text-sm " + C.ch + " " + C.tx}>
-            ${D.leagues.map((l) => html`<optgroup key=${l.k} label=${l.name}>${D.standings[l.k].generale.map((r) => r.team).slice().sort().map((t) => html`<option key=${t} value=${t}>${t}</option>`)}</optgroup>`)}</select></div></div>`;
+            ${D.leagues.map((l) => html`<optgroup key=${l.k} label=${l.name}>${(D.standings[l.k] ? D.standings[l.k].generale.map((r) => r.team) : [...new Set(D.matches.filter((x) => x.lg === l.k).flatMap((x) => [x.h, x.a]))]).slice().sort().map((t) => html`<option key=${t} value=${t}>${t}</option>`)}</optgroup>`)}</select></div></div>`;
     }
 
     /* ---- schedina ---- */
@@ -314,7 +319,7 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
       const [prof, setProf] = useState(0);
       const [off, setOff] = useState(store.get("slipOff", []));
       const [shield, setShield] = useState(false);
-      const pool = D.matches.filter((m) => !off.includes(m.lg));
+      const pool = D.matches.filter((m) => !off.includes(m.lg) && (D.demo || m.st === "NS"));
       let legs = buildSlip(pool, prof);
       const weak = legs.length ? legs.reduce((a, b) => (a.p < b.p ? a : b)) : null;
       if (shield && weak) {
@@ -338,7 +343,7 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
           className=${C.card + " p-3 text-xs font-semibold text-center " + C.tx + (prof === i ? " ring-2 ring-emerald-300 dark:ring-emerald-500/60" : "")}>${p}${lk && html`<div className="text-[10px] mt-1 text-amber-600 dark:text-amber-300 flex items-center justify-center gap-1"><${Ic.Lock} size=${10} />PRO</div>`}</button>`; })}</div>
         <div className=${C.card + " px-4 py-2"}>${legs.length ? legs.map((l) => html`<${LegRow} key=${l.m.id} l=${l} />`) : html`<div className=${"py-3 text-sm " + C.mu}>Nessuna partita adatta a questo profilo nei campionati scelti.</div>`}</div>
         ${legs.length > 0 && html`<div className=${C.card + " p-4 space-y-2"}>
-          <div className="flex justify-between text-sm"><span className=${C.mu}>Quota totale (Bet365)</span><b className=${"tabular-nums " + C.tx}>${odd(tot)}</b></div>
+          <div className="flex justify-between text-sm"><span className=${C.mu}>${D.demo ? "Quota totale (Bet365)" : "Quota totale (quote medie)"}</span><b className=${"tabular-nums " + C.tx}>${odd(tot)}</b></div>
           <div className="flex justify-between text-sm"><span className=${C.mu}>Probabilità che passi, secondo l'IA</span><b className=${"tabular-nums " + C.tx}>${(prob * 100).toFixed(1).replace(".", ",")}%</b></div>
           ${done.length > 0 && html`<div className=${"text-xs font-semibold " + (won.length === done.length ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>Verifica sulla giornata: ${won.length} su ${done.length} esiti corretti${won.length === done.length ? ", schedina vinta" : ""}.</div>`}
           ${weak && html`<div className=${"rounded-xl border p-3 text-sm " + TONE.bad}><div className="font-semibold flex items-center gap-1.5"><${Ic.AlertTriangle} size=${14} />Anello debole</div>
@@ -382,12 +387,12 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
     const [name, setName] = useState(store.get("name", ""));
     const [fav, setFav] = useState(store.get("fav", "Napoli"));
     const [mySlip, setMySlip] = useState(store.get("slip", []));
-    const [banner, setBanner] = useState(store.get("banner", true));
+    const [banner, setBanner] = useState(store.get("banner2", true));
     const [copyText, setCopyText] = useState(null);
     const [toast, setToast] = useState("");
 
     useEffect(() => {
-      fetch("data/giornata.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(setD)
+      fetch("data/giornata.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).then((d) => { setD(d); if (d.today && (d.days || []).some((x) => x.k === d.today)) setDay(d.today); })
         .catch(() => setErr("Non riesco a leggere i dati delle partite. Controlla la connessione e ricarica la pagina."));
       try { if ("serviceWorker" in navigator && window.top === window.self) navigator.serviceWorker.register("sw.js").catch(() => {}); } catch (e) { /* non installabile qui */ }
     }, []);
@@ -453,9 +458,10 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
     const dayMatches = D.matches.filter((m) => (day === "all" || m.date === day) && (!liveOnly || m.st === "LIVE"));
     const home = html`<div className="px-4 space-y-3">
       ${banner && html`<div className=${C.card + " p-3 flex gap-3 items-start"}><${Ic.Info} size=${16} className="text-sky-500 shrink-0 mt-0.5" />
-        <div className=${"text-[13px] flex-1 " + C.tx}>Beta con <b>dati reali</b> della giornata ${D.label}. Le partite sono già giocate: puoi confrontare le letture dell'IA con i risultati. Con la raccolta quotidiana arriveranno le partite del giorno.</div>
-        <button aria-label="Chiudi avviso" onClick=${() => { setBanner(false); store.set("banner", false); }} className=${C.mu}><${Ic.X} size=${16} /></button></div>`}
-      <div className="flex gap-2 overflow-x-auto noscroll -mx-4 px-4">${[{ k: "all", label: "Tutta la giornata" }, ...D.days].map((d) => html`<${Chip} key=${d.k} on=${day === d.k} onClick=${() => setDay(d.k)}>${d.label}<//>`)}</div>
+        <div className=${"text-[13px] flex-1 " + C.tx}>${D.demo ? html`Beta con <b>dati reali</b> della giornata ${D.label}. Le partite sono già giocate: puoi confrontare le letture dell'IA con i risultati.`
+          : html`Beta con <b>dati reali</b>, ${D.label}: quote medie di decine di bookmaker, risultati e classifiche. Si aggiorna da sola ogni mattina e durante le partite.`}</div>
+        <button aria-label="Chiudi avviso" onClick=${() => { setBanner(false); store.set("banner2", false); }} className=${C.mu}><${Ic.X} size=${16} /></button></div>`}
+      <div className="flex gap-2 overflow-x-auto noscroll -mx-4 px-4">${[{ k: "all", label: D.demo ? "Tutta la giornata" : "Tutti i giorni" }, ...D.days].map((d) => html`<${Chip} key=${d.k} on=${day === d.k} onClick=${() => setDay(d.k)}>${d.label}<//>`)}</div>
       <div className="w-40"><${Seg} items=${["Tutte", "Live"]} val=${liveOnly} set=${setLiveOnly} /></div>
       ${D.leagues.map((l) => {
         const ms = dayMatches.filter((m) => m.lg === l.k);
@@ -469,7 +475,7 @@ const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shiel
           ${o && html`<div className=${"border-t " + C.bd}>${ms.map((m, i) => html`<${Row} key=${m.id} m=${m} i=${i} />`)}</div>`}</div>`;
       })}
       ${!dayMatches.length && html`<div className=${C.card + " p-6 text-center text-sm " + C.mu}>${liveOnly ? "Nessuna partita in corso in questo momento." : "Nessuna partita in questo giorno."}</div>`}
-      <p className=${"text-[11px] text-center " + C.mu}>Dati: Football-Data.co.uk, ClubElo. Stemmi generici, non ufficiali.</p></div>`;
+      <p className=${"text-[11px] text-center " + C.mu}>${D.demo ? "Dati: Football-Data.co.uk, ClubElo." : "Dati: quote da The Odds API; risultati e classifiche da football-data.org."} Stemmi generici, non ufficiali.</p></div>`;
 
     const open_m = open && byId[open];
     const views = { partite: home, campionati: html`<${LeaguesView} />`, schedina: html`<${SlipView} />`, club: html`<${ClubView} />` };

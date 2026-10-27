@@ -20,6 +20,7 @@ import json
 import os
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from collections import defaultdict
@@ -40,6 +41,10 @@ LEAGUES = [
 # The Odds API: 2 crediti per campionato (mercati h2h + totals, area eu). 6 campionati al giorno = circa 360 crediti al mese su 500.
 ODDS_API_LEAGUES = ["Serie A", "Serie B", "Premier League", "LaLiga", "Bundesliga", "Champions League"]
 AF_BASE = "https://v3.football.api-sports.io"
+FD_BASE = "https://api.football-data.org/v4"
+# football-data.org (piano gratuito, 10 richieste al minuto): risultati, classifiche, precedenti
+FD_COMPS = {"SA": "Serie A", "CL": "Champions League", "PL": "Premier League", "PD": "LaLiga", "BL1": "Bundesliga"}
+SCORES_ODDS_API = ["Serie B"]  # campionati senza football-data: risultati da The Odds API
 ODDS_BASE = "https://api.the-odds-api.com/v4"
 AF_RISERVA = 5  # richieste API-Football da lasciare sempre libere
 TZ = "Europe/Rome"
@@ -132,6 +137,7 @@ def riassunto(raccolta):
     for k, v in raccolta.items():
         if v:
             out[f"quota_media_{k}"] = round(sum(v) / len(v), 3)
+            out[f"quota_max_{k}"] = round(max(v), 3)
             out[f"bookmaker_{k}"] = len(v)
     tre = [out.get(f"quota_media_{k}") for k in ("1", "X", "2")]
     if all(tre):
@@ -230,8 +236,68 @@ def giro_completo(base="data"):
             if trovata is not None:
                 trovata.update({f"oa_{k}": v for k, v in riassunto(media_oddsapi(e)).items()})
 
+    # risultati degli ultimi giorni per i campionati non coperti da football-data.org (2 crediti per campionato)
+    for nome in SCORES_ODDS_API:
+        if nome in chiavi:
+            sc, _ = odds_api(f"/sports/{chiavi[nome]}/scores", daysFrom=3, dateFormat="iso")
+            if sc is not None:
+                salva(os.path.join(base, "fd"), f"scores_{chiavi[nome]}.json", sc)
+
     scrivi_csv(cart, partite)
+    giro_fd(base, completo=True)
     print(f"Fatto. Richieste API-Football rimaste oggi: {BUDGET.af_rimaste}; crediti The Odds API rimasti: {BUDGET.odds_rimasti}")
+
+
+def fd(path, **params):
+    """Chiamata a football-data.org; rispetta il limite di 10 richieste al minuto."""
+    key = os.environ.get("FOOTBALL_DATA_KEY")
+    if not key:
+        return None
+    url = f"{FD_BASE}{path}" + ("?" + urllib.parse.urlencode(params) if params else "")
+    body = None
+    try:
+        body, _ = get(url, {"X-Auth-Token": key})
+    except urllib.error.HTTPError as e:
+        print(f"  [football-data] {path}: errore {e.code}")
+    except Exception as e:  # rete instabile: si riprova al giro successivo
+        print(f"  [football-data] {path}: {e}")
+    time.sleep(6.5)
+    return body
+
+
+def giro_fd(base="data", completo=True, max_h2h=40):
+    """Mattino: classifiche, partite della stagione e precedenti delle partite dei prossimi 2 giorni.
+    Durante il giorno: solo le partite da ieri a dopodomani (risultati e stato aggiornati)."""
+    if not os.environ.get("FOOTBALL_DATA_KEY"):
+        print("football-data.org: chiave assente, salto.")
+        return
+    cart = os.path.join(base, "fd")
+    oggi = datetime.now(timezone.utc)
+    if completo:
+        prossime = []
+        for code in FD_COMPS:
+            st = fd(f"/competitions/{code}/standings")
+            if st:
+                salva(cart, f"{code}_standings.json", st)
+            ms = fd(f"/competitions/{code}/matches")
+            if ms:
+                salva(cart, f"{code}_matches.json", ms)
+                for m in ms.get("matches", []):
+                    try:
+                        t = datetime.fromisoformat(m["utcDate"].replace("Z", "+00:00"))
+                    except (KeyError, ValueError):
+                        continue
+                    if timedelta(0) <= t - oggi <= timedelta(days=2):
+                        prossime.append(m["id"])
+        for mid in prossime[:max_h2h]:
+            h = fd(f"/matches/{mid}/head2head", limit=6)
+            if h:
+                salva(cart, f"h2h_{mid}.json", h)
+        print(f"football-data.org: {len(FD_COMPS)} campionati, precedenti per {min(len(prossime), max_h2h)} partite")
+    d0 = (oggi - timedelta(days=1)).date()
+    vic = fd("/matches", dateFrom=str(d0), dateTo=str(d0 + timedelta(days=4)))
+    if vic:
+        salva(cart, "vicine.json", vic)
 
 
 def giro_formazioni(base="data", finestra_min=90):
@@ -280,5 +346,7 @@ def scrivi_csv(cart, partite):
 if __name__ == "__main__":
     if "--formazioni" in sys.argv:
         giro_formazioni()
+    elif "--aggiorna" in sys.argv:
+        giro_fd(completo=False)
     else:
         giro_completo()

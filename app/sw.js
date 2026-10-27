@@ -1,6 +1,6 @@
 // AuraPitch - service worker: rende l'app installabile e utilizzabile anche con rete debole.
 // Strategia: i file dell'app dalla cache (aggiornati in background), i dati sempre prima dalla rete.
-const CACHE = "aurapitch-v6";
+const CACHE = "aurapitch-v7";
 const SHELL = ["./", "index.html", "app.js", "app.css", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", (e) => {
@@ -24,4 +24,18 @@ self.addEventListener("fetch", (e) => {
       return hit || net;
     }));
   }
+});
+
+// Notifiche push (servizio AuraPitch su Cloudflare): mostra l'avviso anche con l'app chiusa.
+self.addEventListener("push", (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (err) { d = { title: "AuraPitch", body: e.data ? e.data.text() : "" }; }
+  e.waitUntil(self.registration.showNotification(d.title || "AuraPitch", { body: d.body || "", tag: d.tag, icon: "icon-192.png", badge: "icon-192.png", data: { url: d.url || "./" } }));
+});
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((cs) => {
+    for (const c of cs) if ("focus" in c) return c.focus();
+    return self.clients.openWindow((e.notification.data && e.notification.data.url) || "./");
+  }));
 });

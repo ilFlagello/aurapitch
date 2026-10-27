@@ -791,8 +791,13 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const [favM, setFavM] = useState(store.get("favM", []));
     const [avvisi, setAvvisi] = useState(store.get("avvisi", true));
     const prev = useRef(null);
+    const [pushUrl, setPushUrl] = useState(null);
+    const [pushOn, setPushOn] = useState(store.get("push", false));
+    const [pushMsg, setPushMsg] = useState("");
+    const lastFollow = useRef("");
 
     useEffect(() => {
+      fetch("data/push.json").then((r) => (r.ok ? r.json() : null)).then((x) => x && setPushUrl(x.url)).catch(() => {});
       fetch("data/storico.json").then((r) => (r.ok ? r.json() : null)).then(setStor).catch(() => {});
       fetch("data/giornata.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).then((d) => { setD(d); if (d.today && (d.days || []).some((x) => x.k === d.today)) setDay(d.today); })
         .catch(() => setErr("Non riesco a leggere i dati delle partite. Controlla la connessione e ricarica la pagina."));
@@ -817,6 +822,52 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     useEffect(() => store.set("slip", mySlip), [mySlip]);
     useEffect(() => { if (toast) { const id = setTimeout(() => setToast(""), 1800); return () => clearTimeout(id); } }, [toast]);
     const flash = (t) => setToast(t);
+    // notifiche push: partite seguite = preferite + squadra del cuore, collegate alla diretta e non ancora finite
+    const followList = () => (D ? D.matches.filter((m) => m.eid && m.lgE && m.st !== "FT" && (favM.includes(m.id) || m.h === fav || m.a === fav)).map((m) => ({ lgE: m.lgE, eid: m.eid, h: m.h, a: m.a })) : []);
+    const sendFollow = async (sub, test) => {
+      const r = await fetch(pushUrl + "/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sub: sub.toJSON(), follow: followList() }) });
+      if (!r.ok) throw new Error("iscrizione");
+      if (test) await fetch(pushUrl + "/test", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: sub.endpoint }) });
+    };
+    const attivaPush = async () => {
+      try {
+        if (!pushUrl) return setPushMsg("Il servizio notifiche non è ancora pronto: riprova tra qualche minuto.");
+        if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window))
+          return setPushMsg(navigator.standalone === false || /iPhone|iPad/.test(navigator.userAgent) ? "Su iPhone le notifiche funzionano solo aprendo AuraPitch dall'icona sulla schermata Home (Safari, Condividi, Aggiungi alla schermata Home)." : "Questo browser non supporta le notifiche.");
+        const perm = await Notification.requestPermission();
+        if (perm !== "granted") return setPushMsg("Permesso negato: puoi riattivarlo da Impostazioni, Notifiche, AuraPitch.");
+        setPushMsg("Attivazione in corso...");
+        const reg = await navigator.serviceWorker.ready;
+        const { key } = await (await fetch(pushUrl + "/vapid")).json();
+        const raw = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((key.length + 3) % 4)), (c) => c.charCodeAt(0));
+        const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: raw }));
+        await sendFollow(sub, true);
+        lastFollow.current = JSON.stringify(followList());
+        setPushOn(true); store.set("push", true);
+        setPushMsg("Notifiche attive: dovresti aver ricevuto una notifica di prova.");
+      } catch (e) { setPushMsg("Non sono riuscito ad attivarle: controlla la connessione e riprova."); }
+    };
+    const disattivaPush = async () => {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) { if (pushUrl) await fetch(pushUrl + "/unsubscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: sub.endpoint }) }).catch(() => {}); await sub.unsubscribe(); }
+      } catch (e) { /* gia disattivate */ }
+      setPushOn(false); store.set("push", false); setPushMsg("Notifiche disattivate.");
+    };
+    useEffect(() => {
+      if (!pushOn || !pushUrl || !D) return;
+      const key = JSON.stringify(followList());
+      if (key === lastFollow.current) return;
+      const id = setTimeout(async () => {
+        try {
+          const reg = await navigator.serviceWorker.ready;
+          const sub = await reg.pushManager.getSubscription();
+          if (sub) { await sendFollow(sub, false); lastFollow.current = key; }
+        } catch (e) { /* si riprova al prossimo aggiornamento */ }
+      }, 1500);
+      return () => clearTimeout(id);
+    }, [D, favM, fav, pushOn, pushUrl]);
     // avvisi: gol e fine partita delle partite preferite e della squadra del cuore (con l'app aperta)
     useEffect(() => {
       if (!D) return;
@@ -854,7 +905,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const lg = (k) => D.leagues.find((l) => l.k === k);
     const lgOpen = openL || D.leagues.map((l) => l.k);
     const goMatch = (id) => { setOpen(id); setMt(0); setTeam(null); window.scrollTo(0, 0); };
-    const toggleFavM = (id) => { const nx = favM.includes(id) ? favM.filter((x) => x !== id) : [...favM, id]; setFavM(nx); store.set("favM", nx); flash(favM.includes(id) ? "Tolta dalle preferite" : "Aggiunta alle preferite: ti avviso dei gol"); };
+    const toggleFavM = (id) => { const nx = favM.includes(id) ? favM.filter((x) => x !== id) : [...favM, id]; setFavM(nx); store.set("favM", nx); flash(favM.includes(id) ? "Tolta dalle preferite" : pushOn ? "Aggiunta alle preferite: riceverai le notifiche" : "Aggiunta alle preferite. Attiva le notifiche in Profilo"); };
     const openTeam = (t) => { setTeam(t); window.scrollTo(0, 0); };
     const addLeg = (m, k) => {
       if (mySlip.some((x) => x.id === m.id)) { setMySlip(mySlip.map((x) => (x.id === m.id ? { id: m.id, k } : x))); flash("Esito aggiornato in schedina"); }
@@ -948,6 +999,11 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           className=${"w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left " + C.ch}>
           <span className="flex-1"><span className=${"block text-sm font-semibold " + C.tx}>Gol e risultati delle preferite</span><span className=${"block text-xs " + C.mu}>Partite con la stella e squadra del cuore. Per ora funzionano con l'app aperta.</span></span>
           <span className=${"w-11 h-6 rounded-full p-0.5 transition-colors " + (avvisi ? "bg-emerald-500" : "bg-black/20 dark:bg-white/20")}><span className=${"block w-5 h-5 rounded-full bg-white shadow transition-transform " + (avvisi ? "translate-x-5" : "")}></span></span></button>
+        <div className=${C.lab}>Notifiche con l'app chiusa</div>
+        <div className=${"rounded-xl px-3 py-2.5 space-y-2 " + C.ch}>
+          <div className=${"text-xs " + C.mu}>Calcio d'inizio, gol (con il marcatore) e finale delle partite con la stella e della squadra del cuore, anche con il telefono bloccato.</div>
+          <button onClick=${pushOn ? disattivaPush : attivaPush} className=${"w-full py-2.5 rounded-xl text-sm font-semibold " + (pushOn ? "bg-white dark:bg-[#2C2C2E] " + C.tx : C.on)}>${pushOn ? "Disattiva le notifiche" : "Attiva le notifiche"}</button>
+          ${pushMsg && html`<div className=${"text-xs " + C.tx}>${pushMsg}</div>`}</div>
         <div className=${C.lab}>Squadra del cuore</div>
         <div className=${"text-sm " + C.tx}>${fav} <button onClick=${() => { setProfile(false); setOpen(null); setTab("club"); }} className="text-[#0A84FF] font-medium ml-1">Cambia</button></div>
         <div className=${C.lab}>Accesso</div>

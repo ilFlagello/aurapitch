@@ -39,9 +39,10 @@ jobs:
             for P in ilflagello aurapitch-ilflagello aurapitch-ilflagello-$RANDOM; do
               R=$(curl -s -X PUT "${H[@]}" -H "Content-Type: application/json" -d "{\"subdomain\":\"$P\"}" $API/workers/subdomain)
               log "Creo sottodominio $P: $(echo "$R" | ok)"
-              echo "$R" | grep -q '"success":true' && SUB=$P && break
+              echo "$R" | grep -q '"success": *true' && SUB=$P && break
             done
           fi
+          [ -z "$SUB" ] && SUB=$(curl -s "${H[@]}" $API/workers/subdomain | python3 -c "import json,sys; d=json.load(sys.stdin); print((d.get('result') or {}).get('subdomain') or '')")
           log "Sottodominio: $SUB"
           # archivio KV
           KV=$(curl -s "${H[@]}" "$API/storage/kv/namespaces?per_page=100" | python3 -c "import json,sys; d=json.load(sys.stdin); print(next((n['id'] for n in d.get('result') or [] if n['title']=='aurapitch-push'), ''))")

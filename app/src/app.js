@@ -194,9 +194,10 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <div className="flex items-center"><div className="font-semibold flex-1">${title}</div><button aria-label="Chiudi" onClick=${onClose} className=${C.mu}><${Ic.X} size=${20} /></button></div>
         ${children}</div></div>`;
   }
-  function FavPill({ m, unlocked, big }) {
-    const f = m.p.indexOf(Math.max(...m.p));
-    const p = m.p[f];
+  function FavPill({ m, unlocked, big, pp }) {
+    const P = pp || m.p;
+    const f = P.indexOf(Math.max(...P));
+    const p = P[f];
     return html`<span className=${"inline-flex items-center gap-1.5 rounded-full border tabular-nums font-semibold shrink-0 " + (big ? "px-3 py-1 text-sm " : "px-2.5 py-0.5 text-xs ") + TONE[confTone(p)]}>
       <span>${ESITI[f]}</span><span className=${unlocked ? "" : "blur-[4px] select-none"}>${pct(p)}%</span>${!unlocked && html`<${Ic.Lock} size=${10} className="opacity-60" />`}</span>`;
   }
@@ -683,6 +684,13 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const { d: sm } = useSummary(m.lgE, m.eid, m.st === "LIVE");
       const sw = useRef(null);
       const TABS = ["Panoramica", "Cronaca", "Formazioni", "Analisi IA", "Classifiche"];
+      // in diretta la pillola mostra la probabilita aggiornata (punteggio, minuto, espulsioni), non quella pre-partita
+      const pLive = (() => {
+        if (m.st !== "LIVE" || !m.xg || m.xg[0] == null) return null;
+        const g = (sm && sm.st === "LIVE" && sm.g[0] != null ? sm.g : m.g) || [0, 0];
+        const reds = [0, 1].map((j) => (sm ? sm.eventi.filter((e) => e.k === "rosso" && e.side === j).length : 0));
+        return ["1", "X", "2"].map((c) => liveProb(c, m.xg, g, minuto((sm && sm.clock) || m.clock || ""), reds));
+      })();
       const onTS = (e) => { const t = e.touches[0]; sw.current = e.target.closest("[data-noswipe]") ? null : [t.clientX, t.clientY]; };
       const onTE = (e) => { if (!sw.current) return; const t = e.changedTouches[0], dx = t.clientX - sw.current[0], dy = t.clientY - sw.current[1]; sw.current = null;
         if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6) setMt(Math.max(0, Math.min(TABS.length - 1, mt + (dx < 0 ? 1 : -1)))); };
@@ -697,7 +705,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         { k: "Classifica vs attese", i: Ic.BarChart3, tone: m.attese.some((f) => f.tone !== "ok") ? "info" : "ok", body: html`<div className="space-y-1.5">${m.attese.map((f, j) => html`<div key=${j} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 " + DOT[f.tone]}></span><span><b>${j ? m.a : m.h}:</b> ${f.text}</span></div>`)}</div>` },
         { k: "Precedenti", i: Ic.Swords, tone: m.prec.tone, body: m.prec.text },
         { k: "Contesto", i: Ic.Clock, tone: m.ctx.tone, body: m.ctx.text },
-        { k: "Formazioni", i: Ic.Users, tone: "ok", body: "Titolari, assenti e infortuni arriveranno con la raccolta dati quotidiana, insieme alle notizie dei giornali locali." },
+        { k: "Formazioni", i: Ic.Users, tone: (m.fattori || []).some((f) => f.delta) ? "warn" : "ok", body: ((m.fattori || []).filter((f) => f.delta).length ? "Indisponibili segnalati: " + m.fattori.filter((f) => f.delta).map((f) => f.chi + " (" + (f.lato ? m.a : m.h) + ")").join(", ") + ". " : "Nessun indisponibile importante segnalato da notizie e cartellini. ") + "Le formazioni ufficiali compaiono nella sezione Formazioni circa un'ora prima del calcio d'inizio." },
         { k: "Quote", i: Ic.Calculator, tone: "ok", body: `Favorito per le quote: ${["casa", "pareggio", "ospiti"][m.mk.indexOf(Math.max(...m.mk))]}. Le quote riassumono già forma, classifica e precedenti: la lettura qui sopra spiega il perché.` },
       ];
       const opts = options(m);
@@ -713,17 +721,18 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
               <span className=${"text-sm font-semibold text-center leading-tight " + C.tx}>${t}</span><span className=${"text-[11px] " + C.mu}>${pos(t) ? pos(t) + "° in classifica" : "Pagina squadra"}</span></button>`)}
             <div className="order-2 flex flex-col items-center pt-2"><div className=${"text-3xl font-semibold tabular-nums " + C.tx}>${m.g ? m.g[0] + " - " + m.g[1] : m.time}</div>
               <div className=${"text-xs mt-1 " + (m.st === "LIVE" ? "text-rose-500 font-semibold " : C.mu)}>${m.st === "FT" ? "Finale" : m.st === "LIVE" ? (sm && sm.clock) || m.clock || "In corso" : m.st === "RINV" ? "Rinviata" : ""}</div></div></div>
-          <div className="flex items-center justify-center gap-2 mt-4"><${FavPill} m=${m} unlocked=${unlocked(m)} big=${true} />
+          <div className="flex items-center justify-center gap-2 mt-4"><${FavPill} m=${m} unlocked=${unlocked(m)} big=${true} pp=${pLive} />${pLive && html`<span className=${"text-[10px] font-semibold " + C.mu}>in diretta</span>`}
             ${m.free && html`<span className=${"text-[10px] font-semibold px-2 py-0.5 rounded-full border " + TONE.good}>FREE oggi</span>`}
             ${m.st === "FT" && unlocked(m) && html`<span className=${"text-xs " + (m.res === fav ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>${m.res === fav ? "Favorito rispettato" : "Sorpresa"}</span>`}</div></div>
         <div data-noswipe="1"><${Seg} small=${true} items=${TABS} val=${mt} set=${setMt} /></div>
         <div onTouchStart=${onTS} onTouchEnd=${onTE} className="space-y-3 min-h-[50vh]">
 
         ${mt === 0 && html`<${React.Fragment}>
-          ${sm && sm.st !== "FT" && html`<${AssenzeCard} m=${m} sm=${sm} />`}
+          ${sm && sm.st === "NS" && html`<${AssenzeCard} m=${m} sm=${sm} />`}
           ${sm && sm.st === "LIVE" && html`<${LiveAction} sm=${sm} m=${m} />`}
           ${sm && sm.st !== "NS" && html`<${KeyEvents} sm=${sm} m=${m} />`}
           ${sm && sm.st !== "NS" && html`<${StatsCard} sm=${sm} m=${m} />`}
+          ${sm && sm.st === "LIVE" && html`<${AssenzeCard} m=${m} sm=${sm} />`}
           <div className=${C.card + " p-4 space-y-3"}><div className="flex justify-between items-baseline"><span className=${C.lab}>Probabilità dalle quote</span><span className=${"text-[11px] " + C.mu}>Over 2.5: <b className=${C.tx}>${pct(m.mo)}%</b></span></div>
             <${ProbBar} p=${m.mk} />
             ${!D.demo && m.nb ? html`<div className=${"text-[11px] " + C.mu}>Quota media di ${m.nb} bookmaker${m.prepartita ? ", aggiornata alle " + new Date(m.prepartita).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }) + " (prima del calcio d'inizio)" : ", fotografata al mattino"}.</div>` : null}

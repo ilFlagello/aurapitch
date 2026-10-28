@@ -122,6 +122,8 @@ except Exception as e:
 
 # 5. sito pubblicato e fonte della diretta
 for url, nome in (("https://ilflagello.github.io/aurapitch/data/lista.json", "Sito dell'app"),
+                  ("https://ilflagello.github.io/aurapitch/.well-known/security.txt", "Canale di segnalazione (security.txt)"),
+                  ("https://ilflagello.github.io/aurapitch/privacy.html", "Pagina privacy"),
                   ("https://site.api.espn.com/apis/site/v2/sports/soccer/ita.1/scoreboard", "ESPN (diretta, formazioni)")):
     try:
         s, _ = get(url)

@@ -433,6 +433,37 @@ def precedenti(mid, casa_id, ospite_id):
     return {"tone": "ok", "text": f"{testa}: {pl(vc, 'vittoria', 'vittorie')} della squadra di casa di oggi, {pl(nn, 'pareggio', 'pareggi')}, {pl(vo, 'vittoria', 'vittorie')} dell'ospite. Nei test i precedenti pesano poco: sono già dentro le quote."}, lista
 
 
+def calendario_coppe(fdp, esd):
+    """Partite di coppa (Champions da football-data, Europa e Conference League e Coppa Italia da ESPN) per squadra: elenco di orari."""
+    out = {}
+    def add(nome, t):
+        k = " ".join(sorted(toks(nome)))
+        if k:
+            out.setdefault(k, []).append(t)
+    for m in fdp.values():
+        if m.get("_code") == "CL" and m.get("utcDate"):
+            t = utc(m["utcDate"])
+            add(nome_fd(m.get("homeTeam")), t)
+            add(nome_fd(m.get("awayTeam")), t)
+    for k in ES.COPPE:
+        for e in ((esd.get("risultati_lega") or {}).get(k) or []):
+            try:
+                t = utc(e["t"].replace("Z", "+00:00"))
+            except (KeyError, ValueError):
+                continue
+            add(e["h"], t)
+            add(e["a"], t)
+    return out
+
+
+def coppa_vicina(cal, nome, t0):
+    """Giorni dall'ultima partita di coppa (entro 5) e alla prossima (entro 5), per il segnale 'stanchezza/turnover'."""
+    ts = cal.get(" ".join(sorted(toks(nome)))) or []
+    prima = [(t0 - t).total_seconds() / 86400 for t in ts if timedelta(hours=20) <= t0 - t <= timedelta(days=5)]
+    dopo = [(t - t0).total_seconds() / 86400 for t in ts if timedelta(hours=20) <= t - t0 <= timedelta(days=5)]
+    return {"prima": round(min(prima)) if prima else None, "dopo": round(min(dopo)) if dopo else None}
+
+
 def riposo(per_team, tid, prima):
     lst = [z for z in per_team.get(tid, []) if z["t"] < prima]
     return (prima - lst[-1]["t"]).days if lst else None
@@ -457,6 +488,7 @@ def genera():
     print(f"Arbitri con statistiche: {len(refs)}")
     designati = (jload(os.path.join(DATA, "espn", "arbitri.json"), {}) or {}).get("partite", [])
     colori_es = esd.get("colori") or {}
+    cal_coppe = calendario_coppe(fdp, esd)
     with open(ARBITRI, "w", encoding="utf-8") as f:  # per gli aggiornamenti durante il giorno (arbitri designati dopo il mattino)
         json.dump({c: {"nome": v["nome"], "n": v["n"], "ratio": v["ratio"], "media": v["media"], "lega": v.get("lega")} for c, v in refs.items()}, f, ensure_ascii=False, separators=(",", ":"))
 
@@ -586,7 +618,7 @@ def genera():
             "xgf": [lettura_xg(k, h, t0), lettura_xg(k, a, t0)] if k in xg_lega else None,
             "curiosita": curiosita_partita(per_team, hid, aid, h, a, t0) if (hid or aid) else [],
             "col": colori_partita(colori_es.get(k), h, a),
-            "_ctx": {"riposo": [rh, ra], "sh": sh, "sa": sa, "pos_h": pos.get(hid), "pos_a": pos.get(aid), "raccolte": raccolte,
+            "_ctx": {"coppa": [coppa_vicina(cal_coppe, h, t0), coppa_vicina(cal_coppe, a, t0)] if k not in ES.COPPE else None, "riposo": [rh, ra], "sh": sh, "sa": sa, "pos_h": pos.get(hid), "pos_a": pos.get(aid), "raccolte": raccolte,
                      "gol": [next((rr.get("goalsFor") for rr in (tabs or {}).get("TOTAL", []) if (rr.get("team") or {}).get("id") == x), None) for x in (hid, aid)]},
         })
     # 3 partite FREE: le piu importanti tra oggi e domani non ancora iniziate
@@ -753,6 +785,12 @@ def applica_fattori(d):
             tutti += lista
             tot[lato] = t
             segnali += [dict(x, lato=lato) for x in sg]
+        for lato, cp in enumerate(c.get("coppa") or []):
+            sq = m["h"] if lato == 0 else m["a"]
+            if cp and cp.get("prima") is not None:
+                segnali.append({"tipo": "coppa_prima", "lato": lato, "titolo": f"{sq} ha giocato in coppa {cp['prima']} giorni prima", "fonte": "", "link": "", "t": ""})
+            if cp and cp.get("dopo") is not None:
+                segnali.append({"tipo": "coppa_dopo", "lato": lato, "titolo": f"{sq} ha una partita di coppa tra {cp['dopo']} giorni (possibile turnover)", "fonte": "", "link": "", "t": ""})
         rr = c.get("riposo") or [None, None]
         if None not in rr and abs(rr[0] - rr[1]) >= 3:
             segnali.append({"tipo": "riposo", "lato": 0 if rr[0] > rr[1] else 1, "titolo": f"{abs(rr[0] - rr[1])} giorni di riposo in più", "fonte": "", "link": "", "t": ""})

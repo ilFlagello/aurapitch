@@ -192,6 +192,49 @@ def voti_partita(summ):
     return out
 
 
+PESO_SPINTA = {"shot-on-target": 1.0, "shot-hit-woodwork": 1.0, "shot-off-target": 0.5, "shot-blocked": 0.4, "corner-awarded": 0.3}
+
+
+def fotografie_diretta(summ):
+    """Per il test della 'diretta piu intelligente': al 60' e al 75' risultato e spinta (tiri e angoli negli ultimi 20 minuti) delle due squadre, piu il risultato finale."""
+    comp = summ["header"]["competitions"][0]
+    nomi = {c["team"]["displayName"]: (0 if c["homeAway"] == "home" else 1) for c in comp["competitors"]}
+    fin = [0, 0]
+    for c in comp["competitors"]:
+        fin[nomi[c["team"]["displayName"]]] = int(c.get("score") or 0)
+    ev = []
+    for c in summ.get("commentary") or []:
+        p = c.get("play") or {}
+        lato = nomi.get((p.get("team") or {}).get("displayName"))
+        mi = _minuto((c.get("time") or {}).get("displayValue"))
+        tp = (p.get("type") or {}).get("type") or ""
+        if lato is None or mi is None:
+            continue
+        ev.append((mi, lato, tp))
+    if len(ev) < 20:
+        return None
+    out = {"fin": fin}
+    try:  # quote pre-partita (DraftKings, formato americano) per avere la forza delle squadre nel test
+        pc = (summ.get("pickcenter") or [])[0]
+        ml = [pc["homeTeamOdds"]["moneyLine"], (pc.get("drawOdds") or {}).get("moneyLine"), pc["awayTeamOdds"]["moneyLine"]]
+        if None not in ml:
+            out["ml"] = ml
+        if pc.get("overUnder") is not None:
+            out["ou"] = [pc["overUnder"], pc.get("overOdds"), pc.get("underOdds")]
+    except (IndexError, KeyError, TypeError):
+        pass
+    for t in (60, 75):
+        g = [0, 0]
+        sp = [0.0, 0.0]
+        for mi, lato, tp in ev:
+            if mi <= t and (tp.startswith("goal") or tp == "penalty---scored"):
+                g[lato if "own" not in tp else 1 - lato] += 1
+            if t - 20 < mi <= t:
+                sp[lato] += PESO_SPINTA.get(tp, 0)
+        out[str(t)] = {"g": g, "sp": [round(x, 1) for x in sp]}
+    return out
+
+
 def giro_voti(base="data", giorni=4, massimo=350):
     """Aggiunge all'archivio della stagione i voti delle partite finite negli ultimi giorni (e recupera le precedenti, fino a 'massimo' schede per giro)."""
     path = os.path.join(base, "espn", "voti.json")
@@ -201,6 +244,12 @@ def giro_voti(base="data", giorni=4, massimo=350):
     except (OSError, ValueError):
         arch = {"fatte": [], "g": {}, "inizio": None}
     fatte, G = set(arch.get("fatte", [])), arch.get("g", {})
+    dpath = os.path.join(base, "espn", "diretta.json")
+    try:
+        with open(dpath, encoding="utf-8") as f:
+            dir_ = json.load(f)
+    except (OSError, ValueError):
+        dir_ = {}
     ora = datetime.now(timezone.utc)
     inizio = datetime(ora.year if ora.month >= 7 else ora.year - 1, 8, 1, tzinfo=timezone.utc)
     da = max(inizio, ora - timedelta(days=giorni)) if arch.get("completo") else inizio
@@ -214,16 +263,20 @@ def giro_voti(base="data", giorni=4, massimo=350):
         for ev in evs:
             if nuove >= massimo:
                 break
-            if ev["id"] in fatte or not ev["status"]["type"].get("completed"):
+            if (ev["id"] in fatte and ev["id"] in dir_) or not ev["status"]["type"].get("completed"):
                 continue
+            gia_votata = ev["id"] in fatte
             try:
-                righe = voti_partita(get(f"{SITE}{lg}/summary?event={ev['id']}"))
+                summ = get(f"{SITE}{lg}/summary?event={ev['id']}")
+                righe = voti_partita(summ)
+                foto = fotografie_diretta(summ)
+                dir_[ev["id"]] = {"lg": k, "t": ev["date"], **foto} if foto else {"vuota": True}
             except Exception as e:  # noqa: BLE001
                 print(f"Voti {k} {ev['id']}: {e}")
                 continue
             fatte.add(ev["id"])
             nuove += 1
-            for r in righe:
+            for r in ([] if gia_votata else righe):
                 if not r["id"]:
                     continue
                 x = G.setdefault(r["id"], {"n": r["n"], "t": r["team"], "lg": k, "pos": r["pos"], "p": 0, "tit": 0, "min": 0, "sv": 0.0, "nv": 0, "g": 0, "a": 0})
@@ -236,6 +289,8 @@ def giro_voti(base="data", giorni=4, massimo=350):
                 if r["v"] is not None:
                     x["sv"] = round(x["sv"] + r["v"], 1)
                     x["nv"] += 1
+    with open(dpath, "w", encoding="utf-8") as f:
+        json.dump(dir_, f, separators=(",", ":"))
     arch = {"fatte": sorted(fatte), "g": G, "completo": nuove < massimo, "agg": ora.isoformat()}
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
@@ -438,7 +493,7 @@ def giro_espn(base="data", ore=48):
     out["risultati_lega"] = {}
     for k in ("I2",) + COPPE:
         evs = []
-        for dd in (-2, -1, 0):
+        for dd in ((-4, -3, -2, -1, 0, 1, 2, 3) if k in COPPE else (-2, -1, 0)):
             giorno = (ora + timedelta(days=dd)).strftime("%Y%m%d")
             try:
                 for ev in get(f"{SITE}{ESPN_LG[k]}/scoreboard?dates={giorno}").get("events", []):

@@ -11,10 +11,10 @@ on:
   workflow_dispatch:             # anche a mano: Actions -> Raccolta dati AuraPitch -> Run workflow
     inputs:
       modo:
-        description: "completo (mattino) oppure live (aggiornamento)"
+        description: "completo (mattino), live (aggiornamento) oppure archivio (solo voti e dati della diretta delle partite passate, senza quote)"
         default: completo
         type: choice
-        options: [completo, live]
+        options: [completo, live, archivio]
 
 permissions:
   contents: write                # serve per salvare i dati raccolti nell'archivio
@@ -40,8 +40,12 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Archivio voti e diretta (nessun credito delle quote)
+        if: inputs.modo == 'archivio'
+        run: python -c "import espn_dati; espn_dati.giro_voti(massimo=1200)"
+
       - name: Giro completo (quote, risultati, classifiche) e dati dell'app
-        if: inputs.modo != 'live'
+        if: inputs.modo == 'completo'
         run: |
           python raccoglitore.py
           python raccoglitore.py --notizie --forza

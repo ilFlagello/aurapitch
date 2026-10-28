@@ -1,7 +1,7 @@
 // AuraPitch - service worker: rende l'app installabile e utilizzabile anche con rete debole.
 // Strategia: pagina e codice dell'app prima dalla rete (al massimo 3 secondi, poi copia salvata), così dopo un aggiornamento
 // si apre subito la versione nuova; caratteri e icone dalla copia salvata; dati sempre prima dalla rete (al massimo 8 secondi).
-const CACHE = "aurapitch-v21";
+const CACHE = "aurapitch-v22";
 const SHELL = ["./", "index.html", "app.js", "app.css", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "fonts/figtree.woff2", "fonts/bigshoulders.woff2",
   ...["gol", "annullato", "rossi", "inizio", "intervallo", "finale", "formazioni", "promemoria", "test"].flatMap((t) => [`avvisi/${t}.png`, `avvisi/${t}-badge.png`])];
 

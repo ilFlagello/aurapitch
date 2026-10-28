@@ -1,13 +1,16 @@
 /* AuraPitch - app: stato generale, dati a strati, notifiche, navigazione. */
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
-import { useLiveScores } from "./live.js";
+import { useLiveScores, usaPonte } from "./live.js";
 import { AuraLine, C, Crest, Ctx, Flag, Giorni, Ic, Marchio, Seg, Sheet, TONE, auraCol, hs, html, mmss, store } from "./base.js";
 import { LeaguesView } from "./campionati.js";
 import { ClubView } from "./club.js";
 import { BarraSchedina, Cerca, Glossario, PrimoAvvio, partitaSettimana } from "./extra.js";
 import { MatchView, Row, TeamView } from "./partita.js";
 import { SlipView } from "./schedina.js";
+import { AccountCard, Benvenuto, InvitoRecensione, Legale, PannelloBeta, Recensione, useAccount } from "./fiducia.js";
+import { avviaStatistiche, conta, statAttive } from "./statistiche.js";
+import { VERSIONE as VERS_LEGALE } from "./legale.js";
 
   /* ---------- app ---------- */
   function App() {
@@ -138,6 +141,16 @@ import { SlipView } from "./schedina.js";
     useEffect(() => store.set("slip", mySlip), [mySlip]);
     useEffect(() => { if (toast) { const id = setTimeout(() => setToast(""), 1800); return () => clearTimeout(id); } }, [toast]);
     const flash = (t) => setToast(t);
+    // fiducia: consenso (18+, termini, privacy), account, recensioni, statistiche anonime, pannello beta
+    const [consenso, setConsenso] = useState(((store.get("consenso", null) || {}).v || 0) >= VERS_LEGALE);
+    const [legale, setLegale] = useState(null);
+    const [recensione, setRecensione] = useState(null);
+    const [pannello, setPannello] = useState(false);
+    const [statOn, setStatOn] = useState(statAttive());
+    const A = useAccount(pushUrl, { ripristina, setSyncOn, flash });
+    useEffect(() => { if (pushUrl) { usaPonte(pushUrl); avviaStatistiche(pushUrl); } }, [pushUrl]);
+    useEffect(() => { if (tab !== "partite") conta(tab); }, [tab]);
+    useEffect(() => { if (open) conta("partita"); }, [open]);
     // notifiche push: partite seguite = preferite + squadra del cuore, collegate alla diretta e non ancora finite
     const mia = (m) => favM.includes(m.id) || m.h === fav || m.a === fav || favTeams.includes(m.h) || favTeams.includes(m.a);
     const followList = () => (D ? D.matches.filter((m) => m.eid && m.lgE && m.st !== "FT" && mia(m)).map((m) => ({ lgE: m.lgE, eid: m.eid, h: m.h, a: m.a })) : []);
@@ -160,7 +173,7 @@ import { SlipView } from "./schedina.js";
         const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: raw }));
         await sendFollow(sub, true);
         lastFollow.current = JSON.stringify([followList(), pref]);
-        setPushOn(true); store.set("push", true);
+        setPushOn(true); store.set("push", true); conta("notifiche_on");
         setPushMsg("Notifiche attive: dovresti aver ricevuto una notifica di prova.");
       } catch (e) { setPushMsg("Non sono riuscito ad attivarle: controlla la connessione e riprova."); }
     };
@@ -288,6 +301,7 @@ import { SlipView } from "./schedina.js";
         <div className=${"text-[13px] flex-1 " + C.tx}>${D.demo ? html`Beta con <b>dati reali</b> della giornata ${D.label}. Le partite sono già giocate: puoi confrontare le letture dell'IA con i risultati.`
           : html`Beta con <b>dati reali</b>, ${D.label}: quote medie di decine di bookmaker (DraftKings per i campionati e le coppe in più), classifiche e risultati in diretta (ogni 30 secondi). Apri una partita e scorri col dito tra le sezioni.`}</div>
         <button aria-label="Chiudi avviso" onClick=${() => { setBanner(false); store.set("banner2", false); }} className=${C.mu}><${Ic.X} size=${16} /></button></div>`}
+      <${InvitoRecensione} onApri=${() => setRecensione("invito")} />
       <${Giorni} days=${D.days} day=${day} setDay=${setDay} demo=${D.demo} />
       <div className="flex items-center gap-2 pt-1"><span className=${"text-[22px] font-bold tracking-[-0.02em] flex-1 " + C.tx}>${day === "all" ? "Tutte le partite" : (D.days.find((d) => d.k === day) || {}).label === "Oggi" ? "Oggi" : new Date(day + "T12:00:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }).replace(/^./, (c) => c.toUpperCase())}</span>
         <button onClick=${() => setLiveOnly(liveOnly ? 0 : 1)} aria-pressed=${!!liveOnly} className=${"inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold " + (liveOnly ? "bg-[#FF3D5A] text-white" : "bg-white dark:bg-[#191626] " + C.tx)}>
@@ -322,7 +336,7 @@ import { SlipView } from "./schedina.js";
     const views = { partite: home, campionati: html`<${LeaguesView} />`, schedina: html`<${SlipView} />`, club: html`<${ClubView} />` };
     const DOCK = [["partite", "Partite", Ic.Calendar], ["campionati", "Campionati", Ic.Trophy], ["schedina", "Schedina IA", Ic.Sparkles], ["club", "Il Mio Club", Ic.Shield]];
 
-    const ctx = { caricaDettagli, caricaMercati, syncOn, setSyncOn, setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen, mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
+    const ctx = { A, setRecensione, setLegale, caricaDettagli, caricaMercati, syncOn, setSyncOn, setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen, mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
     return html`<${Ctx.Provider} value=${ctx}><div className="min-h-screen pb-28">
       ${header}
       <main className="max-w-[480px] mx-auto">${!online && html`<div role="status" className=${"mx-4 mb-3 px-3.5 py-2.5 rounded-2xl border text-[13px] flex items-center gap-2 " + TONE.warn}><${Ic.Clock} size=${15} />Sei offline: vedi i dati delle ${(D.generato || "").slice(-5)}. Quando torna la rete, tira giù la pagina per aggiornarli.</div>`}${guideBox}${team ? html`<${TeamView} key=${team.name} />` : open_m ? (D.leggera && !open_m.dett ? html`<div className="px-4 pt-4 space-y-3" aria-busy="true"><div className=${C.card + " p-5 text-center"}><div className=${"text-[17px] font-semibold " + C.tx}>${open_m.h} - ${open_m.a}</div><div className=${"text-[13px] mt-1 " + C.mu}>${online ? "Carico l'analisi della partita..." : "Sei offline: l'analisi di questa partita non è ancora stata scaricata."}</div>
@@ -349,6 +363,10 @@ import { SlipView } from "./schedina.js";
 
       ${cerca && html`<${Cerca} onClose=${() => setCerca(false)} />`}
       ${gloss && html`<${Glossario} onClose=${() => setGloss(false)} />`}
+      ${!consenso && html`<${Benvenuto} onFine=${() => setConsenso(true)} />`}
+      ${legale && html`<${Legale} tipo=${legale} onClose=${() => setLegale(null)} />`}
+      ${recensione && pushUrl && html`<${Recensione} pushUrl=${pushUrl} dove=${recensione} onClose=${() => setRecensione(null)} />`}
+      ${pannello && A.acc && A.acc.admin && html`<${PannelloBeta} A=${A} onClose=${() => setPannello(false)} />`}
       ${!onb && html`<${PrimoAvvio} onFine=${() => { setOnb(true); store.set("onb", true); store.set("guideSeen", true); setGuide(0); }} />`}
       ${!open && !team && html`<${BarraSchedina} vaiSchedina=${() => { setTab("schedina"); window.scrollTo(0, 0); }} />`}
       ${askPush && html`<${Sheet} title="Notifiche della partita" onClose=${() => setAskPush(false)}>
@@ -382,9 +400,17 @@ import { SlipView } from "./schedina.js";
         <button onClick=${() => { setProfile(false); setOnb(false); }} className=${"w-full py-2.5 rounded-xl text-sm font-semibold " + C.ch + " " + C.tx}>Scegli campionati e squadre che segui</button>
         <div className=${C.lab}>Squadra del cuore</div>
         <div className=${"text-sm " + C.tx}>${fav} <button onClick=${() => { setProfile(false); setOpen(null); setTab("club"); }} className="text-[#5B2EE6] dark:text-[#A58BFF] font-medium ml-1">Cambia</button></div>
-        <div className=${C.lab}>Accesso</div>
-        <div className="grid grid-cols-2 gap-2">${["Google", "Apple"].map((p) => html`<button key=${p} disabled className=${"py-2.5 rounded-xl text-sm font-semibold opacity-50 " + C.ch + " " + C.tx}>${p}</button>`)}</div>
-        <p className=${"text-xs " + C.mu}>${syncOn ? "Una copia dei tuoi dati è salvata sul servizio AuraPitch con il tuo codice personale (Il Mio Club, Account)." : "I tuoi dati restano solo su questo dispositivo, a meno che tu non attivi il salvataggio in Il Mio Club, Account."} L'accesso con Google e Apple arriverà con la versione pubblica.</p><//>`}
+        <div className=${C.lab}>Account</div>
+        <${AccountCard} A=${A} pushUrl=${pushUrl} compatta=${true} />
+        <button onClick=${() => { setProfile(false); setOpen(null); setTeam(null); setTab("club"); store.set("sch:club", 3); }} className=${"w-full py-2.5 rounded-xl text-sm font-semibold " + C.ch + " " + C.tx}>${A.acc ? "Gestisci account e dati" : "Più opzioni: codice personale, cancella dati"}</button>
+        ${A.acc && A.acc.admin && html`<button onClick=${() => { setProfile(false); setPannello(true); }} className=${"w-full py-2.5 rounded-xl text-sm font-semibold " + C.on}>Pannello beta: recensioni e utilizzo</button>`}
+        <div className=${C.lab}>Privacy</div>
+        <button onClick=${() => { const v = !statOn; setStatOn(v); store.set("statNo", !v); }} className=${"w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left " + C.ch}>
+          <span className="flex-1"><span className=${"block text-sm font-semibold " + C.tx}>Statistiche d'uso anonime</span><span className=${"block text-xs " + C.mu}>Solo conteggi del giorno, senza nulla che ti identifichi.</span></span>
+          <span className=${"w-11 h-6 rounded-full p-0.5 transition-colors " + (statOn ? "bg-emerald-500" : "bg-black/20 dark:bg-white/20")}><span className=${"block w-5 h-5 rounded-full bg-white shadow transition-transform " + (statOn ? "translate-x-5" : "")}></span></span></button>
+        <div className="grid grid-cols-2 gap-2">${[["privacy", "Privacy"], ["termini", "Termini d'uso"]].map(([k, l]) => html`<button key=${k} onClick=${() => setLegale(k)} className=${"py-2.5 rounded-xl text-sm font-semibold " + C.ch + " " + C.tx}>${l}</button>`)}</div>
+        <button onClick=${() => { setProfile(false); setRecensione("profilo"); }} className=${"w-full py-2.5 rounded-xl text-sm font-semibold " + C.on}>Dicci cosa ne pensi</button>
+        <p className=${"text-[11px] text-center " + C.mu}>Solo per maggiorenni. Il gioco può causare dipendenza: Telefono Verde Nazionale 800 55 88 22.</p><//>`}
 
       ${copyText !== null && html`<${Sheet} title="Copia la schedina" onClose=${() => setCopyText(null)}>
         <p className=${"text-sm " + C.mu}>Il telefono non ha permesso la copia automatica: tieni premuto sul testo e scegli Copia.</p>

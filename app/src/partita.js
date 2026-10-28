@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { scaricaCalendario, immaginePartita } from "./condividi.js";
 import { Citazione, citazionePartita, citazioneArbitro } from "./citazioni.js";
 import { SchedaAllenatore, usaPanchine } from "./panchine.js";
-import { useSummary, loadPlayer, loadCareer, ruolo, findTeam, loadTeam, minuto, ESPN_LG, andamento } from "./live.js";
+import { useSummary, loadPlayer, loadCareer, ruolo, findTeam, loadTeam, minuto, ESPN_LG, andamento, getJSON } from "./live.js";
 import { inizioSwipe, fineSwipe, Voce, AuraLine, C, Crest, Ctx, DOT, FavPill, Flag, Form, GROUPS, Ic, Seg, Sheet, TONE, Tabs, auraCol, evalCode, html, leggiXg, lum, mGroup, mLabel, nf, norm, odd, options, pct, pctL, spiega, store } from "./base.js";
 import { usaVoti } from "./campionati.js";
 import { Anteprima, partitaSettimana } from "./extra.js";
@@ -567,10 +567,10 @@ import { Anteprima, partitaSettimana } from "./extra.js";
         if (meteoCache[key]) { setW(meteoCache[key]); return; }
         (async () => {
           try {
-            const g = await (await fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=it&name=" + encodeURIComponent(citta))).json();
+            const g = await getJSON("https://geocoding-api.open-meteo.com/v1/search?count=1&language=it&name=" + encodeURIComponent(citta));
             const p = g.results && g.results[0];
             if (!p) return;
-            const f = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p.latitude}&longitude=${p.longitude}&hourly=temperature_2m,precipitation,wind_speed_10m&timezone=UTC&forecast_days=8`)).json();
+            const f = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${p.latitude}&longitude=${p.longitude}&hourly=temperature_2m,precipitation,wind_speed_10m&timezone=UTC&forecast_days=8`);
             const h = m.ko.slice(0, 13);
             const i = (f.hourly.time || []).findIndex((t) => t.slice(0, 13) === h);
             if (i < 0) return;

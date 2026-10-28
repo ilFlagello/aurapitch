@@ -1,4 +1,5 @@
 /* AuraPitch - partite nel calendario del telefono (.ics) e scheda partita come immagine da condividere. */
+import { conta } from "./statistiche.js";
 import { auraCol, mGroup, mLabel, odd, pct, schiarisci } from "./base.js";
 
 const due = (n) => String(n).padStart(2, "0");
@@ -7,6 +8,7 @@ const testoIcs = (s) => String(s || "").replace(/[\;,]/g, (c) => "\\" + c).repla
 
 // file .ics con una o più partite: su iPhone si apre "Aggiungi al calendario", con promemoria 30 minuti prima
 async function scaricaCalendario(partite, lg, nome) {
+  conta("calendario");
   const ora = utcIcs(new Date());
   const ev = partite.filter((m) => m && m.ko).map((m) => {
     const t = new Date(m.ko), fine = new Date(t.getTime() + 115 * 60000), L = (lg(m.lg) || {}).name || "";
@@ -23,6 +25,7 @@ async function scaricaCalendario(partite, lg, nome) {
 
 // scheda partita 1080 x 1350 nello stile AuraPitch: squadre, orario, probabilità e (se sbloccato) il consiglio dell'IA
 async function immaginePartita(m, lg, conConsiglio) {
+  conta("immagine");
   try { await document.fonts.ready; } catch (e) { /* caratteri di sistema */ }
   const W = 1080, H = 1350, c = document.createElement("canvas");
   c.width = W; c.height = H;
@@ -73,6 +76,7 @@ function mercatoBookmaker(m, k) {
 
 // schedina come immagine: alta risoluzione, partite in ordine di orario e divise per giorno, mercato scritto come sui siti dei bookmaker
 async function immagineSchedina(legs, titolo, lg) {
+  conta("immagine");
   try { await document.fonts.ready; } catch (e) { /* caratteri di sistema */ }
   const L = legs.filter((l) => l && l.m).slice().sort((a, b) => String(a.m.ko).localeCompare(String(b.m.ko)));
   const giorno = (m) => new Date(m.ko).toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" });

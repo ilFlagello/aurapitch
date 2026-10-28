@@ -1,5 +1,6 @@
 /* AuraPitch - partita della settimana, glossario, gioco responsabile, primo avvio, schedina in diretta, ricerca. */
-import React, { useState } from "react";
+import { conta } from "./statistiche.js";
+import React, { useState, useEffect } from "react";
 import { ESPN_LG } from "./live.js";
 import { C, Crest, Ctx, Flag, Ic, Marchio, Sheet, evalCode, hit, html, norm, pct, store } from "./base.js";
 import { statoGiocata } from "./schedina.js";
@@ -53,6 +54,7 @@ import { statoGiocata } from "./schedina.js";
     ["Marcatore", "Il giocatore segna almeno un gol nella partita (in qualsiasi momento)."],
   ];
   function Glossario({ onClose }) {
+    useEffect(() => { conta("glossario"); }, []);
     return html`<${Sheet} title="Glossario delle scommesse" onClose=${onClose}>
       ${GLOSSARIO.map(([t, d]) => html`<div key=${t} className=${"py-2 border-t first:border-t-0 " + C.bd}><div className=${"text-[15px] font-semibold " + C.tx}>${t}</div><div className=${"text-[14px] mt-0.5 " + C.mu}>${d}</div></div>`)}<//>`;
   }

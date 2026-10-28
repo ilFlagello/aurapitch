@@ -40,7 +40,24 @@ const css = compiler.build(candidates);
 const min = await esbuild.transform(css, { loader: "css", minify: true });
 fs.writeFileSync(path.join(OUT, "app.css"), min.code);
 
-for (const f of ["index.html", "manifest.webmanifest", "sw.js", "icon.svg", "icon-180.png", "icon-192.png", "icon-512.png"]) fs.copyFileSync(path.join(ROOT, f), path.join(OUT, f));
+for (const f of ["index.html", "manifest.webmanifest", "sw.js", "icon.svg", "icon-180.png", "icon-192.png", "icon-512.png", "accesso.html", "accesso-pagina.js"]) fs.copyFileSync(path.join(ROOT, f), path.join(OUT, f));
+// pagine pubbliche di privacy e termini (stesso testo dell'app, da src/legale.js): servono anche a Google per la schermata di accesso
+{
+  const tmp = path.join((await import("node:os")).tmpdir(), "aurapitch-legale-" + process.pid + ".mjs");
+  fs.copyFileSync(path.join(ROOT, "src", "legale.js"), tmp); // .mjs: modulo ES senza avvisi di Node
+  const L = await import("file://" + tmp);
+  fs.rmSync(tmp, { force: true });
+  const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const pagina = (titolo, sez) => `<!doctype html><html lang="it"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'self'"><meta name="referrer" content="no-referrer">
+<title>AuraPitch - ${titolo}</title><style>body{margin:0;background:#EFEEF5;color:#17152B;font:16px/1.6 -apple-system,BlinkMacSystemFont,system-ui,sans-serif}
+main{max-width:720px;margin:0 auto;padding:32px 20px 64px}h1{font-size:30px;letter-spacing:-.02em;margin:0 0 4px}h2{font-size:18px;margin:28px 0 6px}p{color:#3d3a52;margin:0 0 10px}
+.v{color:#5F5B76;font-size:14px}a{color:#5B2EE6}@media(prefers-color-scheme:dark){body{background:#0E0C18;color:#F4F2FF}p{color:#c9c5dd}.v{color:#9A95B3}a{color:#A58BFF}}</style>
+<main><p class="v"><a href="./">AuraPitch</a></p><h1>${titolo}</h1><p class="v">Versione ${L.VERSIONE}, aggiornata il ${L.AGGIORNATA}</p>
+${sez.map(([t, ps]) => `<h2>${esc(t)}</h2>` + ps.map((x) => `<p>${esc(x)}</p>`).join("")).join("\n")}</main></html>`;
+  fs.writeFileSync(path.join(OUT, "privacy.html"), pagina("Privacy", L.privacy()));
+  fs.writeFileSync(path.join(OUT, "termini.html"), pagina("Termini d'uso", L.termini()));
+}
 fs.mkdirSync(path.join(OUT, "avvisi"), { recursive: true });
 for (const f of fs.readdirSync(path.join(ROOT, "avvisi"))) fs.copyFileSync(path.join(ROOT, "avvisi", f), path.join(OUT, "avvisi", f));
 fs.mkdirSync(path.join(OUT, "fonts"), { recursive: true });

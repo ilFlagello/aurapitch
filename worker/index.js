@@ -4,9 +4,14 @@
    Archivio: "subs" = iscrizioni con le partite seguite; "state" = ultimo stato visto di ogni partita; "vapid" = chiavi. */
 
 import { DurableObject } from "cloudflare:workers";
+import { gestisci as accesso, ORIGINI, pulisciInattivi } from "./accesso.js";
 
 const SITE = "https://site.api.espn.com/apis/site/v2/sports/soccer/";
-const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET,POST,OPTIONS", "Access-Control-Allow-Headers": "Content-Type" };
+// solo l'app AuraPitch puo usare il servizio dal browser; niente dati in cache intermedie, niente indirizzo di provenienza
+const CORS = { "Access-Control-Allow-Origin": ORIGINI[0], "Access-Control-Allow-Methods": "GET,POST,OPTIONS", "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Max-Age": "86400", "Vary": "Origin", "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", "Cache-Control": "no-store" };
+// fonti pubbliche che l'app legge passando dal servizio: cosi ESPN e Open-Meteo non vedono l'indirizzo IP di chi usa l'app
+const PONTE = new Set(["site.api.espn.com", "site.web.api.espn.com", "sports.core.api.espn.com", "api.open-meteo.com", "geocoding-api.open-meteo.com"]);
 const enc = new TextEncoder();
 
 const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -39,6 +44,13 @@ export class Archivio extends DurableObject {
   async put(k, v, ttl) { this._put(k, String(v), ttl); }
   async del(k) { this.sql.exec("DELETE FROM kv WHERE k = ?", k); }
   async conta() { return this.sql.exec("SELECT substr(k, 1, instr(k || ':', ':')) AS p, count(*) AS n FROM kv GROUP BY p").toArray(); }
+  // statistiche anonime: somma dei conteggi del giorno in un colpo solo
+  async incr(k, campi, ttl) {
+    const v = JSON.parse(this._get(k) || "{}");
+    for (const [c, n] of Object.entries(campi)) v[c] = (v[c] || 0) + n;
+    this._put(k, JSON.stringify(v), ttl);
+  }
+  async lista(prefisso, max) { return this.sql.exec("SELECT k, v FROM kv WHERE k >= ? AND k < ? AND (exp IS NULL OR exp > ?) ORDER BY k DESC LIMIT ?", prefisso, prefisso + "\uffff", Date.now(), max).toArray().map((r) => [r.k, r.v]); }
   async pulisci() { this.sql.exec("DELETE FROM kv WHERE exp IS NOT NULL AND exp < ?", Date.now()); }
   // voto atomico: legge e scrive profilo e conteggio in un colpo solo
   async voto(id, chi, s, meta) {
@@ -320,8 +332,20 @@ export default {
     const url = new URL(req.url);
     const DB = archivio(env);
     if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
+    const acc = await accesso(req, url, env, DB, json, troppi);
+    if (acc) return acc;
+    if (url.pathname === "/x") {
+      let t;
+      try { t = new URL(url.searchParams.get("u") || ""); } catch (e) { return json({ ok: false }, 400); }
+      if (t.protocol !== "https:" || !PONTE.has(t.hostname)) return json({ ok: false }, 400);
+      if (troppi(req, 240)) return json({ ok: false, err: "troppe richieste" }, 429);
+      const vivo = /scoreboard|summary|plays|status/.test(t.pathname);
+      const r = await fetch(t.toString(), { cf: { cacheTtl: vivo ? 15 : 300, cacheEverything: true }, headers: { "User-Agent": "AuraPitch" } });
+      return new Response(r.body, { status: r.status, headers: { ...CORS, "Content-Type": r.headers.get("Content-Type") || "application/json", "Cache-Control": "public, max-age=" + (vivo ? 10 : 120) } });
+    }
     if (url.pathname === "/vapid") return json({ key: (await vapid(env)).pub });
     if (url.pathname === "/subscribe" && req.method === "POST") {
+      if (troppi(req, 15)) return json({ ok: false, err: "troppe richieste" }, 429);
       const d = await req.json().catch(() => null);
       if (!d || !d.sub || !d.sub.endpoint || !d.sub.keys) return json({ ok: false, err: "iscrizione non valida" }, 400);
       if (!/^https:\/\/[a-z0-9.-]+(push\.apple\.com|googleapis\.com|mozilla\.com|windows\.com|mozaws\.net)\//.test(d.sub.endpoint)) return json({ ok: false, err: "servizio push non riconosciuto" }, 400);
@@ -352,6 +376,7 @@ export default {
       return json({ ok: true });
     }
     if (url.pathname === "/test" && req.method === "POST") {
+      if (troppi(req, 5)) return json({ ok: false, err: "troppe richieste" }, 429);
       const d = await req.json().catch(() => null);
       const subs = (await DB.get("subs", "json")) || {};
       const id = d && d.endpoint ? await sha(d.endpoint) : null;
@@ -412,6 +437,7 @@ export default {
       }
     }
     if (url.pathname === "/profilo") {
+      if (troppi(req, 40)) return json({ ok: false, err: "troppe richieste" }, 429);
       // lettura: il codice arriva nel corpo (POST) per non finire nei registri; GET resta per le versioni vecchie dell'app
       const chi = req.method === "POST" ? ((await req.clone().json().catch(() => null)) || {}).chi : url.searchParams.get("chi");
       if (!okChi(chi)) return json({ ok: false }, 400);
@@ -421,6 +447,7 @@ export default {
       return json({ ok: true, u: { nome: u.nome, gruppi: gr.map((g) => ({ code: g.code, nome: g.nome, n: (g.membri || []).length })), voti: Object.fromEntries(Object.entries(u.voti || {}).map(([k, v]) => [k, v.s])) } });
     }
     if (url.pathname === "/gruppo" && req.method === "POST") {
+      if (troppi(req, 15)) return json({ ok: false, err: "troppe richieste" }, 429);
       const d = await req.json().catch(() => null);
       if (!d || !okChi(d.chi)) return json({ ok: false }, 400);
       const u = (await DB.get("u:" + d.chi, "json")) || { nome: "", gruppi: [], voti: {} };
@@ -441,6 +468,7 @@ export default {
     }
     if (url.pathname === "/classifica") {
       const q = req.method === "POST" ? (await req.json().catch(() => null)) || {} : Object.fromEntries(url.searchParams);
+      if (troppi(req, 40)) return json({ ok: false, err: "troppe richieste" }, 429);
       const chi = q.chi, code = String(q.gruppo || "").toUpperCase(), per = q.periodo || "settimana";
       if (!okChi(chi)) return json({ ok: false }, 400);
       // risultati: archivio "ris" aggiornato con le partite finite del file dell'app
@@ -482,6 +510,7 @@ export default {
     // ---------- sincronizzazione tra dispositivi (codice personale) ----------
     if (url.pathname === "/sync" && req.method === "POST") {
       const d = await req.json().catch(() => null);
+      if (troppi(req, 30)) return json({ ok: false, err: "troppe richieste" }, 429);
       if (d && okChi(d.chi) && d.leggi) return json({ ok: true, dati: (await DB.get("s:" + d.chi, "json")) || null });
       if (!d || !okChi(d.chi) || typeof d.dati !== "object") return json({ ok: false }, 400);
       if (troppi(req, 6)) return json({ ok: false, err: "troppe richieste" }, 429);
@@ -496,6 +525,7 @@ export default {
   },
   async scheduled(event, env, ctx) {
     ctx.waitUntil(Promise.all([controlla(env), orologio(env), migraDaKV(env).catch(() => null),
-      env.ARCH && new Date().getUTCMinutes() === 0 ? archivio(env).stub.pulisci() : null]));
+      env.ARCH && new Date().getUTCMinutes() === 0 ? archivio(env).stub.pulisci() : null,
+      env.ARCH && new Date().getUTCHours() === 3 && new Date().getUTCMinutes() === 0 ? pulisciInattivi(archivio(env)).catch(() => 0) : null]));
   },
 };

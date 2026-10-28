@@ -36,8 +36,11 @@ jobs:
           python3 -m unittest discover -s test -v
       - name: Logica dell'app (stessi esiti dell'algoritmo, schedina)
         run: node test/test_app.mjs
-      - name: Servizio notifiche (sintassi)
-        run: node --check worker/index.js
+      - name: Servizio (sintassi) e account (passkey, Google, esporta, elimina)
+        run: |
+          node --check worker/index.js
+          node --check worker/accesso.js
+          node test/test_accesso.mjs
       - name: Compila l'app
         working-directory: app
         run: node build.mjs

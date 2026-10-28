@@ -28,7 +28,20 @@ async function giro(tema) {
   p.on("pageerror", (e) => errori.push(`[${tema}] errore: ${e.message}`));
   p.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource|net::/.test(m.text())) errori.push(`[${tema}] console: ${m.text()}`); });
   await p.route(/^(?!http:\/\/127\.0\.0\.1)/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
+  const passo0 = async (nome, fn) => { try { await fn(); } catch (e) { errori.push(`[${tema}] ${nome}: ${e.message.split("\n")[0]}`); } };
   await p.goto(URL0);
+  await p.waitForTimeout(800);
+  // primo avvio: prima di tutto il benvenuto con 18+, termini e privacy; "Entra" resta spento finché non si spunta
+  await passo0("benvenuto", async () => {
+    if (!(await p.getByText("Ho almeno").count())) { errori.push(`[${tema}] manca il benvenuto con 18+ e consensi`); return; }
+    if (await p.getByRole("button", { name: "Entra", exact: true }).isEnabled()) errori.push(`[${tema}] benvenuto: si entra senza accettare`);
+    await p.getByRole("button", { name: "Privacy", exact: true }).first().click(); await p.waitForTimeout(200);
+    if (!(await p.getByText("I tuoi diritti").count())) errori.push(`[${tema}] informativa privacy non apribile dal benvenuto`);
+    await p.keyboard.press("Escape"); await p.getByLabel("Chiudi").last().click(); await p.waitForTimeout(150);
+    await p.locator("#eta").check(); await p.locator("#acc").check();
+    await p.getByRole("button", { name: "Entra", exact: true }).click(); await p.waitForTimeout(200);
+    if (await p.getByText("Ho almeno").count()) errori.push(`[${tema}] benvenuto: non si chiude dopo l'accettazione`);
+  });
   await p.evaluate(() => { localStorage.setItem("ap:onb", "true"); localStorage.setItem("ap:guideSeen", "true"); localStorage.setItem("ap:swipeOk", "true"); });
   await p.reload(); await p.waitForTimeout(1200);
   const foto = (n) => p.screenshot({ path: path.join(OUT, `${tema}-${n}.png`) });
@@ -76,6 +89,15 @@ async function giro(tema) {
     const [dl] = await Promise.all([p.waitForEvent("download", { timeout: 8000 }), p.getByRole("button", { name: /Condividi immagine/ }).first().click()]);
     if (!dl.suggestedFilename().endsWith(".png")) errori.push(`[${tema}] immagine della schedina: file inatteso`);
     for (const n of ["La mia schedina", "Diario", "Storico IA"]) { await tab(n); await foto("schedina-" + n.replace(/ /g, "")); }
+  });
+  await passo("profilo: account, privacy, recensione", async () => {
+    await p.getByRole("button", { name: "Profilo e impostazioni" }).click(); await p.waitForTimeout(300);
+    for (const t of ["Statistiche d'uso anonime", "Termini d'uso", "Dicci cosa ne pensi", "800 55 88 22"]) if (!(await p.getByText(t).count())) errori.push(`[${tema}] profilo: manca "${t}"`);
+    await foto("profilo");
+    await p.getByRole("button", { name: "Dicci cosa ne pensi" }).click(); await p.waitForTimeout(300);
+    if (!(await p.getByRole("radiogroup", { name: "Voto da 1 a 5" }).count())) errori.push(`[${tema}] recensione: mancano le stelle`);
+    await foto("recensione");
+    await p.getByLabel("Chiudi").last().click(); await p.waitForTimeout(200);
   });
   await passo("come sta andando l'IA", async () => {
     if (!(await p.getByText("Come sta andando l'IA").count())) { errori.push(`[${tema}] Storico IA: manca la pagina dell'apprendimento`); return; }

@@ -6,10 +6,12 @@ import { GiocoResponsabile, gruppiSquadre } from "./extra.js";
 import { scaricaCalendario } from "./condividi.js";
 import { Row } from "./partita.js";
 import { statoGiocata } from "./schedina.js";
+import { AccountCard, codiceChi } from "./fiducia.js";
+import { conta } from "./statistiche.js";
 
     /* ---- il mio club ---- */
     /* ---- gara dei pronostici: 3 punti per ogni esito indovinato, +2 se le quote lo davano sotto il 30%; classifiche nei gruppi di amici ---- */
-    function codiceChi() { let chi = store.get("chi", null); if (!chi) { chi = Array.from({ length: 16 }, () => "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]).join(""); store.set("chi", chi); } return chi; }
+    // codice personale: generato con il generatore crittografico del telefono (non indovinabile)
     function Gara() {
       const { D, pushUrl, favM, fav, goMatch } = React.useContext(Ctx);
       const [prof, setProf] = useState(undefined);
@@ -30,7 +32,7 @@ import { statoGiocata } from "./schedina.js";
       const vota = (m, s) => { const prima = voti, ps = store.get("voto:" + m.id, null);
         const annulla = (t) => { setVoti(prima); store.set("voto:" + m.id, ps); setMsg(t); };
         setVoti({ ...voti, [m.id]: s }); store.set("voto:" + m.id, s);
-        api("/voto", { id: m.id, s, chi }).then((x) => { if (!x.ok) annulla(x.err === "votazione chiusa" ? `${m.h} - ${m.a} è già iniziata: voto non salvato.` : `Voto su ${m.h} - ${m.a} non salvato, riprova.`); }).catch(() => annulla("Voto non salvato: controlla la connessione.")); };
+        (conta("gara_voto"), api("/voto", { id: m.id, s, chi })).then((x) => { if (!x.ok) annulla(x.err === "votazione chiusa" ? `${m.h} - ${m.a} è già iniziata: voto non salvato.` : `Voto su ${m.h} - ${m.a} non salvato, riprova.`); }).catch(() => annulla("Voto non salvato: controlla la connessione.")); };
       if (prof === undefined) return html`<div className=${C.card + " p-4 text-sm " + C.mu}>Caricamento della gara dei pronostici...</div>`;
       if (prof === null || !prof.nome) return html`<div className=${C.card + " p-4 space-y-2"}>
         <div className=${C.lab}>Gara dei pronostici</div>
@@ -68,7 +70,7 @@ import { statoGiocata } from "./schedina.js";
       if (!pushUrl) return null;
       const attiva = (v) => { setSyncOn(v); store.set("syncOn", v); if (!v) store.set("syncImpr", ""); };
       if (!syncOn) return html`<div className=${C.card + " p-4 space-y-2"}>
-        <div className=${C.lab}>Usa AuraPitch su un altro dispositivo</div>
+        <div className=${C.lab}>Senza account: codice personale</div>
         <p className=${"text-[13px] " + C.mu}>Ora i tuoi dati (preferite, squadra del cuore, diario, schedina) restano solo su questo telefono. Se vuoi ritrovarli su un altro dispositivo, puoi salvarne una copia sul servizio AuraPitch, protetta da un codice personale.</p>
         <button onClick=${() => attiva(true)} className=${"w-full py-2.5 rounded-xl text-[14px] font-semibold " + C.on}>Salva i miei dati sul servizio AuraPitch</button></div>`;
       const chi = codiceChi();
@@ -135,7 +137,7 @@ import { statoGiocata } from "./schedina.js";
         <p className=${"text-[12px] mt-3 " + C.mu}>Prossima: ${(L.find((x) => !x[2]) || ["", "le hai tutte!"])[1]}.</p></div>`;
     }
     function ClubView() {
-      const { D, lg, fav, setFav, setTeam, favLeagues } = React.useContext(Ctx);
+      const { D, lg, fav, setFav, setTeam, favLeagues, A, pushUrl } = React.useContext(Ctx);
       const lgK = Object.keys(D.standings).find((k) => D.standings[k].generale.some((r) => r.team === fav));
       const L = lgK && lg(lgK);
       const pos = lgK ? D.standings[lgK].generale.findIndex((r) => r.team === fav) + 1 : 0;
@@ -159,7 +161,7 @@ import { statoGiocata } from "./schedina.js";
             ${!fav && html`<option value="">Scegli...</option>`}${gruppiSquadre(D, favLeagues || []).map((g) => html`<optgroup key=${g.k} label=${g.nome}>${g.nomi.map((t) => html`<option key=${t} value=${t}>${t}</option>`)}</optgroup>`)}</select></div><//>`,
         html`<${Gara} />`,
         html`<${React.Fragment}><${Riepilogo} /><${Medaglie} /><//>`,
-        html`<${React.Fragment}><${Codice} /><${GiocoResponsabile} /><//>`]}<//></div>`;
+        html`<${React.Fragment}><${AccountCard} A=${A} pushUrl=${pushUrl} />${!(A && A.acc) && html`<${Codice} />`}<${GiocoResponsabile} /><//>`]}<//></div>`;
     }
 
 export { codiceChi, Gara, Codice, Riepilogo, Medaglie, ClubView };

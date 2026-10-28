@@ -19,6 +19,8 @@ jobs:
       CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CF_ACC: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       GH_DISPATCH: ${{ secrets.GH_DISPATCH_TOKEN }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      ADMIN_CODE: ${{ secrets.AURAPITCH_ADMIN }}
       NOME: aurapitch-push
     steps:
       - uses: actions/checkout@v4
@@ -66,13 +68,20 @@ jobs:
           if os.environ.get("GH_DISPATCH"):
               b.append({"type": "secret_text", "name": "GH_TOKEN", "text": os.environ["GH_DISPATCH"]})
           b.append({"type": "durable_object_namespace", "name": "ARCH", "class_name": "Archivio"})
+          # accesso con Google (l'identificativo dell'app Google non e segreto, ma resta comunque tra i secret) e codice amministratore
+          if os.environ.get("GOOGLE_CLIENT_ID"):
+              b.append({"type": "plain_text", "name": "GOOGLE_CLIENT_ID", "text": os.environ["GOOGLE_CLIENT_ID"].strip()})
+          if os.environ.get("ADMIN_CODE"):
+              b.append({"type": "secret_text", "name": "ADMIN_CODE", "text": os.environ["ADMIN_CODE"].strip()})
+          print("Google:", "configurato" if os.environ.get("GOOGLE_CLIENT_ID") else "manca il secret GOOGLE_CLIENT_ID")
+          print("Amministratore:", "codice impostato" if os.environ.get("ADMIN_CODE") else "manca il secret AURAPITCH_ADMIN")
           meta = {"main_module": "index.js", "compatibility_date": "2024-11-01", "bindings": b}
           if os.environ.get("TAG") != "v1":
               meta["migrations"] = {"new_tag": "v1", "new_sqlite_classes": ["Archivio"]}
           json.dump(meta, open("/tmp/meta.json", "w"))
           print("orologio:", "attivo" if os.environ.get("GH_DISPATCH") else "manca il secret GH_DISPATCH_TOKEN")
           PY
-          R=$(curl -s -X PUT "${H[@]}" -F "metadata=@/tmp/meta.json;type=application/json" -F "index.js=@worker/index.js;type=application/javascript+module" $API/workers/scripts/$NOME)
+          R=$(curl -s -X PUT "${H[@]}" -F "metadata=@/tmp/meta.json;type=application/json" -F "index.js=@worker/index.js;type=application/javascript+module" -F "accesso.js=@worker/accesso.js;type=application/javascript+module" $API/workers/scripts/$NOME)
           log "Carico il servizio: $(echo "$R" | ok)"
           R=$(curl -s -X POST "${H[@]}" -H "Content-Type: application/json" -d '{"enabled":true}' $API/workers/scripts/$NOME/subdomain)
           log "Attivo indirizzo workers.dev: $(echo "$R" | ok)"
@@ -81,6 +90,9 @@ jobs:
           URL="https://$NOME.$SUB.workers.dev"
           for i in 1 2 3 4 5 6; do sleep 10; C=$(curl -s -o /dev/null -w "%{http_code}" $URL/vapid); [ "$C" = "200" ] && break; done
           log "Prova $URL/vapid: HTTP $C"
+          G=$(curl -s $URL/auth/config | python3 -c "import json,sys; d=json.load(sys.stdin); print('configurato' if d.get('google') else 'non configurato')" 2>/dev/null)
+          log "Accesso con Google: $G"
+          [ -n "$ADMIN_CODE" ] && log "Codice amministratore: impostato" || log "Codice amministratore: manca il secret AURAPITCH_ADMIN"
           if [ "$C" = "200" ]; then mkdir -p app/data; echo "{\"url\":\"$URL\"}" > app/data/push.json; fi
           exit 0
       - name: Salva l'esito

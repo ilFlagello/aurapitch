@@ -13,13 +13,24 @@ const WEB = "https://site.web.api.espn.com/apis/common/v3/sports/soccer/";
 const CORE = "https://sports.core.api.espn.com/v2/sports/soccer/";
 
 const cache = new Map();
+/* privacy: le fonti pubbliche (ESPN, Open-Meteo) si leggono passando dal servizio AuraPitch, cosi non vedono l'indirizzo IP
+   di chi usa l'app. Solo se il servizio non risponde si va diretti, per non lasciare l'utente senza risultati. */
+let PONTE = null;
+export const usaPonte = (u) => { PONTE = u || null; };
+const DAL_PONTE = /^https:\/\/(site\.api\.espn\.com|site\.web\.api\.espn\.com|sports\.core\.api\.espn\.com|api\.open-meteo\.com|geocoding-api\.open-meteo\.com)\//;
+async function prendi(u, signal) {
+  if (PONTE && DAL_PONTE.test(u)) {
+    try { const r = await fetch(PONTE + "/x?u=" + encodeURIComponent(u), { signal, cache: "no-store" }); if (r.ok) return r; } catch (e) { if (signal.aborted) throw e; }
+  }
+  return fetch(u, { signal, cache: "no-store", referrerPolicy: "no-referrer" });
+}
 export async function getJSON(url, maxAge = 0) {
   const c = cache.get(url);
   if (c && Date.now() - c.t < maxAge) return c.d;
   const ctl = new AbortController();
   const to = setTimeout(() => ctl.abort(), 12000);
   try {
-    const r = await fetch(url.replace(/^http:/, "https:"), { signal: ctl.signal, cache: "no-store" });
+    const r = await prendi(url.replace(/^http:/, "https:"), ctl.signal);
     if (!r.ok) throw new Error(r.status);
     const d = await r.json();
     cache.set(url, { t: Date.now(), d });

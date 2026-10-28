@@ -1,567 +1,334 @@
 {
- "quando": "2026-10-28T13:24:07.561266+00:00",
+ "quando": "2026-10-28T13:45:54.500591+00:00",
  "espn": {
-  "ita.1": {
-   "partite": 17,
-   "con_quote": 17,
-   "esempio": {
-    "partita": "Bologna at AC Milan",
-    "fornitore": "DraftKings",
-    "overUnder": 2.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 255,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ],
-    "completo": {
-     "overUnder": 2.5,
-     "link": {
-      "language": "en-US",
-      "rel": [
-       "game",
-       "desktop",
-       "bets"
-      ],
-      "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861334",
-      "text": "Game",
-      "shortText": "Game",
-      "isExternal": true,
-      "isPremium": false,
-      "isHidden": false
-     },
-     "provider": {
-      "id": "100",
-      "name": "DraftKings",
-      "priority": 1,
-      "displayName": "DraftKings",
-      "logos": [
-       {
-        "href": "https://a.espncdn.com/i/betting/Draftkings_Light.svg",
-        "rel": [
-         "light"
-        ]
-       },
-       {
-        "href": "https://a.espncdn.com/i/betting/Draftkings_Dark.svg",
-        "rel": [
-         "dark"
-        ]
-       }
-      ]
-     },
-     "drawOdds": {
-      "moneyLine": 255,
-      "link": {
-       "language": "en-US",
-       "rel": [
-        "draw",
-        "desktop",
-        "bets",
-        "draftkings"
-       ],
-       "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861334%3Foutcomes%3D0ML86823812_2",
-       "text": "Draw Bet",
-       "shortText": "Draw Bet",
-       "isExternal": true,
-       "isPremium": false,
-       "isHidden": false
-      }
-     },
-     "total": {
-      "displayName": "Total",
-      "shortDisplayName": "Total",
-      "over": {
-       "open": {
-        "line": "o2.5",
-        "odds": "-130"
-       },
-       "close": {
-        "line": "o2.5",
-        "odds": "+105",
-        "link": {
-         "rel": [
-          "over",
-          "bets"
-         ],
-         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861334%3Foutcomes%3D0OU86824535O250_1",
-         "tracking": {
-          "campaign": "betting-integrations",
-          "tags": {
-           "league": "ita.1",
-           "sport": "soccer",
-           "gameId": 401874993,
-           "betSide": "over",
-           "betType": "straight",
-           "betDetails": "Over:2.5"
-          }
-         }
-        }
-       }
-      },
-      "under": {
-       "open": {
-        "line": "u2.5",
-        "odds": "-110"
-       },
-       "close": {
-        "line": "u2.5",
-        "odds": "-130",
-        "link": {
-         "rel": [
-          "under",
-          "bets"
-         ],
-         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861334%3Foutcomes%3D0OU86824535U250_3",
-         "tracking": {
-          "campaign": "betting-integrations",
-          "tags": {
-           "league": "ita.1",
-           "sport": "soccer",
-           "gameId": 401874993,
-           "betSide": "under",
-           "betType": "straight",
-           "betDetails": "Under:2.5"
-          }
-         }
-        }
-       }
-      }
-     },
-     "pointSpread": {
-      "displayName": "Spread",
-      "shortDisplayName": "Spread",
-      "home": {
-       "open": {
-        "line": "-0.5",
-        "odds": "-185"
-       },
-       "close": {
-        "line": "-0.5",
-        "odds": "-155",
-        "link": {
-         "rel": [
-          "homeSpread",
-          "bets"
-         ],
-         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861334%3Foutcomes%3D0HC86824540N50_1",
-         "tracking": {
-          "campaign": "betting-integrations",
-          "tags": {
-           "league": "ita.1",
-           "sport": "soccer",
-           "gameId": 401874993,
-           "betSide": "home",
-           "betType": "straight",
-           "betDetails": "Spread:MIL-0.5"
-          }
-         }
-        }
-       }
-      },
-      "away": {
-       "open": {
-        "line": "+0.5",
-        "odds": "+120"
-       },
-       "close": {
-        "line": "+0.5",
-        "odds": "+110",
-        "link": {
-         "rel": [
-          "awaySpread",
-          "bets"
-         ],
-         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861334%3Foutcomes%3D0HC86824540P50_3",
-         "tracking": {
-          "campaign": "betting-integrations",
-          "tags": {
-           "league": "ita.1",
-           "sport": "soccer",
-           "gameId": 401874993,
-           "betSide": "away",
-           "betType": "straight",
-           "betDetails": "Spread:BOL+0.5"
-          }
-         }
-        }
-       }
-      }
-     },
-     "moneyline": {
-      "displayName": "Moneyline",
-      "shortDisplayName": "ML",
-      "home": {
-       "open": {
-        "odds": "-175"
-       },
-       "close": {
-        "odds": "-145",
-        "link": {
-         "rel": [
-          "home",
-          "bets"
-         ],
-         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861334%3Foutcomes%3D0ML86823812_1",
-         "tracking": {
-          "campaign": "betting-integrations",
-          "tags": {
-           "league": "ita.1",
-           "sport": "soccer",
-           "gameId": 401874993,
-           "betSide": "home",
-           "betType": "straight"
-          }
-         }
-        }
-       }
-      },
-      "away": {
-       "open": {
-        "odds": "+390"
-       },
-       "close": {
-        "odds": "+390",
-        "link": {
-         "rel": [
-          "away",
-          "bets"
-         ],
-         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861334%3Foutcomes%3D0ML86823812_3",
-         "tracking": {
-          "campaign": "betting-integrations",
-          "tags": {
-           "league": "ita.1",
-           "sport": "soccer",
-           "gameId": 401874993,
-           "betSide": "away",
-           "betType": "straight"
-          }
-         }
-        }
-       }
-      },
-      "draw": {
-       "open": {
-        "odds": "+285"
-       },
-       "close": {
-        "odds": "+255",
-        "link": {
-         "rel": [
-          "draw",
-          "bets"
-         ],
-         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861334%3Foutcomes%3D0ML86823812_2",
-         "tracking": {
-          "campaign": "betting-integrations",
-          "tags": {
-           "league": "ita.1",
-           "sport": "soccer",
-           "gameId": 401874993,
-           "betSide": "draw",
-           "betType": "straight"
-          }
-         }
-        }
-       }
-      }
-     },
-     "details": "MIL -145"
-    }
-   },
-   "errore": null
-  },
-  "fra.1": {
-   "partite": 9,
-   "con_quote": 9,
-   "esempio": {
-    "partita": "Paris Saint-Germain at Le Havre AC",
-    "fornitore": "DraftKings",
-    "overUnder": 3.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 600,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ],
-    "completo": {
-     "overUnder": 3.5,
-     "link": {
-      "language": "en-US",
-      "rel": [
-       "game",
-       "desktop",
-       "bets"
-      ],
-      "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861321",
-      "text": "Game",
-      "shortText": "Game",
-      "isExternal": true,
-      "isPremium": false,
-      "isHidden": false
-     },
-     "provider": {
-      "id": "100",
-      "name": "DraftKings",
-      "priority": 1,
-      "displayName": "DraftKings",
-      "logos": [
-       {
-        "href": "https://a.espncdn.com/i/betting/Draftkings_Light.svg",
-        "rel": [
-         "light"
-        ]
-       },
-       {
-        "href": "https://a.espncdn.com/i/betting/Draftkings_Dark.svg",
-        "rel": [
-         "dark"
-        ]
-       }
-      ]
-     },
-     "drawOdds": {
-      "moneyLine": 600,
-      "link": {
-       "language": "en-US",
-       "rel": [
-        "draw",
-        "desktop",
-        "bets",
-        "draftkings"
-       ],
-       "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861321%3Foutcomes%3D0ML86823798_2",
-       "text": "Draw Bet",
-       "shortText": "Draw Bet",
-       "isExternal": true,
-       "isPremium": false,
-       "isHidden": false
-      }
-     },
-     "total": {
-      "displayName": "Total",
-      "shortDisplayName": "Total",
-      "over": {
-       "open": {
-        "line": "o3.5",
-        "odds": "-125"
-       },
-       "close": {
-        "line": "o3.5",
-        "odds": "-120",
-        "link": {
-         "rel": [
-          "over",
-          "bets"
-         ],
-         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861321%3Foutcomes%3D0OU86824041O350_1",
-         "tracking": {
-          "campaign": "betting-integrations",
-          "tags": {
-           "league": "fra.1",
-           "sport": "soccer",
-           "gameId": 401876421,
-           "betSide": "over",
-           "betType": "straight",
-           "betDetails": "Over:3.5"
-          }
-         }
-        }
-       }
-      },
-      "under": {
-       "open": {
-        "line": "u3.5",
-        "odds": "-115"
-       },
-       "close": {
-        "line": "u3.5",
-        "odds": "-105",
-        "link": {
-         "rel": [
-          "under",
-          "bets"
-         ],
-         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861321%3Foutcomes%3D0OU86824041U350_3",
-         "tracking": {
-          "campaign": "betting-integrations",
-          "tags": {
-           "league": "fra.1",
-           "sport": "soccer",
-           "gameId": 401876421,
-           "betSide": "under",
-           "betType": "straight",
-           "betDetails": "Under:3.5"
-          }
-         }
-        }
-       }
-      }
-     },
-     "pointSpread": {
-      "displayName": "Spread",
-      "shortDisplayName": "Spread",
-      "home": {
-       "open": {
-        "line": "+1.5",
-        "odds": "+105"
-       },
-       "close": {
-        "line": "+1.5",
-        "odds": "+120",
-        "link": {
-         "rel": [
-          "homeSpread",
-          "bets"
-         ],
-         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861321%3Foutcomes%3D0HC86824046P150_1",
-         "tracking": {
-          "campaign": "betting-integrations",
-          "tags": {
-           "league": "fra.1",
-           "sport": "soccer",
-           "gameId": 401876421,
-           "betSide": "home",
-           "betType": "straight",
-           "betDetails": "Spread:HAC+1.5"
-          }
-         }
-        }
-       }
-      },
-      "away": {
-       "open": {
-        "line": "-1.5",
-        "odds": "-165"
-       },
-       "close": {
-        "line": "-1.5",
-        "odds": "-165",
-        "link": {
-         "rel": [
-          "awaySpread",
-          "bets"
-         ],
-         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861321%3Foutcomes%3D0HC86824046N150_3",
-         "tracking": {
-          "campaign": "betting-integrations",
-          "tags": {
-           "league": "fra.1",
-           "sport": "soccer",
-           "gameId": 401876421,
-           "betSide": "away",
-           "betType": "straight",
-           "betDetails": "Spread:PSG-1.5"
-          }
-         }
-        }
-       }
-      }
-     },
-     "moneyline": {
-      "displayName": "Moneyline",
-      "shortDisplayName": "ML",
-      "home": {
-       "open": {
-        "odds": "+800"
-       },
-       "close": {
-        "odds": "+950",
-        "link": {
-         "rel": [
-          "home",
-          "bets"
-         ],
-         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861321%3Foutcomes%3D0ML86823798_1",
-         "tracking": {
-          "campaign": "betting-integrations",
-          "tags": {
-           "league": "fra.1",
-           "sport": "soccer",
-           "gameId": 401876421,
-           "betSide": "home",
-           "betType": "straight"
-          }
-         }
-        }
-       }
-      },
-      "away": {
-       "open": {
-        "odds": "-425"
-       },
-       "close": {
-        "odds": "-425",
-        "link": {
-         "rel": [
-          "away",
-          "bets"
-         ],
-         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861321%3Foutcomes%3D0ML86823798_3",
-         "tracking": {
-          "campaign": "betting-integrations",
-          "tags": {
-           "league": "fra.1",
-           "sport": "soccer",
-           "gameId": 401876421,
-           "betSide": "away",
-           "betType": "straight"
-          }
-         }
-        }
-       }
-      },
-      "draw": {
-       "open": {
-        "odds": "+550"
-       },
-       "close": {
-        "odds": "+600",
-        "link": {
-         "rel": [
-          "draw",
-          "bets"
-         ],
-         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861321%3Foutcomes%3D0ML86823798_2",
-         "tracking": {
-          "campaign": "betting-integrations",
-          "tags": {
-           "league": "fra.1",
-           "sport": "soccer",
-           "gameId": 401876421,
-           "betSide": "draw",
-           "betType": "straight"
-          }
-         }
-        }
-       }
-      }
-     },
-     "details": "PSG -425"
-    }
-   },
-   "errore": null
-  },
   "esp.copa_del_rey": {
    "partite": 38,
    "con_quote": 38,
    "esempio": null,
-   "errore": "evento: 'NoneType' object has no attribute 'get'"
+   "errore": "evento: 'NoneType' object has no attribute 'get'",
+   "evento_problema": {
+    "id": "401928514",
+    "date": "2026-10-28T18:00Z",
+    "name": "Alavés at ANAITASUNA",
+    "competitions": [
+     {
+      "id": "401928514",
+      "uid": "s:600~l:3951~e:401928514~c:401928514",
+      "date": "2026-10-28T18:00Z",
+      "startDate": "2026-10-28T18:00Z",
+      "attendance": 0,
+      "timeValid": true,
+      "recent": false,
+      "status": {
+       "clock": 0.0,
+       "displayClock": "0'",
+       "type": {
+        "id": "1",
+        "name": "STATUS_SCHEDULED",
+        "state": "pre",
+        "completed": false,
+        "description": "Scheduled",
+        "detail": "Wed, October 28th at 2:00 PM EDT",
+        "shortDetail": "Scheduled"
+       }
+      },
+      "venue": {
+       "id": "8560",
+       "fullName": "Txerloia",
+       "address": {
+        "city": "Azkoitia",
+        "country": "Spain"
+       }
+      },
+      "format": {
+       "regulation": {
+        "periods": 2
+       }
+      },
+      "altGameNote": "Copa del Rey, First Round",
+      "notes": [],
+      "geoBroadcasts": [
+       {
+        "type": {
+         "id": "4",
+         "shortName": "STREAMING"
+        },
+        "market": {
+         "id": "1",
+         "type": "National"
+        },
+        "media": {
+         "shortName": "ESPN+",
+         "logo": "https://a.espncdn.com/guid/322a7e47-3cdb-3b5c-ab1b-678e1f2c27e5/logos/default.png",
+         "darkLogo": "https://a.espncdn.com/guid/322a7e47-3cdb-3b5c-ab1b-678e1f2c27e5/logos/default-dark.png"
+        },
+        "lang": "en",
+        "region": "us"
+       }
+      ],
+      "broadcasts": [
+       {
+        "market": "national",
+        "names": [
+         "ESPN+"
+        ]
+       }
+      ],
+      "broadcast": "",
+      "competitors": [
+       {
+        "id": "20776",
+        "uid": "s:600~t:20776",
+        "type": "team",
+        "order": 0,
+        "homeAway": "home",
+        "winner": false,
+        "form": "WWLW",
+        "score": "0",
+        "team": {
+         "id": "20776",
+         "uid": "s:600~t:20776",
+         "abbreviation": "Anaitasuna",
+         "displayName": "ANAITASUNA",
+         "shortDisplayName": "ANAITASUNA",
+         "name": "ANAITASUNA",
+         "location": "ANAITASUNA",
+         "color": "000000",
+         "alternateColor": "C60000",
+         "isActive": true,
+         "logo": "",
+         "links": [
+          {
+           "rel": [
+            "clubhouse",
+            "desktop",
+            "team"
+           ],
+           "href": "https://www.espn.com/soccer/club/_/id/20776/anaitasuna",
+           "text": "Clubhouse",
+           "isExternal": false,
+           "isPremium": false,
+           "isHidden": false
+          },
+          {
+           "rel": [
+            "stats",
+            "desktop",
+            "team"
+           ],
+           "href": "https://www.espn.com/soccer/team/stats/_/id/20776/anaitasuna",
+           "text": "Stats",
+           "isExternal": false,
+           "isPremium": false,
+           "isHidden": false
+          },
+          {
+           "rel": [
+            "stats",
+            "sportscenter",
+            "app",
+            "team"
+           ],
+           "href": "sportscenter://x-callback-url/showClubhouse?uid=s:600~t:20776&section=stats",
+           "text": "Stats",
+           "isExternal": false,
+           "isPremium": false,
+           "isHidden": false
+          },
+          {
+           "rel": [
+            "schedule",
+            "desktop",
+            "team"
+           ],
+           "href": "https://www.espn.com/soccer/team/fixtures/_/id/20776/anaitasuna",
+           "text": "Fixtures",
+           "isExternal": false,
+           "isPremium": false,
+           "isHidden": false
+          },
+          {
+           "rel": [
+            "schedule",
+            "sportscenter",
+            "app",
+            "team"
+           ],
+           "href": "sportscenter://x-callback-url/showClubhouse?uid=s:600~t:20776&section=scores",
+           "text": "Fixtures",
+           "isExternal": false,
+           "isPremium": false,
+           "isHidden": false
+          },
+          {
+           "rel": [
+            "squad",
+            "desktop",
+            "team"
+           ],
+           "href": "https://www.espn.com/soccer/team/squad/_/id/20776/anaitasuna",
+           "text": "Squad",
+           "isExternal": false,
+           "isPremium": false,
+           "isHidden": false
+          },
+          {
+           "rel": [
+            "squad",
+            "sportscenter",
+            "app",
+            "team"
+           ],
+           "href": "sportscenter://x-callback-url/showClubhouse?uid=s:600~t:20776&section=squad",
+           "text": "Squad",
+           "isExternal": false,
+           "isPremium": false,
+           "isHidden": false
+          }
+         ]
+        },
+        "statistics": []
+       },
+       {
+        "id": "96",
+        "uid": "s:600~t:96",
+        "type": "team",
+        "order": 1,
+        "homeAway": "away",
+        "winner": false,
+        "form": "DLLDL",
+        "score": "0",
+        "team": {
+         "id": "96",
+         "uid": "s:600~t:96",
+         "abbreviation": "ALA",
+         "displayName": "Alavés",
+         "shortDisplayName": "Alavés",
+         "name": "Alavés",
+         "location": "Alavés",
+         "color": "0000ff",
+         "alternateColor": "FFC0CB",
+         "isActive": true,
+         "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/96.png",
+         "links": [
+          {
+           "rel": [
+            "clubhouse",
+            "desktop",
+            "team"
+           ],
+           "href": "https://www.espn.com/soccer/club/_/id/96/alaves",
+           "text": "Clubhouse",
+           "isExternal": false,
+           "isPremium": false,
+           "isHidden": false
+          },
+          {
+           "rel": [
+            "stats",
+            "desktop",
+            "team"
+           ],
+           "href": "https://www.espn.com/soccer/team/stats/_/id/96/alaves",
+           "text": "Stats",
+           "isExternal": false,
+           "isPremium": false,
+           "isHidden": false
+          },
+          {
+           "rel": [
+            "stats",
+            "sportscenter",
+            "app",
+            "team"
+           ],
+           "href": "sportscenter://x-callback-url/showClubhouse?uid=s:600~t:96&section=stats",
+           "text": "Stats",
+           "isExternal": false,
+           "isPremium": false,
+           "isHidden": false
+          },
+          {
+           "rel": [
+            "schedule",
+            "desktop",
+            "team"
+           ],
+           "href": "https://www.espn.com/soccer/team/fixtures/_/id/96/alaves",
+           "text": "Fixtures",
+           "isExternal": false,
+           "isPremium": false,
+           "isHidden": false
+          },
+          {
+           "rel": [
+            "schedule",
+            "sportscenter",
+            "app",
+            "team"
+           ],
+           "href": "sportscenter://x-callback-url/showClubhouse?uid=s:600~t:96&section=scores",
+           "text": "Fixtures",
+           "isExternal": false,
+           "isPremium": false,
+           "isHidden": false
+          },
+          {
+           "rel": [
+            "squad",
+            "desktop",
+            "team"
+           ],
+           "href": "https://www.espn.com/soccer/team/squad/_/id/96/alaves",
+           "text": "Squad",
+           "isExternal": false,
+           "isPremium": false,
+           "isHidden": false
+          },
+          {
+           "rel": [
+            "squad",
+            "sportscenter",
+            "app",
+            "team"
+           ],
+           "href": "sportscenter://x-callback-url/showClubhouse?uid=s:600~t:96&section=squad",
+           "text": "Squad",
+           "isExternal": false,
+           "isPremium": false,
+           "isHidden": false
+          }
+         ],
+         "venue": {
+          "id": "10022"
+         }
+        },
+        "statistics": []
+       }
+      ],
+      "details": [],
+      "odds": [
+       null
+      ],
+      "wasSuspended": false,
+      "playByPlayAvailable": true,
+      "playByPlayAthletes": true
+     }
+    ],
+    "status": {
+     "clock": 0.0,
+     "displayClock": "0'",
+     "type": {
+      "id": "1",
+      "name": "STATUS_SCHEDULED",
+      "state": "pre",
+      "completed": false,
+      "description": "Scheduled",
+      "detail": "Wed, October 28th at 2:00 PM EDT",
+      "shortDetail": "Scheduled"
+     }
+    }
+   }
   }
  },
  "football_data": {

@@ -441,7 +441,7 @@ def scarica_stagione_fd(base="data"):
     s0 = stagione(oggi)
     cod = f"{s0 % 100:02d}{(s0 + 1) % 100:02d}"
     os.makedirs(os.path.join(base, "fd"), exist_ok=True)
-    for div in ("I1", "I2", "E0", "SP1", "D1", "E1", "F1"):  # E1 e F1: per il termometro della panchina
+    for div in ("I1", "I2", "E0", "SP1", "D1", "E1", "F1", "N1", "P1", "B1", "T1", "SC0", "G1", "D2", "SP2", "F2"):  # dal 2° in poi: termometro della panchina
         try:
             req = urllib.request.Request(f"https://www.football-data.co.uk/mmz4281/{cod}/{div}.csv", headers={"User-Agent": "Mozilla/5.0 (AuraPitch beta)"})
             with urllib.request.urlopen(req, timeout=30) as r:

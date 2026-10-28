@@ -44,7 +44,7 @@ function PanchineLega({ k, apriSquadra }) {
   const P = usaPanchine();
   if (!P) return html`<div className=${C.card + " p-4 text-sm " + C.mu}>Caricamento...</div>`;
   const L = Object.entries(P.squadre).filter(([, s]) => s.lg === k).sort((a, b) => (b[1].p30 ?? -1) - (a[1].p30 ?? -1));
-  if (!L.length) return html`<div className=${C.card + " p-4 text-sm " + C.mu}>Termometro delle panchine non disponibile per questa competizione: serve lo storico degli allenatori (per ora Serie A e B, Premier League, Championship, LaLiga, Bundesliga e Ligue 1).</div>`;
+  if (!L.length) return html`<div className=${C.card + " p-4 text-sm " + C.mu}>Termometro delle panchine non disponibile per questa competizione: serve lo storico degli allenatori (per ora i principali campionati europei e le loro seconde divisioni).</div>`;
   return html`<div className=${C.card + " px-4 py-2"}>
     <div className=${"text-[12px] py-2 " + C.mu}>Probabilità che l'allenatore lasci entro 30 giorni, dalla panchina più calda.</div>
     ${L.map(([t, s]) => html`<button key=${t} onClick=${() => apriSquadra && apriSquadra(t)} className=${"w-full flex items-center gap-3 py-2.5 border-t text-left " + C.bd}>

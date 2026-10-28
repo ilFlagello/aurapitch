@@ -10,7 +10,7 @@ import math
 import os
 from datetime import date, datetime, timezone
 
-LEGHE = ("I1", "I2", "E0", "E1", "SP1", "D1", "F1")
+LEGHE = ("I1", "I2", "E0", "E1", "SP1", "D1", "F1", "N1", "P1", "B1", "T1", "SC0", "G1", "D2", "SP2", "F2")
 # soglie rispetto alla media: in un mese circa il 6% degli allenatori lascia la panchina
 LIVELLI = [(0.06, "Tranquilla"), (0.12, "Da tenere d'occhio"), (0.20, "Scotta"), (1.01, "Rovente")]
 

@@ -16,6 +16,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
+      - name: Stagione in corso da Football-Data (squadre e risultati)
+        run: python3 -c "import raccoglitore; raccoglitore.scarica_stagione_fd()" || true
       - name: Archivio da Wikidata
         if: github.event_name == 'schedule' || inputs.scarica == 'si'
         run: python3 strumenti/allenatori.py
@@ -24,7 +26,6 @@ jobs:
           if [ -f strumenti/test_allenatori.py ]; then pip install -q numpy && python3 strumenti/test_allenatori.py; fi
       - name: Termometro nell'app (stagione in corso da Football-Data)
         run: |
-          python3 -c "import raccoglitore; raccoglitore.scarica_stagione_fd()" || true
           python3 genera_app.py --panchine
       - name: Salva
         run: |

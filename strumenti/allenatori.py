@@ -3,7 +3,12 @@ inizio (P580) e fine (P582). Abbina i club ai nomi di Football-Data (storico/fd_
 Wikidata e' rilasciato in CC0: si puo' usare liberamente."""
 import csv, gzip, json, os, re, sys, time, unicodedata, urllib.parse, urllib.request
 
-PAESI = {"I": ["Q38"], "E": ["Q21", "Q145"], "S": ["Q29"], "D": ["Q183"], "F": ["Q142", "Q235"]}  # Q235 = Monaco (gioca in Ligue 1)
+PAESI = {"I": ["Q38"], "E": ["Q21", "Q145"], "S": ["Q29"], "D": ["Q183"], "F": ["Q142", "Q235"],  # Q235 = Monaco (gioca in Ligue 1)
+         "N": ["Q55"], "P": ["Q45"], "B": ["Q31"], "T": ["Q43"], "SC": ["Q22", "Q145"], "G": ["Q41"]}
+
+
+def paese_di(div):
+    return "SC" if div.startswith("SC") else "S" if div.startswith("SP") else div[0]
 NO_PRIMA = re.compile(r"academy|women|femminile|femenino|frauen|feminine|u-?\d\d|under|youth|primavera|reserve|riserve|development|juvenil|\bb\b|\bii\b|giovanili|nachwuchs", re.I)
 SPARQL = """SELECT ?club ?clubLabel (GROUP_CONCAT(DISTINCT ?alt; separator="|") AS ?alts) ?coach ?coachLabel ?start ?end WHERE {
   VALUES ?paese { %s }
@@ -57,7 +62,19 @@ def main():
     squadre = {}
     for r in righe:
         for t in (r["HomeTeam"], r["AwayTeam"]):
-            squadre.setdefault(t, r["Div"][0])
+            squadre.setdefault(t, paese_di(r["Div"]))
+    # squadre della stagione in corso degli altri campionati (CSV scaricati prima dal workflow)
+    import glob
+    for path in glob.glob("data/fd/stagione_*.csv"):
+        div = os.path.basename(path)[9:-4]
+        try:
+            with open(path, encoding="utf-8-sig", errors="replace") as f:
+                for r in csv.DictReader(f):
+                    for t in (r.get("HomeTeam"), r.get("AwayTeam")):
+                        if t:
+                            squadre.setdefault(t, paese_di(div))
+        except OSError:
+            pass
     print("squadre Football-Data:", len(squadre))
     club = {}
     for paese, qids in PAESI.items():

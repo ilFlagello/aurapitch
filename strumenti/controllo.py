@@ -3,6 +3,7 @@
 Controlla: dati aggiornati, ultime esecuzioni dei processi automatici, crediti delle quote, servizio notifiche, sito, ESPN.
 Nessun valore segreto viene stampato: il token di GitHub arriva solo dall'ambiente del workflow."""
 import json
+import urllib.parse
 import os
 import sys
 import urllib.request
@@ -89,6 +90,16 @@ try:
         note.append(f"Servizio notifiche: ok ({dg.get('iscrizioni')} iscrizioni, archivio {(dg.get('archivio') or {}).get('tipo', dg.get('archivio'))})")
 except Exception as e:
     problemi.append(f"Servizio notifiche non raggiungibile ({type(e).__name__})")
+
+# 4b. ponte privacy (diretta ESPN attraverso il servizio) e accesso
+try:
+    _, p = get("https://ilflagello.github.io/aurapitch/data/push.json")
+    get(p["url"] + "/x?u=" + urllib.parse.quote("https://site.api.espn.com/apis/site/v2/sports/soccer/ita.1/scoreboard", safe=""))
+    note.append("Ponte privacy per la diretta: ok")
+    _, cf = get(p["url"] + "/auth/config")
+    note.append("Accesso con Google: " + ("configurato" if cf.get("google") else "non ancora configurato") + "; passkey: attive")
+except Exception as e:
+    problemi.append(f"Ponte privacy o accesso non raggiungibili ({type(e).__name__})")
 
 # 5. sito pubblicato e fonte della diretta
 for url, nome in (("https://ilflagello.github.io/aurapitch/data/lista.json", "Sito dell'app"),

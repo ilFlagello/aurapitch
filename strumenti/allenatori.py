@@ -79,8 +79,8 @@ def main():
         for c, x in club.items():
             if x["paese"] != paese:
                 continue
-            if NO_PRIMA.search(x["nome"]):
-                continue  # squadre giovanili, femminili, riserve
+            if NO_PRIMA.search(x["nome"]) or not any(a["da"] for a in x["all"]):
+                continue  # squadre giovanili, femminili, riserve, o senza date degli allenatori
             for nome in [x["nome"], *x["alias"]]:
                 tt = tok(nome)
                 if not tt or not cerca:

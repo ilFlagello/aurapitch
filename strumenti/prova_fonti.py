@@ -9,7 +9,7 @@ def get(url):
         raw = r.read()
         return gzip.decompress(raw) if raw[:2] == b"\x1f\x8b" else raw
 
-LEGHE = ["esp.copa_del_rey"] if os.environ.get("BREVE") else ["ita.1", "ita.2", "eng.1", "eng.2", "esp.1", "esp.2", "ger.1", "ger.2", "fra.1", "fra.2", "ned.1", "por.1", "bel.1", "tur.1", "sco.1",
+LEGHE = os.environ["LISTA"].split(",") if os.environ.get("LISTA") else ["esp.copa_del_rey"] if os.environ.get("BREVE") else ["ita.1", "ita.2", "eng.1", "eng.2", "esp.1", "esp.2", "ger.1", "ger.2", "fra.1", "fra.2", "ned.1", "por.1", "bel.1", "tur.1", "sco.1",
          "aut.1", "sui.1", "gre.1", "den.1", "usa.1", "bra.1", "arg.1", "mex.1", "sau.1", "jpn.1",
          "uefa.champions", "uefa.europa", "uefa.europa.conf", "ita.coppa_italia", "eng.fa", "eng.league_cup", "esp.copa_del_rey",
          "ger.dfb_pokal", "fra.coupe_de_france", "ita.super_cup", "esp.super_cup", "uefa.nations", "fifa.worldq.uefa", "conmebol.libertadores"]
@@ -17,7 +17,7 @@ oggi = datetime.now(timezone.utc).date()
 out = {"quando": datetime.now(timezone.utc).isoformat(), "espn": {}, "football_data": {}}
 for lg in LEGHE:
     r = {"partite": 0, "con_quote": 0, "esempio": None, "errore": None}
-    for g in range(0, 8):
+    for g in range(0, int(os.environ.get("GIORNI", "8"))):
         d = (oggi + timedelta(days=g)).strftime("%Y%m%d")
         try:
             j = json.loads(get(f"https://site.api.espn.com/apis/site/v2/sports/soccer/{lg}/scoreboard?dates={d}"))

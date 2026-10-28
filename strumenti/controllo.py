@@ -91,6 +91,13 @@ try:
 except Exception as e:
     problemi.append(f"Servizio notifiche non raggiungibile ({type(e).__name__})")
 
+# 4-bis. cassaforte dell'algoritmo: deve contenere modello, storico e diario
+try:
+    cf = next((r["n"] for r in ((dg.get("archivio") or {}).get("chiavi") or []) if r.get("p") == "cf:"), 0)
+    (problemi if cf < 3 else note).append(f"Cassaforte dell'algoritmo: {cf} file")
+except Exception as e:
+    note.append(f"Cassaforte: non leggibile ({type(e).__name__})")
+
 # 4a. allarmi di sicurezza: tentativi respinti oggi (firme false, codici sbagliati, raffiche di richieste)
 SOGLIE = {"cassaforte_firma": 3, "admin_errato": 5, "ritiro_errato": 5, "passkey_rifiutata": 40, "google_rifiutato": 40, "sessione_non_valida": 300, "limite": 3000}
 try:

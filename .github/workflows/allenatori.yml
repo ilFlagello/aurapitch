@@ -1,11 +1,11 @@
-# Archivio delle panchine (Wikidata) e studio sugli allenatori. Manuale, e ogni lunedi per tenere aggiornato il termometro.
+# Archivio delle panchine (Wikidata) e studio sugli allenatori. Ogni mattina alle 5:30 UTC (prima del giro completo) per avere gli allenatori aggiornati.
 name: Allenatori
 on:
   workflow_dispatch:
     inputs:
       scarica: { description: "Riscarica l'archivio da Wikidata", default: "si" }
   schedule:
-    - cron: "30 5 * * 1"
+    - cron: "30 5 * * *"
 permissions: { contents: write }
 concurrency: { group: allenatori, cancel-in-progress: false }
 jobs:

@@ -1,0 +1,45 @@
+{
+ "partite": 25686,
+ "verifica": 15252,
+ "frequenze": {
+  "pioggia (log mm)": 0.728,
+  "pioggia forte (>10 mm)": 0.0768,
+  "vento forte (>35 km/h)": 0.0505,
+  "freddo (<5°)": 0.0514,
+  "caldo (>28°)": 0.0482
+ },
+ "Over 2,5": {
+  "solo_quote": 0.6765,
+  "quote_piu_meteo": 0.67668,
+  "miglioramento_%": -0.026,
+  "pesi_meteo": {
+   "pioggia (log mm)": -0.034,
+   "pioggia forte (>10 mm)": 0.164,
+   "vento forte (>35 km/h)": -0.002,
+   "freddo (<5°)": -0.073,
+   "caldo (>28°)": -0.029
+  },
+  "pioggia_forte": {
+   "partite": 1150,
+   "attesa_quote": 0.505,
+   "reale": 0.517
+  }
+ },
+ "Pareggio": {
+  "solo_quote": 0.57035,
+  "quote_piu_meteo": 0.57062,
+  "miglioramento_%": -0.046,
+  "pesi_meteo": {
+   "pioggia (log mm)": 0.021,
+   "pioggia forte (>10 mm)": 0.005,
+   "vento forte (>35 km/h)": 0.096,
+   "freddo (<5°)": -0.036,
+   "caldo (>28°)": -0.021
+  },
+  "pioggia_forte": {
+   "partite": 1150,
+   "attesa_quote": 0.261,
+   "reale": 0.275
+  }
+ }
+}

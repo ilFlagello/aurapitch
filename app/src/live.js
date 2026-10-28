@@ -184,6 +184,7 @@ const POS_IT = { G: "Portiere", D: "Difensore", M: "Centrocampista", F: "Attacca
 export function ruolo(abbr) {
   const a = (abbr || "").toUpperCase();
   if (a === "G" || a === "GK") return "Portiere";
+  if (/^(DM|CM|AM|LM|RM)/.test(a)) return "Centrocampista"; // DM è il mediano, non un difensore
   if (/^(CD|D|LB|RB|LWB|RWB|SW)/.test(a) || a.endsWith("B")) return "Difensore";
   if (/^(F|CF|ST|LF|RF|LW|RW|SS)/.test(a)) return "Attaccante";
   return POS_IT[a[0]] || "Centrocampista";
@@ -307,7 +308,7 @@ export function votoGiocatore(p, gf, gs, ora, finita) {
     + 0.1 * n("foulsSuffered") - 0.1 * n("foulsCommitted") - 0.4 * n("yellowCards") - 1.5 * n("redCards") - 1.0 * n("ownGoals") - 0.05 * n("offsides");
   const ruoloP = String(p.pos || "");
   if (ruoloP === "G") v += 0.3 * n("saves") - 0.35 * gs + (gs === 0 && min >= 60 ? 0.6 : 0);
-  else if (/^(D|CB|CD|LB|RB|SW|LWB|RWB|CD-L|CD-R)/.test(ruoloP)) v += -0.15 * gs + (gs === 0 && min >= 60 ? 0.4 : 0);
+  else if (/^(D(?!M)|CB|CD|LB|RB|SW|LWB|RWB)/.test(ruoloP)) v += -0.15 * gs + (gs === 0 && min >= 60 ? 0.4 : 0);
   if (finita) v += gf > gs ? 0.3 : gf < gs ? -0.2 : 0;
   if (min < 30) v = 6 + (v - 6) * Math.max(0.5, min / 30);
   return Math.round(Math.max(3, Math.min(10, v)) * 10) / 10;

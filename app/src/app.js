@@ -18,6 +18,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     set(k, v) { try { localStorage.setItem("ap:" + k, JSON.stringify(v)); } catch (e) { /* archivio del browser non disponibile */ } },
   };
   const pct = (x) => Math.round((x || 0) * 100);
+  const pctL = (x) => (x > 0.99 && x < 0.999 ? ">99" : x < 0.01 && x > 0.001 ? "<1" : pct(x)); // in diretta: niente 100% o 0% per esiti non ancora decisi
   const odd = (x) => (x == null ? "-" : Number(x).toFixed(2).replace(".", ","));
   const hs = (s) => [...String(s)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
   const mmss = (s) => String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
@@ -26,7 +27,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   const C = {
     card: "bg-white dark:bg-[#191626] rounded-[20px]",
     tx: "text-[#17152B] dark:text-[#F4F2FF]",
-    mu: "text-[#6E6A85] dark:text-[#9A95B3]",
+    mu: "text-[#5F5B76] dark:text-[#9A95B3]",
     bd: "border-[#17152B]/[0.07] dark:border-white/[0.07]",
     ch: "bg-[#17152B]/[0.05] dark:bg-white/[0.07]",
     seg: "bg-[#17152B] text-white dark:bg-[#F4F2FF] dark:text-[#17152B]",
@@ -83,8 +84,10 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     };
     let h = one(0), a = one(1);
     if (/^#/.test(h) && /^#/.test(a) && dist(h, a) < 90) { const alt = m.col && m.col[1] && m.col[1][1]; a = alt && dist(alt, h) >= 90 && lum(alt) <= 0.86 ? alt : "#A7A3BC"; }
-    return [h, a];
+    return document.documentElement.dataset.theme === "dark" ? [h, a].map(schiarisci) : [h, a];
   }
+  // in tema scuro i colori molto scuri (nero, blu notte) si schiariscono, altrimenti spariscono sullo sfondo
+  function schiarisci(c) { if (!/^#[0-9a-f]{6}$/i.test(c) || lum(c) > 0.32) return c; const v = [1, 3, 5].map((i) => Math.round(parseInt(c.slice(i, i + 2), 16) * 0.45 + 255 * 0.55)); return "#" + v.map((x) => x.toString(16).padStart(2, "0")).join(""); }
   /* aura delle probabilità: 1 X 2 in proporzione, colore di casa, grigio pareggio, colore ospite */
   function AuraLine({ m, p, h = 3, labels }) {
     const P = p || m.mk || m.p;
@@ -156,7 +159,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     if (c.startsWith("MARC:")) return "Segna " + c.slice(5) + (short ? "" : " (in qualsiasi momento)");
     if (/^[KCF][HA][OU]\d/.test(c)) return ({ K: "Cartellini ", C: "Angoli ", F: "Falli " })[c[0]] + (c[1] === "H" ? m.h : m.a) + (c[2] === "O" ? " Over " : " Under ") + nf(c.slice(3));
     if (/^[KCF][OU]\d/.test(c)) return ({ K: "Cartellini ", C: "Angoli ", F: "Falli " })[c[0]] + (c[1] === "O" ? "Over " : "Under ") + nf(c.slice(2));
-    if (c.includes("+")) return c.split("+").map((x) => mLabel(m, x, true)).join(" + ");
+    if (c.includes("+")) { const ps = c.split("+"), tempi = ps.some((x) => /^T[12]:/.test(x));
+      return ps.map((x) => (!tempi ? mLabel(m, x, true) : /^T[12]:/.test(x) ? mLabel(m, x.slice(3), true) + " nel " + x[1] + "° tempo" : mLabel(m, x, true) + " finale")).join(" + "); }
     if (c.startsWith("T1:") || c.startsWith("T2:")) return (c[1] === "1" ? "1° tempo: " : "2° tempo: ") + mLabel(m, c.slice(3), true);
     if (c.startsWith("PF")) return "Parziale/finale " + c.slice(2);
     if (c.startsWith("TPG")) return { 1: "Più gol nel 1° tempo", X: "Stessi gol nei due tempi", 2: "Più gol nel 2° tempo" }[c.slice(3)];
@@ -166,7 +170,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const base = "Handicap " + (meno ? "−" : "+") + k + " " + m.h + ": " + e;
       if (short) return base;
       const sq = meno ? m.h : m.a, sc = k === 1 ? "1 gol" : k + " gol";
-      const nonVince = k === 1 ? `${sq} non vince (pareggio o sconfitta)` : `${sq} non vince con ${sc} o più di scarto`;
+      const nonVince = k === 1 ? `${sq} non vince (pareggio o sconfitta)` : `${sq} vince di ${k - 1 === 1 ? "1 gol" : "massimo " + (k - 1) + " gol"}, pareggia o perde`;
       const sp = meno ? { 1: `${sq} vince con almeno ${k + 1} gol di scarto`, X: `${sq} vince con esattamente ${sc} di scarto`, 2: nonVince }
         : { 1: nonVince, X: `${sq} vince con esattamente ${sc} di scarto`, 2: `${sq} vince con almeno ${k + 1} gol di scarto` };
       return base + " (" + sp[e] + ")"; }
@@ -300,7 +304,10 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
      partita la giocata con il miglior punteggio IA vicina alla quota per partita e si ritocca finché il totale è vicino all'obiettivo */
   const PROF_T = [{ lo: 1.12, hi: 1.55, mid: 1.3, pmin: 0.6 }, { lo: 1.3, hi: 2.3, mid: 1.7, pmin: 0.4 }, { lo: 1.7, hi: 4.5, mid: 2.4, pmin: 0.2 }];
   const ESCLUSI_SLIP = ["Pari/Dispari", "Risultato esatto"];
-  function rumore(id, v) { return v ? ((hs(id + ":" + v) % 1000) / 1000 - 0.5) : 0; }
+  function rumore(id, v) { // numero pseudo-casuale in [-0,5, 0,5): diverso per ogni combinazione richiesta
+    if (!v) return 0; let h = hs(v + "|" + id) ^ Math.imul(v, 0x9E3779B1);
+    h = Math.imul(h ^ (h >>> 16), 0x85EBCA6B); h = Math.imul(h ^ (h >>> 13), 0xC2B2AE35); h ^= h >>> 16;
+    return (h >>> 0) / 4294967296 - 0.5; }
   function candidati(m, prof, qt, v) {
     const R = PROF_T[prof];
     return options(m).filter((o) => { const g = mGroup(o.k); if (ESCLUSI_SLIP.includes(g)) return false;
@@ -308,7 +315,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         if (prof === 1 && /Marcatori|Parziale|Gol esatti/.test(g)) return false;
         if (prof < 2 && /^EH[MP]2/.test(o.k)) return false;
         return o.p >= R.pmin && o.q >= Math.max(1.08, R.lo * 0.92) && o.q <= R.hi * 1.8; })
-      .map((o) => ({ ...o, sc: (o.s != null ? o.s : 50) / 100 + 0.5 * o.p - 0.35 * Math.abs(Math.log(o.q / qt)) + 0.12 * rumore(m.id + o.k, v) }))
+      .map((o) => ({ ...o, sc: (o.s != null ? o.s : 50) / 100 + 0.5 * o.p - 0.35 * Math.abs(Math.log(o.q / qt)) + (o.stima ? 0 : 0.1) + 0.12 * rumore(m.id + o.k, v) }))
       .sort((a, b) => b.sc - a.sc);
   }
   function buildTarget(matches, prof, T, v) {
@@ -374,8 +381,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const P = pp || m.p;
     const f = P.indexOf(Math.max(...P));
     const p = P[f];
-    return html`<span className=${"inline-flex items-center gap-1 rounded-full border tabular-nums font-bold shrink-0 " + (big ? "px-3 py-1 text-sm " : "px-2 py-0.5 text-[11px] ") + TONE[confTone(p)]}>
-      <span>${ESITI[f]}</span><span className=${"num " + (big ? "text-[16px] " : "text-[13px] ") + (unlocked ? "" : "blur-[4px] select-none")}>${pct(p)}%</span>${!unlocked && html`<${Ic.Lock} size=${10} className="opacity-60" />`}</span>`;
+    // bloccata: niente esito né colore della fiducia, altrimenti si capirebbe il favorito
+    return html`<span className=${"inline-flex items-center gap-1 rounded-full border tabular-nums font-bold shrink-0 " + (big ? "px-3 py-1 text-sm " : "px-2 py-0.5 text-[11px] ") + TONE[unlocked ? confTone(p) : "ok"]}>
+      <span>${unlocked ? ESITI[f] : "?"}</span><span className=${"num " + (big ? "text-[16px] " : "text-[13px] ") + (unlocked ? "" : "blur-[4px] select-none")}>${unlocked ? pct(p) : 50}%</span>${!unlocked && html`<${Ic.Lock} size=${10} className="opacity-60" />`}</span>`;
   }
   function Form({ list }) {
     return html`<div className="flex gap-1">${list.map((z, i) => html`<span key=${i} title=${z.avv + " " + z.ris}
@@ -418,11 +426,13 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const [i, setI0] = useState(Math.min(store.get("sch:" + id, 0), items.length - 1));
     const [dir, setDir] = useState(0);
     const sw = useRef(null);
-    const setI = (n) => { setDir(n > i ? 1 : -1); setI0(n); store.set("sch:" + id, n); };
+    const seg = useRef(null);
+    const setI = (n) => { setDir(n > i ? 1 : -1); setI0(n); store.set("sch:" + id, n);
+      const el = seg.current; if (el && el.getBoundingClientRect().top < 60) window.scrollTo({ top: Math.max(0, window.scrollY + el.getBoundingClientRect().top - 56), behavior: "instant" }); };
     const ts = (e) => { const t = e.touches[0]; sw.current = e.target.closest("[data-noswipe]") ? null : [t.clientX, t.clientY]; };
     const te = (e) => { if (!sw.current) return; const t = e.changedTouches[0], dx = t.clientX - sw.current[0], dy = t.clientY - sw.current[1]; sw.current = null;
       if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) { const n = Math.max(0, Math.min(items.length - 1, i + (dx < 0 ? 1 : -1))); if (n !== i) setI(n); } };
-    return html`<${React.Fragment}><${Tabs} items=${items} val=${i} set=${setI} sticky=${true} />
+    return html`<${React.Fragment}><div ref=${seg} className="h-0"></div><${Tabs} items=${items} val=${i} set=${setI} sticky=${true} />
       <div key=${i} onTouchStart=${ts} onTouchEnd=${te} className=${"space-y-3 min-h-[60vh] " + (dir > 0 ? "entra-dx" : dir < 0 ? "entra-sx" : "")}>${children[i]}</div><//>`;
   }
 
@@ -856,9 +866,12 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       if (!pushUrl || (!aperto && (!v || v[0] + v[1] + v[2] === 0))) return null;
       const vota = (s) => {
         let chi = store.get("chi", null); if (!chi) { chi = Array.from({ length: 16 }, () => "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]).join(""); store.set("chi", chi); }
+        if (s === mio) return;
+        const pm = mio, pv = v;
         setMio(s); store.set("voto:" + m.id, s);
         const nv = (v || [0, 0, 0]).slice(); if (mio != null) nv[mio] = Math.max(0, nv[mio] - 1); nv[s] += 1; setV(nv);
-        fetch(pushUrl + "/voto", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: m.id, s, chi }) }).then((r) => r.json()).then((x) => x && x.ok && setV(x.v)).catch(() => {});
+        const annulla = () => { setMio(pm); store.set("voto:" + m.id, pm); setV(pv); };
+        fetch(pushUrl + "/voto", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: m.id, s, chi }) }).then((r) => r.json()).then((x) => (x && x.ok ? setV(x.v) : annulla())).catch(annulla);
       };
       const tot = v ? v[0] + v[1] + v[2] : 0;
       const col = auraCol(m);
@@ -926,14 +939,20 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       if (sm) for (const c of sm.cronaca) { const d = min - minuto(c.min); if (c.side != null && d >= 0 && d < 20) sp[c.side] += PESO_SPINTA[c.type] || 0; }
       return sp;
     }
+    // Versione 2 (28/10/2026): rampa del tempo che resta (fine media 96') e spinta lineare. Verificata su 990 fotografie: -4,4% di errore.
+    function quotaRestante(min) {
+      const E = 96, r = 1.13, t = Math.min(Math.max(min || 0, 0), E - 0.5);
+      return (E - t + (r * (E * E - t * t)) / 180) / (E + (r * E * E) / 180);
+    }
     function liveProb(code, xg, g, min, reds, sp) {
       if (evalCode(code, 1, 0) === null) return null; // mercati sui tempi, cartellini, marcatori: niente stima in diretta
-      const f = Math.max(0.005, (90 - Math.min(min, 90)) / 90);
-      const qs = sp ? (sp[0] + 0.5) / (sp[0] + sp[1] + 1) - 0.5 : 0;
-      const rh = Math.pow(0.67, reds[0]) * Math.pow(1.25, reds[1]) * Math.exp(1.4 * qs), ra = Math.pow(0.67, reds[1]) * Math.pow(1.25, reds[0]) * Math.exp(-1.4 * qs);
-      const ph = pois(Math.max(0.01, xg[0] * f * rh)), pa = pois(Math.max(0.01, xg[1] * f * ra));
+      reds = reds || [0, 0];
+      const f = quotaRestante(min);
+      const z = sp ? 0.058 * ((sp[0] || 0) - (sp[1] || 0)) : 0;
+      const rh = Math.pow(0.67, reds[0]) * Math.pow(1.25, reds[1]) * Math.exp(z), ra = Math.pow(0.67, reds[1]) * Math.pow(1.25, reds[0]) * Math.exp(-z);
+      const ph = pois(Math.max(0.001, xg[0] * f * rh)), pa = pois(Math.max(0.001, xg[1] * f * ra));
       let p = 0, tot = 0;
-      for (let i = 0; i <= 8; i++) for (let j = 0; j <= 8; j++) { const w = ph[i] * pa[j]; tot += w; if (evalCode(code, g[0] + i, g[1] + j)) p += w; }
+      for (let i = 0; i < ph.length; i++) for (let j = 0; j < pa.length; j++) { const w = ph[i] * pa[j]; tot += w; if (evalCode(code, g[0] + i, g[1] + j)) p += w; }
       return p / tot;
     }
     function LiveTips({ m, sm }) {
@@ -962,7 +981,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           return html`<div key=${k} className="flex items-center gap-2 text-sm">
             <span className=${"flex-1 min-w-0 " + C.tx}><span className=${C.mu}>${{ consiglio: "Consiglio", prudente: "Prudente", coraggiosa: "Coraggiosa" }[k]}:</span> ${mLabel(m, t.c)}</span>
             ${lab ? html`<span className=${"text-xs font-semibold px-2 py-0.5 rounded-full border " + lab[1]}>${lab[0]}</span>`
-              : html`<span className="tabular-nums text-right"><b className=${C.tx}>${pct(p)}%</b> <span className=${"text-xs " + (d >= 0 ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>${d >= 0 ? "+" : ""}${pct(d)}</span></span>`}</div>`; })}
+              : html`<span className="tabular-nums text-right"><b className=${C.tx}>${pctL(p)}%</b> <span className=${"text-xs " + (d >= 0 ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>${d >= 0 ? "+" : ""}${pct(d)}</span></span>`}</div>`; })}
         <div className=${"text-[11px] " + C.mu}>Probabilità ricalcolate su punteggio, minuto ed espulsioni, partendo dai gol attesi prima della partita (il numero piccolo è la differenza rispetto al pre-partita).${reds[0] + reds[1] ? " Espulsioni considerate: " + reds[0] + " - " + reds[1] + "." : ""}</div></div>`;
     }
 
@@ -1238,7 +1257,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
               <div className=${"num font-extrabold leading-none tracking-[0.02em] " + (m.st === "LIVE" ? "text-[#FF3D5A] " : C.tx + " ") + (gScore ? "text-[60px]" : "text-[44px] pt-2")}>${gScore ? m.g[0] + "–" + m.g[1] : m.time || "-"}</div>
               <div className=${"text-[13px] mt-1.5 font-semibold flex items-center gap-1 " + (m.st === "LIVE" ? C.live : C.mu)}>${m.st === "LIVE" && html`<i className="pulse block w-1.5 h-1.5 rounded-full bg-[#FF3D5A]"></i>`}${m.st === "FT" ? "Finale" : m.st === "LIVE" ? (sm && sm.clock) || m.clock || "In corso" : m.st === "RINV" ? "Rinviata" : "Calcio d'inizio"}</div></div></div>
           <div className="mt-5"><${AuraLine} m=${m} p=${pLive || m.mk} h=${6} labels=${true} /></div>
-          <div className="flex items-center justify-center flex-wrap gap-2 mt-3"><span className=${"text-[12px] " + C.mu}>${pLive ? "Probabilità in diretta" : "Probabilità dalle quote"}, favorito IA</span><${FavPill} m=${m} unlocked=${unlocked(m)} pp=${pLive} />
+          <div className="flex items-center justify-center flex-wrap gap-2 mt-3"><span className=${"text-[12px] " + C.mu}>${pLive ? "Probabilità in diretta" : "Barra: probabilità dalle quote"} · favorito IA</span><${FavPill} m=${m} unlocked=${unlocked(m)} pp=${pLive} />
             ${m.free && html`<span className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + TONE.good}>Gratis oggi</span>`}
             ${m.st === "FT" && unlocked(m) && html`<span className=${"text-xs " + (m.res === fav ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>${m.res === fav ? "Favorito rispettato" : "Sorpresa"}</span>`}</div></div></div>
         <div data-schede="1" className="h-0"></div>
@@ -1268,7 +1287,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           <div className=${C.card + " p-4 space-y-2"}><div className=${C.lab}>Laboratorio: IA contro quote</div>
             <div className="overflow-x-auto"><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}><th className="text-left font-medium py-1">Esito</th><th className="text-right font-medium">IA</th><th className="text-right font-medium">Quote</th><th className="text-right font-medium">${D.demo ? "Bet365" : "Media"}</th><th className="text-right font-medium">Migliore</th></tr></thead>
               <tbody>${[["1", m.p[0], m.mk[0], m.odds["1"], m.max["1"]], ["X", m.p[1], m.mk[1], m.odds["X"], m.max["X"]], ["2", m.p[2], m.mk[2], m.odds["2"], m.max["2"]],
-                ["Over 2.5", m.po, m.mo, m.odds.O, m.max.O], ["Under 2.5", 1 - m.po, 1 - m.mo, m.odds.U, m.max.U]].map((r) => html`<tr key=${r[0]} className=${"border-t " + C.bd}>
+                ["Over 2,5", m.po, m.mo, m.odds.O, m.max.O], ["Under 2,5", 1 - m.po, 1 - m.mo, m.odds.U, m.max.U]].map((r) => html`<tr key=${r[0]} className=${"border-t " + C.bd}>
                 <td className="py-1.5 font-semibold">${r[0]}</td><td className="text-right">${pct(r[1])}%</td><td className=${"text-right " + C.mu}>${pct(r[2])}%</td><td className="text-right">${odd(r[3])}</td><td className=${"text-right " + C.mu}>${odd(r[4])}</td></tr>`)}</tbody></table></div>
             <p className=${"text-[11px] " + C.mu}>${D.demo ? "\"Quote\" è la probabilità ricavata dalla quota togliendo il margine del bookmaker. Nel test su oltre 18.000 partite gli scarti tra IA e quote non hanno dato un vantaggio affidabile: per questo l'IA non li trasforma in consigli."
               : "Per ora l'IA usa come base la quota media dei bookmaker, perché nei test è la stima più precisa: se ne discosterà solo quando arriveranno formazioni ufficiali e notizie. \"Migliore\" è la quota più alta tra i bookmaker."}</p></div>
@@ -1278,7 +1297,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
 
 
         ${mt === 4 && html`<${React.Fragment}>
-          <div className=${C.card + " p-4 space-y-3"}><div className="flex justify-between items-baseline"><span className=${C.lab}>Probabilità dalle quote</span><span className=${"text-[11px] " + C.mu}>Over 2.5: <b className=${C.tx}>${pct(m.mo)}%</b></span></div>
+          <div className=${C.card + " p-4 space-y-3"}><div className="flex justify-between items-baseline"><span className=${C.lab}>Probabilità dalle quote</span><span className=${"text-[11px] " + C.mu}>Over 2,5: <b className=${C.tx}>${pct(m.mo)}%</b></span></div>
             <${AuraLine} m=${m} h=${6} labels=${true} />
             ${!D.demo && m.nb ? html`<div className=${"text-[11px] " + C.mu}>Quota media di ${m.nb} bookmaker${m.prepartita ? ", aggiornata alle " + new Date(m.prepartita).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }) + " (prima del calcio d'inizio)" : ", fotografata al mattino"}.</div>` : null}
             ${m.mk_mattino && html`<div className=${"text-[12px] rounded-lg p-2 " + C.ch + " " + C.tx}><b>Movimento delle quote</b> dal mattino: ${["1", "X", "2"].map((e, i) => { const dd = m.mk[i] - m.mk_mattino[i]; return html`<span key=${e} className="mr-2 whitespace-nowrap tabular-nums">${e} ${pct(m.mk_mattino[i])}% → <b>${pct(m.mk[i])}%</b>${Math.abs(dd) >= 0.02 ? html`<span className=${dd > 0 ? " text-emerald-600 dark:text-emerald-300" : " text-rose-600 dark:text-rose-300"}> ${dd > 0 ? "▲" : "▼"}</span>` : ""}</span>`; })}
@@ -1460,7 +1479,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     function Gara() {
       const { D, pushUrl, favM, fav, goMatch } = React.useContext(Ctx);
       const [prof, setProf] = useState(undefined);
-      const [nome, setNome] = useState("");
+      const [nome, setNome] = useState(store.get("name", "") || "");
       const [per, setPer] = useState(0);
       const [gr, setGr] = useState(store.get("garaGruppo", ""));
       const [cl, setCl] = useState(null);
@@ -1469,17 +1488,20 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const [voti, setVoti] = useState({});
       const chi = codiceChi();
       const api = (p, body) => fetch(pushUrl + p, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : undefined).then((r) => r.json());
-      const carica = () => api("/profilo?chi=" + chi).then((x) => { if (x.ok) { setProf(x.u); setVoti(x.u.voti || {}); if (!gr && x.u.gruppi[0]) setGr(x.u.gruppi[0].code); } else setProf(null); }).catch(() => setProf(null));
+      const carica = () => api("/profilo", { chi, leggi: 1 }).then((x) => { if (x.ok) { setProf(x.u); setVoti(x.u.voti || {}); if (!gr && x.u.gruppi[0]) setGr(x.u.gruppi[0].code); } else setProf(null); }).catch(() => setProf(null));
       useEffect(() => { if (pushUrl) carica(); }, [pushUrl]);
-      useEffect(() => { if (!pushUrl || !prof) return; api("/classifica?chi=" + chi + "&gruppo=" + (gr || "") + "&periodo=" + (per ? "tutto" : "settimana")).then((x) => x.ok && setCl(x)).catch(() => {}); }, [pushUrl, prof, gr, per]);
+      useEffect(() => { if (!pushUrl || !prof) return; api("/classifica", { chi, gruppo: gr || "", periodo: per ? "tutto" : "settimana" }).then((x) => x.ok && setCl(x)).catch(() => {}); }, [pushUrl, prof, gr, per]);
       if (!pushUrl) return null;
       const prossime = D.matches.filter((m) => m.st === "NS" && new Date(m.ko).getTime() > Date.now()).sort((a, b) => (favM.includes(b.id) || b.h === fav || b.a === fav) - (favM.includes(a.id) || a.h === fav || a.a === fav) || a.ko.localeCompare(b.ko)).slice(0, 10);
-      const vota = (m, s) => { setVoti({ ...voti, [m.id]: s }); store.set("voto:" + m.id, s); api("/voto", { id: m.id, s, chi }).then((x) => { if (!x.ok) setMsg(x.err === "votazione chiusa" ? "La partita è già iniziata." : "Voto non salvato, riprova."); }).catch(() => setMsg("Voto non salvato: controlla la connessione.")); };
+      const vota = (m, s) => { const prima = voti, ps = store.get("voto:" + m.id, null);
+        const annulla = (t) => { setVoti(prima); store.set("voto:" + m.id, ps); setMsg(t); };
+        setVoti({ ...voti, [m.id]: s }); store.set("voto:" + m.id, s);
+        api("/voto", { id: m.id, s, chi }).then((x) => { if (!x.ok) annulla(x.err === "votazione chiusa" ? `${m.h} - ${m.a} è già iniziata: voto non salvato.` : `Voto su ${m.h} - ${m.a} non salvato, riprova.`); }).catch(() => annulla("Voto non salvato: controlla la connessione.")); };
       if (prof === undefined) return html`<div className=${C.card + " p-4 text-sm " + C.mu}>Caricamento della gara dei pronostici...</div>`;
       if (prof === null || !prof.nome) return html`<div className=${C.card + " p-4 space-y-2"}>
         <div className=${C.lab}>Gara dei pronostici</div>
         <p className=${"text-[14px] " + C.tx}>Indovina chi vince le partite: 3 punti per ogni esito giusto, 2 in più se le quote lo davano sotto il 30%. Sfida gli amici in un gruppo e confrontati con l'IA.</p>
-        <input value=${nome} onChange=${(e) => setNome(e.target.value)} placeholder="Il tuo nome in classifica" maxLength=${20} className=${"w-full rounded-xl px-3 py-2.5 outline-none " + C.ch + " " + C.tx} />
+        <input value=${nome} onChange=${(e) => setNome(e.target.value)} placeholder="Il tuo nome in classifica" aria-label="Il tuo nome in classifica" maxLength=${20} className=${"w-full rounded-xl px-3 py-2.5 outline-none " + C.ch + " " + C.tx} />
         <button disabled=${nome.trim().length < 2} onClick=${() => api("/profilo", { chi, nome: nome.trim() }).then(carica)} className=${"w-full py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 " + C.on}>Partecipa</button></div>`;
       const io = cl && cl.io;
       return html`<div className=${C.card + " p-4 space-y-3"}>
@@ -1500,33 +1522,40 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           <span className=${"text-[12px] " + C.mu}>${r.giuste}/${r.giocate}</span><span className=${"num w-10 text-right text-[19px] font-bold " + C.tx}>${r.pt}</span></div>`)}</div>`}
         ${gr && html`<button onClick=${() => { const t = "Sfidami ai pronostici su AuraPitch! Apri l'app, vai in Il Mio Club e inserisci il codice gruppo " + gr + "."; if (navigator.share) navigator.share({ text: t }).catch(() => {}); else navigator.clipboard && navigator.clipboard.writeText(t).then(() => setMsg("Invito copiato.")); }}
           className=${"w-full py-2 rounded-xl text-[13px] font-semibold " + C.ch + " " + C.tx}>Invita amici nel gruppo (codice ${gr})</button>`}
-        <div className="flex gap-2"><input value=${codice} onChange=${(e) => setCodice(e.target.value.toUpperCase())} placeholder="Nome nuovo gruppo o codice" maxLength=${24} className=${"flex-1 min-w-0 rounded-xl px-3 py-2 text-[14px] outline-none " + C.ch + " " + C.tx} />
+        <div className="flex gap-2"><input value=${codice} onChange=${(e) => setCodice(e.target.value.toUpperCase())} placeholder="Nome gruppo o codice" aria-label="Nome del nuovo gruppo o codice di un gruppo" maxLength=${24} className=${"flex-1 min-w-0 rounded-xl px-3 py-2 text-[14px] outline-none " + C.ch + " " + C.tx} />
           <button onClick=${() => api("/gruppo", { chi, azione: "entra", code: codice }).then((x) => { if (x.ok) { setGr(x.code); store.set("garaGruppo", x.code); setCodice(""); carica(); } else setMsg("Codice non trovato."); })} className=${"px-3 rounded-xl text-[13px] font-semibold " + C.ch + " " + C.tx}>Entra</button>
           <button onClick=${() => api("/gruppo", { chi, azione: "crea", nome: codice || "Amici" }).then((x) => { if (x.ok) { setGr(x.code); store.set("garaGruppo", x.code); setCodice(""); carica(); setMsg("Gruppo creato: codice " + x.code + "."); } })} className=${"px-3 rounded-xl text-[13px] font-semibold " + C.on}>Crea</button></div></div>`;
     }
     /* ---- codice personale: preferite, diario e schedina anche su un altro dispositivo ---- */
     function Codice() {
-      const { pushUrl, ripristina } = React.useContext(Ctx);
+      const { pushUrl, ripristina, syncOn, setSyncOn } = React.useContext(Ctx);
       const [c, setC] = useState("");
       const [msg, setMsg] = useState("");
       if (!pushUrl) return null;
+      const attiva = (v) => { setSyncOn(v); store.set("syncOn", v); if (!v) store.set("syncImpr", ""); };
+      if (!syncOn) return html`<div className=${C.card + " p-4 space-y-2"}>
+        <div className=${C.lab}>Usa AuraPitch su un altro dispositivo</div>
+        <p className=${"text-[13px] " + C.mu}>Ora i tuoi dati (preferite, squadra del cuore, diario, schedina) restano solo su questo telefono. Se vuoi ritrovarli su un altro dispositivo, puoi salvarne una copia sul servizio AuraPitch, protetta da un codice personale.</p>
+        <button onClick=${() => attiva(true)} className=${"w-full py-2.5 rounded-xl text-[14px] font-semibold " + C.on}>Salva i miei dati sul servizio AuraPitch</button></div>`;
       const chi = codiceChi();
       return html`<div className=${C.card + " p-4 space-y-2"}>
         <div className=${C.lab}>Usa AuraPitch su un altro dispositivo</div>
-        <p className=${"text-[13px] " + C.mu}>Il tuo codice personale porta con sé preferite, squadra del cuore, diario, schedina e gara dei pronostici. Tienilo per te: chi lo conosce vede i tuoi dati.</p>
+        <p className=${"text-[13px] " + C.mu}>Una copia dei tuoi dati (preferite, squadra del cuore, diario, schedina) è salvata sul servizio AuraPitch con questo codice personale. Tienilo per te: chi lo conosce può vedere e cambiare i tuoi dati.</p>
         <div className="flex items-center gap-2"><span className=${"num flex-1 text-[22px] font-bold tracking-[0.06em] " + C.tx}>${chi}</span>
           <button onClick=${() => navigator.clipboard && navigator.clipboard.writeText(chi).then(() => setMsg("Codice copiato."))} className=${"px-3 py-1.5 rounded-full text-[13px] font-semibold " + C.ch + " " + C.tx}>Copia</button></div>
-        <div className="flex gap-2"><input value=${c} onChange=${(e) => setC(e.target.value.trim().toLowerCase())} placeholder="Codice dell'altro dispositivo" className=${"flex-1 min-w-0 rounded-xl px-3 py-2 text-[14px] outline-none " + C.ch + " " + C.tx} />
-          <button disabled=${c.length < 8} onClick=${() => fetch(pushUrl + "/sync?chi=" + c).then((r) => r.json()).then((x) => { if (x.ok && x.dati) { store.set("chi", c); ripristina(x.dati); setMsg("Dati recuperati."); } else setMsg("Nessun dato per questo codice."); }).catch(() => setMsg("Non riesco a collegarmi."))}
+        <div className="flex gap-2"><input value=${c} onChange=${(e) => setC(e.target.value.trim().toLowerCase())} placeholder="Codice dell'altro dispositivo" aria-label="Codice dell'altro dispositivo" className=${"flex-1 min-w-0 rounded-xl px-3 py-2 text-[14px] outline-none " + C.ch + " " + C.tx} />
+          <button disabled=${c.length < 8} onClick=${() => { if (!window.confirm("Vuoi portare su questo telefono i dati dell'altro dispositivo? Preferite e schedina verranno sostituite, il diario verrà unito.")) return;
+            fetch(pushUrl + "/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chi: c, leggi: 1 }) }).then((r) => r.json()).then((x) => { if (x.ok && x.dati) { store.set("chi", c); store.set("syncImpr", ""); ripristina(x.dati); setMsg("Dati recuperati."); setTimeout(() => location.reload(), 1200); } else setMsg("Nessun dato per questo codice."); }).catch(() => setMsg("Non riesco a collegarmi.")); }}
             className=${"px-3 rounded-xl text-[13px] font-semibold disabled:opacity-50 " + C.on}>Usa</button></div>
-        ${msg && html`<div className=${"text-[12px] " + C.mu}>${msg}</div>`}</div>`;
+        ${msg && html`<div className=${"text-[12px] " + C.mu}>${msg}</div>`}
+        <button onClick=${() => attiva(false)} className=${"text-[12px] font-semibold " + C.mu}>Smetti di salvare i dati sul servizio</button></div>`;
     }
     /* ---- la tua settimana: pronostici, gruppo, diario e IA della settimana scorsa ---- */
     function Riepilogo() {
       const { pushUrl, diario, byId, stor } = React.useContext(Ctx);
       const [cl, setCl] = useState(null);
       const chi = store.get("chi", null), gr = store.get("garaGruppo", "");
-      useEffect(() => { if (pushUrl && chi) fetch(pushUrl + "/classifica?chi=" + chi + "&gruppo=" + gr + "&periodo=scorsa").then((r) => r.json()).then((x) => x.ok && setCl(x)).catch(() => {}); }, [pushUrl]);
+      useEffect(() => { if (pushUrl && chi) fetch(pushUrl + "/classifica", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chi, gruppo: gr || "", periodo: "scorsa" }) }).then((r) => r.json()).then((x) => x.ok && setCl(x)).catch(() => {}); }, [pushUrl]);
       const lun = new Date(); lun.setHours(0, 0, 0, 0); lun.setDate(lun.getDate() - ((lun.getDay() + 6) % 7)); const da = lun.getTime() - 7 * 86400e3, a = lun.getTime();
       const gioc = diario.filter((x) => x.t >= da && x.t < a), chiuse = gioc.filter((x) => statoGiocata(x, byId) !== "aperta");
       const resa = chiuse.reduce((s0, x) => s0 + (statoGiocata(x, byId) === "vinta" ? x.imp * x.q : 0) - x.imp, 0);
@@ -1548,7 +1577,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const { diario, byId, favM, pushUrl } = React.useContext(Ctx);
       const [cl, setCl] = useState(null);
       const chi = store.get("chi", null);
-      useEffect(() => { if (pushUrl && chi) fetch(pushUrl + "/classifica?chi=" + chi + "&periodo=tutto").then((r) => r.json()).then((x) => x.ok && setCl(x)).catch(() => {}); }, [pushUrl]);
+      useEffect(() => { if (pushUrl && chi) fetch(pushUrl + "/classifica", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chi, periodo: "tutto" }) }).then((r) => r.json()).then((x) => x.ok && setCl(x)).catch(() => {}); }, [pushUrl]);
       const io = (cl && cl.io) || { giocate: 0, giuste: 0, ia: 0, iaG: 0, pt: 0 };
       const vinte = diario.filter((x) => statoGiocata(x, byId) === "vinta").length;
       const L = [
@@ -1580,16 +1609,16 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const m = D.matches.find((x) => x.h === fav || x.a === fav);
       const l5 = m ? m.last5[m.h === fav ? 0 : 1] : [];
       return html`<div className="px-4 space-y-3"><${Schede} id="club" items=${["La mia squadra", "Gara", "Traguardi", "Account"]}>${[html`<${React.Fragment}>
-        <div className=${C.card + " p-4"}><div className="flex items-center gap-3"><${Crest} t=${fav} size=${52} />
-          <div className="flex-1 min-w-0"><div className=${"text-xs " + C.mu}>Squadra del cuore</div><div className=${"text-xl font-semibold truncate " + C.tx}>${fav}</div>
+        <div className=${C.card + " p-4"}><div className="flex items-center gap-3">${fav ? html`<${Crest} t=${fav} size=${52} />` : html`<span className=${"w-[52px] h-[52px] rounded-full flex items-center justify-center " + C.ch + " " + C.mu}><${Ic.Shield} size=${24} /></span>`}
+          <div className="flex-1 min-w-0"><div className=${"text-xs " + C.mu}>Squadra del cuore</div><div className=${(fav ? "text-xl " : "text-[15px] ") + "font-semibold truncate " + C.tx}>${fav || "Scegline una qui sotto"}</div>
             ${L && html`<div className=${"text-xs flex items-center gap-1.5 " + C.mu}><${Flag} k=${L.flag} w=${14} />${L.name} - ${pos}° con ${row.pt} punti</div>`}</div></div>
           ${l5.length > 0 && html`<div className="mt-4"><div className=${C.lab + " mb-1.5"}>Ultime 5</div><${Form} list=${l5} /></div>`}
           ${lgK && ESPN_LG[lgK] && html`<button onClick=${() => setTeam({ lgE: ESPN_LG[lgK], name: fav })} className=${"mt-4 w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}>Calendario, risultati e rosa<${Ic.ChevronRight} size=${15} /></button>`}</div>
         ${m ? html`<div className=${C.lab}>Partita della giornata</div><div className=${C.card + " overflow-hidden"}><${Row} m=${m} i=${0} /></div>`
           : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${fav} non gioca in questa giornata.</div>`}
-        <div className=${C.card + " p-4 space-y-2"}><label htmlFor="fav" className=${C.lab}>Cambia squadra</label>
+        <div className=${C.card + " p-4 space-y-2"}><label htmlFor="fav" className=${C.lab}>${fav ? "Cambia squadra" : "Squadra del cuore"}</label>
           <select id="fav" value=${fav} onChange=${(e) => { setFav(e.target.value); store.set("fav", e.target.value); }} className=${"w-full rounded-xl px-3 py-2 text-sm " + C.ch + " " + C.tx}>
-            ${D.leagues.map((l) => html`<optgroup key=${l.k} label=${l.name}>${(D.standings[l.k] ? D.standings[l.k].generale.map((r) => r.team) : [...new Set(D.matches.filter((x) => x.lg === l.k).flatMap((x) => [x.h, x.a]))]).slice().sort().map((t) => html`<option key=${t} value=${t}>${t}</option>`)}</optgroup>`)}</select></div><//>`,
+            ${!fav && html`<option value="">Scegli...</option>`}${D.leagues.map((l) => html`<optgroup key=${l.k} label=${l.name}>${(D.standings[l.k] ? D.standings[l.k].generale.map((r) => r.team) : [...new Set(D.matches.filter((x) => x.lg === l.k).flatMap((x) => [x.h, x.a]))]).slice().sort().map((t) => html`<option key=${t} value=${t}>${t}</option>`)}</optgroup>`)}</select></div><//>`,
         html`<${Gara} />`,
         html`<${React.Fragment}><${Riepilogo} /><${Medaglie} /><//>`,
         html`<${React.Fragment}><${Codice} /><${GiocoResponsabile} /><//>`]}<//></div>`;
@@ -1608,10 +1637,10 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const pool = D.matches.filter((m) => !off.includes(m.lg) && (D.demo || m.st === "NS") && (D.demo || inPeriodo(m.date, per, today)));
       let legs = qo ? buildTarget(pool, prof, qo, vr) : buildSlip(pool, prof);
       const weak = legs.length ? legs.reduce((a, b) => (a.p < b.p ? a : b)) : null;
-      if (shield && weak) {
-        const alt = options(weak.m).sort((a, b) => b.p - a.p)[0];
-        legs = legs.map((l) => (l === weak ? { m: l.m, ...alt, shielded: true } : l));
-      }
+      const alt = weak ? candidati(weak.m, Math.max(0, prof - 1), weak.q, 0)
+        .filter((o) => o.k !== weak.k && o.p >= weak.p + 0.1 && o.q >= 1.15 && evalCode(o.k, 1, 0, 0, 0) !== null)
+        .sort((a, b) => b.sc - a.sc)[0] : null;
+      if (shield && weak && alt) legs = legs.map((l) => (l === weak ? { m: l.m, ...alt, shielded: true } : l));
       const tot = legs.reduce((a, l) => a * l.q, 1), prob = legs.reduce((a, l) => a * l.p, 1);
       const done = legs.filter((l) => hit(l.m, l.k) !== null), won = done.filter((l) => hit(l.m, l.k));
       const mine = mySlip.map((x) => ({ ...x, m: byId[x.id] })).filter((x) => x.m).map((x) => ({ ...x, ...options(x.m).find((o) => o.k === norm(x.k)) }));
@@ -1637,12 +1666,14 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <div className=${C.card + " px-4 py-2"}>${legs.length ? legs.map((l) => html`<${LegRow} key=${l.m.id} l=${l} />`) : html`<div className=${"py-3 text-sm " + C.mu}>${pool.length ? "Nessuna partita adatta a questo stile: prova un altro periodo o un altro stile." : "Nessuna partita in questo periodo nei campionati scelti."}</div>`}</div>
         ${legs.length > 0 && html`<div className=${C.card + " p-4 space-y-2"}>
           <div className="flex justify-between items-baseline text-sm"><span className=${C.mu}>${D.demo ? "Quota totale (Bet365)" : "Quota totale"}${qo ? ", obiettivo ×" + qo : ""}</span><b className=${"num text-[24px] " + C.tx}>${odd(tot)}</b></div>
+          ${qo > 0 && !shield && tot < qo * 0.8 && html`<div className=${"text-[13px] rounded-xl p-3 border " + TONE.warn}>Con le partite di questo periodo si arriva al massimo a ${odd(tot)}: scegli un periodo più lungo o uno stile più rischioso.</div>`}
+          ${legs.some((l) => l.stima) && html`<div className=${"text-[12px] " + C.mu}>Di cui ${legs.filter((l) => l.stima).length} ${legs.filter((l) => l.stima).length === 1 ? "quota stimata" : "quote stimate"} dall'IA: dal bookmaker la quota reale può essere un po' più bassa.</div>`}
           <div className="flex justify-between text-sm"><span className=${C.mu}>Partite</span><b className=${"tabular-nums " + C.tx}>${legs.length}</b></div>
           <div className="flex justify-between text-sm"><span className=${C.mu}>Probabilità che passi, secondo l'IA</span><b className=${"tabular-nums " + C.tx}>${(prob * 100).toFixed(1).replace(".", ",")}%</b></div>
           ${done.length > 0 && html`<div className=${"text-xs font-semibold " + (won.length === done.length ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>Verifica sulla giornata: ${won.length} su ${done.length} esiti corretti${won.length === done.length ? ", schedina vinta" : ""}.</div>`}
           ${weak && html`<div className=${"rounded-xl border p-3 text-sm " + TONE.bad}><div className="font-semibold flex items-center gap-1.5"><${Ic.AlertTriangle} size=${14} />Anello debole</div>
-            <div>${shield ? "Protetto dallo Scudo IA: la gamba più fragile è passata all'esito più probabile della stessa partita." : `${weak.m.h} - ${weak.m.a}, ${mLabel(weak.m, weak.k, true)} (IA ${pct(weak.p)}%) è la gamba più fragile.`}</div>
-            <button onClick=${() => setShield(!shield)} className=${"mt-2 inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full " + (shield ? TONE.good + " border" : C.on)}><${Ic.ShieldCheck} size=${13} />${shield ? "Scudo IA attivo" : "Scudo IA: proteggi"}</button></div>`}
+            <div>${shield && alt ? `Protetto dallo Scudo IA: nella stessa partita ora c'è ${mLabel(weak.m, alt.k, true)} (IA ${pct(alt.p)}%, quota ${odd(alt.q)}). Nuova quota totale ${odd(tot)}${qo ? ", obiettivo ×" + qo : ""}.` : `${weak.m.h} - ${weak.m.a}, ${mLabel(weak.m, weak.k, true)} (IA ${pct(weak.p)}%) è la gamba più fragile.${alt ? "" : " Nella stessa partita non c'è un'alternativa più sicura e sensata."}`}</div>
+            ${alt && html`<button onClick=${() => setShield(!shield)} className=${"mt-2 inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full " + (shield ? TONE.good + " border" : C.on)}><${Ic.ShieldCheck} size=${13} />${shield ? "Scudo IA attivo" : "Scudo IA: proteggi"}</button>`}</div>`}
           <${Gioca} legs=${legs} />
           ${qo > 0 && html`<button onClick=${() => { setVr(vr + 1); setShield(false); }} className=${"w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Repeat} size=${15} />Un'altra combinazione</button>`}
           <div className="grid grid-cols-2 gap-2 pt-1">
@@ -1724,6 +1755,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const ch = diario.filter((x) => statoGiocata(x, byId) !== "aperta");
     const speso = ch.reduce((a, x) => a + x.imp, 0), vinto = ch.filter((x) => statoGiocata(x, byId) === "vinta").reduce((a, x) => a + x.imp * x.q, 0);
     const eur = (v) => v.toLocaleString("it-IT", { style: "currency", currency: "EUR" });
+    // le giocate che il risultato non verifica (cartellini, falli, angoli, marcatori) si chiudono a mano a partita finita
+    const chiudibile = (g, x) => { const m = byId[g.id]; return m ? m.st === "FT" : Date.now() - x.t > 4 * 3600e3; };
+    const segna = (id, i, v) => setDiario(diario.map((z) => (z.id !== id ? z : { ...z, legs: z.legs.map((g, j) => (j === i ? { ...g, ok: v } : g)) })));
     return html`<div className=${C.card + " p-4"}>
       <div className="flex items-baseline mb-2"><span className=${C.lab + " flex-1"}>Il mio diario</span><span className=${"text-[12px] " + C.mu}>${diario.length} giocate</span></div>
       <div className="grid grid-cols-3 gap-2 mb-2">${[["Giocato", eur(speso)], ["Vinto", eur(vinto)], ["Resa", ch.length ? (vinto - speso >= 0 ? "+" : "") + eur(vinto - speso) : "-"]].map(([l, v]) => html`<div key=${l} className=${"rounded-[14px] p-2.5 " + C.ch}>
@@ -1735,16 +1769,18 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           <span className=${"text-[12px] " + C.mu}>${eur(x.imp)} @</span><span className=${"num text-[18px] font-bold " + C.tx}>${odd(x.q)}</span></button>
         ${o && html`<div className="pb-3 space-y-1">${x.legs.map((g, i) => { const e = esitoGamba(g, byId); return html`<div key=${i} className="flex items-center gap-2 text-[13px]">
           <span className=${"flex-1 truncate " + C.tx}>${g.h} - ${g.a}: <b>${g.l}</b></span><span className=${"num text-[15px] " + C.mu}>${odd(g.q)}</span>
-          ${e === null ? html`<${Ic.Clock} size=${15} className=${C.mu} />` : e ? html`<${Ic.CheckCircle2} size=${15} className="text-[#0F9D84]" />` : html`<${Ic.XCircle} size=${15} className="text-[#FF3D5A]" />`}</div>`; })}
+          ${e === null ? (chiudibile(g, x) ? html`<span className="flex gap-1">${[[true, "Presa"], [false, "Non presa"]].map(([v, t]) => html`<button key=${t} onClick=${() => segna(x.id, i, v)} className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + (v ? TONE.good : TONE.bad)}>${t}</button>`)}</span>` : html`<${Ic.Clock} size=${15} className=${C.mu} />`) : e ? html`<${Ic.CheckCircle2} size=${15} className="text-[#0F9D84]" />` : html`<${Ic.XCircle} size=${15} className="text-[#FF3D5A]" />`}</div>`; })}
           <button onClick=${() => setDiario(diario.filter((z) => z.id !== x.id))} className=${"text-[12px] font-semibold " + C.mu}>Elimina dal diario</button></div>`}</div>`; })}
-      <p className=${"text-[11px] mt-2 " + C.mu}>Il diario resta su questo telefono. Le giocate su cartellini, falli, angoli e marcatori non si verificano dal risultato: segnale tu dall'app del bookmaker.</p></div>`;
+      <p className=${"text-[11px] mt-2 " + C.mu}>Il diario resta su questo telefono. Le giocate su cartellini, falli, angoli e marcatori non si verificano dal risultato: quando la partita è finita segnalo tu qui con "Presa" o "Non presa".</p></div>`;
   }
   function Gioca({ legs, onDone }) {
     const { setDiario, diario, lg } = React.useContext(Ctx);
     const [imp, setImp] = useState(store.get("impUltimo", 5));
     const [msg, setMsg] = useState("");
+    const [fatto, setFatto] = useState("");
     const q = legs.reduce((a, l) => a * l.q, 1);
-    const salva = () => { const x = { id: Date.now().toString(36), t: Date.now(), imp: Number(imp) || 0, q, legs: legs.map((l) => ({ id: l.m.id, k: l.k, q: l.q, p: l.p, h: l.m.h, a: l.m.a, l: mLabel(l.m, l.k, true) })) };
+    const firma = legs.map((l) => l.m.id + l.k).join("|");
+    const salva = () => { if (fatto === firma) return; setFatto(firma); const x = { id: Date.now().toString(36), t: Date.now(), imp: Number(imp) || 0, q, legs: legs.map((l) => ({ id: l.m.id, k: l.k, q: l.q, p: l.p, h: l.m.h, a: l.m.a, l: mLabel(l.m, l.k, true) })) };
       setDiario([...diario, x]); store.set("impUltimo", Number(imp) || 0);
       const lim = store.get("limite", 0), mese = new Date().toISOString().slice(0, 7);
       const speso = [...diario, x].filter((z) => new Date(z.t).toISOString().slice(0, 7) === mese).reduce((a, z) => a + z.imp, 0);
@@ -1753,7 +1789,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     return html`<div className="space-y-2">
       <div className="flex items-center gap-2"><span className=${"text-[13px] " + C.mu}>Importo</span>${[1, 2, 5, 10, 20].map((v) => html`<button key=${v} onClick=${() => setImp(v)} className=${"num text-[16px] font-bold px-2.5 py-1 rounded-full " + (Number(imp) === v ? C.on : C.ch + " " + C.tx)}>${v}€</button>`)}</div>
       <div className="grid grid-cols-2 gap-2">
-        <button onClick=${salva} className=${"py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.on}><${Ic.Book} size=${15} />L'ho giocata</button>
+        <button onClick=${salva} disabled=${fatto === firma} className=${"py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 disabled:opacity-60 " + C.on}><${Ic.Book} size=${15} />${fatto === firma ? "Salvata" : "L'ho giocata"}</button>
         <button onClick=${async () => { try { const r = await immagineSchedina(legs, "Schedina del " + new Date().toLocaleDateString("it-IT", { day: "numeric", month: "long" }), lg); setMsg("Immagine " + r + "."); } catch (e) { setMsg("Condivisione annullata."); } }}
           className=${"py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Share} size=${15} />Condividi immagine</button></div>
       ${msg && html`<div className=${"text-[12px] " + C.mu}>${msg}</div>`}</div>`;
@@ -1933,7 +1969,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const [profile, setProfile] = useState(false);
     const [guide, setGuide] = useState(store.get("guideSeen", false) ? 0 : 1);
     const [name, setName] = useState(store.get("name", ""));
-    const [fav, setFav] = useState(store.get("fav", "Napoli"));
+    const [fav, setFav] = useState(store.get("fav", ""));
     const [mySlip, setMySlip] = useState(store.get("slip", []));
     const [banner, setBanner] = useState(store.get("banner2", true));
     const [copyText, setCopyText] = useState(null);
@@ -1963,16 +1999,19 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const ripristina = (x) => {
       if (Array.isArray(x.favM)) { setFavM(x.favM); store.set("favM", x.favM); }
       if (x.fav) { setFav(x.fav); store.set("fav", x.fav); }
-      if (Array.isArray(x.diario)) setDiario(x.diario);
+      if (Array.isArray(x.diario)) { const ids = new Set(x.diario.map((z) => z.id)); setDiario([...diario.filter((z) => !ids.has(z.id)), ...x.diario].sort((a, b) => a.t - b.t)); }
       if (Array.isArray(x.slip)) setMySlip(x.slip);
       if (typeof x.name === "string") { setName(x.name); store.set("name", x.name); }
     };
-    // copia dei dati personali sul servizio AuraPitch (per il codice personale), 3 secondi dopo l'ultima modifica
+    // copia dei dati personali sul servizio AuraPitch: solo se l'utente l'ha attivata nel Club (Account), e solo quando i dati cambiano davvero
+    const [syncOn, setSyncOn] = useState(store.get("syncOn", false));
     useEffect(() => {
-      if (!pushUrl || !store.get("chi", null)) return;
-      const id = setTimeout(() => { fetch(pushUrl + "/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chi: store.get("chi", null), dati: { favM, fav, diario, slip: mySlip, name } }) }).catch(() => {}); }, 3000);
+      if (!pushUrl || !syncOn || !store.get("chi", null)) return;
+      const dati = { favM, fav, diario, slip: mySlip, name }, impr = String(hs(JSON.stringify(dati)));
+      if (store.get("syncImpr", "") === impr) return;
+      const id = setTimeout(() => { fetch(pushUrl + "/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chi: store.get("chi", null), dati }) }).then((r) => { if (r.ok) store.set("syncImpr", impr); }).catch(() => {}); }, 15000);
       return () => clearTimeout(id);
-    }, [pushUrl, favM, fav, diario, mySlip, name]);
+    }, [pushUrl, syncOn, favM, fav, diario, mySlip, name]);
     const [pref, setPref] = useState(store.get("pushPref", { formazioni: true, inizio: true, gol: true, rossi: true, intervallo: true, finale: true }));
     const lastFollow = useRef("");
 
@@ -1994,7 +2033,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const mq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
       if (mq && mq.addEventListener) { mq.addEventListener("change", apply); return () => mq.removeEventListener("change", apply); }
     }, [theme]);
-    useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
+    // l'orologio al secondo serve solo per il conto alla rovescia del pass PRO: niente ridisegni inutili quando non è attivo
+    useEffect(() => { if (until <= Date.now()) return; const id = setInterval(() => { setNow(Date.now()); if (Date.now() > until) clearInterval(id); }, 1000); return () => clearInterval(id); }, [until]);
     useEffect(() => {
       if (ad === null) return;
       if (ad === 0) { const u = Date.now() + 15 * 60 * 1000 - 1000; setUntil(u); store.set("until", u); setAd(null); setUnlock(false); flash("PRO attivo per 15 minuti"); return; }
@@ -2081,6 +2121,15 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const unlocked = (m) => pro || m.free;
     const ini = (name.trim() ? name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("") : "IO").toUpperCase();
 
+
+    // apertura da una notifica: ./#m=<id partita> (anche ad app già aperta, tramite messaggio del service worker)
+    const [daAprire, setDaAprire] = useState(() => { const x = /#m=([^&]+)/.exec(location.hash || ""); return x ? decodeURIComponent(x[1]) : null; });
+    useEffect(() => {
+      const sw = navigator.serviceWorker, fn = (e) => { const x = e.data && e.data.apri && /#m=([^&]+)/.exec(e.data.apri); if (x) setDaAprire(decodeURIComponent(x[1])); };
+      if (sw) sw.addEventListener("message", fn);
+      return () => { if (sw) sw.removeEventListener("message", fn); };
+    }, []);
+    useEffect(() => { if (!daAprire || !D) return; setOpen(daAprire); setMt(0); setTeam(null); window.scrollTo(0, 0); setDaAprire(null); if (location.hash) history.replaceState(null, "", location.pathname); }, [daAprire, D]);
     if (err) return html`<div className="p-6 text-center text-sm ${C.mu}">${err}</div>`;
     if (!D) return html`<div className="p-12 text-center text-sm ${C.mu}">Caricamento delle partite...</div>`;
     const byId = Object.fromEntries(D.matches.map((m) => [m.id, m]));
@@ -2168,7 +2217,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const views = { partite: home, campionati: html`<${LeaguesView} />`, schedina: html`<${SlipView} />`, club: html`<${ClubView} />` };
     const DOCK = [["partite", "Partite", Ic.Calendar], ["campionati", "Campionati", Ic.Trophy], ["schedina", "Schedina IA", Ic.Sparkles], ["club", "Il Mio Club", Ic.Shield]];
 
-    const ctx = { setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen, mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
+    const ctx = { syncOn, setSyncOn, setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen, mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
     return html`<${Ctx.Provider} value=${ctx}><div className="min-h-screen pb-28">
       ${header}
       <main className="max-w-[480px] mx-auto">${guideBox}${team ? html`<${TeamView} key=${team.name} />` : open_m ? html`<${MatchView} key=${open_m.id} m=${open_m} />` : views[tab]}</main>
@@ -2228,7 +2277,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <div className=${"text-sm " + C.tx}>${fav} <button onClick=${() => { setProfile(false); setOpen(null); setTab("club"); }} className="text-[#5B2EE6] dark:text-[#A58BFF] font-medium ml-1">Cambia</button></div>
         <div className=${C.lab}>Accesso</div>
         <div className="grid grid-cols-2 gap-2">${["Google", "Apple"].map((p) => html`<button key=${p} disabled className=${"py-2.5 rounded-xl text-sm font-semibold opacity-50 " + C.ch + " " + C.tx}>${p}</button>`)}</div>
-        <p className=${"text-xs " + C.mu}>Nella beta i tuoi dati restano solo su questo dispositivo. L'accesso con Google e Apple arriverà con la versione pubblica.</p><//>`}
+        <p className=${"text-xs " + C.mu}>${syncOn ? "Una copia dei tuoi dati è salvata sul servizio AuraPitch con il tuo codice personale (Il Mio Club, Account)." : "I tuoi dati restano solo su questo dispositivo, a meno che tu non attivi il salvataggio in Il Mio Club, Account."} L'accesso con Google e Apple arriverà con la versione pubblica.</p><//>`}
 
       ${copyText !== null && html`<${Sheet} title="Copia la schedina" onClose=${() => setCopyText(null)}>
         <p className=${"text-sm " + C.mu}>Il telefono non ha permesso la copia automatica: tieni premuto sul testo e scegli Copia.</p>

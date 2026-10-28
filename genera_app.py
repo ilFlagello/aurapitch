@@ -642,6 +642,18 @@ def genera():
         if sc:
             out.setdefault("scorers", {})[k] = [{"n": (r.get("player") or {}).get("name", "?"), "t": nome_fd(r.get("team")), "g": r.get("goals") or 0, "a": r.get("assists") or 0,
                                                   "r": r.get("penalties") or 0, "pg": r.get("playedMatches") or 0} for r in sc]
+    # stessi nomi tra partite e classifiche/marcatori (es. "Sudtirol" in classifica, "Südtirol" nelle partite)
+    import unicodedata
+    piega = lambda x: unicodedata.normalize("NFD", x or "").encode("ascii", "ignore").decode().lower().strip()
+    nomi = {piega(t): t for m in out["matches"] for t in (m["h"], m["a"])}
+    for tabs in out["standings"].values():
+        for rows in tabs.values():
+            if isinstance(rows, list):
+                for r in rows:
+                    r["team"] = nomi.get(piega(r["team"]), r["team"])
+    for rows in (out.get("scorers") or {}).values():
+        for r in rows:
+            r["t"] = nomi.get(piega(r["t"]), r["t"])
     etich = {-1: "Ieri", 0: "Oggi", 1: "Domani"}
     for d in giorni:
         if any(m["date"] == d.isoformat() for m in out["matches"]):
@@ -845,13 +857,16 @@ def applica_fattori(d):
                 eff.append(f"gol attesi di {sq} corretti del {str(round(f['delta'] * 100, 1)).replace('.', ',')}%")
             if f.get("delta_avv"):
                 eff.append(f"gol attesi di {avv} +{str(round(f['delta_avv'] * 100, 1)).replace('.', ',')}% (peso in difesa)")
-            righe.append((f"Squalifica: {f['chi']} ({f['titolo'].split(': ', 1)[-1]}). " if f.get("fonte_tipo") == "cartellini" else
+            testo = ", ".join(eff)
+            righe.append(((f"Squalifica: {f['chi']} ({f['titolo'].split(': ', 1)[-1]}). " if f.get("fonte_tipo") == "cartellini" else
                           f"Notizia ({f['fonte'] or 'stampa'}): {f['chi']} {dict(squalifica='squalificato', infortunio='indisponibile', dubbio='in dubbio').get(f['tipo'], f['tipo'])}. ")
-                         + ", ".join(eff).capitalize() + (" (in parte già nelle quote)." if f["prezzo"] < 1 else "."))
+                         + testo[:1].upper() + testo[1:] + (" (in parte già nelle quote)." if f["prezzo"] < 1 else "."), (f["delta"] or 0) < 0))
         for v in tip.values():
             if not (c.get("sh") and c.get("sa")):
                 v["perche"].append("Statistiche delle squadre non disponibili per questo campionato: il consiglio si basa solo sulle quote.")
-            v["perche"] += righe
+            # le assenze che abbassano i gol attesi vanno tra le cose "da tenere d'occhio", non tra i motivi a favore
+            v["perche"] += [t for t, neg in righe if not neg]
+            v.setdefault("contro", []).extend(t for t, neg in righe if neg)
         assenti = {f["chi"] for f in tutti if (f.get("delta") or f.get("delta_avv")) and f.get("affidabilita", 0) >= 0.6}
         marc_l, marc_info = [], {}
         for lato, sq in enumerate((m["h"], m["a"])):
@@ -965,7 +980,24 @@ def main():
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(d, f, ensure_ascii=False, separators=(",", ":"))
+    scrivi_stato(d)
     aggiorna_storico(d)
+
+
+STATO_OUT = os.path.join("app", "data", "stato.json")
+
+
+def scrivi_stato(d):
+    """Versione ridotta del file dell'app per il servizio notifiche e la gara (pochi KB: poca CPU sul piano gratuito)."""
+    righe = []
+    for m in d.get("matches", []):
+        t = (m.get("tip") or {}).get("consiglio")
+        righe.append({"id": m["id"], "st": m.get("st"), "ko": m.get("ko"), "date": m.get("date"), "g": m.get("g"), "h": m["h"], "a": m["a"],
+                      "p": m.get("p"), "mk": m.get("mk"),
+                      "tip": {"consiglio": {"l": t.get("l"), "p": t.get("p")}} if t else None,
+                      "marcatori": {k: {"lato": v["lato"], "g": v["g"]} for k, v in (m.get("marcatori") or {}).items() if v.get("g", 0) >= 2}})
+    with open(STATO_OUT, "w", encoding="utf-8") as f:
+        json.dump({"matches": righe}, f, ensure_ascii=False, separators=(",", ":"))
 
 
 if __name__ == "__main__":

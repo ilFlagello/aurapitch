@@ -150,7 +150,7 @@ def voto_giocatore(st, pos, starter, minuti, gf, gs):
          + 0.1 * n("foulsSuffered") - 0.1 * n("foulsCommitted") - 0.4 * n("yellowCards") - 1.5 * n("redCards") - 1.0 * n("ownGoals") - 0.05 * n("offsides"))
     if pos == "G":
         v += 0.3 * n("saves") - 0.35 * gs + (0.6 if gs == 0 and minuti >= 60 else 0)
-    elif str(pos or "").startswith(DIFESA):
+    elif str(pos or "").startswith(DIFESA) and not str(pos or "").startswith("DM"):  # DM = mediano
         v += -0.15 * gs + (0.4 if gs == 0 and minuti >= 60 else 0)
     v += 0.3 if gf > gs else (-0.2 if gf < gs else 0)
     if minuti < 30:

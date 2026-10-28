@@ -70,20 +70,24 @@ function stato(ev) {
   const h = c.competitors.find((x) => x.homeAway === "home"), a = c.competitors.find((x) => x.homeAway === "away");
   const goals = (c.details || []).filter((d) => d.scoringPlay).map((d) => ({ min: (d.clock && d.clock.displayValue) || "", chi: ((d.athletesInvolved || [])[0] || {}).displayName || "", og: d.ownGoal, pen: d.penaltyKick }));
   const rossi = (c.details || []).filter((d) => d.redCard).map((d) => ({ min: (d.clock && d.clock.displayValue) || "", chi: ((d.athletesInvolved || [])[0] || {}).displayName || "", casa: (d.team || {}).id === h.team.id }));
-  return { st: t.state, half: t.name === "STATUS_HALFTIME", g: [Number(h.score || 0), Number(a.score || 0)], clock: ev.status.displayClock || "", goals, rossi, ko: Date.parse(ev.date) };
+  return { st: t.state, half: t.name === "STATUS_HALFTIME", g: h.score == null || a.score == null ? null : [Number(h.score), Number(a.score)], clock: ev.status.displayClock || "", goals, rossi, ko: Date.parse(ev.date) };
 }
 const PREF0 = { promemoria: true, inizio: true, gol: true, rossi: true, intervallo: true, finale: true, formazioni: true };
 const vuole = (sub, tipo) => ((sub && sub.pref) || PREF0)[tipo] !== false;
 /* dati dell'app (probabilita IA e marcatori) per arricchire l'avviso delle formazioni; letti al massimo ogni 5 minuti */
+// stato.json è la versione ridotta di giornata.json (pochi KB): leggerla costa poca CPU, dentro il limite del piano gratuito
 async function giornata() {
-  try { const r = await fetch("https://ilflagello.github.io/aurapitch/data/giornata.json", { cf: { cacheTtl: 300 } }); return r.ok ? await r.json() : null; } catch (e) { return null; }
+  for (const f of ["stato.json", "giornata.json"]) {
+    try { const r = await fetch("https://ilflagello.github.io/aurapitch/data/" + f, { cf: { cacheTtl: 300 } }); if (r.ok) return await r.json(); } catch (e) { /* si prova il file successivo */ }
+  }
+  return null;
 }
 const piano = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 async function formazioni(lg, eid) {
   try {
     const d = await (await fetch(`${SITE}${lg}/summary?event=${eid}`, { cf: { cacheTtl: 60 } })).json();
     const R = d.rosters || [];
-    const tit = R.map((r) => (r.roster || []).filter((p) => p.starter).map((p) => p.athlete && p.athlete.displayName).filter(Boolean));
+    const tit = ["home", "away"].map((ha) => ((R.find((r) => r.homeAway === ha) || {}).roster || []).filter((p) => p.starter).map((p) => p.athlete && p.athlete.displayName).filter(Boolean));
     return tit.length === 2 && tit[0].length >= 11 && tit[1].length >= 11 ? tit : null;
   } catch (e) { return null; }
 }
@@ -109,10 +113,11 @@ async function controlla(env) {
     const ev = eventi[k];
     if (!ev) { if (old[k]) nuovo[k] = old[k]; continue; }
     const s = stato(ev), o = old[k];
+    if (!s.g) s.g = o ? o.g : [0, 0]; // punteggio assente da ESPN: si tiene quello di prima (niente falsi "gol annullato")
     nuovo[k] = { st: s.st, g: s.g, half: s.half, rossi: s.rossi.length, form: o ? o.form : false, prom: o ? o.prom : false };
     if (!o) continue; // prima volta che la vediamo: nessun avviso
     const nomi = `${f.h} ${s.g[0]} - ${s.g[1]} ${f.a}`;
-    const push = (title, body, tipo) => msgs.push({ ids: ids.filter((id) => vuole(subs[id], tipo)), msg: { title, body, tag: k + "|" + title + "|" + body.length, url: "./" } });
+    const push = (title, body, tipo) => msgs.push({ f, ids: ids.filter((id) => vuole(subs[id], tipo)), msg: { title, body, tag: k + "|" + tipo + "|" + s.g.join("-") + "|" + (tipo === "rossi" ? body : ""), url: "./" } });
     // promemoria un'ora prima, con il consiglio dell'IA
     if (s.st === "pre" && !o.prom && s.ko - Date.now() < 62 * 60000 && s.ko - Date.now() > 40 * 60000) {
       nuovo[k].prom = true;
@@ -151,6 +156,9 @@ async function controlla(env) {
   }
   if (JSON.stringify(nuovo) !== JSON.stringify(old)) await env.KV.put("state", JSON.stringify(nuovo));
   if (!msgs.length) return "nessuna novità";
+  // toccando la notifica si apre la partita nell'app
+  G = G || (await giornata()) || { matches: [] };
+  for (const x of msgs) { const m = G.matches.find((y) => piano(y.h) === piano(x.f.h) && piano(y.a) === piano(x.f.a)); if (m) x.msg.url = "./#m=" + encodeURIComponent(m.id); }
   const v = await vapid(env);
   let morte = [];
   for (const { ids, msg } of msgs.filter((x) => x.ids.length)) {
@@ -158,7 +166,12 @@ async function controlla(env) {
       try { const st = await invia(env, v, subs[id].sub, msg); if (st === 404 || st === 410) morte.push(id); } catch (e) { /* invio non riuscito */ }
     }));
   }
-  if (morte.length) { for (const id of morte) delete subs[id]; await env.KV.put("subs", JSON.stringify(subs)); }
+  if (morte.length) {
+    // si rilegge subito prima di scrivere, per non cancellare un'iscrizione arrivata nel frattempo
+    const ora = (await env.KV.get("subs", "json")) || {};
+    for (const id of morte) delete ora[id];
+    await env.KV.put("subs", JSON.stringify(ora));
+  }
   return `${msgs.length} avvisi inviati`;
 }
 
@@ -184,6 +197,14 @@ async function orologio(env) {
   return `${modo}: ${r.status}`;
 }
 
+// limite di richieste per indirizzo (in memoria, al minuto): frena chi prova a gonfiare i voti o a consumare le scritture
+const conta = new Map();
+function troppi(req, max = 20) {
+  const ip = req.headers.get("CF-Connecting-IP") || "?", k = ip + ":" + Math.floor(Date.now() / 60000) + ":" + max;
+  const n = (conta.get(k) || 0) + 1; conta.set(k, n);
+  if (conta.size > 5000) conta.clear();
+  return n > max;
+}
 async function sha(s) { return b64u(await crypto.subtle.digest("SHA-256", enc.encode(s))).slice(0, 22); }
 
 export default {
@@ -200,11 +221,13 @@ export default {
       const subs = (await env.KV.get("subs", "json")) || {};
       const id = await sha(d.sub.endpoint);
       if (Object.keys(subs).length > 500 && !subs[id]) return json({ ok: false, err: "troppe iscrizioni" }, 429);
-      const prima = JSON.stringify(subs[id] || null);
+      const vecchia = subs[id] || null;
       const pref = {};
       for (const k of Object.keys(PREF0)) pref[k] = !(d.pref && d.pref[k] === false);
-      subs[id] = { sub: { endpoint: d.sub.endpoint, keys: d.sub.keys }, follow, pref, t: Date.now() };
-      if (prima !== JSON.stringify(subs[id]) || !subs[id].t0) { subs[id].t0 = (JSON.parse(prima) || {}).t0 || Date.now(); await env.KV.put("subs", JSON.stringify(subs)); }
+      const confronta = (x) => x && JSON.stringify({ sub: x.sub, follow: x.follow, pref: x.pref });
+      const nuova = { sub: { endpoint: d.sub.endpoint, keys: d.sub.keys }, follow, pref };
+      // si scrive solo se qualcosa è cambiato davvero (limite gratuito: 1000 scritture al giorno)
+      if (confronta(vecchia) !== confronta(nuova)) { subs[id] = { ...nuova, t: Date.now(), t0: (vecchia && vecchia.t0) || Date.now() }; await env.KV.put("subs", JSON.stringify(subs)); }
       return json({ ok: true, seguite: follow.length });
     }
     if (url.pathname === "/unsubscribe" && req.method === "POST") {
@@ -223,12 +246,12 @@ export default {
       return json({ ok: st < 300, status: st });
     }
     if (url.pathname === "/diagnosi") {
-      // controllo senza dati sensibili: quante iscrizioni, quali partite seguite, ultimo stato visto
+      // controllo senza dati personali: solo conteggi e stato del servizio
       const subs = (await env.KV.get("subs", "json")) || {};
       const state = (await env.KV.get("state", "json")) || {};
       return json({
-        iscrizioni: Object.values(subs).map((x) => ({ servizio: new URL(x.sub.endpoint).host, seguite: (x.follow || []).map((f) => `${f.h}-${f.a} (${f.lgE}/${f.eid})`), aggiornata: new Date(x.t).toISOString() })),
-        stato_partite: state, orologio: (await env.KV.get("orologio", "json")) || null, vapid: !!(await env.KV.get("vapid")),
+        iscrizioni: Object.keys(subs).length, partite_seguite: new Set(Object.values(subs).flatMap((x) => (x.follow || []).map((f) => f.lgE + "/" + f.eid))).size,
+        stato_partite: Object.keys(state).length, orologio: (await env.KV.get("orologio", "json")) || null, vapid: !!(await env.KV.get("vapid")),
       });
     }
     // sondaggio "chi vince?": un voto per dispositivo (impronta anonima dal browser), chiuso al calcio d'inizio dall'app
@@ -241,34 +264,40 @@ export default {
       const d = await req.json().catch(() => null);
       const id = d && String(d.id || ""), s = d && Number(d.s), chi = d && String(d.chi || "");
       if (!/^[A-Za-z0-9_-]{1,40}$/.test(id) || ![0, 1, 2].includes(s) || !/^[a-z0-9]{8,40}$/.test(chi)) return json({ ok: false }, 400);
+      if (troppi(req)) return json({ ok: false, err: "troppi voti, riprova tra un minuto" }, 429);
       const G0 = await giornata();
-      const mt = G0 && G0.matches.find((x) => x.id === id);
-      if (mt && (mt.st !== "NS" || Date.parse(mt.ko) <= Date.now())) return json({ ok: false, err: "votazione chiusa" }, 409);
-      const k = "v:" + id, kc = "vc:" + id + ":" + chi;
+      if (!G0) return json({ ok: false, err: "servizio momentaneamente non disponibile" }, 503);
+      const mt = G0.matches.find((x) => x.id === id);
+      // si vota solo su partite note e non ancora iniziate
+      if (!mt) return json({ ok: false, err: "partita sconosciuta" }, 404);
+      if (mt.st !== "NS" || Date.parse(mt.ko) <= Date.now()) return json({ ok: false, err: "votazione chiusa" }, 409);
+      const k = "v:" + id;
       const v = (await env.KV.get(k, "json")) || [0, 0, 0];
       const u = (await env.KV.get("u:" + chi, "json")) || { nome: "", gruppi: [], voti: {} };
-      u.voti[id] = { s, d: mt ? mt.date : new Date().toISOString().slice(0, 10), p: mt ? mt.mk || mt.p : null, ia: mt && mt.p ? mt.p.indexOf(Math.max(...mt.p)) : null };
-      await env.KV.put("u:" + chi, JSON.stringify(u));
-      const prima = await env.KV.get(kc);
-      if (prima !== null && Number(prima) === s) return json({ ok: true, v });
-      if (prima !== null) v[Number(prima)] = Math.max(0, v[Number(prima)] - 1);
+      const prima = u.voti[id] ? u.voti[id].s : null;
+      if (prima === s) return json({ ok: true, v }); // nessun cambiamento: nessuna scrittura
+      u.voti[id] = { s, t: Date.now(), k: mt.ko, d: mt.date, p: mt.mk || mt.p || null, ia: mt.p ? mt.p.indexOf(Math.max(...mt.p)) : null };
+      if (prima != null) v[prima] = Math.max(0, v[prima] - 1);
       v[s] += 1;
+      await env.KV.put("u:" + chi, JSON.stringify(u));
       await env.KV.put(k, JSON.stringify(v), { expirationTtl: 60 * 60 * 24 * 21 });
-      await env.KV.put(kc, String(s), { expirationTtl: 60 * 60 * 24 * 21 });
       return json({ ok: true, v });
     }
     // ---------- gara dei pronostici ----------
     const okChi = (c) => /^[a-z0-9]{8,40}$/.test(String(c || ""));
     if (url.pathname === "/profilo" && req.method === "POST") {
-      const d = await req.json().catch(() => null);
+      const d = await req.clone().json().catch(() => null);
       if (!d || !okChi(d.chi)) return json({ ok: false }, 400);
-      const u = (await env.KV.get("u:" + d.chi, "json")) || { nome: "", gruppi: [], voti: {} };
-      if (typeof d.nome === "string") u.nome = d.nome.replace(/[^\p{L}\p{N} ._-]/gu, "").trim().slice(0, 20);
-      await env.KV.put("u:" + d.chi, JSON.stringify(u));
-      return json({ ok: true, u: { nome: u.nome, gruppi: u.gruppi } });
+      if (typeof d.nome === "string") {
+        const u = (await env.KV.get("u:" + d.chi, "json")) || { nome: "", gruppi: [], voti: {} };
+        const nome = d.nome.replace(/[^\p{L}\p{N} ._-]/gu, "").trim().slice(0, 20);
+        if (nome !== u.nome || !(await env.KV.get("u:" + d.chi))) { u.nome = nome; await env.KV.put("u:" + d.chi, JSON.stringify(u)); }
+        return json({ ok: true, u: { nome: u.nome, gruppi: u.gruppi } });
+      }
     }
     if (url.pathname === "/profilo") {
-      const chi = url.searchParams.get("chi");
+      // lettura: il codice arriva nel corpo (POST) per non finire nei registri; GET resta per le versioni vecchie dell'app
+      const chi = req.method === "POST" ? ((await req.clone().json().catch(() => null)) || {}).chi : url.searchParams.get("chi");
       if (!okChi(chi)) return json({ ok: false }, 400);
       const u = await env.KV.get("u:" + chi, "json");
       if (!u) return json({ ok: false, err: "codice non trovato" }, 404);
@@ -295,14 +324,19 @@ export default {
       return json({ ok: true, code, nome: g.nome });
     }
     if (url.pathname === "/classifica") {
-      const chi = url.searchParams.get("chi"), code = String(url.searchParams.get("gruppo") || "").toUpperCase(), per = url.searchParams.get("periodo") || "settimana";
+      const q = req.method === "POST" ? (await req.json().catch(() => null)) || {} : Object.fromEntries(url.searchParams);
+      const chi = q.chi, code = String(q.gruppo || "").toUpperCase(), per = q.periodo || "settimana";
       if (!okChi(chi)) return json({ ok: false }, 400);
       // risultati: archivio "ris" aggiornato con le partite finite del file dell'app
       const ris = (await env.KV.get("ris", "json")) || {};
       const G1 = await giornata();
       let nuovi = false;
       for (const m of (G1 && G1.matches) || []) if (m.st === "FT" && m.g && !ris[m.id]) { ris[m.id] = [m.g[0] > m.g[1] ? 0 : m.g[0] === m.g[1] ? 1 : 2, m.date]; nuovi = true; }
-      if (nuovi) await env.KV.put("ris", JSON.stringify(ris));
+      if (nuovi) { // archivio dei risultati: si tengono gli ultimi 120 giorni
+        const lim = new Date(Date.now() - 120 * 86400000).toISOString().slice(0, 10);
+        for (const id of Object.keys(ris)) if (ris[id][1] < lim) delete ris[id];
+        await env.KV.put("ris", JSON.stringify(ris));
+      }
       const lun = new Date(); lun.setUTCHours(0, 0, 0, 0); lun.setUTCDate(lun.getUTCDate() - ((lun.getUTCDay() + 6) % 7));
       const lunPrima = new Date(lun.getTime() - 7 * 86400000);
       const da = per === "settimana" ? lun.toISOString().slice(0, 10) : per === "scorsa" ? lunPrima.toISOString().slice(0, 10) : "0000";
@@ -312,6 +346,7 @@ export default {
         for (const [id, v] of Object.entries(u.voti || {})) {
           const r = ris[id];
           if (!r || r[1] < da || r[1] >= a_) continue;
+          if (v.t && v.k && v.t >= Date.parse(v.k)) continue; // voto arrivato dopo il calcio d'inizio: non conta
           giocate++;
           if (v.s === r[0]) { giuste++; pt += 3 + (v.p && v.p[v.s] < 0.3 ? 2 : 0); }
           if (v.ia != null) { iaG++; if (v.ia === r[0]) ia++; }
@@ -331,16 +366,13 @@ export default {
     // ---------- sincronizzazione tra dispositivi (codice personale) ----------
     if (url.pathname === "/sync" && req.method === "POST") {
       const d = await req.json().catch(() => null);
+      if (d && okChi(d.chi) && d.leggi) return json({ ok: true, dati: (await env.KV.get("s:" + d.chi, "json")) || null });
       if (!d || !okChi(d.chi) || typeof d.dati !== "object") return json({ ok: false }, 400);
+      if (troppi(req, 6)) return json({ ok: false, err: "troppe richieste" }, 429);
       const txt = JSON.stringify(d.dati);
       if (txt.length > 200000) return json({ ok: false, err: "troppi dati" }, 413);
       await env.KV.put("s:" + d.chi, txt);
       return json({ ok: true });
-    }
-    if (url.pathname === "/sync") {
-      const chi = url.searchParams.get("chi");
-      if (!okChi(chi)) return json({ ok: false }, 400);
-      return json({ ok: true, dati: (await env.KV.get("s:" + chi, "json")) || null });
     }
     if (url.pathname === "/stato") return json({ orologio: (await env.KV.get("orologio", "json")) || null, token: !!env.GH_TOKEN });
     if (url.pathname === "/") return json({ ok: true, servizio: "AuraPitch notifiche" });

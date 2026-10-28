@@ -47,8 +47,18 @@ LEAGUES = [
     ("MLS", "MLS", "Stati Uniti", "us", None, "MLS"), ("BR1", "Brasileirão", "Brasile", "br", None, "Brasileirão"),
     ("AR1", "Liga Profesional", "Argentina", "ar", None, "Liga Profesional"), ("MX1", "Liga MX", "Messico", "mx", None, "Liga MX"),
     ("J1", "J1 League", "Giappone", "jp", None, "J1 League"),
+    ("F2", "Ligue 2", "Francia", "fr", None, "Ligue 2"), ("NO1", "Eliteserien", "Norvegia", "no", None, "Eliteserien"),
+    ("SE1", "Allsvenskan", "Svezia", "se", None, "Allsvenskan"), ("SA1", "Saudi Pro League", "Arabia Saudita", "sa", None, "Saudi Pro League"),
+    ("CHI1", "Primera División", "Cile", "cl", None, "Primera División Cile"), ("COL1", "Liga BetPlay", "Colombia", "co", None, "Liga BetPlay"),
+    ("AU1", "A-League", "Australia", "au", None, "A-League"), ("UY1", "Primera División", "Uruguay", "uy", None, "Primera División Uruguay"),
+    ("PY1", "Primera División", "Paraguay", "py", None, "Primera División Paraguay"), ("EC1", "LigaPro", "Ecuador", "ec", None, "LigaPro Ecuador"),
+    ("PE1", "Liga 1", "Perù", "pe", None, "Liga 1 Perù"), ("LIB", "Copa Libertadores", "Sudamerica", "sam", None, "Copa Libertadores"),
+    ("SUD", "Copa Sudamericana", "Sudamerica", "sam", None, "Copa Sudamericana"), ("ACL", "AFC Champions League", "Asia", "as", None, "AFC Champions League"),
+    # nazionali (nomi in italiano, originali in eh/ea)
+    ("NL", "Nations League", "Europa", "eu", None, "Nations League"), ("AMI", "Amichevoli nazionali", "Mondo", "wo", None, "Amichevoli nazionali"),
+    ("EQ", "Qualificazioni Europei", "Europa", "eu", None, "Qualificazioni Europei"), ("WCQ", "Qualificazioni Mondiali", "Mondo", "wo", None, "Qualificazioni Mondiali"),
 ]
-PRIORITA = ["CL", "I1", "EL", "CI", "SCI", "E0", "SP1", "D1", "F1", "ECL", "I2", "FAC", "CDR", "DFB", "ELC", "CDF", "P1", "N1", "E1", "D2", "SP2", "T1", "B1", "SC0", "BR1", "AR1", "MLS", "MX1", "A1", "G1", "DK1", "J1"]
+PRIORITA = ["NL", "CL", "I1", "EL", "CI", "SCI", "E0", "SP1", "D1", "F1", "ECL", "I2", "FAC", "CDR", "DFB", "ELC", "CDF", "P1", "N1", "E1", "D2", "SP2", "T1", "B1", "SC0", "BR1", "AR1", "MLS", "MX1", "A1", "G1", "DK1", "J1", "SA1", "LIB", "SUD", "F2", "NO1", "SE1", "COL1", "CHI1", "AU1", "UY1", "PY1", "EC1", "PE1", "ACL", "AMI", "EQ", "WCQ"]
 GG = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"]
 STOP = {"fc", "ac", "as", "ssc", "afc", "cf", "sc", "us", "usd", "calcio", "club", "de", "del", "cd", "ud", "sd", "rc", "rcd", "sv", "vfb", "vfl", "tsg",
         "bc", "fk", "1", "04", "05", "1899", "1909", "1913", "1919", "1929", "and", "hove", "albion", "hotspur", "wanderers", "the"}
@@ -628,8 +638,13 @@ def genera():
         arbitro = scheda_arbitro(arb_nome, arb, (medie_ck.get(k) or {}).get("lega") or {}) if arb_nome else None
         extra = extra or []
         mid = f"{k}-{m_fd['id'] if m_fd else zlib.crc32((h + '|' + a + '|' + loc.date().isoformat()).encode())}"
+        if k in ES.NAZIONALI:  # nazionali: nome italiano per l'app, quello originale per diretta e risultati
+            import nazionali as NZ
+            eh, ea, h, a = h, a, NZ.italiano(h), NZ.italiano(a)
+        else:
+            eh = ea = None
         out["matches"].append({
-            "id": mid, "fd": m_fd["id"] if m_fd else None, "lg": k, "date": loc.strftime("%Y-%m-%d"), "time": loc.strftime("%H:%M"), "ko": t0.isoformat(),
+            "id": mid, "fd": m_fd["id"] if m_fd else None, "lg": k, **({"eh": eh, "ea": ea} if eh else {}), "date": loc.strftime("%Y-%m-%d"), "time": loc.strftime("%H:%M"), "ko": t0.isoformat(),
             "h": h, "a": a, "st": st, "g": g, "g1": primo_tempo(m_fd) if m_fd and st in ("FT", "LIVE") else None, "res": (None if g is None else (0 if g[0] > g[1] else 1 if g[0] == g[1] else 2)), "free": False,
             "p": q["mk"], "mk": q["mk"], "po": q["mo"] if q["mo"] is not None else 0.5, "mo": q["mo"] if q["mo"] is not None else 0.5,
             "odds": q["odds"], "max": q["max"], "nb": q["nb"], "xg": [lh, la], "elo": [None, None],

@@ -5,13 +5,14 @@ import { C, Crest, Ctx, Flag, Ic, Marchio, Sheet, evalCode, hit, html, norm, pct
 import { statoGiocata } from "./schedina.js";
 
   /* ---- partita della settimana: la sfida più importante dei prossimi 7 giorni (competizione, classifica delle due squadre, equilibrio) ---- */
-  const PESO_LEGA = { CL: 3, I1: 2.4, E0: 2.4, SP1: 2.1, D1: 2, F1: 1.7, EL: 1.6, CI: 1.4, SCI: 1.6, FAC: 1.2, CDR: 1.2, DFB: 1.1, ECL: 1.1, P1: 1, N1: 1, ELC: 0.8, CDF: 0.7, E1: 0.6, I2: 0.6, T1: 0.7, B1: 0.6, SC0: 0.6, BR1: 0.7, AR1: 0.6, MLS: 0.5, MX1: 0.5, D2: 0.5, SP2: 0.5, A1: 0.4, G1: 0.4, DK1: 0.4, J1: 0.4 };
+  const PESO_LEGA = { NL: 2.6, LIB: 1.2, SA1: 0.6, F2: 0.4, NO1: 0.3, SE1: 0.3, COL1: 0.3, CHI1: 0.3, AU1: 0.3, UY1: 0.2, PY1: 0.2, EC1: 0.2, PE1: 0.2, SUD: 0.6, ACL: 0.5, AMI: 0.8, EQ: 1.5, WCQ: 1.8, CL: 3, I1: 2.4, E0: 2.4, SP1: 2.1, D1: 2, F1: 1.7, EL: 1.6, CI: 1.4, SCI: 1.6, FAC: 1.2, CDR: 1.2, DFB: 1.1, ECL: 1.1, P1: 1, N1: 1, ELC: 0.8, CDF: 0.7, E1: 0.6, I2: 0.6, T1: 0.7, B1: 0.6, SC0: 0.6, BR1: 0.7, AR1: 0.6, MLS: 0.5, MX1: 0.5, D2: 0.5, SP2: 0.5, A1: 0.4, G1: 0.4, DK1: 0.4, J1: 0.4 };
   function partitaSettimana(D) {
     const pos = (k, t) => { const S = D.standings[k]; const i = S ? S.generale.findIndex((r) => r.team === t) : -1; return i < 0 ? 12 : i + 1; };
     let best = null;
     for (const m of D.matches) {
       if (m.st !== "NS" || new Date(m.ko).getTime() - Date.now() > 7 * 86400e3 || new Date(m.ko).getTime() < Date.now()) continue;
-      const v = (PESO_LEGA[m.lg] || 1) + Math.max(0, 8 - pos(m.lg, m.h)) * 0.12 + Math.max(0, 8 - pos(m.lg, m.a)) * 0.12 + (1 - Math.abs(m.mk[0] - m.mk[2])) * 0.8;
+      const bonus = (t) => { const q = pos(m.lg, t); return q > 0 ? Math.max(0, 8 - q) * 0.12 : 0; }; // senza classifica (coppe, nazionali): nessun bonus
+      const v = (PESO_LEGA[m.lg] || 0.3) + bonus(m.h) + bonus(m.a) + (1 - Math.abs(m.mk[0] - m.mk[2])) * 0.8;
       if (!best || v > best.v) best = { m, v };
     }
     return best && best.m;
@@ -79,11 +80,15 @@ import { statoGiocata } from "./schedina.js";
     ["F1", "Ligue 1", "fr"], ["N1", "Eredivisie", "nl"], ["P1", "Primeira Liga", "pt"], ["E1", "Championship", "en"], ["SCI", "Supercoppa Italiana", "it"],
     ["FAC", "FA Cup", "en"], ["ELC", "Carabao Cup", "en"], ["CDR", "Copa del Rey", "es"], ["DFB", "DFB-Pokal", "de"], ["CDF", "Coppa di Francia", "fr"],
     ["D2", "2. Bundesliga", "de"], ["SP2", "LaLiga 2", "es"], ["B1", "Pro League", "be"], ["T1", "Süper Lig", "tr"], ["SC0", "Premiership", "sc"], ["A1", "Bundesliga austriaca", "at"],
-    ["G1", "Super League", "gr"], ["DK1", "Superliga", "dk"], ["MLS", "MLS", "us"], ["BR1", "Brasileirão", "br"], ["AR1", "Liga Profesional", "ar"], ["MX1", "Liga MX", "mx"], ["J1", "J1 League", "jp"]];
+    ["G1", "Super League", "gr"], ["DK1", "Superliga", "dk"], ["MLS", "MLS", "us"], ["BR1", "Brasileirão", "br"], ["AR1", "Liga Profesional", "ar"], ["MX1", "Liga MX", "mx"], ["J1", "J1 League", "jp"],
+    ["F2", "Ligue 2", "fr"], ["NO1", "Eliteserien", "no"], ["SE1", "Allsvenskan", "se"], ["SA1", "Saudi Pro League", "sa"], ["CHI1", "Primera Cile", "cl"], ["COL1", "Liga BetPlay", "co"],
+    ["AU1", "A-League", "au"], ["UY1", "Primera Uruguay", "uy"], ["PY1", "Primera Paraguay", "py"], ["EC1", "LigaPro Ecuador", "ec"], ["PE1", "Liga 1 Perù", "pe"],
+    ["LIB", "Copa Libertadores", "sam"], ["SUD", "Copa Sudamericana", "sam"], ["ACL", "AFC Champions League", "as"],
+    ["NL", "Nations League", "eu"], ["AMI", "Amichevoli nazionali", "wo"], ["EQ", "Qualificazioni Europei", "eu"], ["WCQ", "Qualificazioni Mondiali", "wo"]];
   // gruppi per il primo avvio: prima le competizioni più seguite, il resto a scomparsa
-  const GRUPPI_LEGHE = [["Italia ed Europa", ["I1", "I2", "CL", "EL", "ECL", "CI", "SCI", "E0", "SP1", "D1", "F1"]],
-    ["Coppe nazionali", ["FAC", "ELC", "CDR", "DFB", "CDF"]], ["Altri campionati europei", ["E1", "SP2", "D2", "N1", "P1", "B1", "T1", "SC0", "A1", "G1", "DK1"]],
-    ["Resto del mondo", ["MLS", "BR1", "AR1", "MX1", "J1"]]];
+  const GRUPPI_LEGHE = [["Italia ed Europa", ["I1", "I2", "CL", "EL", "ECL", "CI", "SCI", "E0", "SP1", "D1", "F1"]], ["Nazionali", ["NL", "AMI", "EQ", "WCQ"]],
+    ["Coppe nazionali", ["FAC", "ELC", "CDR", "DFB", "CDF"]], ["Altri campionati europei", ["E1", "SP2", "D2", "F2", "N1", "P1", "B1", "T1", "SC0", "A1", "G1", "DK1", "NO1", "SE1"]],
+    ["Resto del mondo", ["MLS", "BR1", "AR1", "MX1", "SA1", "J1", "COL1", "CHI1", "UY1", "PY1", "EC1", "PE1", "AU1", "LIB", "SUD", "ACL"]]];
   function PrimoAvvio({ onFine }) {
     const { D, setFavTeams, setFavLeagues, setFav } = React.useContext(Ctx);
     const [passo, setPasso] = useState(0);

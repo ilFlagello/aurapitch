@@ -20,18 +20,29 @@ ESPN_LG = {"I1": "ita.1", "I2": "ita.2", "E0": "eng.1", "SP1": "esp.1", "D1": "g
            "F1": "fra.1", "N1": "ned.1", "P1": "por.1", "E1": "eng.2",
            "FAC": "eng.fa", "ELC": "eng.league_cup", "CDR": "esp.copa_del_rey", "DFB": "ger.dfb_pokal", "CDF": "fra.coupe_de_france", "SCI": "ita.super_cup",
            "D2": "ger.2", "SP2": "esp.2", "B1": "bel.1", "T1": "tur.1", "SC0": "sco.1", "A1": "aut.1", "G1": "gre.1", "DK1": "den.1",
-           "MLS": "usa.1", "BR1": "bra.1", "AR1": "arg.1", "MX1": "mex.1", "J1": "jpn.1"}
-COPPE = ("CL", "EL", "ECL", "CI", "FAC", "ELC", "CDR", "DFB", "CDF", "SCI")
-SOLO_ESPN = ("I2", "F1", "N1", "P1", "E1", "D2", "SP2", "B1", "T1", "SC0", "A1", "G1", "DK1", "MLS", "BR1", "AR1", "MX1", "J1")  # campionati con classifica e risultati da ESPN (non da football-data.org)
+           "MLS": "usa.1", "BR1": "bra.1", "AR1": "arg.1", "MX1": "mex.1", "J1": "jpn.1",
+           "F2": "fra.2", "NO1": "nor.1", "SE1": "swe.1", "SA1": "ksa.1", "CHI1": "chi.1", "COL1": "col.1", "AU1": "aus.1", "UY1": "uru.1", "PY1": "par.1",
+           "EC1": "ecu.1", "PE1": "per.1", "LIB": "conmebol.libertadores", "SUD": "conmebol.sudamericana", "ACL": "afc.champions",
+           # nazionali
+           "NL": "uefa.nations", "AMI": "fifa.friendly", "EQ": "uefa.euroq", "WCQ": "fifa.worldq.uefa"}
+NAZIONALI = ("NL", "AMI", "EQ", "WCQ")
+COPPE = ("CL", "EL", "ECL", "CI", "FAC", "ELC", "CDR", "DFB", "CDF", "SCI", "LIB", "SUD", "ACL", "NL", "AMI", "EQ", "WCQ")
+SOLO_ESPN = ("I2", "F1", "N1", "P1", "E1", "D2", "SP2", "B1", "T1", "SC0", "A1", "G1", "DK1", "MLS", "BR1", "AR1", "MX1", "J1",
+             "F2", "NO1", "SE1", "SA1", "CHI1", "COL1", "AU1", "UY1", "PY1", "EC1", "PE1")  # campionati con classifica e risultati da ESPN (non da football-data.org)
 # quote da ESPN: nome del campionato come nel file delle quote (deve coincidere con l'ultimo campo di LEAGUES in genera_app.py)
 QUOTE_ESPN = {"F1": "Ligue 1", "N1": "Eredivisie", "P1": "Primeira Liga", "E1": "Championship", "FAC": "FA Cup", "ELC": "Carabao Cup",
               "CDR": "Copa del Rey", "DFB": "DFB-Pokal", "CDF": "Coppa di Francia", "SCI": "Supercoppa Italiana",
               "D2": "2. Bundesliga", "SP2": "LaLiga 2", "B1": "Pro League", "T1": "Süper Lig", "SC0": "Premiership", "A1": "Bundesliga austriaca",
-              "G1": "Super League", "DK1": "Superliga", "MLS": "MLS", "BR1": "Brasileirão", "AR1": "Liga Profesional", "MX1": "Liga MX", "J1": "J1 League"}
+              "G1": "Super League", "DK1": "Superliga", "MLS": "MLS", "BR1": "Brasileirão", "AR1": "Liga Profesional", "MX1": "Liga MX", "J1": "J1 League",
+              "F2": "Ligue 2", "NO1": "Eliteserien", "SE1": "Allsvenskan", "SA1": "Saudi Pro League", "CHI1": "Primera División Cile", "COL1": "Liga BetPlay",
+              "AU1": "A-League", "UY1": "Primera División Uruguay", "PY1": "Primera División Paraguay", "EC1": "LigaPro Ecuador", "PE1": "Liga 1 Perù",
+              "LIB": "Copa Libertadores", "SUD": "Copa Sudamericana", "ACL": "AFC Champions League", "NL": "Nations League", "AMI": "Amichevoli nazionali",
+              "EQ": "Qualificazioni Europei", "WCQ": "Qualificazioni Mondiali"}
 # Football-Data.co.uk: quote medie di molti bookmaker per il prossimo turno (fixtures.csv: codice "Div"; new_league_fixtures.csv: paese/campionato)
-FD_DIV = {"F1": "F1", "N1": "N1", "P1": "P1", "E1": "E1", "D2": "D2", "SP2": "SP2", "B1": "B1", "T1": "T1", "SC0": "SC0", "G1": "G1"}
+FD_DIV = {"F1": "F1", "N1": "N1", "P1": "P1", "E1": "E1", "D2": "D2", "SP2": "SP2", "B1": "B1", "T1": "T1", "SC0": "SC0", "G1": "G1", "F2": "F2"}
 FD_NUOVI = {"A1": ("Austria", "Bundesliga"), "DK1": ("Denmark", "Superliga"), "MLS": ("USA", "MLS"), "BR1": ("Brazil", "Serie A"),
-            "AR1": ("Argentina", "Liga Profesional"), "MX1": ("Mexico", "Liga MX"), "J1": ("Japan", "J1 League")}
+            "AR1": ("Argentina", "Liga Profesional"), "MX1": ("Mexico", "Liga MX"), "J1": ("Japan", "J1 League"),
+            "NO1": ("Norway", "Eliteserien"), "SE1": ("Sweden", "Allsvenskan")}
 SOGLIE_GIALLI = (5, 10)  # squalifica alla 5a e alla 10a ammonizione (regola comune a Serie A, Serie B, Premier, LaLiga, Bundesliga)
 STOP = {"fc", "ac", "as", "ss", "us", "ssc", "afc", "cf", "sc", "calcio", "club", "de", "1907", "1909", "1913", "1919", "bc", "vfb", "vfl", "tsg", "sv", "fsv", "rc", "cd", "ud", "rcd", "ca", "sd", "1846", "04", "05", "1899", "hellas"}
 ALIAS = {"internazionale": "inter", "inter milan": "inter", "ac milan": "milan", "manchester united": "man united", "manchester city": "man city", "bayern munich": "bayern", "tottenham hotspur": "tottenham"}
@@ -271,6 +282,8 @@ def giro_voti(base="data", giorni=4, massimo=350):
     scans = set(arch.get("giorni", []))  # "lega|giorno" gia controllati (solo giorni chiusi da almeno 3 giorni)
     giorno_ev = {}
     for k, lg in ESPN_LG.items():
+        if k in NAZIONALI:
+            continue  # voti AuraPitch: solo club
         evs, w = [], inizio
         while w.date() <= ora.date():  # un giorno per richiesta: ESPN rifiuta gli intervalli di date
             chiave = f"{k}|{w.strftime('%Y%m%d')}"
@@ -484,7 +497,7 @@ def giro_espn(base="data", ore=48):
             ko = datetime.fromisoformat(m["ko"])
         except (KeyError, ValueError):
             continue
-        if m.get("lg") in ESPN_LG and timedelta(hours=-3) <= ko - ora <= timedelta(hours=ore):
+        if m.get("lg") in ESPN_LG and m.get("lg") not in NAZIONALI and timedelta(hours=-3) <= ko - ora <= timedelta(hours=ore):
             for sq in (m["h"], m["a"]):
                 if sq not in squadre or squadre[sq] in COPPE:  # il campionato vale piu della coppa (rosa, squalifiche)
                     squadre[sq] = m["lg"]

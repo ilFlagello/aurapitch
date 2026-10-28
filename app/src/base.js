@@ -126,6 +126,19 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       ${k === "ar" && html`<rect width="24" height="16" fill="#7dd3fc" /><rect y="5.33" width="24" height="5.34" fill="#f8fafc" /><circle cx="12" cy="8" r="1.6" fill="#facc15" />`}
       ${k === "mx" && html`<rect width="8" height="16" fill="#15803d" /><rect x="8" width="8" height="16" fill="#f8fafc" /><rect x="16" width="8" height="16" fill="#dc2626" /><circle cx="12" cy="8" r="1.6" fill="#a16207" />`}
       ${k === "jp" && html`<rect width="24" height="16" fill="#f8fafc" /><circle cx="12" cy="8" r="4.2" fill="#dc2626" />`}
+      ${k === "no" && html`<rect width="24" height="16" fill="#dc2626" /><rect x="6" width="4" height="16" fill="#f8fafc" /><rect y="6" width="24" height="4" fill="#f8fafc" /><rect x="7" width="2" height="16" fill="#1e3a8a" /><rect y="7" width="24" height="2" fill="#1e3a8a" />`}
+      ${k === "se" && html`<rect width="24" height="16" fill="#1d4ed8" /><rect x="7" width="2.6" height="16" fill="#facc15" /><rect y="6.7" width="24" height="2.6" fill="#facc15" />`}
+      ${k === "sa" && html`<rect width="24" height="16" fill="#15803d" /><rect x="6" y="9.5" width="12" height="1.2" rx="0.6" fill="#f8fafc" />`}
+      ${k === "cl" && html`<rect width="24" height="16" fill="#f8fafc" /><rect y="8" width="24" height="8" fill="#dc2626" /><rect width="8" height="8" fill="#1d4ed8" /><circle cx="4" cy="4" r="1.4" fill="#f8fafc" />`}
+      ${k === "co" && html`<rect width="24" height="16" fill="#facc15" /><rect y="8" width="24" height="4" fill="#1d4ed8" /><rect y="12" width="24" height="4" fill="#dc2626" />`}
+      ${k === "ec" && html`<rect width="24" height="16" fill="#facc15" /><rect y="8" width="24" height="4" fill="#1d4ed8" /><rect y="12" width="24" height="4" fill="#dc2626" /><circle cx="12" cy="8" r="1.8" fill="#a16207" />`}
+      ${k === "au" && html`<rect width="24" height="16" fill="#1e3a8a" /><path d="M0 0L10 6M10 0L0 6" stroke="#f8fafc" stroke-width="1.4" /><circle cx="17" cy="11" r="1" fill="#f8fafc" /><circle cx="20" cy="6" r="0.8" fill="#f8fafc" /><circle cx="5" cy="12" r="1.3" fill="#f8fafc" />`}
+      ${k === "uy" && html`<rect width="24" height="16" fill="#f8fafc" />${[1, 3, 5, 7].map((i) => html`<rect key=${i} y=${i * 1.78} width="24" height="1.78" fill="#3b82f6" />`)}<rect width="9" height="8" fill="#f8fafc" /><circle cx="4.5" cy="4" r="2" fill="#facc15" />`}
+      ${k === "py" && html`<rect width="24" height="5.34" fill="#dc2626" /><rect y="5.33" width="24" height="5.34" fill="#f8fafc" /><rect y="10.66" width="24" height="5.34" fill="#1d4ed8" />`}
+      ${k === "pe" && html`<rect width="8" height="16" fill="#dc2626" /><rect x="8" width="8" height="16" fill="#f8fafc" /><rect x="16" width="8" height="16" fill="#dc2626" />`}
+      ${k === "sam" && html`<rect width="24" height="16" fill="#0f766e" /><circle cx="12" cy="8" r="4.5" fill="none" stroke="#facc15" stroke-width="1.4" />`}
+      ${k === "as" && html`<rect width="24" height="16" fill="#1e40af" /><circle cx="12" cy="8" r="4.5" fill="none" stroke="#f8fafc" stroke-width="1.4" />`}
+      ${k === "wo" && html`<rect width="24" height="16" fill="#334155" /><circle cx="12" cy="8" r="5" fill="none" stroke="#f8fafc" stroke-width="1.2" /><path d="M7 8h10M12 3c-2.5 3-2.5 7 0 10M12 3c2.5 3 2.5 7 0 10" stroke="#f8fafc" stroke-width="0.9" fill="none" />`}
       ${k === "eu" && html`<rect width="24" height="16" fill="#1d4ed8" />`}</svg>`;
   }
 

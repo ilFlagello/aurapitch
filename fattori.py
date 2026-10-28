@@ -48,7 +48,7 @@ LINGUE = {
 # lingua delle notizie per campionato (le nazionali usano l'inglese; Italia e altre si aggiungono in genera)
 LINGUA_LEGA = {"I1": "it", "I2": "it", "CI": "it", "SCI": "it", "E0": "en", "E1": "en", "FAC": "en", "ELC": "en", "SC0": "en", "MLS": "en", "CL": "en", "EL": "en", "ECL": "en",
                "SP1": "es", "SP2": "es", "CDR": "es", "AR1": "es", "MX1": "es", "D1": "de", "D2": "de", "DFB": "de", "A1": "de", "F1": "fr", "CDF": "fr", "B1": "fr",
-               "P1": "pt", "BR1": "pt", "N1": "nl"}
+               "P1": "pt", "BR1": "pt", "N1": "nl", "F2": "fr", "CHI1": "es", "COL1": "es", "UY1": "es", "PY1": "es", "EC1": "es", "PE1": "es", "LIB": "es", "SUD": "es"}
 
 
 def piano(s):
@@ -58,7 +58,8 @@ def piano(s):
 
 def url_notizie(squadra, lega):
     import urllib.parse
-    hl, gl, ceid, chiavi = LINGUE[LINGUA_LEGA.get(lega, "it")]
+    lingua = "it" if squadra == "Italia" else LINGUA_LEGA.get(lega, "en")  # nazionali e campionati senza lingua dedicata: notizie in inglese
+    hl, gl, ceid, chiavi = LINGUE[lingua]
     nome = re.sub(r"\b(fc|ac|as|ssc|cf|1907|1909|calcio)\b", "", squadra, flags=re.I).strip()
     q = f'"{nome}" {chiavi} when:3d'
     return "https://news.google.com/rss/search?" + urllib.parse.urlencode({"q": q, "hl": hl, "gl": gl, "ceid": ceid})

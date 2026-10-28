@@ -396,6 +396,8 @@ def giro_notizie(base="data", ore=48):
             ko = datetime.fromisoformat(m["ko"])
         except (KeyError, ValueError):
             continue
+        if m.get("eh"):
+            continue  # nazionali: senza rosa con gol e assist le notizie non diventano correzioni
         if m.get("st") == "NS" and timedelta(hours=-1) <= ko - ora <= timedelta(hours=ore):
             squadre[m["h"]] = m["lg"]
             squadre[m["a"]] = m["lg"]

@@ -36,7 +36,10 @@ const DERBY = [
   ["Revierderby", [["dortmund"], ["schalke"]]], ["Der Klassiker", [["bayern"], ["dortmund"]]], ["Le Classique", [["paris saint", "psg", "paris sg"], ["marseille"]]],
   ["De Klassieker", [["ajax"], ["feyenoord"]]], ["Derby di Lisbona", [["benfica"], ["sporting"]]], ["O Clássico", [["porto"], ["benfica"]]],
   ["Derby intercontinentale", [["galatasaray"], ["fenerbahce", "fenerbahçe"]]], ["Derby degli eterni nemici", [["olympiacos", "olympiakos"], ["panathinaikos"]]],
-  ["Superclásico", [["boca"], ["river"]]], ["Fla-Flu", [["flamengo"], ["fluminense"]]], ["Clásico de México", [["america", "américa"], ["guadalajara", "chivas"]]],
+  ["Superclásico", [["boca"], ["river"]]],
+  ["Italia-Germania, la sfida più amata", [["italia"], ["germania"]]], ["Italia-Francia, la sfida del 2006", [["italia"], ["francia"]]],
+  ["Superclásico de las Américas", [["argentina"], ["brasile"]]], ["Inghilterra-Germania", [["inghilterra"], ["germania"]], "lineker"],
+  ["Derbi ibérico", [["spagna"], ["portogallo"]]], ["Paesi Bassi-Germania", [["paesi bassi"], ["germania"]]], ["Fla-Flu", [["flamengo"], ["fluminense"]]], ["Clásico de México", [["america", "américa"], ["guadalajara", "chivas"]]],
 ];
 const pn = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 const ha = (nome, pezzi, escludi) => pezzi.some((p) => pn(nome).includes(pn(p))) && !(escludi || []).some((p) => pn(nome).includes(pn(p)));

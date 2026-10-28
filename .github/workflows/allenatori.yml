@@ -1,0 +1,29 @@
+# Archivio delle panchine (Wikidata) e studio sugli allenatori. Manuale, e ogni lunedi per tenere aggiornato il termometro.
+name: Allenatori
+on:
+  workflow_dispatch:
+    inputs:
+      scarica: { description: "Riscarica l'archivio da Wikidata", default: "si" }
+  schedule:
+    - cron: "30 5 * * 1"
+permissions: { contents: write }
+concurrency: { group: allenatori, cancel-in-progress: false }
+jobs:
+  studio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Archivio da Wikidata
+        if: github.event_name == 'schedule' || inputs.scarica == 'si'
+        run: python3 strumenti/allenatori.py
+      - name: Studio e termometro della panchina
+        run: |
+          if [ -f strumenti/test_allenatori.py ]; then pip install -q numpy && python3 strumenti/test_allenatori.py; fi
+      - name: Salva
+        run: |
+          git config user.name "aurapitch-raccolta"; git config user.email "aurapitch-raccolta@users.noreply.github.com"
+          git add storico app/data 2>/dev/null; git commit -m "Allenatori: archivio e studio" || true
+          for i in 1 2 3; do git pull --rebase -q origin main && git push && break; sleep 5; done

@@ -4,7 +4,8 @@
 import { useState, useEffect, useRef } from "react";
 
 export const ESPN_LG = { I1: "ita.1", I2: "ita.2", CL: "uefa.champions", EL: "uefa.europa", ECL: "uefa.europa.conf", CI: "ita.coppa_italia", E0: "eng.1", SP1: "esp.1", D1: "ger.1",
-  F1: "fra.1", N1: "ned.1", P1: "por.1", E1: "eng.2", FAC: "eng.fa", ELC: "eng.league_cup", CDR: "esp.copa_del_rey", DFB: "ger.dfb_pokal", CDF: "fra.coupe_de_france", SCI: "ita.super_cup" };
+  F1: "fra.1", N1: "ned.1", P1: "por.1", E1: "eng.2", FAC: "eng.fa", ELC: "eng.league_cup", CDR: "esp.copa_del_rey", DFB: "ger.dfb_pokal", CDF: "fra.coupe_de_france", SCI: "ita.super_cup",
+  D2: "ger.2", SP2: "esp.2", B1: "bel.1", T1: "tur.1", SC0: "sco.1", A1: "aut.1", G1: "gre.1", DK1: "den.1", MLS: "usa.1", BR1: "bra.1", AR1: "arg.1", MX1: "mex.1", J1: "jpn.1" };
 const SITE = "https://site.api.espn.com/apis/site/v2/sports/soccer/";
 const WEB = "https://site.web.api.espn.com/apis/common/v3/sports/soccer/";
 const CORE = "https://sports.core.api.espn.com/v2/sports/soccer/";

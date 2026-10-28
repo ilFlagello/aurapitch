@@ -18,12 +18,20 @@ STAND = "https://site.api.espn.com/apis/v2/sports/soccer/"
 ESPN_LG = {"I1": "ita.1", "I2": "ita.2", "E0": "eng.1", "SP1": "esp.1", "D1": "ger.1", "CL": "uefa.champions", "EL": "uefa.europa", "ECL": "uefa.europa.conf", "CI": "ita.coppa_italia",
            # campionati e coppe con quote gratuite da ESPN (DraftKings), senza crediti di The Odds API
            "F1": "fra.1", "N1": "ned.1", "P1": "por.1", "E1": "eng.2",
-           "FAC": "eng.fa", "ELC": "eng.league_cup", "CDR": "esp.copa_del_rey", "DFB": "ger.dfb_pokal", "CDF": "fra.coupe_de_france", "SCI": "ita.super_cup"}
+           "FAC": "eng.fa", "ELC": "eng.league_cup", "CDR": "esp.copa_del_rey", "DFB": "ger.dfb_pokal", "CDF": "fra.coupe_de_france", "SCI": "ita.super_cup",
+           "D2": "ger.2", "SP2": "esp.2", "B1": "bel.1", "T1": "tur.1", "SC0": "sco.1", "A1": "aut.1", "G1": "gre.1", "DK1": "den.1",
+           "MLS": "usa.1", "BR1": "bra.1", "AR1": "arg.1", "MX1": "mex.1", "J1": "jpn.1"}
 COPPE = ("CL", "EL", "ECL", "CI", "FAC", "ELC", "CDR", "DFB", "CDF", "SCI")
-SOLO_ESPN = ("I2", "F1", "N1", "P1", "E1")  # campionati con classifica e risultati da ESPN (non da football-data.org)
+SOLO_ESPN = ("I2", "F1", "N1", "P1", "E1", "D2", "SP2", "B1", "T1", "SC0", "A1", "G1", "DK1", "MLS", "BR1", "AR1", "MX1", "J1")  # campionati con classifica e risultati da ESPN (non da football-data.org)
 # quote da ESPN: nome del campionato come nel file delle quote (deve coincidere con l'ultimo campo di LEAGUES in genera_app.py)
 QUOTE_ESPN = {"F1": "Ligue 1", "N1": "Eredivisie", "P1": "Primeira Liga", "E1": "Championship", "FAC": "FA Cup", "ELC": "Carabao Cup",
-              "CDR": "Copa del Rey", "DFB": "DFB-Pokal", "CDF": "Coppa di Francia", "SCI": "Supercoppa Italiana"}
+              "CDR": "Copa del Rey", "DFB": "DFB-Pokal", "CDF": "Coppa di Francia", "SCI": "Supercoppa Italiana",
+              "D2": "2. Bundesliga", "SP2": "LaLiga 2", "B1": "Pro League", "T1": "Süper Lig", "SC0": "Premiership", "A1": "Bundesliga austriaca",
+              "G1": "Super League", "DK1": "Superliga", "MLS": "MLS", "BR1": "Brasileirão", "AR1": "Liga Profesional", "MX1": "Liga MX", "J1": "J1 League"}
+# Football-Data.co.uk: quote medie di molti bookmaker per il prossimo turno (fixtures.csv: codice "Div"; new_league_fixtures.csv: paese/campionato)
+FD_DIV = {"F1": "F1", "N1": "N1", "P1": "P1", "E1": "E1", "D2": "D2", "SP2": "SP2", "B1": "B1", "T1": "T1", "SC0": "SC0", "G1": "G1"}
+FD_NUOVI = {"A1": ("Austria", "Bundesliga"), "DK1": ("Denmark", "Superliga"), "MLS": ("USA", "MLS"), "BR1": ("Brazil", "Serie A"),
+            "AR1": ("Argentina", "Liga Profesional"), "MX1": ("Mexico", "Liga MX"), "J1": ("Japan", "J1 League")}
 SOGLIE_GIALLI = (5, 10)  # squalifica alla 5a e alla 10a ammonizione (regola comune a Serie A, Serie B, Premier, LaLiga, Bundesliga)
 STOP = {"fc", "ac", "as", "ss", "us", "ssc", "afc", "cf", "sc", "calcio", "club", "de", "1907", "1909", "1913", "1919", "bc", "vfb", "vfl", "tsg", "sv", "fsv", "rc", "cd", "ud", "rcd", "ca", "sd", "1846", "04", "05", "1899", "hellas"}
 ALIAS = {"internazionale": "inter", "inter milan": "inter", "ac milan": "milan", "manchester united": "man united", "manchester city": "man city", "bayern munich": "bayern", "tottenham hotspur": "tottenham"}
@@ -579,6 +587,8 @@ def quote_espn(base="data", giorni=7):
     import csv
     oggi = datetime.now(timezone.utc)
     righe = []
+    medie = medie_football_data()
+    usate = 0
     for k, nome in QUOTE_ESPN.items():
         for dd in range(giorni):
             giorno = (oggi + timedelta(days=dd)).strftime("%Y%m%d")
@@ -611,6 +621,16 @@ def quote_espn(base="data", giorni=7):
                     if linea == 2.5 and qo and qu:
                         r.update({"oa_quota_media_Over 2.5": qo, "oa_quota_media_Under 2.5": qu, "oa_quota_max_Over 2.5": qo, "oa_quota_max_Under 2.5": qu,
                                   "oa_bookmaker_Over 2.5": 1, "oa_bookmaker_Under 2.5": 1})
+                    # se Football-Data ha la stessa partita, si usa la media di molti bookmaker (più precisa di un bookmaker solo)
+                    fd = trova_media(medie.get(k) or [], r["casa"], r["ospite"], ev.get("date", "")[:10])
+                    if fd:
+                        usate += 1
+                        r.update({"oa_quota_media_1": fd["1"], "oa_quota_media_X": fd["X"], "oa_quota_media_2": fd["2"],
+                                  "oa_quota_max_1": fd.get("m1") or fd["1"], "oa_quota_max_X": fd.get("mX") or fd["X"], "oa_quota_max_2": fd.get("m2") or fd["2"],
+                                  "oa_bookmaker_1": "", "oa_bookmaker_X": "", "oa_bookmaker_2": "", "fonte": "football-data"})
+                        if fd.get("O") and fd.get("U"):
+                            r.update({"oa_quota_media_Over 2.5": fd["O"], "oa_quota_media_Under 2.5": fd["U"], "oa_quota_max_Over 2.5": fd.get("mO") or fd["O"],
+                                      "oa_quota_max_Under 2.5": fd.get("mU") or fd["U"], "oa_bookmaker_Over 2.5": "", "oa_bookmaker_Under 2.5": ""})
                     righe.append(r)
                 except Exception as e:  # noqa: BLE001
                     print(f"ESPN quote {k}: partita saltata ({e})")
@@ -624,5 +644,63 @@ def quote_espn(base="data", giorni=7):
         w = csv.DictWriter(f, fieldnames=campi)
         w.writeheader()
         w.writerows(righe)
-    print(f"ESPN quote: {len(righe)} partite in {len({r['campionato'] for r in righe})} competizioni")
+    print(f"ESPN quote: {len(righe)} partite in {len({r['campionato'] for r in righe})} competizioni ({usate} con la media di Football-Data)")
     return len(righe)
+
+
+def medie_football_data():
+    """Quote medie del prossimo turno da Football-Data.co.uk, per codice di campionato AuraPitch."""
+    import csv
+    import io
+    out = {}
+    def num(x):
+        try:
+            v = float(x)
+            return v if v > 1 else None
+        except (TypeError, ValueError):
+            return None
+    for nome in ("fixtures.csv", "new_league_fixtures.csv"):
+        try:
+            req = urllib.request.Request("https://www.football-data.co.uk/" + nome, headers={"User-Agent": "Mozilla/5.0 (AuraPitch beta)"})
+            with urllib.request.urlopen(req, timeout=25) as r:
+                testo = r.read().decode("utf-8-sig", "replace")
+        except Exception as e:  # noqa: BLE001
+            print(f"Football-Data {nome}: {e}")
+            continue
+        for x in csv.DictReader(io.StringIO(testo)):
+            if nome == "fixtures.csv":
+                k = next((a for a, b in FD_DIV.items() if b == x.get("Div")), None)
+                h, a = x.get("HomeTeam"), x.get("AwayTeam")
+            else:
+                k = next((a for a, (c, l) in FD_NUOVI.items() if c == x.get("Country") and l == x.get("League")), None)
+                h, a = x.get("Home"), x.get("Away")
+            q = [num(x.get(c)) for c in ("AvgH", "AvgD", "AvgA")]
+            if not k or not all(q):
+                continue
+            try:
+                d = datetime.strptime(x.get("Date", ""), "%d/%m/%Y").strftime("%Y-%m-%d")
+            except ValueError:
+                continue
+            out.setdefault(k, []).append({"h": h, "a": a, "d": d, "1": q[0], "X": q[1], "2": q[2], "m1": num(x.get("MaxH")), "mX": num(x.get("MaxD")), "m2": num(x.get("MaxA")),
+                                          "O": num(x.get("Avg>2.5")), "U": num(x.get("Avg<2.5")), "mO": num(x.get("Max>2.5")), "mU": num(x.get("Max<2.5"))})
+    print("Football-Data: quote medie per", {k: len(v) for k, v in out.items()})
+    return out
+
+
+def trova_media(elenco, casa, ospite, giorno):
+    """La partita di Football-Data con le stesse squadre (nomi simili) entro un giorno di distanza."""
+    try:
+        g0 = datetime.strptime(giorno, "%Y-%m-%d")
+    except ValueError:
+        return None
+    best, bs = None, 0
+    for x in elenco:
+        try:
+            if abs((datetime.strptime(x["d"], "%Y-%m-%d") - g0).days) > 1:
+                continue
+        except ValueError:
+            continue
+        s = sim(casa, [x["h"]]) + sim(ospite, [x["a"]])
+        if s > bs:
+            best, bs = x, s
+    return best if bs >= 1.3 else None

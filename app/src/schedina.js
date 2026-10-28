@@ -6,9 +6,12 @@ import { StoricoCard } from "./partita.js";
 
     /* ---- schedina ---- */
     function SlipView() {
-      const { D, lg, byId, pro, mySlip, setMySlip, setUnlock, doCopy } = React.useContext(Ctx);
+      const { D, lg, byId, pro, mySlip, setMySlip, setUnlock, doCopy, favLeagues, caricaMercati } = React.useContext(Ctx);
       const [prof, setProf] = useState(0);
-      const [off, setOff] = useState(store.get("slipOff", []));
+      // campionati della schedina: se non li hai mai scelti qui, quelli che segui
+      const [off, setOff0] = useState(() => store.get("slipOff", null) || (favLeagues && favLeagues.length ? D.leagues.map((l) => l.k).filter((k) => !favLeagues.includes(k)) : []));
+      const setOff = (nx) => { setOff0(nx); store.set("slipOff", nx); if (caricaMercati) caricaMercati(D.leagues.map((l) => l.k).filter((k) => !nx.includes(k))); };
+      const miei = favLeagues && favLeagues.length ? D.leagues.map((l) => l.k).filter((k) => !favLeagues.includes(k)) : null;
       const [shield, setShield] = useState(false);
       const [per, setPer] = useState(store.get("slipPer", "3g"));
       const [qo, setQo] = useState(store.get("slipQ", 0));
@@ -32,7 +35,10 @@ import { StoricoCard } from "./partita.js";
         ${h === null ? null : h ? html`<${Ic.CheckCircle2} size=${17} className="text-emerald-500" />` : html`<${Ic.XCircle} size=${17} className="text-rose-500" />`}
         ${onDel && html`<button aria-label="Rimuovi" onClick=${onDel} className=${C.mu}><${Ic.Trash2} size=${15} /></button>`}</div>`; };
       return html`<div className="px-4 space-y-3"><${Schede} id="schedina" items=${["Crea con l'IA", "La mia schedina", "Diario", "Storico IA"]}>${[html`<${React.Fragment}>
-        <div className="flex gap-2 overflow-x-auto noscroll -mx-4 px-4">${D.leagues.map((l) => html`<${Chip} key=${l.k} on=${!off.includes(l.k)} onClick=${() => { const nx = off.includes(l.k) ? off.filter((q) => q !== l.k) : [...off, l.k]; setOff(nx); store.set("slipOff", nx); }}><${Flag} k=${l.flag} w=${16} />${l.name}<//>`)}</div>
+        <div className="flex gap-2 overflow-x-auto noscroll -mx-4 px-4">
+          ${miei && html`<${Chip} on=${off.length === miei.length && miei.every((k) => off.includes(k))} onClick=${() => setOff(miei)}><${Ic.Star} size=${14} />Solo i miei<//>`}
+          <${Chip} on=${off.length === 0} onClick=${() => setOff([])}>Tutti<//>
+          ${D.leagues.map((l) => html`<${Chip} key=${l.k} on=${!off.includes(l.k)} onClick=${() => { const nx = off.includes(l.k) ? off.filter((q) => q !== l.k) : [...off, l.k]; setOff(nx); }}><${Flag} k=${l.flag} w=${16} />${l.name}<//>`)}</div>
         <div className=${"text-[14px] font-semibold " + C.tx}>Partite di</div>
         <div className="flex gap-1.5 overflow-x-auto noscroll -mx-4 px-4">${PERIODI.map(([k, l]) => html`<button key=${k} onClick=${() => { setPer(k); store.set("slipPer", k); setVr(0); }}
           className=${"shrink-0 px-3.5 py-[7px] rounded-full text-[14px] font-semibold " + (per === k ? C.seg : "bg-white dark:bg-[#191626] " + C.tx)}>${l}</button>`)}</div>

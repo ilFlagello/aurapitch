@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { ESPN_LG } from "./live.js";
 import { C, Crest, Ctx, Flag, Form, Ic, Schede, Seg, html, store } from "./base.js";
 import { GiocoResponsabile } from "./extra.js";
+import { scaricaCalendario } from "./condividi.js";
 import { Row } from "./partita.js";
 import { statoGiocata } from "./schedina.js";
 
@@ -140,15 +141,19 @@ import { statoGiocata } from "./schedina.js";
       const pos = lgK ? D.standings[lgK].generale.findIndex((r) => r.team === fav) + 1 : 0;
       const row = lgK && D.standings[lgK].generale[pos - 1];
       const m = D.matches.find((x) => x.h === fav || x.a === fav);
-      const l5 = m ? m.last5[m.h === fav ? 0 : 1] : [];
+      const { caricaDettagli } = React.useContext(Ctx);
+      useEffect(() => { if (m && caricaDettagli) caricaDettagli(m.id); }, [m && m.id]);
+      const l5 = m && m.last5 ? m.last5[m.h === fav ? 0 : 1] : [];
       return html`<div className="px-4 space-y-3"><${Schede} id="club" items=${["La mia squadra", "Gara", "Traguardi", "Account"]}>${[html`<${React.Fragment}>
         <div className=${C.card + " p-4"}><div className="flex items-center gap-3">${fav ? html`<${Crest} t=${fav} size=${52} />` : html`<span className=${"w-[52px] h-[52px] rounded-full flex items-center justify-center " + C.ch + " " + C.mu}><${Ic.Shield} size=${24} /></span>`}
           <div className="flex-1 min-w-0"><div className=${"text-xs " + C.mu}>Squadra del cuore</div><div className=${(fav ? "text-xl " : "text-[15px] ") + "font-semibold truncate " + C.tx}>${fav || "Scegline una qui sotto"}</div>
             ${L && html`<div className=${"text-xs flex items-center gap-1.5 " + C.mu}><${Flag} k=${L.flag} w=${14} />${L.name} - ${pos}° con ${row.pt} punti</div>`}</div></div>
           ${l5.length > 0 && html`<div className="mt-4"><div className=${C.lab + " mb-1.5"}>Ultime 5</div><${Form} list=${l5} /></div>`}
+          ${fav && D.matches.some((x) => x.st === "NS" && (x.h === fav || x.a === fav)) && html`<button onClick=${() => scaricaCalendario(D.matches.filter((x) => x.st === "NS" && (x.h === fav || x.a === fav)), lg, "partite-" + fav.replace(/[^\w-]+/g, "-"))}
+            className=${"mt-3 w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Calendar} size=${15} />Prossime partite nel calendario</button>`}
           ${lgK && ESPN_LG[lgK] && html`<button onClick=${() => setTeam({ lgE: ESPN_LG[lgK], name: fav })} className=${"mt-4 w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}>Calendario, risultati e rosa<${Ic.ChevronRight} size=${15} /></button>`}</div>
         ${m ? html`<div className=${C.lab}>Partita della giornata</div><div className=${C.card + " overflow-hidden"}><${Row} m=${m} i=${0} /></div>`
-          : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${fav} non gioca in questa giornata.</div>`}
+          : fav ? html`<div className=${C.card + " p-4 text-sm " + C.mu}>${fav} non gioca in questa giornata.</div>` : null}
         <div className=${C.card + " p-4 space-y-2"}><label htmlFor="fav" className=${C.lab}>${fav ? "Cambia squadra" : "Squadra del cuore"}</label>
           <select id="fav" value=${fav} onChange=${(e) => { setFav(e.target.value); store.set("fav", e.target.value); }} className=${"w-full rounded-xl px-3 py-2 text-sm " + C.ch + " " + C.tx}>
             ${!fav && html`<option value="">Scegli...</option>`}${D.leagues.map((l) => html`<optgroup key=${l.k} label=${l.name}>${(D.standings[l.k] ? D.standings[l.k].generale.map((r) => r.team) : [...new Set(D.matches.filter((x) => x.lg === l.k).flatMap((x) => [x.h, x.a]))]).slice().sort().map((t) => html`<option key=${t} value=${t}>${t}</option>`)}</optgroup>`)}</select></div><//>`,

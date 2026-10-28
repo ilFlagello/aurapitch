@@ -24,10 +24,16 @@ import { SlipView } from "./schedina.js";
         .catch(() => fetch("data/giornata.json").then((r) => (r.ok ? r.json() : null)).then((d) => d && setD(d)).catch(() => {})) // ripiego: il file completo
         .finally(() => { inCarico.current[id] = false; });
     };
-    const caricaMercati = () => {
-      if (!Draw || !Draw.leggera || merc || inCarico.current.merc) return;
-      inCarico.current.merc = true;
-      fetch("data/mercati.json").then((r) => (r.ok ? r.json() : Promise.reject(r.status))).then(setMerc).catch(() => {}).finally(() => { inCarico.current.merc = false; });
+    // mercati per campionato: si scaricano solo quelli dei campionati scelti nella Schedina
+    const caricaMercati = (leghe) => {
+      if (!Draw || !Draw.leggera) return;
+      for (const k of leghe) {
+        const c = "merc:" + k;
+        if (inCarico.current[c]) continue;
+        inCarico.current[c] = true;
+        fetch("data/mercati/" + k + ".json").then((r) => (r.ok ? r.json() : fetch("data/mercati.json").then((r2) => r2.json())))
+          .then((x) => setMerc((m) => ({ ...(m || {}), ...x }))).catch(() => { inCarico.current[c] = false; });
+      }
     };
     const live = useLiveScores(Draw ? Draw.matches : null);
     const D = React.useMemo(() => Draw && { ...Draw, matches: Draw.matches.map((m0) => {
@@ -60,6 +66,9 @@ import { SlipView } from "./schedina.js";
     const [banner, setBanner] = useState(store.get("banner2", true));
     const [copyText, setCopyText] = useState(null);
     const [toast, setToast] = useState("");
+    // senza rete: l'app continua con i dati salvati e lo dice
+    const [online, setOnline] = useState(typeof navigator === "undefined" || navigator.onLine !== false);
+    useEffect(() => { const su = () => setOnline(true), giu = () => setOnline(false); window.addEventListener("online", su); window.addEventListener("offline", giu); return () => { window.removeEventListener("online", su); window.removeEventListener("offline", giu); }; }, []);
     const [team, setTeam] = useState(null);
     const [stor, setStor] = useState(null);
     const [aff, setAff] = useState(null);
@@ -216,10 +225,15 @@ import { SlipView } from "./schedina.js";
       return () => { if (sw) sw.removeEventListener("message", fn); };
     }, []);
     useEffect(() => { if (open) caricaDettagli(open); }, [open, Draw, extra]);
-    useEffect(() => { if (tab === "schedina") caricaMercati(); }, [tab, Draw, merc]);
+    const legheSchedina = () => { const off = store.get("slipOff", null); return Draw ? [...new Set(Draw.matches.map((m) => m.lg))].filter((k) => (off ? !off.includes(k) : !favLeagues.length || favLeagues.includes(k))) : []; };
+    useEffect(() => { if (tab === "schedina") caricaMercati([...legheSchedina(), ...mySlip.map((x) => (Draw && Draw.matches.find((m) => m.id === x.id) || {}).lg).filter(Boolean)]); }, [tab, Draw, mySlip.length]);
     useEffect(() => { if (!daAprire || !D) return; setOpen(daAprire); setMt(0); setTeam(null); window.scrollTo(0, 0); setDaAprire(null); if (location.hash) history.replaceState(null, "", location.pathname); }, [daAprire, D]);
     if (err) return html`<div className="p-6 text-center text-sm ${C.mu}">${err}</div>`;
-    if (!D) return html`<div className="p-12 text-center text-sm ${C.mu}">Caricamento delle partite...</div>`;
+    if (!D) return html`<div className="max-w-[480px] mx-auto px-4 pt-6 space-y-3" aria-busy="true" aria-label="Caricamento delle partite">
+      <div className="h-9 w-40 rounded-xl bg-[#17152B]/[0.06] dark:bg-white/[0.06] animate-pulse"></div>
+      <div className="flex gap-2">${[0, 1, 2, 3, 4].map((i) => html`<div key=${i} className="h-16 flex-1 rounded-2xl bg-[#17152B]/[0.06] dark:bg-white/[0.06] animate-pulse"></div>`)}</div>
+      ${[0, 1, 2].map((i) => html`<div key=${i} className=${C.card + " p-4 space-y-3"}><div className="h-5 w-32 rounded bg-[#17152B]/[0.06] dark:bg-white/[0.06] animate-pulse"></div>
+        ${[0, 1, 2].map((j) => html`<div key=${j} className="h-12 rounded-xl bg-[#17152B]/[0.05] dark:bg-white/[0.05] animate-pulse"></div>`)}</div>`)}</div>`;
     const byId = Object.fromEntries(D.matches.map((m) => [m.id, m]));
     const lg = (k) => D.leagues.find((l) => l.k === k);
     // senza scelte salvate: aperti i campionati che segui (o i primi 5 se non ne segui), gli altri chiusi con il solo conteggio
@@ -306,10 +320,11 @@ import { SlipView } from "./schedina.js";
     const views = { partite: home, campionati: html`<${LeaguesView} />`, schedina: html`<${SlipView} />`, club: html`<${ClubView} />` };
     const DOCK = [["partite", "Partite", Ic.Calendar], ["campionati", "Campionati", Ic.Trophy], ["schedina", "Schedina IA", Ic.Sparkles], ["club", "Il Mio Club", Ic.Shield]];
 
-    const ctx = { syncOn, setSyncOn, setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen, mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
+    const ctx = { caricaDettagli, caricaMercati, syncOn, setSyncOn, setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen, mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
     return html`<${Ctx.Provider} value=${ctx}><div className="min-h-screen pb-28">
       ${header}
-      <main className="max-w-[480px] mx-auto">${guideBox}${team ? html`<${TeamView} key=${team.name} />` : open_m ? (D.leggera && !open_m.dett ? html`<div className="px-4 pt-16 text-center"><div className=${"text-[15px] font-semibold " + C.tx}>${open_m.h} - ${open_m.a}</div><div className=${"text-[13px] mt-2 " + C.mu}>Carico l'analisi della partita...</div></div>` : html`<${MatchView} key=${open_m.id} m=${open_m} />`) : views[tab]}</main>
+      <main className="max-w-[480px] mx-auto">${!online && html`<div role="status" className=${"mx-4 mb-3 px-3.5 py-2.5 rounded-2xl border text-[13px] flex items-center gap-2 " + TONE.warn}><${Ic.Clock} size=${15} />Sei offline: vedi i dati delle ${(D.generato || "").slice(-5)}. Quando torna la rete, tira giù la pagina per aggiornarli.</div>`}${guideBox}${team ? html`<${TeamView} key=${team.name} />` : open_m ? (D.leggera && !open_m.dett ? html`<div className="px-4 pt-4 space-y-3" aria-busy="true"><div className=${C.card + " p-5 text-center"}><div className=${"text-[17px] font-semibold " + C.tx}>${open_m.h} - ${open_m.a}</div><div className=${"text-[13px] mt-1 " + C.mu}>${online ? "Carico l'analisi della partita..." : "Sei offline: l'analisi di questa partita non è ancora stata scaricata."}</div>
+          <div className="h-2 mt-4 rounded-full bg-[#17152B]/[0.06] dark:bg-white/[0.06] animate-pulse"></div></div>${[0, 1].map((i) => html`<div key=${i} className=${C.card + " h-36 animate-pulse"}></div>`)}</div>` : html`<${MatchView} key=${open_m.id} m=${open_m} />`) : views[tab]}</main>
       <nav className="fixed inset-x-0 z-40" style=${{ bottom: "calc(10px + env(safe-area-inset-bottom, 0px))", paddingLeft: "calc(12px + env(safe-area-inset-left, 0px))", paddingRight: "calc(12px + env(safe-area-inset-right, 0px))" }}>
         <div className="dock max-w-[456px] mx-auto rounded-[26px] p-1.5 grid grid-cols-4 gap-1">${DOCK.map(([k, l, I]) => { const on = tab === k && !open && !team; return html`<button key=${k} onClick=${() => { setTab(k); setOpen(null); setTeam(null); window.scrollTo(0, 0); }}
           aria-current=${on ? "page" : undefined}

@@ -24,7 +24,7 @@ const URL0 = `http://127.0.0.1:${srv.address().port}/`;
 const errori = [];
 const b = await pw.chromium.launch();
 async function giro(tema) {
-  const p = await b.newPage({ viewport: { width: 390, height: 844 }, colorScheme: tema });
+  const p = await b.newPage({ viewport: { width: 390, height: 844 }, colorScheme: tema, acceptDownloads: true });
   p.on("pageerror", (e) => errori.push(`[${tema}] errore: ${e.message}`));
   p.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource|net::/.test(m.text())) errori.push(`[${tema}] console: ${m.text()}`); });
   await p.route(/^(?!http:\/\/127\.0\.0\.1)/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
@@ -39,6 +39,12 @@ async function giro(tema) {
   await passo("partita", async () => {
     await p.locator("main button").filter({ hasText: /\d\d:\d\d/ }).first().click(); await p.waitForTimeout(1000);
     for (const n of ["Partita", "Formazioni", "IA", "Statistiche", "Cronaca", "In breve"]) { await tab(n); await foto("partita-" + n.replace(" ", "")); }
+    // calendario e immagine della partita: devono produrre un file
+    for (const [nome, est] of [["Nel calendario", ".ics"], ["Condividi la partita", ".png"]]) {
+      const b = p.getByRole("button", { name: nome }); if (!(await b.count())) continue;
+      const [dl] = await Promise.all([p.waitForEvent("download", { timeout: 8000 }), b.click()]);
+      if (!dl.suggestedFilename().endsWith(est)) errori.push(`[${tema}] ${nome}: file inatteso ${dl.suggestedFilename()}`);
+    }
     await p.getByRole("button", { name: /Partite/ }).first().click(); await p.waitForTimeout(400);
   });
   await passo("campionati", async () => { await dock("Campionati"); for (const n of ["Classifica", "Marcatori", "Assist", "Voti", "Confronta"]) { await tab(n); } await foto("campionati"); });
@@ -50,6 +56,8 @@ async function giro(tema) {
   });
   await passo("club", async () => { await dock("Il Mio Club"); for (const n of ["La mia squadra", "Gara", "Traguardi", "Account"]) { await tab(n); await foto("club-" + n.replace(/ /g, "")); } });
   await passo("ricerca", async () => { await p.getByRole("button", { name: /Cerca/ }).first().click(); await p.keyboard.type("Inter"); await p.waitForTimeout(400); await foto("ricerca"); });
+  await passo("offline", async () => { await p.keyboard.press("Escape"); await p.context().setOffline(true); await p.waitForTimeout(300);
+    if (!(await p.getByText("Sei offline").count())) errori.push(`[${tema}] offline: manca l'avviso`); await p.context().setOffline(false); });
   const testo = await p.evaluate(() => document.body.innerText);
   if (/undefined|NaN/.test(testo)) errori.push(`[${tema}] testo con "undefined" o "NaN" nell'ultima schermata`);
   await p.close();

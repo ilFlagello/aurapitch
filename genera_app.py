@@ -40,8 +40,15 @@ LEAGUES = [
     ("SCI", "Supercoppa Italiana", "Italia", "it", None, "Supercoppa Italiana"), ("FAC", "FA Cup", "Inghilterra", "en", None, "FA Cup"),
     ("ELC", "Carabao Cup", "Inghilterra", "en", None, "Carabao Cup"), ("CDR", "Copa del Rey", "Spagna", "es", None, "Copa del Rey"),
     ("DFB", "DFB-Pokal", "Germania", "de", None, "DFB-Pokal"), ("CDF", "Coppa di Francia", "Francia", "fr", None, "Coppa di Francia"),
+    ("D2", "2. Bundesliga", "Germania", "de", None, "2. Bundesliga"), ("SP2", "LaLiga 2", "Spagna", "es", None, "LaLiga 2"),
+    ("B1", "Pro League", "Belgio", "be", None, "Pro League"), ("T1", "Süper Lig", "Turchia", "tr", None, "Süper Lig"),
+    ("SC0", "Premiership", "Scozia", "sc", None, "Premiership"), ("A1", "Bundesliga austriaca", "Austria", "at", None, "Bundesliga austriaca"),
+    ("G1", "Super League", "Grecia", "gr", None, "Super League"), ("DK1", "Superliga", "Danimarca", "dk", None, "Superliga"),
+    ("MLS", "MLS", "Stati Uniti", "us", None, "MLS"), ("BR1", "Brasileirão", "Brasile", "br", None, "Brasileirão"),
+    ("AR1", "Liga Profesional", "Argentina", "ar", None, "Liga Profesional"), ("MX1", "Liga MX", "Messico", "mx", None, "Liga MX"),
+    ("J1", "J1 League", "Giappone", "jp", None, "J1 League"),
 ]
-PRIORITA = ["CL", "I1", "EL", "CI", "SCI", "E0", "SP1", "D1", "F1", "ECL", "I2", "FAC", "CDR", "DFB", "ELC", "CDF", "P1", "N1", "E1"]
+PRIORITA = ["CL", "I1", "EL", "CI", "SCI", "E0", "SP1", "D1", "F1", "ECL", "I2", "FAC", "CDR", "DFB", "ELC", "CDF", "P1", "N1", "E1", "D2", "SP2", "T1", "B1", "SC0", "BR1", "AR1", "MLS", "MX1", "A1", "G1", "DK1", "J1"]
 GG = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"]
 STOP = {"fc", "ac", "as", "ssc", "afc", "cf", "sc", "us", "usd", "calcio", "club", "de", "del", "cd", "ud", "sd", "rc", "rcd", "sv", "vfb", "vfl", "tsg",
         "bc", "fk", "1", "04", "05", "1899", "1909", "1913", "1919", "1929", "and", "hove", "albion", "hotspur", "wanderers", "the"}
@@ -1003,7 +1010,9 @@ def main():
 
 STATO_OUT = os.path.join("app", "data", "stato.json")
 # l'app scarica prima una lista leggera; i dettagli di una partita arrivano quando la apri, i mercati quando apri la Schedina
-DETTAGLI = ("markets", "ia", "cart", "curiosita", "xgf", "segnali", "attese", "prec")
+DETTAGLI = ("markets", "ia", "cart", "curiosita", "xgf", "segnali", "attese", "prec", "forma", "ctx", "h2h", "last5", "odds", "max", "elo", "foto",
+            "arbitro", "xg_mercato", "fattori")
+FATTORI_LISTA = ("chi", "lato", "tipo", "fonte", "delta")  # nella lista resta un riassunto delle assenze (pagina squadra)
 NON_SERVONO = ("_ctx", "_firma")
 
 
@@ -1019,8 +1028,10 @@ def scrivi_lista(d):
         with open(os.path.join(cartella, nome), "w", encoding="utf-8") as f:
             json.dump(det, f, ensure_ascii=False, separators=(",", ":"))
         if m.get("markets"):
-            mercati[m["id"]] = m["markets"]
+            mercati.setdefault(m["lg"], {})[m["id"]] = m["markets"]
         leggera = {k: v for k, v in m.items() if k not in DETTAGLI and k not in NON_SERVONO}
+        if m.get("fattori"):
+            leggera["fattori"] = [{k: f.get(k) for k in FATTORI_LISTA} for f in m["fattori"]]
         if isinstance(m.get("tip"), dict):  # nel consiglio restano esito, probabilità e quota; le motivazioni sono nei dettagli
             leggera["tip"] = {k: {c: x for c, x in t.items() if c not in ("perche", "contro")} if isinstance(t, dict) else t for k, t in m["tip"].items()}
         lista.append(leggera)
@@ -1029,8 +1040,17 @@ def scrivi_lista(d):
             os.remove(os.path.join(cartella, f))
     with open(os.path.join("app", "data", "lista.json"), "w", encoding="utf-8") as f:
         json.dump({**{k: v for k, v in d.items() if k != "matches"}, "matches": lista, "leggera": True}, f, ensure_ascii=False, separators=(",", ":"))
-    with open(os.path.join("app", "data", "mercati.json"), "w", encoding="utf-8") as f:
-        json.dump(mercati, f, ensure_ascii=False, separators=(",", ":"))
+    # mercati per campionato: la Schedina scarica solo quelli dei campionati scelti
+    cm = os.path.join("app", "data", "mercati")
+    os.makedirs(cm, exist_ok=True)
+    for f in os.listdir(cm):
+        if f.endswith(".json") and f[:-5] not in mercati:
+            os.remove(os.path.join(cm, f))
+    for k, v in mercati.items():
+        with open(os.path.join(cm, k + ".json"), "w", encoding="utf-8") as f:
+            json.dump(v, f, ensure_ascii=False, separators=(",", ":"))
+    with open(os.path.join("app", "data", "mercati.json"), "w", encoding="utf-8") as f:  # tutto insieme: per le versioni vecchie dell'app
+        json.dump({i: r for v in mercati.values() for i, r in v.items()}, f, ensure_ascii=False, separators=(",", ":"))
 
 
 def scrivi_stato(d):

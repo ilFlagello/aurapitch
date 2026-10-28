@@ -115,6 +115,17 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       ${k === "fr" && html`<rect width="8" height="16" fill="#1d4ed8" /><rect x="8" width="8" height="16" fill="#f8fafc" /><rect x="16" width="8" height="16" fill="#dc2626" />`}
       ${k === "nl" && html`<rect width="24" height="5.34" fill="#dc2626" /><rect y="5.33" width="24" height="5.34" fill="#f8fafc" /><rect y="10.66" width="24" height="5.34" fill="#1d4ed8" />`}
       ${k === "pt" && html`<rect width="24" height="16" fill="#dc2626" /><rect width="9.6" height="16" fill="#15803d" /><circle cx="9.6" cy="8" r="2.6" fill="#facc15" />`}
+      ${k === "be" && html`<rect width="8" height="16" fill="#111827" /><rect x="8" width="8" height="16" fill="#facc15" /><rect x="16" width="8" height="16" fill="#dc2626" />`}
+      ${k === "tr" && html`<rect width="24" height="16" fill="#dc2626" /><circle cx="9.5" cy="8" r="4" fill="#f8fafc" /><circle cx="10.6" cy="8" r="3.2" fill="#dc2626" /><circle cx="14.6" cy="8" r="1.3" fill="#f8fafc" />`}
+      ${k === "sc" && html`<rect width="24" height="16" fill="#1d4ed8" /><path d="M0 0L24 16M24 0L0 16" stroke="#f8fafc" stroke-width="2.6" />`}
+      ${k === "at" && html`<rect width="24" height="16" fill="#dc2626" /><rect y="5.33" width="24" height="5.34" fill="#f8fafc" />`}
+      ${k === "gr" && html`<rect width="24" height="16" fill="#2563eb" /><rect y="3.55" width="24" height="1.78" fill="#f8fafc" /><rect y="7.1" width="24" height="1.78" fill="#f8fafc" /><rect y="10.65" width="24" height="1.78" fill="#f8fafc" /><rect width="8.9" height="8.9" fill="#2563eb" /><rect x="3.55" width="1.78" height="8.9" fill="#f8fafc" /><rect y="3.55" width="8.9" height="1.78" fill="#f8fafc" />`}
+      ${k === "dk" && html`<rect width="24" height="16" fill="#dc2626" /><rect x="7" width="2.6" height="16" fill="#f8fafc" /><rect y="6.7" width="24" height="2.6" fill="#f8fafc" />`}
+      ${k === "us" && html`<rect width="24" height="16" fill="#f8fafc" />${[0, 2, 4, 6].map((i) => html`<rect key=${i} y=${i * 2.29} width="24" height="1.14" fill="#dc2626" />`)}<rect y="13.7" width="24" height="1.14" fill="#dc2626" /><rect width="10" height="8" fill="#1e3a8a" />`}
+      ${k === "br" && html`<rect width="24" height="16" fill="#16a34a" /><path d="M12 2L22 8L12 14L2 8Z" fill="#facc15" /><circle cx="12" cy="8" r="3.2" fill="#1e3a8a" />`}
+      ${k === "ar" && html`<rect width="24" height="16" fill="#7dd3fc" /><rect y="5.33" width="24" height="5.34" fill="#f8fafc" /><circle cx="12" cy="8" r="1.6" fill="#facc15" />`}
+      ${k === "mx" && html`<rect width="8" height="16" fill="#15803d" /><rect x="8" width="8" height="16" fill="#f8fafc" /><rect x="16" width="8" height="16" fill="#dc2626" /><circle cx="12" cy="8" r="1.6" fill="#a16207" />`}
+      ${k === "jp" && html`<rect width="24" height="16" fill="#f8fafc" /><circle cx="12" cy="8" r="4.2" fill="#dc2626" />`}
       ${k === "eu" && html`<rect width="24" height="16" fill="#1d4ed8" />`}</svg>`;
   }
 
@@ -269,6 +280,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   }
   function options(m) {
     if (m.markets) return m.markets.map(([c, p, q, qm, sc]) => ({ k: c, p, q: q || Math.round(Math.max(1.01, 0.94 / p) * 100) / 100, stima: !qm, s: sc == null ? null : sc }));
+    if (!m.odds) return []; // lista leggera: i mercati arrivano con i dettagli o con i mercati del campionato
     const [p1, px, p2] = m.p, o = m.odds, po = m.po, mk = m.mk;
     // dati vecchi senza mercati: doppia chance con quota "equa" ricavata dalle probabilita, minimo 1,01
     const dc = (a, b) => Math.max(1.01, 1 / (mk[a] + mk[b]));

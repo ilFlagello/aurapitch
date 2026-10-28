@@ -1,5 +1,6 @@
 /* AuraPitch - riga partita e scheda partita: diretta, formazioni, IA, statistiche, cronaca, In breve, pagina squadra. */
 import React, { useState, useEffect, useRef } from "react";
+import { scaricaCalendario, immaginePartita } from "./condividi.js";
 import { useSummary, loadPlayer, loadCareer, ruolo, findTeam, loadTeam, minuto, ESPN_LG, andamento } from "./live.js";
 import { AuraLine, C, Crest, Ctx, DOT, FavPill, Flag, Form, GROUPS, Ic, Seg, Sheet, TONE, Tabs, auraCol, evalCode, html, leggiXg, lum, mGroup, mLabel, nf, norm, odd, options, pct, pctL, spiega, store } from "./base.js";
 import { usaVoti } from "./campionati.js";
@@ -913,7 +914,8 @@ import { Anteprima, partitaSettimana } from "./extra.js";
       return html`<button onClick=${onClick} className=${"mt-3 w-full flex items-center justify-between rounded-[14px] px-3.5 py-2.5 text-[14px] font-semibold " + C.ch + " " + C.tx}><span>${children}</span><${Ic.ChevronRight} size=${17} className=${C.mu} /></button>`;
     }
     function InBreve({ m, sm, vai, onPlayer }) {
-      const { unlocked, setUnlock, addLeg, mySlip } = React.useContext(Ctx);
+      const { unlocked, setUnlock, addLeg, mySlip, lg } = React.useContext(Ctx);
+      const [avviso, setAvviso] = useState("");
       const st = sm && sm.st !== "NS" ? sm.st : m.st;
       const tip = m.tip && m.tip.consiglio;
       const inSlip = mySlip.find((x) => x.id === m.id);
@@ -953,6 +955,12 @@ import { Anteprima, partitaSettimana } from "./extra.js";
           <${Vai} onClick=${() => vai(4)}>Forma, classifica e precedenti<//></div>`}
         ${st === "NS" && sm && sm.formazioni[0] && html`<div className=${C.card + " p-4"}><div className=${C.lab}>Formazioni ufficiali uscite</div>
           <div className=${"text-[14px] mt-1 " + C.mu}>${m.h} ${sm.formazioni[0].formation || ""}, ${m.a} ${(sm.formazioni[1] || {}).formation || ""}.</div><${Vai} onClick=${() => vai(2)}>Guarda le formazioni<//></div>`}
+        <div className=${"grid gap-2 " + (st === "NS" ? "grid-cols-2" : "grid-cols-1")}>
+          ${st === "NS" && html`<button onClick=${() => scaricaCalendario([m], lg, (m.h + "-" + m.a).replace(/[^\w-]+/g, "-")).then(() => setAvviso("Apri il file per aggiungerla al calendario (con promemoria 30 minuti prima)."))}
+            className=${"py-3 rounded-[16px] text-[14px] font-semibold flex items-center justify-center gap-1.5 " + C.card + " " + C.tx}><${Ic.Calendar} size=${16} />Nel calendario</button>`}
+          <button onClick=${() => immaginePartita(m, lg, unlocked(m)).then((r) => setAvviso("Immagine " + r + ".")).catch(() => setAvviso("Condivisione annullata."))}
+            className=${"py-3 rounded-[16px] text-[14px] font-semibold flex items-center justify-center gap-1.5 " + C.card + " " + C.tx}><${Ic.Share} size=${16} />Condividi la partita</button></div>
+        ${avviso && html`<div className=${"text-[12px] text-center " + C.mu}>${avviso}</div>`}
       <//>`;
     }
 

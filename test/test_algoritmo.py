@@ -93,5 +93,66 @@ class FileDellApp(unittest.TestCase):
             self.assertTrue(os.path.exists(f), f"manca il dettaglio di {m['id']}")
 
 
+class Apprendimento(unittest.TestCase):
+    """Correzioni imparate dai risultati (calibrazione.py) e motore di apprendimento (strumenti/impara.py)."""
+    MOD = {"cal": {"1": [0.05, 0.95], "X": [-0.03, 1.02], "GG": [0.02, 0.97], "O2.5": [-0.02, 1.01], "PF1/1": [0.04, 0.96], "MG1-3": [0.01, 0.98]},
+           "cal_lg": {"I1": {"X": 0.04, "O2.5": -0.03}}, "peso_ia": {"Esito finale": 0.6, "Under/Over": 1.2}}
+
+    def test_nessuna_correzione(self):
+        import calibrazione as CB
+        righe = M.calcola_mercati(1.5, 1.1, "C", "O", {})
+        prima = [(x["c"], x["p"], x["q"]) for x in righe]
+        CB.calibra(righe, "I1", mod={})
+        self.assertEqual(prima, [(x["c"], x["p"], x["q"]) for x in righe])
+
+    def test_coerenza(self):
+        import calibrazione as CB
+        for lh, la, lg in ((1.5, 1.1, "I1"), (0.8, 2.0, "E0"), (1.2, 1.2, "I1")):
+            righe = M.calcola_mercati(lh, la, "C", "O", {"1": 2.0})
+            quote = M.calcola_mercati(lh * 1.08, la, "C", "O", {})
+            CB.calibra(righe, lg, quote, mod=self.MOD)
+            p = {x["c"]: x for x in righe}
+            self.assertAlmostEqual(p["1"]["p"] + p["X"]["p"] + p["2"]["p"], 1, delta=0.002)
+            self.assertAlmostEqual(p["1X"]["p"], p["1"]["p"] + p["X"]["p"], delta=0.002)
+            self.assertAlmostEqual(p["O2.5"]["p"] + p["U2.5"]["p"], 1, delta=0.002)
+            self.assertAlmostEqual(sum(p[f"PF{a}/{b}"]["p"] for a in "1X2" for b in "1X2"), 1, delta=0.005)
+            self.assertEqual(p["1"]["q"], 2.0)  # le quote raccolte non si toccano
+            self.assertTrue(all(0 < x["p"] < 1 for x in righe))
+
+    def test_stessa_logica_numpy(self):
+        try:
+            import numpy as np
+        except ImportError:
+            self.skipTest("numpy assente")
+        sys.path.insert(0, os.path.join(RADICE, "strumenti"))
+        import calibrazione as CB
+        import impara as I
+        lh, la = np.array([1.5, 0.8, 1.2]), np.array([1.1, 2.0, 1.2])
+        cod, P = I.probabilita(lh, la)
+        _, PM = I.probabilita(lh * 1.08, la)
+        for n in range(3):  # stesse probabilita del motore di mercati.py
+            rif = mercati_di(lh[n], la[n])
+            self.assertLess(max(abs(P[n, k] - rif[c]) for k, c in enumerate(cod) if c in rif), 2e-4)
+        LG = np.array(["I1", "E0", "I1"])
+        Q = I.applica(self.MOD, cod, P, LG, PM)
+        for n in range(3):
+            z = CB.calibra_p({c: float(P[n, k]) for k, c in enumerate(cod)}, LG[n], self.MOD, {c: float(PM[n, k]) for k, c in enumerate(cod)})
+            self.assertLess(max(abs(Q[n, k] - z[c]) for k, c in enumerate(cod)), 1e-6)
+
+    def test_ricalibrazione_impara(self):
+        try:
+            import numpy as np
+        except ImportError:
+            self.skipTest("numpy assente")
+        sys.path.insert(0, os.path.join(RADICE, "strumenti"))
+        import impara as I
+        rng = np.random.default_rng(0)
+        p = rng.uniform(0.2, 0.8, 20000)
+        y = (rng.uniform(size=p.size) < I.sig(0.3 + 0.8 * I.logit(p))).astype(float)  # probabilita "storte" di proposito
+        a, b = I.adatta(I.logit(p), y, np.ones(p.size), pen=1.0)
+        self.assertAlmostEqual(a, 0.3, delta=0.06)
+        self.assertAlmostEqual(b, 0.8, delta=0.06)
+
+
 if __name__ == "__main__":
     unittest.main()

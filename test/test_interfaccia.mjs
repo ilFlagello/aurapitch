@@ -77,6 +77,16 @@ async function giro(tema) {
     if (!dl.suggestedFilename().endsWith(".png")) errori.push(`[${tema}] immagine della schedina: file inatteso`);
     for (const n of ["La mia schedina", "Diario", "Storico IA"]) { await tab(n); await foto("schedina-" + n.replace(/ /g, "")); }
   });
+  await passo("come sta andando l'IA", async () => {
+    if (!(await p.getByText("Come sta andando l'IA").count())) { errori.push(`[${tema}] Storico IA: manca la pagina dell'apprendimento`); return; }
+    for (const v of ["Probabilità oneste", "IA contro bookmaker", "Valore anticipato", "Quanto pesano notizie e assenze"]) {
+      const bt = p.getByRole("button", { name: new RegExp(v) }).first();
+      if (await bt.count()) { await bt.click(); await p.waitForTimeout(150); }
+    }
+    const t = await p.evaluate(() => document.body.innerText);
+    if (/undefined|NaN/.test(t)) errori.push(`[${tema}] pagina IA: testo con "undefined" o "NaN"`);
+    await p.screenshot({ path: path.join(OUT, `${tema}-ia.png`), fullPage: true });
+  });
   await passo("club", async () => { await dock("Il Mio Club"); for (const n of ["La mia squadra", "Gara", "Traguardi", "Account"]) { await tab(n); await foto("club-" + n.replace(/ /g, "")); } });
   await passo("ricerca", async () => { await p.getByRole("button", { name: /Cerca/ }).first().click(); await p.keyboard.type("Inter"); await p.waitForTimeout(400); await foto("ricerca"); });
   await passo("offline", async () => { await p.keyboard.press("Escape"); await p.context().setOffline(true); await p.waitForTimeout(300);

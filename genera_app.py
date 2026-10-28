@@ -17,6 +17,7 @@ import sys
 import unicodedata
 import zlib
 
+import calibrazione as CB
 import cartellini as CK
 import espn_dati as ES
 import fattori as FT
@@ -621,6 +622,9 @@ def genera():
             L = ("%g" % q["linea"])
             raccolte.update({"O" + L: fnum(r.get("oa_quota_media_Over L")), "U" + L: fnum(r.get("oa_quota_media_Under L"))})
         mercati = M.calcola_mercati(lh, la, h, a, raccolte)
+        p0 = {x["c"]: x["p"] for x in mercati if x["c"] in ("1", "X", "2")}  # probabilita del motore prima delle correzioni imparate
+        CB.calibra(mercati, k)  # correzioni imparate dai risultati (data/modello.json, aggiornato ogni mattina)
+        pc = {x["c"]: x["p"] for x in mercati}
         if q["mo"] is None:  # Over 2,5 senza quota diretta: probabilità del modello (dai gol attesi)
             q["mo"] = next((x["p"] for x in mercati if x["c"] == "O2.5"), None)
         sh = M.statistiche([z for z in per_team.get(hid, []) if z["t"] < t0]) if hid else None
@@ -646,7 +650,8 @@ def genera():
         out["matches"].append({
             "id": mid, "fd": m_fd["id"] if m_fd else None, "lg": k, **({"eh": eh, "ea": ea} if eh else {}), "date": loc.strftime("%Y-%m-%d"), "time": loc.strftime("%H:%M"), "ko": t0.isoformat(),
             "h": h, "a": a, "st": st, "g": g, "g1": primo_tempo(m_fd) if m_fd and st in ("FT", "LIVE") else None, "res": (None if g is None else (0 if g[0] > g[1] else 1 if g[0] == g[1] else 2)), "free": False,
-            "p": q["mk"], "mk": q["mk"], "po": q["mo"] if q["mo"] is not None else 0.5, "mo": q["mo"] if q["mo"] is not None else 0.5,
+            "p": [pc["1"], pc["X"], pc["2"]] if CB.attivo() and all(c in pc for c in "1X2") else q["mk"], "_p0": q["mk"], "mk": q["mk"],
+            "po": pc.get("O2.5", q["mo"]) if CB.attivo() and q["mo"] is not None else (q["mo"] if q["mo"] is not None else 0.5), "mo": q["mo"] if q["mo"] is not None else 0.5,
             "odds": q["odds"], "max": q["max"], "nb": q["nb"], "xg": [lh, la], "elo": [None, None],
             "forma": [testo_forma(l5[0]), testo_forma(l5[1])] if (code or hid or aid) else [{"tone": "ok", "text": "Forma non disponibile per questo campionato nei dati gratuiti."}] * 2,
             "attese": [testo_classifica(tabs, hid), testo_classifica(tabs, aid)] if tabs else [{"tone": "ok", "text": "Classifica non disponibile nei dati gratuiti."}] * 2,
@@ -832,7 +837,9 @@ def ritara_fattori(corr, ll):
         migliore = min(prove, key=prove.get)
         peso = min(1.0, 0.5 + (n - MIN_TARATURA) / (2 * (300 - MIN_TARATURA))) if n < 300 else 1.0
         scala = round(1 + (migliore - 1) * peso, 2)
-        out.update({"attiva": True, "scala": scala, "migliore": migliore, "errore_1": round(prove[1.0], 4), "errore_0": round(prove[0.0], 4), "errore_migliore": round(prove[migliore], 4)})
+        # dal 29/10/2026 la scala resta 1: il peso delle correzioni si impara per famiglia di mercato in strumenti/impara.py
+        # (qui resta solo come controllo: "suggerita" e quella che questo metodo sceglierebbe sull'1X2)
+        out.update({"attiva": False, "scala": 1.0, "suggerita": scala, "migliore": migliore, "errore_1": round(prove[1.0], 4), "errore_0": round(prove[0.0], 4), "errore_migliore": round(prove[migliore], 4)})
     with open(TARATURA, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=1)
     return out["scala"]
@@ -929,7 +936,7 @@ def applica_fattori(d):
         avv = [sum(f.get("delta_avv", 0) for f in tutti if f["lato"] == 1), sum(f.get("delta_avv", 0) for f in tutti if f["lato"] == 0)]
         sc = SCALA_FATTORI()  # ritaratura automatica: quanto pesano davvero le correzioni (1 = come da fattori.py)
         nuovo = [round(lh0 * (1 + sc * (tot[0] + avv[0])), 3), round(la0 * (1 + sc * (tot[1] + avv[1])), 3)]
-        firma = zlib.crc32(json.dumps([tutti, nuovo, segnali], sort_keys=True).encode())
+        firma = zlib.crc32(json.dumps([tutti, nuovo, segnali, CB.versione()], sort_keys=True).encode())
         if firma == m.get("_firma"):
             continue
         m["_firma"] = firma
@@ -938,8 +945,14 @@ def applica_fattori(d):
         lh, la = nuovo
         m["xg"] = nuovo
         mercati = M.calcola_mercati(lh, la, m["h"], m["a"], c.get("raccolte") or {})
+        corretta = any(f["delta"] or f.get("delta_avv") for f in tutti)
         pm = {x["c"]: x["p"] for x in mercati}
-        if any(f["delta"] or f.get("delta_avv") for f in tutti):
+        m["_p0"] = [round(pm.get("1", 0), 4), round(pm.get("X", 0), 4), round(pm.get("2", 0), 4)] if corretta else m["mk"]  # prima delle correzioni imparate
+        # correzioni imparate: con le notizie serve anche la lettura delle sole quote (per il peso della correzione IA)
+        sole_quote = M.calcola_mercati(lh0, la0, m["h"], m["a"], c.get("raccolte") or {}) if corretta and (CB.modello().get("peso_ia")) else None
+        CB.calibra(mercati, m["lg"], sole_quote)
+        pm = {x["c"]: x["p"] for x in mercati}
+        if corretta or CB.attivo():
             m["p"] = [round(pm.get("1", 0), 4), round(pm.get("X", 0), 4), round(pm.get("2", 0), 4)]
             m["po"] = round(pm.get("O2.5", 0.5), 4)
         else:
@@ -1025,7 +1038,7 @@ def aggiorna_storico(d):
         r = st.get(m["id"])
         if r is None or (r.get("st") == "NS" and m["st"] == "NS"):
             # finche la partita non inizia si tiene l'ultima versione del consiglio (quote piu recenti)
-            r = {"date": m["date"], "lg": m["lg"], "h": m["h"], "a": m["a"], "st": m["st"], "g": m.get("g"), "mk": m.get("mk"), "p": m.get("p"),
+            r = {"date": m["date"], "lg": m["lg"], "h": m["h"], "a": m["a"], "st": m["st"], "g": m.get("g"), "mk": m.get("mk"), "p": m.get("_p0") or m.get("p"),
                  "nf": sum(1 for f in m.get("fattori", []) if f.get("delta")), "sc": SCALA_FATTORI(), "ver": FT.VERSIONE, "segnali": [x["tipo"] for x in m.get("segnali", [])],
                  "tips": {k: {x: v[x] for x in ("c", "l", "p", "q", "qm")} for k, v in tip.items()}}
             st[m["id"]] = r
@@ -1065,6 +1078,48 @@ def aggiorna_storico(d):
     print(f"Storico consigli: {len(chiuse)} partite verificate, {len(st)} salvate")
 
 
+DIARIO = os.path.join(DATA, "diario")
+CHIAVI_DIARIO = ("1", "X", "2", "O2.5", "GG")
+
+
+def aggiorna_diario(d):
+    """Diario di ogni previsione (tutte le partite, non solo i consigli): gol attesi dell'IA e delle sole quote, probabilita
+    mostrate nell'app, quote e consigli del mattino (prima volta vista) e di chiusura (ultima prima del fischio), risultato.
+    E' la materia prima con cui strumenti/impara.py migliora l'algoritmo ogni mattina. Un file per giorno di partita."""
+    per_giorno = {}
+    for m in d.get("matches", []):
+        per_giorno.setdefault(m["date"], []).append(m)
+    ver, ora = CB.versione(), datetime.now(timezone.utc).isoformat(timespec="minutes")
+    nuove = 0
+    for giorno, ms in per_giorno.items():
+        path = os.path.join(DIARIO, giorno + ".json")
+        vecchio = jload(path, {}) or {}
+        dd = json.loads(json.dumps(vecchio))
+        for m in ms:
+            r = dd.get(m["id"])
+            if m.get("st") == "NS" and m.get("xg") and m.get("xg_mercato") and m.get("mk"):
+                od = m.get("odds") or {}
+                q = {c: od[x] for c, x in (("1", "1"), ("X", "X"), ("2", "2"), ("O2.5", "O"), ("U2.5", "U")) if od.get(x)}
+                pr = {x[0]: x[1] for x in m.get("markets", [])}
+                tips = {k: [v["c"], v.get("q"), 1 if v.get("qm") else 0] for k, v in (m.get("tip") or {}).items() if isinstance(v, dict)}
+                n = {"lg": m["lg"], "h": m["h"], "a": m["a"], "date": m["date"], "ko": m["ko"], "xg": m["xg"], "xm": m["xg_mercato"], "mk": m["mk"],
+                     "mo": m.get("mo") if od.get("O") and od.get("U") else None, "nf": sum(1 for f in m.get("fattori") or [] if f.get("delta") or f.get("delta_avv")),
+                     "ver": ver, "pc": {c: pr[c] for c in CHIAVI_DIARIO if c in pr}, "q": q, "tips": tips, "st": "NS"}
+                if r is None:
+                    n.update({"t0": ora, "mk0": n["mk"], "mo0": n["mo"], "xm0": n["xm"], "pc0": n["pc"], "q0": q, "tips0": tips})
+                    nuove += 1
+                else:
+                    n.update({k: r[k] for k in ("t0", "mk0", "mo0", "xm0", "pc0", "q0", "tips0") if k in r})
+                dd[m["id"]] = n
+            elif r is not None and m.get("st") in ("FT", "LIVE", "RINV"):
+                r["st"], r["g"], r["g1"] = m["st"], m.get("g"), m.get("g1")
+        if dd != vecchio:
+            os.makedirs(DIARIO, exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:  # una partita per riga: git conserva solo le righe cambiate
+                f.write("{\n" + ",\n".join(json.dumps(k) + ":" + json.dumps(dd[k], ensure_ascii=False, separators=(",", ":")) for k in sorted(dd)) + "\n}\n")
+    print(f"Diario: {nuove} nuove previsioni")
+
+
 def main():
     if "--panchine" in sys.argv:  # solo allenatori e termometro (workflow "Allenatori", ogni mattina)
         scrivi_panchine(jload(OUT, {}) or {})
@@ -1086,6 +1141,7 @@ def main():
     scrivi_stato(d)
     scrivi_lista(d)
     aggiorna_storico(d)
+    aggiorna_diario(d)
 
 
 STATO_OUT = os.path.join("app", "data", "stato.json")
@@ -1093,7 +1149,7 @@ STATO_OUT = os.path.join("app", "data", "stato.json")
 DETTAGLI = ("markets", "ia", "cart", "curiosita", "xgf", "segnali", "attese", "prec", "forma", "ctx", "h2h", "last5", "odds", "max", "elo", "foto",
             "arbitro", "xg_mercato", "fattori")
 FATTORI_LISTA = ("chi", "lato", "tipo", "fonte", "delta")  # nella lista resta un riassunto delle assenze (pagina squadra)
-NON_SERVONO = ("_ctx", "_firma")
+NON_SERVONO = ("_ctx", "_firma", "_p0")
 
 
 def scrivi_lista(d):

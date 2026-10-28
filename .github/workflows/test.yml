@@ -5,7 +5,7 @@ name: Test
 on:
   push:
     branches: [main]
-    paths: ["app/src/**", "app/build.mjs", "app/sw.js", "app/index.html", "*.py", "test/**", "worker/**", ".github/workflows/test.yml"]
+    paths: ["app/src/**", "app/build.mjs", "app/sw.js", "app/index.html", "*.py", "strumenti/impara.py", "test/**", "worker/**", ".github/workflows/test.yml"]
   schedule:
     - cron: "40 6 * * *"
   workflow_dispatch: {}
@@ -30,8 +30,10 @@ jobs:
           npm install --no-audit --no-fund
           npm install --no-save --no-audit --no-fund playwright@1.63.0
           npx playwright install --with-deps chromium
-      - name: Algoritmo (mercati, cartellini, dati pubblicati)
-        run: python3 -m unittest discover -s test -v
+      - name: Algoritmo (mercati, cartellini, apprendimento, dati pubblicati)
+        run: |
+          pip install -q numpy
+          python3 -m unittest discover -s test -v
       - name: Logica dell'app (stessi esiti dell'algoritmo, schedina)
         run: node test/test_app.mjs
       - name: Servizio notifiche (sintassi)

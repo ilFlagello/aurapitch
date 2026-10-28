@@ -44,7 +44,7 @@ except Exception as e:
     problemi.append(f"File dei dati dell'app illeggibile: {type(e).__name__}")
 
 # 2. ultime esecuzioni dei processi automatici
-for wf, nome in (("raccolta.yml", "Raccolta dati"), ("pubblica.yml", "Pubblicazione app"), ("notifiche.yml", "Servizio notifiche"), ("test.yml", "Test")):
+for wf, nome in (("raccolta.yml", "Raccolta dati"), ("pubblica.yml", "Pubblicazione app"), ("notifiche.yml", "Servizio notifiche"), ("test.yml", "Test"), ("impara.yml", "Apprendimento")):
     try:
         _, j = get(f"https://api.github.com/repos/{REPO}/actions/workflows/{wf}/runs?per_page=5&status=completed", gh=True)
         runs = [r for r in j.get("workflow_runs", []) if r["conclusion"] != "cancelled"]
@@ -54,6 +54,15 @@ for wf, nome in (("raccolta.yml", "Raccolta dati"), ("pubblica.yml", "Pubblicazi
             note.append(f"{nome}: ok")
     except Exception as e:
         note.append(f"{nome}: stato non leggibile ({type(e).__name__})")
+
+# 2b. apprendimento: il modello si aggiorna ogni mattina
+try:
+    mo = json.load(open("data/modello.json", encoding="utf-8")).get("attivo") or {}
+    agg = datetime.fromisoformat(mo.get("aggiornato", "2000-01-01")).replace(tzinfo=ZoneInfo("UTC"))
+    giorni = (ORA - agg).total_seconds() / 86400
+    (problemi if giorni > 2.5 else note).append(f"Modello dell'IA aggiornato {giorni:.1f} giorni fa ({mo.get('nome', '?')})")
+except Exception as e:
+    note.append(f"Modello dell'IA non leggibile ({type(e).__name__})")
 
 # 3. crediti di The Odds API: riserva per il giro del mattino fino a fine mese
 try:

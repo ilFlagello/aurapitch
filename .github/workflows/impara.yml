@@ -1,0 +1,28 @@
+# AuraPitch - apprendimento iterativo: ogni mattina alle 5:45 UTC (prima del giro completo delle 6:00) l'algoritmo
+# si riallena su archivio storico + diario delle previsioni dell'app e aggiorna data/modello.json e la pagina "Come sta andando l'IA".
+name: Apprendimento
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "45 5 * * *"
+permissions: { contents: write }
+concurrency: { group: impara, cancel-in-progress: false }
+jobs:
+  impara:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Stagione in corso da Football-Data (risultati e quote)
+        run: python3 -c "import raccoglitore; raccoglitore.scarica_stagione_fd()" || true
+      - name: Impara dai risultati
+        run: |
+          pip install -q numpy
+          python3 strumenti/impara.py
+      - name: Salva
+        run: |
+          git config user.name "aurapitch-raccolta"; git config user.email "aurapitch-raccolta@users.noreply.github.com"
+          git add data/modello.json app/data/ia.json; git commit -m "Apprendimento: modello del $(date -u +%F)" || true
+          for i in 1 2 3 4 5; do git pull --rebase -q origin main && git push && break; sleep 7; done

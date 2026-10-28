@@ -5,6 +5,7 @@ import { Citazione, citazioneSchedina, citazioneDiario } from "./citazioni.js";
 import { C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, buildForzata, ESITI_SCHEDINA, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
 import { GiocoResponsabile } from "./extra.js";
 import { StoricoCard } from "./partita.js";
+import { IACard } from "./ia.js";
 
     /* ---- schedina ---- */
     function SlipView() {
@@ -89,7 +90,7 @@ import { StoricoCard } from "./partita.js";
             <button onClick=${() => setMySlip([])} className=${"py-2 rounded-xl text-xs font-semibold " + C.ch + " " + C.tx}>Svuota</button></div>
           <${Gioca} legs=${mine.filter((l) => l.q)} /></div>`}<//>`,
         html`<${React.Fragment}><${Diario} /><${GiocoResponsabile} compatto=${true} /><//>`,
-        html`<${StoricoCard} />`]}<//></div>`;
+        html`<${React.Fragment}><${IACard} /><${StoricoCard} /><//>`]}<//></div>`;
     }
 
 

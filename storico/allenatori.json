@@ -1,0 +1,10112 @@
+{
+"fonte": "Wikidata (CC0), proprieta P286",
+"squadre": {
+"Fiorentina": {
+"wikidata": "Q2052",
+"nome": "ACF Fiorentina",
+"allenatori": [
+{
+"chi": "Siniša Mihajlović",
+"qid": "Q294351",
+"da": "2010-06-04",
+"a": "2011-11-07"
+},
+{
+"chi": "Stefano Pioli",
+"qid": "Q923088",
+"da": "2017-06-06",
+"a": "2019-04-09"
+},
+{
+"chi": "Vincenzo Montella",
+"qid": "Q297768",
+"da": "2019-04-10",
+"a": "2019-12-21"
+},
+{
+"chi": "Giuseppe Iachini",
+"qid": "Q604969",
+"da": "2019-12-23",
+"a": "2020-11-09"
+},
+{
+"chi": "Cesare Prandelli",
+"qid": "Q218380",
+"da": "2020-11-09",
+"a": "2021-03-23"
+},
+{
+"chi": "Giuseppe Iachini",
+"qid": "Q604969",
+"da": "2021-03-24",
+"a": "2021-06-30"
+},
+{
+"chi": "Vincenzo Italiano",
+"qid": "Q1091404",
+"da": "2021-07-01",
+"a": "2024-06-04"
+},
+{
+"chi": "Raffaele Palladino",
+"qid": "Q282551",
+"da": "2024-07-01",
+"a": "2025-05-30"
+},
+{
+"chi": "Stefano Pioli",
+"qid": "Q923088",
+"da": "2025-07-12",
+"a": "2025-11-04"
+},
+{
+"chi": "Paolo Vanoli",
+"qid": "Q3362674",
+"da": "2025-11-07",
+"a": "2026-06-01"
+},
+{
+"chi": "Fabio Grosso",
+"qid": "Q230529",
+"da": "2026-06-08",
+"a": "2026-09-07"
+},
+{
+"chi": "Paolo Vanoli",
+"qid": "Q3362674",
+"da": "2026-09-07",
+"a": null
+}
+]
+},
+"Udinese": {
+"wikidata": "Q2798",
+"nome": "Udinese Calcio",
+"allenatori": [
+{
+"chi": "Davide Nicola",
+"qid": "Q3019103",
+"da": "2018-11-13",
+"a": "2019-03-20"
+},
+{
+"chi": "Igor Tudor",
+"qid": "Q276544",
+"da": "2019-03-20",
+"a": "2019-11-01"
+},
+{
+"chi": "Luca Gotti",
+"qid": "Q3838152",
+"da": "2019-11-01",
+"a": "2021-12-07"
+},
+{
+"chi": "Gabriele Cioffi",
+"qid": "Q1615609",
+"da": "2021-12-07",
+"a": "2022-06-07"
+},
+{
+"chi": "Andrea Sottil",
+"qid": "Q547067",
+"da": "2022-06-07",
+"a": "2023-10-24"
+},
+{
+"chi": "Gabriele Cioffi",
+"qid": "Q1615609",
+"da": "2023-10-25",
+"a": "2024-04-22"
+},
+{
+"chi": "Fabio Cannavaro",
+"qid": "Q102027",
+"da": "2024-04-22",
+"a": "2024-06-08"
+},
+{
+"chi": "Kosta Runjaić",
+"qid": "Q1785131",
+"da": "2024-07-01",
+"a": null
+}
+]
+},
+"Juventus": {
+"wikidata": "Q1422",
+"nome": "Juventus FC",
+"allenatori": [
+{
+"chi": "Ciro Ferrara",
+"qid": "Q314078",
+"da": "2009-05-19",
+"a": "2010-01-28"
+},
+{
+"chi": "Alberto Zaccheroni",
+"qid": "Q316633",
+"da": "2010-01-29",
+"a": "2010-05-19"
+},
+{
+"chi": "Luigi Delneri",
+"qid": "Q332742",
+"da": "2010-05-19",
+"a": "2011-05-31"
+},
+{
+"chi": "Antonio Conte",
+"qid": "Q26580",
+"da": "2011-07-01",
+"a": "2012-06-30"
+},
+{
+"chi": "Massimo Carrera",
+"qid": "Q980189",
+"da": "2012-07-01",
+"a": "2012-10-15"
+},
+{
+"chi": "Angelo Alessio",
+"qid": "Q62175",
+"da": "2012-10-16",
+"a": "2012-12-09"
+},
+{
+"chi": "Antonio Conte",
+"qid": "Q26580",
+"da": "2012-12-09",
+"a": "2014-07-15"
+},
+{
+"chi": "Massimiliano Allegri",
+"qid": "Q354529",
+"da": "2014-07-16",
+"a": "2019-06-16"
+},
+{
+"chi": "Maurizio Sarri",
+"qid": "Q3852721",
+"da": "2019-06-16",
+"a": "2020-08-08"
+},
+{
+"chi": "Andrea Pirlo",
+"qid": "Q43926",
+"da": "2020-08-08",
+"a": "2021-06-30"
+},
+{
+"chi": "Massimiliano Allegri",
+"qid": "Q354529",
+"da": "2021-07-01",
+"a": "2024-05-17"
+},
+{
+"chi": "Paolo Montero",
+"qid": "Q342484",
+"da": "2024-05-17",
+"a": "2024-06-30"
+},
+{
+"chi": "Thiago Motta",
+"qid": "Q191885",
+"da": "2024-07-01",
+"a": "2025-03-23"
+},
+{
+"chi": "Igor Tudor",
+"qid": "Q276544",
+"da": "2025-03-23",
+"a": "2025-10-27"
+},
+{
+"chi": "Luciano Spalletti",
+"qid": "Q310813",
+"da": "2025-10-30",
+"a": null
+}
+]
+},
+"Parma": {
+"wikidata": "Q2693",
+"nome": "Parma Calcio 1913",
+"allenatori": [
+{
+"chi": "Roberto D'Aversa",
+"qid": "Q573195",
+"da": "2016-12-03",
+"a": "2020-08-23"
+},
+{
+"chi": "Fabio Liverani",
+"qid": "Q381262",
+"da": "2020-08-28",
+"a": "2021-01-07"
+},
+{
+"chi": "Roberto D'Aversa",
+"qid": "Q573195",
+"da": "2021-01-07",
+"a": "2021-05-24"
+},
+{
+"chi": "Enzo Maresca",
+"qid": "Q317282",
+"da": "2021-05-27",
+"a": "2021-11-23"
+},
+{
+"chi": "Giuseppe Iachini",
+"qid": "Q604969",
+"da": "2021-11-23",
+"a": "2022-05-17"
+},
+{
+"chi": "Fabio Pecchia",
+"qid": "Q1087530",
+"da": "2022-06-02",
+"a": "2025-02-17"
+},
+{
+"chi": "Cristian Chivu",
+"qid": "Q210491",
+"da": "2025-02-18",
+"a": "2025-06-01"
+},
+{
+"chi": "Carlos Cuesta",
+"qid": "Q116776804",
+"da": "2025-06-19",
+"a": "2026-09-01"
+},
+{
+"chi": "Alberto Gilardino",
+"qid": "Q182451",
+"da": "2026-09-29",
+"a": null
+}
+]
+},
+"Atalanta": {
+"wikidata": "Q1886",
+"nome": "Atalanta BC",
+"allenatori": [
+{
+"chi": "Antonio Conte",
+"qid": "Q26580",
+"da": "2009-09-21",
+"a": "2010-01-07"
+},
+{
+"chi": "Valter Bonacina",
+"qid": "Q1448449",
+"da": "2010-01-07",
+"a": "2010-01-10"
+},
+{
+"chi": "Bortolo Mutti",
+"qid": "Q1058939",
+"da": "2010-01-11",
+"a": "2010-06-10"
+},
+{
+"chi": "Stefano Colantuono",
+"qid": "Q1353173",
+"da": "2010-06-14",
+"a": "2015-03-04"
+},
+{
+"chi": "Edoardo Reja",
+"qid": "Q2327467",
+"da": "2015-03-04",
+"a": "2016-06-14"
+},
+{
+"chi": "Gian Piero Gasperini",
+"qid": "Q367846",
+"da": "2016-07-01",
+"a": "2025-06-01"
+},
+{
+"chi": "Ivan Jurić",
+"qid": "Q556688",
+"da": "2025-06-06",
+"a": "2025-11-10"
+},
+{
+"chi": "Raffaele Palladino",
+"qid": "Q282551",
+"da": "2025-11-11",
+"a": "2026-06-01"
+},
+{
+"chi": "Maurizio Sarri",
+"qid": "Q3852721",
+"da": "2026-06-15",
+"a": null
+}
+]
+},
+"Lazio": {
+"wikidata": "Q2609",
+"nome": "SS Lazio",
+"allenatori": [
+{
+"chi": "Stefano Pioli",
+"qid": "Q923088",
+"da": "2014-06-12",
+"a": "2016-04-03"
+},
+{
+"chi": "Simone Inzaghi",
+"qid": "Q314670",
+"da": "2016-04-04",
+"a": "2021-06-30"
+},
+{
+"chi": "Maurizio Sarri",
+"qid": "Q3852721",
+"da": "2021-07-01",
+"a": "2024-03-13"
+},
+{
+"chi": "Igor Tudor",
+"qid": "Q276544",
+"da": "2024-03-18",
+"a": "2024-06-05"
+},
+{
+"chi": "Marco Baroni",
+"qid": "Q1317738",
+"da": "2024-07-01",
+"a": "2025-05-30"
+},
+{
+"chi": "Maurizio Sarri",
+"qid": "Q3852721",
+"da": "2025-06-02",
+"a": "2026-05-27"
+},
+{
+"chi": "Gennaro Gattuso",
+"qid": "Q116980",
+"da": "2026-06-23",
+"a": null
+}
+]
+},
+"Chievo": {
+"wikidata": "Q2037",
+"nome": "AC ChievoVerona",
+"allenatori": [
+{
+"chi": "Stefano Pioli",
+"qid": "Q923088",
+"da": "2010-06-10",
+"a": "2011-06-02"
+},
+{
+"chi": "Gian Piero Ventura",
+"qid": "Q2631653",
+"da": "2018-10-10",
+"a": "2018-11-13"
+},
+{
+"chi": "Domenico Di Carlo",
+"qid": "Q507043",
+"da": "2018-11-13",
+"a": "2019-05-31"
+},
+{
+"chi": "Michele Marcolini",
+"qid": "Q2162463",
+"da": "2019-07-04",
+"a": "2020-03-01"
+},
+{
+"chi": "Alfredo Aglietti",
+"qid": "Q868751",
+"da": "2020-03-01",
+"a": "2021-05-31"
+},
+{
+"chi": "Marco Zaffaroni",
+"qid": "Q3846591",
+"da": "2021-07-09",
+"a": null
+}
+]
+},
+"Bologna": {
+"wikidata": "Q1893",
+"nome": "Bologna F.C. 1909",
+"allenatori": [
+{
+"chi": "Stefano Pioli",
+"qid": "Q923088",
+"da": "2011-10-04",
+"a": "2014-01-07"
+},
+{
+"chi": "Filippo Inzaghi",
+"qid": "Q126503",
+"da": "2018-07-01",
+"a": "2019-01-28"
+},
+{
+"chi": "Siniša Mihajlović",
+"qid": "Q294351",
+"da": "2019-01-28",
+"a": "2022-09-06"
+},
+{
+"chi": "Luca Vigiani",
+"qid": "Q2262270",
+"da": "2022-09-07",
+"a": "2022-09-12"
+},
+{
+"chi": "Thiago Motta",
+"qid": "Q191885",
+"da": "2022-09-12",
+"a": "2024-06-04"
+},
+{
+"chi": "Vincenzo Italiano",
+"qid": "Q1091404",
+"da": "2024-06-05",
+"a": "2026-05-28"
+},
+{
+"chi": "Domenico Tedesco",
+"qid": "Q28916689",
+"da": "2026-06-02",
+"a": "2026-09-16"
+},
+{
+"chi": "Raffaele Palladino",
+"qid": "Q282551",
+"da": "2026-09-16",
+"a": null
+}
+]
+},
+"Genoa": {
+"wikidata": "Q2074",
+"nome": "Genoa CFC",
+"allenatori": [
+{
+"chi": "Ivan Jurić",
+"qid": "Q556688",
+"da": "2018-10-09",
+"a": "2018-12-06"
+},
+{
+"chi": "Cesare Prandelli",
+"qid": "Q218380",
+"da": "2018-12-07",
+"a": "2019-06-30"
+},
+{
+"chi": "Aurelio Andreazzoli",
+"qid": "Q4734615",
+"da": "2019-07-01",
+"a": "2019-10-22"
+},
+{
+"chi": "Thiago Motta",
+"qid": "Q191885",
+"da": "2019-10-22",
+"a": "2019-12-28"
+},
+{
+"chi": "Davide Nicola",
+"qid": "Q3019103",
+"da": "2019-12-28",
+"a": "2020-08-26"
+},
+{
+"chi": "Rolando Maran",
+"qid": "Q3940276",
+"da": "2020-08-26",
+"a": "2020-12-21"
+},
+{
+"chi": "Davide Ballardini",
+"qid": "Q1024171",
+"da": "2020-12-21",
+"a": "2021-11-06"
+},
+{
+"chi": "Andriy Shevchenko",
+"qid": "Q41244",
+"da": "2021-11-07",
+"a": "2022-01-15"
+},
+{
+"chi": "Abdoulay Konko",
+"qid": "Q308391",
+"da": "2022-01-16",
+"a": "2022-01-19"
+},
+{
+"chi": "Alexander Blessin",
+"qid": "Q1560347",
+"da": "2022-01-19",
+"a": "2022-12-06"
+},
+{
+"chi": "Alberto Gilardino",
+"qid": "Q182451",
+"da": "2022-12-06",
+"a": "2024-11-19"
+},
+{
+"chi": "Patrick Vieira",
+"qid": "Q46347",
+"da": "2024-11-20",
+"a": "2025-11-02"
+},
+{
+"chi": "Daniele De Rossi",
+"qid": "Q168497",
+"da": "2025-11-06",
+"a": null
+}
+]
+},
+"Cagliari": {
+"wikidata": "Q1900",
+"nome": "Cagliari Calcio",
+"allenatori": [
+{
+"chi": "Massimiliano Allegri",
+"qid": "Q354529",
+"da": "2008-05-29",
+"a": "2010-04-13"
+},
+{
+"chi": "Zdeněk Zeman",
+"qid": "Q169092",
+"da": "2014-07-01",
+"a": "2014-12-23"
+},
+{
+"chi": "Gianfranco Zola",
+"qid": "Q9354",
+"da": "2014-12-25",
+"a": "2015-03-09"
+},
+{
+"chi": "Zdeněk Zeman",
+"qid": "Q169092",
+"da": "2015-03-09",
+"a": "2015-04-21"
+},
+{
+"chi": "Rolando Maran",
+"qid": "Q3940276",
+"da": "2018-06-07",
+"a": "2020-03-03"
+},
+{
+"chi": "Walter Zenga",
+"qid": "Q294302",
+"da": "2020-03-03",
+"a": "2020-08-02"
+},
+{
+"chi": "Eusebio Di Francesco",
+"qid": "Q396154",
+"da": "2020-08-03",
+"a": "2021-02-22"
+},
+{
+"chi": "Leonardo Semplici",
+"qid": "Q26696437",
+"da": "2021-02-22",
+"a": "2021-09-14"
+},
+{
+"chi": "Walter Mazzarri",
+"qid": "Q370838",
+"da": "2021-09-15",
+"a": "2022-05-02"
+},
+{
+"chi": "Alessandro Agostini",
+"qid": "Q869044",
+"da": "2022-05-03",
+"a": "2022-05-23"
+},
+{
+"chi": "Fabio Liverani",
+"qid": "Q381262",
+"da": "2022-07-01",
+"a": "2022-12-20"
+},
+{
+"chi": "Claudio Ranieri",
+"qid": "Q235068",
+"da": "2023-01-01",
+"a": "2024-06-30"
+},
+{
+"chi": "Davide Nicola",
+"qid": "Q3019103",
+"da": "2024-07-05",
+"a": "2025-06-04"
+},
+{
+"chi": "Fabio Pisacane",
+"qid": "Q3737807",
+"da": "2025-06-11",
+"a": null
+}
+]
+},
+"Milan": {
+"wikidata": "Q1543",
+"nome": "AC Milan",
+"allenatori": [
+{
+"chi": "Leonardo Araújo",
+"qid": "Q46741",
+"da": "2009-07-01",
+"a": "2010-05-17"
+},
+{
+"chi": "Massimiliano Allegri",
+"qid": "Q354529",
+"da": "2010-06-25",
+"a": "2014-01-13"
+},
+{
+"chi": "Clarence Seedorf",
+"qid": "Q484909",
+"da": "2014-01-16",
+"a": "2014-06-09"
+},
+{
+"chi": "Filippo Inzaghi",
+"qid": "Q126503",
+"da": "2014-06-09",
+"a": "2015-06-16"
+},
+{
+"chi": "Siniša Mihajlović",
+"qid": "Q294351",
+"da": "2015-06-16",
+"a": "2016-04-12"
+},
+{
+"chi": "Vincenzo Montella",
+"qid": "Q297768",
+"da": "2016-07-01",
+"a": "2017-11-27"
+},
+{
+"chi": "Gennaro Gattuso",
+"qid": "Q116980",
+"da": "2017-11-27",
+"a": "2019-05-28"
+},
+{
+"chi": "Marco Giampaolo",
+"qid": "Q2704759",
+"da": "2019-06-19",
+"a": "2019-10-08"
+},
+{
+"chi": "Stefano Pioli",
+"qid": "Q923088",
+"da": "2019-10-09",
+"a": "2024-05-26"
+},
+{
+"chi": "Paulo Fonseca",
+"qid": "Q10346582",
+"da": "2024-07-01",
+"a": "2024-12-30"
+},
+{
+"chi": "Sérgio Conceição",
+"qid": "Q317298",
+"da": "2024-12-30",
+"a": "2025-05-29"
+},
+{
+"chi": "Massimiliano Allegri",
+"qid": "Q354529",
+"da": "2025-05-30",
+"a": "2026-05-25"
+},
+{
+"chi": "Ruben Amorim",
+"qid": "Q368682",
+"da": "2026-06-16",
+"a": null
+}
+]
+},
+"Sampdoria": {
+"wikidata": "Q1457",
+"nome": "U.C. Sampdoria",
+"allenatori": [
+{
+"chi": "Siniša Mihajlović",
+"qid": "Q294351",
+"da": "2013-11-20",
+"a": "2015-06-11"
+},
+{
+"chi": "Walter Zenga",
+"qid": "Q294302",
+"da": "2015-06-11",
+"a": "2015-11-10"
+},
+{
+"chi": "Marco Giampaolo",
+"qid": "Q2704759",
+"da": "2016-07-04",
+"a": "2019-06-19"
+},
+{
+"chi": "Eusebio Di Francesco",
+"qid": "Q396154",
+"da": "2019-06-23",
+"a": "2019-10-07"
+},
+{
+"chi": "Claudio Ranieri",
+"qid": "Q235068",
+"da": "2019-10-11",
+"a": "2021-06-30"
+},
+{
+"chi": "Roberto D'Aversa",
+"qid": "Q573195",
+"da": "2021-07-04",
+"a": "2022-01-17"
+},
+{
+"chi": "Marco Giampaolo",
+"qid": "Q2704759",
+"da": "2022-01-19",
+"a": "2022-10-02"
+},
+{
+"chi": "Dejan Stanković",
+"qid": "Q192640",
+"da": "2022-10-06",
+"a": "2023-06-06"
+},
+{
+"chi": "Andrea Pirlo",
+"qid": "Q43926",
+"da": "2023-06-28",
+"a": "2024-08-29"
+},
+{
+"chi": "Andrea Sottil",
+"qid": "Q547067",
+"da": "2024-08-30",
+"a": "2024-12-09"
+},
+{
+"chi": "Leonardo Semplici",
+"qid": "Q26696437",
+"da": "2024-12-11",
+"a": "2025-04-07"
+},
+{
+"chi": "Alberico Evani",
+"qid": "Q458474",
+"da": "2025-04-07",
+"a": "2025-06-30"
+},
+{
+"chi": "Massimo Donati",
+"qid": "Q533727",
+"da": "2025-07-13",
+"a": "2025-10-18"
+},
+{
+"chi": "Luca D'Angelo",
+"qid": "Q3838092",
+"da": "2026-10-22",
+"a": null
+}
+]
+},
+"Palermo": {
+"wikidata": "Q2674",
+"nome": "Palermo F.C.",
+"allenatori": [
+{
+"chi": "Stefano Pioli",
+"qid": "Q923088",
+"da": "2011-06-02",
+"a": "2011-08-31"
+},
+{
+"chi": "Gennaro Gattuso",
+"qid": "Q116980",
+"da": "2013-06-19",
+"a": "2013-09-25"
+},
+{
+"chi": "Bruno Tedino",
+"qid": "Q30505453",
+"da": "2017-06-22",
+"a": "2018-09-26"
+},
+{
+"chi": "Pasquale Marino",
+"qid": "Q2305065",
+"da": "2019-06-07",
+"a": "2019-07-12"
+},
+{
+"chi": "Rosario Pergolizzi",
+"qid": "Q3941377",
+"da": "2019-08-03",
+"a": "2020-08-01"
+},
+{
+"chi": "Roberto Boscaglia",
+"qid": "Q13527921",
+"da": "2020-08-18",
+"a": "2021-02-27"
+},
+{
+"chi": "Giacomo Filippi",
+"qid": "Q3762094",
+"da": "2021-02-27",
+"a": "2021-12-24"
+},
+{
+"chi": "Eugenio Corini",
+"qid": "Q511092",
+"da": "2022-07-01",
+"a": "2024-04-01"
+},
+{
+"chi": "Alessio Dionisi",
+"qid": "Q65127311",
+"da": "2024-06-01",
+"a": "2025-06-01"
+},
+{
+"chi": "Filippo Inzaghi",
+"qid": "Q126503",
+"da": "2025-06-17",
+"a": null
+}
+]
+},
+"Napoli": {
+"wikidata": "Q2641",
+"nome": "SSC Napoli",
+"allenatori": [
+{
+"chi": "Walter Mazzarri",
+"qid": "Q370838",
+"da": "2009-10-06",
+"a": "2013-05-20"
+},
+{
+"chi": "Maurizio Sarri",
+"qid": "Q3852721",
+"da": "2015-07-01",
+"a": "2018-07-13"
+},
+{
+"chi": "Carlo Ancelotti",
+"qid": "Q174614",
+"da": "2018-07-01",
+"a": "2019-12-10"
+},
+{
+"chi": "Gennaro Gattuso",
+"qid": "Q116980",
+"da": "2019-12-11",
+"a": "2021-05-23"
+},
+{
+"chi": "Luciano Spalletti",
+"qid": "Q310813",
+"da": "2021-07-01",
+"a": "2023-06-30"
+},
+{
+"chi": "Rudi Garcia",
+"qid": "Q923131",
+"da": "2023-07-01",
+"a": "2023-11-14"
+},
+{
+"chi": "Walter Mazzarri",
+"qid": "Q370838",
+"da": "2023-11-14",
+"a": "2024-02-19"
+},
+{
+"chi": "Francesco Calzona",
+"qid": "Q113652572",
+"da": "2024-02-19",
+"a": "2024-06-30"
+},
+{
+"chi": "Antonio Conte",
+"qid": "Q26580",
+"da": "2024-07-01",
+"a": "2026-05-24"
+},
+{
+"chi": "Massimiliano Allegri",
+"qid": "Q354529",
+"da": "2026-07-03",
+"a": null
+}
+]
+},
+"Pescara": {
+"wikidata": "Q2710",
+"nome": "Delfino Pescara 1936",
+"allenatori": [
+{
+"chi": "Zdeněk Zeman",
+"qid": "Q169092",
+"da": "2011-06-22",
+"a": "2012-06-04"
+},
+{
+"chi": "Zdeněk Zeman",
+"qid": "Q169092",
+"da": "2017-02-17",
+"a": "2018-03-04"
+},
+{
+"chi": "Giuseppe Pillon",
+"qid": "Q3771227",
+"da": "2018-04-04",
+"a": "2019-05-01"
+},
+{
+"chi": "Massimo Oddo",
+"qid": "Q125438",
+"da": "2020-08-29",
+"a": "2020-11-29"
+},
+{
+"chi": "Gianluca Grassadonia",
+"qid": "Q3763238",
+"da": "2021-02-14",
+"a": "2021-06-19"
+},
+{
+"chi": "Alberto Colombo",
+"qid": "Q1871054",
+"da": "2022-06-22",
+"a": null
+}
+]
+},
+"Inter": {
+"wikidata": "Q631",
+"nome": "Inter Milan",
+"allenatori": [
+{
+"chi": "José Mourinho",
+"qid": "Q79983",
+"da": "2008-07-01",
+"a": "2010-06-30"
+},
+{
+"chi": "Claudio Ranieri",
+"qid": "Q235068",
+"da": "2011-08-22",
+"a": "2012-02-26"
+},
+{
+"chi": "Walter Mazzarri",
+"qid": "Q370838",
+"da": "2013-05-24",
+"a": "2014-11-14"
+},
+{
+"chi": "Roberto Mancini",
+"qid": "Q48330",
+"da": "2014-11-14",
+"a": "2016-08-08"
+},
+{
+"chi": "Stefano Pioli",
+"qid": "Q923088",
+"da": "2016-11-08",
+"a": "2017-05-09"
+},
+{
+"chi": "Luciano Spalletti",
+"qid": "Q310813",
+"da": "2017-07-01",
+"a": "2019-06-30"
+},
+{
+"chi": "Antonio Conte",
+"qid": "Q26580",
+"da": "2019-07-01",
+"a": "2021-06-30"
+},
+{
+"chi": "Simone Inzaghi",
+"qid": "Q314670",
+"da": "2021-07-01",
+"a": "2025-06-03"
+},
+{
+"chi": "Cristian Chivu",
+"qid": "Q210491",
+"da": "2025-06-09",
+"a": null
+}
+]
+},
+"Roma": {
+"wikidata": "Q2739",
+"nome": "AS Roma",
+"allenatori": [
+{
+"chi": "Claudio Ranieri",
+"qid": "Q235068",
+"da": "2009-09-01",
+"a": "2011-02-20"
+},
+{
+"chi": "Luis Enrique",
+"qid": "Q222789",
+"da": "2011-07-01",
+"a": "2012-05-10"
+},
+{
+"chi": "Zdeněk Zeman",
+"qid": "Q169092",
+"da": "2012-06-04",
+"a": "2013-02-02"
+},
+{
+"chi": "Rudi Garcia",
+"qid": "Q923131",
+"da": "2013-07-01",
+"a": "2016-01-13"
+},
+{
+"chi": "Luciano Spalletti",
+"qid": "Q310813",
+"da": "2016-01-14",
+"a": "2017-05-30"
+},
+{
+"chi": "Eusebio Di Francesco",
+"qid": "Q396154",
+"da": "2017-06-13",
+"a": "2019-03-07"
+},
+{
+"chi": "Claudio Ranieri",
+"qid": "Q235068",
+"da": "2019-03-08",
+"a": "2019-06-30"
+},
+{
+"chi": "Paulo Fonseca",
+"qid": "Q10346582",
+"da": "2019-07-01",
+"a": "2021-06-30"
+},
+{
+"chi": "José Mourinho",
+"qid": "Q79983",
+"da": "2021-07-01",
+"a": "2024-01-16"
+},
+{
+"chi": "Daniele De Rossi",
+"qid": "Q168497",
+"da": "2024-01-16",
+"a": "2024-09-18"
+},
+{
+"chi": "Ivan Jurić",
+"qid": "Q556688",
+"da": "2024-09-18",
+"a": "2024-11-10"
+},
+{
+"chi": "Claudio Ranieri",
+"qid": "Q235068",
+"da": "2024-11-14",
+"a": "2025-06-01"
+},
+{
+"chi": "Gian Piero Gasperini",
+"qid": "Q367846",
+"da": "2025-06-06",
+"a": null
+}
+]
+},
+"Catania": {
+"wikidata": "Q2018",
+"nome": "Catania FC",
+"allenatori": [
+{
+"chi": "Siniša Mihajlović",
+"qid": "Q294351",
+"da": "2009-12-08",
+"a": "2010-05-24"
+},
+{
+"chi": "Marco Giampaolo",
+"qid": "Q2704759",
+"da": "2010-05-30",
+"a": "2011-01-18"
+},
+{
+"chi": "Diego Simeone",
+"qid": "Q258115",
+"da": "2011-01-19",
+"a": "2011-06-01"
+},
+{
+"chi": "Rolando Maran",
+"qid": "Q3940276",
+"da": "2012-06-11",
+"a": "2013-10-20"
+}
+]
+},
+"Siena": {
+"wikidata": "Q2756",
+"nome": "Siena FC",
+"allenatori": [
+{
+"chi": "Antonio Conte",
+"qid": "Q26580",
+"da": "2010-05-23",
+"a": "2011-05-30"
+}
+]
+},
+"Torino": {
+"wikidata": "Q2768",
+"nome": "Torino FC",
+"allenatori": [
+{
+"chi": "Gian Piero Ventura",
+"qid": "Q2631653",
+"da": "2011-06-06",
+"a": "2016-06-25"
+},
+{
+"chi": "Siniša Mihajlović",
+"qid": "Q294351",
+"da": "2016-05-25",
+"a": "2018-01-04"
+},
+{
+"chi": "Walter Mazzarri",
+"qid": "Q370838",
+"da": "2018-01-04",
+"a": "2020-02-04"
+},
+{
+"chi": "Moreno Longo",
+"qid": "Q3862936",
+"da": "2020-02-04",
+"a": "2020-08-07"
+},
+{
+"chi": "Marco Giampaolo",
+"qid": "Q2704759",
+"da": "2020-08-07",
+"a": "2021-01-18"
+},
+{
+"chi": "Davide Nicola",
+"qid": "Q3019103",
+"da": "2021-01-19",
+"a": "2021-05-28"
+},
+{
+"chi": "Ivan Jurić",
+"qid": "Q556688",
+"da": "2021-07-01",
+"a": "2024-06-30"
+},
+{
+"chi": "Paolo Vanoli",
+"qid": "Q3362674",
+"da": "2024-07-01",
+"a": "2025-06-05"
+},
+{
+"chi": "Marco Baroni",
+"qid": "Q1317738",
+"da": "2025-06-05",
+"a": "2026-02-23"
+},
+{
+"chi": "Roberto D'Aversa",
+"qid": "Q573195",
+"da": "2026-02-23",
+"a": "2026-06-12"
+},
+{
+"chi": "Ignazio Abate",
+"qid": "Q213007",
+"da": "2026-06-12",
+"a": null
+}
+]
+},
+"Modena": {
+"wikidata": "Q8408",
+"nome": "Modena F.C.",
+"allenatori": []
+},
+"Verona": {
+"wikidata": "Q8639",
+"nome": "Hellas Verona FC",
+"allenatori": [
+{
+"chi": "Fabio Grosso",
+"qid": "Q230529",
+"da": "2018-06-21",
+"a": "2019-05-01"
+},
+{
+"chi": "Ivan Jurić",
+"qid": "Q556688",
+"da": "2019-06-14",
+"a": "2021-05-28"
+},
+{
+"chi": "Eusebio Di Francesco",
+"qid": "Q396154",
+"da": "2021-06-07",
+"a": "2021-09-14"
+},
+{
+"chi": "Igor Tudor",
+"qid": "Q276544",
+"da": "2021-09-14",
+"a": "2022-05-28"
+},
+{
+"chi": "Gabriele Cioffi",
+"qid": "Q1615609",
+"da": "2022-06-14",
+"a": "2022-10-11"
+},
+{
+"chi": "Marco Zaffaroni",
+"qid": "Q3846591",
+"da": "2022-12-03",
+"a": "2023-06-30"
+},
+{
+"chi": "Marco Baroni",
+"qid": "Q1317738",
+"da": "2023-07-01",
+"a": "2024-06-10"
+},
+{
+"chi": "Paolo Zanetti",
+"qid": "Q1494098",
+"da": "2024-06-13",
+"a": "2026-02-02"
+},
+{
+"chi": "Paolo Sammarco",
+"qid": "Q2706967",
+"da": "2026-02-03",
+"a": null
+}
+]
+},
+"Bari": {
+"wikidata": "Q6641",
+"nome": "SSC Bari",
+"allenatori": [
+{
+"chi": "Gian Piero Ventura",
+"qid": "Q2631653",
+"da": "2009-06-27",
+"a": "2011-02-10"
+},
+{
+"chi": "Fabio Caserta",
+"qid": "Q267797",
+"da": "2025-06-18",
+"a": null
+}
+]
+},
+"Cittadella": {
+"wikidata": "Q6673",
+"nome": "Associazione Sportiva Cittadella",
+"allenatori": [
+{
+"chi": "Roberto Venturato",
+"qid": "Q26520275",
+"da": "2015-07-10",
+"a": null
+}
+]
+},
+"Crotone": {
+"wikidata": "Q6690",
+"nome": "F.C. Crotone",
+"allenatori": [
+{
+"chi": "Walter Zenga",
+"qid": "Q294302",
+"da": "2016-12-08",
+"a": "2018-06-30"
+},
+{
+"chi": "Giovanni Stroppa",
+"qid": "Q2656692",
+"da": "2018-12-28",
+"a": "2021-03-01"
+},
+{
+"chi": "Francesco Modesto",
+"qid": "Q2584470",
+"da": "2021-06-09",
+"a": "2021-10-29"
+},
+{
+"chi": "Francesco Modesto",
+"qid": "Q2584470",
+"da": "2021-12-10",
+"a": "2022-05-29"
+},
+{
+"chi": "Franco Lerda",
+"qid": "Q2657704",
+"da": "2022-05-30",
+"a": null
+}
+]
+},
+"Brescia": {
+"wikidata": "Q6651",
+"nome": "Brescia Calcio",
+"allenatori": [
+{
+"chi": "Marco Giampaolo",
+"qid": "Q2704759",
+"da": "2013-07-02",
+"a": "2013-09-24"
+},
+{
+"chi": "Roberto Boscaglia",
+"qid": "Q13527921",
+"da": "2018-01-16",
+"a": "2018-04-29"
+},
+{
+"chi": "Eugenio Corini",
+"qid": "Q511092",
+"da": "2018-09-18",
+"a": "2019-11-03"
+},
+{
+"chi": "Fabio Grosso",
+"qid": "Q230529",
+"da": "2019-11-03",
+"a": "2019-12-02"
+},
+{
+"chi": "Eugenio Corini",
+"qid": "Q511092",
+"da": "2019-12-02",
+"a": "2020-02-05"
+},
+{
+"chi": "Luis Diego López",
+"qid": "Q954307",
+"da": "2020-02-05",
+"a": "2020-08-20"
+},
+{
+"chi": "Pierpaolo Bisoli",
+"qid": "Q1403552",
+"da": "2024-12-09",
+"a": "2025-01-01"
+}
+]
+},
+"Empoli": {
+"wikidata": "Q6703",
+"nome": "Empoli FC",
+"allenatori": [
+{
+"chi": "Maurizio Sarri",
+"qid": "Q3852721",
+"da": "2012-07-01",
+"a": "2015-06-30"
+},
+{
+"chi": "Marco Giampaolo",
+"qid": "Q2704759",
+"da": "2015-06-15",
+"a": "2016-06-30"
+},
+{
+"chi": "Giuseppe Iachini",
+"qid": "Q604969",
+"da": "2018-11-06",
+"a": "2019-03-13"
+},
+{
+"chi": "Aurelio Andreazzoli",
+"qid": "Q4734615",
+"da": "2019-03-13",
+"a": "2019-06-30"
+},
+{
+"chi": "Cristian Bucchi",
+"qid": "Q1140277",
+"da": "2019-06-18",
+"a": "2019-11-12"
+},
+{
+"chi": "Pasquale Marino",
+"qid": "Q2305065",
+"da": "2020-01-26",
+"a": "2020-08-11"
+},
+{
+"chi": "Alessio Dionisi",
+"qid": "Q65127311",
+"da": "2020-08-19",
+"a": "2021-06-15"
+},
+{
+"chi": "Aurelio Andreazzoli",
+"qid": "Q4734615",
+"da": "2021-06-21",
+"a": "2022-06-01"
+},
+{
+"chi": "Paolo Zanetti",
+"qid": "Q1494098",
+"da": "2022-06-06",
+"a": "2023-09-19"
+},
+{
+"chi": "Aurelio Andreazzoli",
+"qid": "Q4734615",
+"da": "2023-09-19",
+"a": "2024-01-15"
+},
+{
+"chi": "Davide Nicola",
+"qid": "Q3019103",
+"da": "2024-01-15",
+"a": "2024-07-02"
+},
+{
+"chi": "Roberto D'Aversa",
+"qid": "Q573195",
+"da": "2024-07-02",
+"a": "2025-06-30"
+},
+{
+"chi": "Guido Pagliuca",
+"qid": "Q123920027",
+"da": "2025-06-16",
+"a": "2025-10-15"
+},
+{
+"chi": "Fabio Caserta",
+"qid": "Q267797",
+"da": "2026-03-10",
+"a": "2026-06-30"
+},
+{
+"chi": "Guido Pagliuca",
+"qid": "Q123920027",
+"da": "2026-07-06",
+"a": "2026-09-28"
+},
+{
+"chi": "Matteo Andreoletti",
+"qid": "Q131745425",
+"da": "2026-09-30",
+"a": null
+}
+]
+},
+"Reggina": {
+"wikidata": "Q8476",
+"nome": "AS Reggina 1914",
+"allenatori": [
+{
+"chi": "Domenico Toscano",
+"qid": "Q3713267",
+"da": "2019-06-21",
+"a": null
+}
+]
+},
+"Grosseto": {
+"wikidata": "Q6721",
+"nome": "U.S. Grosseto 1912",
+"allenatori": [
+{
+"chi": "Maurizio Sarri",
+"qid": "Q3852721",
+"da": "2010-02-24",
+"a": "2010-05-30"
+},
+{
+"chi": "Lamberto Magrini",
+"qid": "Q3826331",
+"da": "2019-01-09",
+"a": null
+}
+]
+},
+"Novara": {
+"wikidata": "Q8416",
+"nome": "Novara Calcio",
+"allenatori": [
+{
+"chi": "Emiliano Mondonico",
+"qid": "Q3052298",
+"da": "2012-01-30",
+"a": "2012-03-06"
+}
+]
+},
+"Juve Stabia": {
+"wikidata": "Q6748",
+"nome": "S.S. Juve Stabia",
+"allenatori": [
+{
+"chi": "Guido Pagliuca",
+"qid": "Q123920027",
+"da": "2023-06-26",
+"a": null
+}
+]
+},
+"Livorno": {
+"wikidata": "Q6767",
+"nome": "US Livorno 1915",
+"allenatori": [
+{
+"chi": "Roberto Breda",
+"qid": "Q1466614",
+"da": "2018-11-07",
+"a": null
+}
+]
+},
+"Padova": {
+"wikidata": "Q8428",
+"nome": "Calcio Padova",
+"allenatori": [
+{
+"chi": "Fulvio Pea",
+"qid": "Q3754317",
+"da": "2013-03-20",
+"a": "2013-06-30"
+},
+{
+"chi": "Oscar Brevi",
+"qid": "Q1467050",
+"da": "2016-07-01",
+"a": "2017-06-30"
+}
+]
+},
+"Virtus Lanciano": {
+"wikidata": "Q8648",
+"nome": "Lanciano Calcio 1920",
+"allenatori": [
+{
+"chi": "Carmine Gautieri",
+"qid": "Q3660370",
+"da": "2011-01-01",
+"a": "2013-01-01"
+}
+]
+},
+"Pro Vercelli": {
+"wikidata": "Q8455",
+"nome": "F.C. Pro Vercelli 1892",
+"allenatori": []
+},
+"Ternana": {
+"wikidata": "Q8623",
+"nome": "Ternana Calcio",
+"allenatori": []
+},
+"Spezia": {
+"wikidata": "Q8615",
+"nome": "Spezia Calcio",
+"allenatori": [
+{
+"chi": "Vincenzo Italiano",
+"qid": "Q1091404",
+"da": "2019-07-01",
+"a": "2021-06-30"
+},
+{
+"chi": "Thiago Motta",
+"qid": "Q191885",
+"da": "2021-07-08",
+"a": "2022-06-28"
+},
+{
+"chi": "Luca Gotti",
+"qid": "Q3838152",
+"da": "2022-07-01",
+"a": "2023-02-15"
+},
+{
+"chi": "Massimiliano Alvini",
+"qid": "Q98581426",
+"da": "2023-07-06",
+"a": "2023-11-15"
+},
+{
+"chi": "Luca D'Angelo",
+"qid": "Q3838092",
+"da": "2023-11-15",
+"a": "2025-11-04"
+},
+{
+"chi": "Roberto Donadoni",
+"qid": "Q294718",
+"da": "2025-11-04",
+"a": null
+}
+]
+},
+"Vicenza": {
+"wikidata": "Q8643",
+"nome": "Vicenza Calcio",
+"allenatori": [
+{
+"chi": "Nedo Sonetti",
+"qid": "Q1080952",
+"da": "2010-03-28",
+"a": "2010-04-15"
+}
+]
+},
+"Ascoli": {
+"wikidata": "Q6630",
+"nome": "Ascoli Calcio 1898 FC",
+"allenatori": [
+{
+"chi": "Valerio Bertotto",
+"qid": "Q1408854",
+"da": "2020-08-25",
+"a": null
+}
+]
+},
+"Cesena": {
+"wikidata": "Q6664",
+"nome": "AC Cesena",
+"allenatori": [
+{
+"chi": "Marco Giampaolo",
+"qid": "Q2704759",
+"da": "2011-06-04",
+"a": "2011-10-30"
+}
+]
+},
+"Sassuolo": {
+"wikidata": "Q8603",
+"nome": "US Sassuolo Calcio",
+"allenatori": [
+{
+"chi": "Stefano Pioli",
+"qid": "Q923088",
+"da": "2009-06-12",
+"a": "2010-06-09"
+},
+{
+"chi": "Eusebio Di Francesco",
+"qid": "Q396154",
+"da": "2012-06-19",
+"a": "2014-01-28"
+},
+{
+"chi": "Eusebio Di Francesco",
+"qid": "Q396154",
+"da": "2014-03-03",
+"a": "2017-06-12"
+},
+{
+"chi": "Roberto De Zerbi",
+"qid": "Q2032119",
+"da": "2018-06-13",
+"a": "2021-05-25"
+},
+{
+"chi": "Alessio Dionisi",
+"qid": "Q65127311",
+"da": "2021-06-15",
+"a": "2024-02-25"
+},
+{
+"chi": "Davide Ballardini",
+"qid": "Q1024171",
+"da": "2024-03-01",
+"a": "2024-06-03"
+},
+{
+"chi": "Fabio Grosso",
+"qid": "Q230529",
+"da": "2024-06-03",
+"a": "2026-06-08"
+}
+]
+},
+"Arsenal": {
+"wikidata": "Q9617",
+"nome": "Arsenal F.C.",
+"allenatori": [
+{
+"chi": "Arsène Wenger",
+"qid": "Q47576",
+"da": "1996-10-01",
+"a": "2018-05-21"
+},
+{
+"chi": "Unai Emery",
+"qid": "Q295610",
+"da": "2018-05-23",
+"a": "2019-11-29"
+},
+{
+"chi": "Freddie Ljungberg",
+"qid": "Q10560",
+"da": "2019-11-29",
+"a": "2019-12-20"
+},
+{
+"chi": "Mikel Arteta",
+"qid": "Q185572",
+"da": "2019-12-20",
+"a": null
+}
+]
+},
+"Sunderland": {
+"wikidata": "Q18739",
+"nome": "Sunderland A.F.C.",
+"allenatori": [
+{
+"chi": "Steve Bruce",
+"qid": "Q331904",
+"da": "2009-07-01",
+"a": "2011-11-30"
+},
+{
+"chi": "Chris Coleman",
+"qid": "Q381769",
+"da": "2017-11-19",
+"a": "2018-04-29"
+},
+{
+"chi": "Jack Ross",
+"qid": "Q3805645",
+"da": "2018-05-25",
+"a": "2019-10-08"
+},
+{
+"chi": "Phil Parkinson",
+"qid": "Q797757",
+"da": "2019-10-17",
+"a": "2020-11-29"
+},
+{
+"chi": "Alex Neil",
+"qid": "Q1828808",
+"da": "2022-02-11",
+"a": "2022-08-28"
+},
+{
+"chi": "Tony Mowbray",
+"qid": "Q717959",
+"da": "2022-08-30",
+"a": "2023-12-05"
+},
+{
+"chi": "Michael Beale",
+"qid": "Q112339753",
+"da": "2023-12-18",
+"a": "2024-02-19"
+},
+{
+"chi": "Mike Dodds",
+"qid": "Q111180951",
+"da": "2024-02-19",
+"a": "2024-06-30"
+},
+{
+"chi": "Régis Le Bris",
+"qid": "Q3455749",
+"da": "2024-07-01",
+"a": null
+}
+]
+},
+"Fulham": {
+"wikidata": "Q18708",
+"nome": "Fulham F.C.",
+"allenatori": [
+{
+"chi": "Claudio Ranieri",
+"qid": "Q235068",
+"da": "2018-11-14",
+"a": "2019-02-28"
+},
+{
+"chi": "Scott Parker",
+"qid": "Q213989",
+"da": "2019-02-28",
+"a": "2021-06-30"
+},
+{
+"chi": "Marco Silva",
+"qid": "Q6757714",
+"da": "2021-07-01",
+"a": "2026-06-02"
+},
+{
+"chi": "Álvaro Arbeloa",
+"qid": "Q250901",
+"da": "2026-07-08",
+"a": null
+}
+]
+},
+"Norwich": {
+"wikidata": "Q18721",
+"nome": "Norwich City F.C.",
+"allenatori": [
+{
+"chi": "Dean Smith",
+"qid": "Q5246473",
+"da": "2021-11-15",
+"a": "2022-12-27"
+},
+{
+"chi": "David Wagner",
+"qid": "Q871069",
+"da": "2023-01-06",
+"a": "2024-05-17"
+},
+{
+"chi": "Johannes Hoff Thorup",
+"qid": "Q118483155",
+"da": "2024-05-30",
+"a": "2025-04-22"
+},
+{
+"chi": "Jack Wilshere",
+"qid": "Q15199",
+"da": "2025-04-22",
+"a": "2025-06-03"
+},
+{
+"chi": "Liam Manning",
+"qid": "Q97138662",
+"da": "2025-06-03",
+"a": "2025-11-08"
+},
+{
+"chi": "Philippe Clement",
+"qid": "Q1338480",
+"da": "2025-11-18",
+"a": null
+}
+]
+},
+"Newcastle": {
+"wikidata": "Q18716",
+"nome": "Newcastle United F.C.",
+"allenatori": [
+{
+"chi": "Rafa Benítez",
+"qid": "Q144048",
+"da": "2016-03-11",
+"a": "2019-06-30"
+},
+{
+"chi": "Steve Bruce",
+"qid": "Q331904",
+"da": "2019-07-17",
+"a": "2021-10-20"
+},
+{
+"chi": "Eddie Howe",
+"qid": "Q5336135",
+"da": "2021-11-08",
+"a": "2026-07-30"
+},
+{
+"chi": "Matthias Jaissle",
+"qid": "Q690028",
+"da": "2026-08-05",
+"a": null
+}
+]
+},
+"Tottenham": {
+"wikidata": "Q18741",
+"nome": "Tottenham Hotspur F.C.",
+"allenatori": [
+{
+"chi": "Harry Redknapp",
+"qid": "Q221349",
+"da": "2008-10-26",
+"a": "2012-06-14"
+},
+{
+"chi": "André Villas-Boas",
+"qid": "Q212914",
+"da": "2012-07-03",
+"a": "2013-12-16"
+},
+{
+"chi": "Tim Sherwood",
+"qid": "Q970732",
+"da": "2013-12-23",
+"a": "2014-05-13"
+},
+{
+"chi": "Mauricio Pochettino",
+"qid": "Q313000",
+"da": "2014-05-27",
+"a": "2019-11-19"
+},
+{
+"chi": "José Mourinho",
+"qid": "Q79983",
+"da": "2019-11-20",
+"a": "2021-04-19"
+},
+{
+"chi": "Ryan Mason",
+"qid": "Q4459692",
+"da": "2021-04-20",
+"a": "2021-06-30"
+},
+{
+"chi": "Nuno Espírito Santo",
+"qid": "Q372372",
+"da": "2021-07-01",
+"a": "2021-11-01"
+},
+{
+"chi": "Antonio Conte",
+"qid": "Q26580",
+"da": "2021-11-02",
+"a": "2023-03-26"
+},
+{
+"chi": "Cristian Stellini",
+"qid": "Q461177",
+"da": "2023-03-26",
+"a": "2023-04-24"
+},
+{
+"chi": "Ryan Mason",
+"qid": "Q4459692",
+"da": "2023-04-24",
+"a": "2023-06-30"
+},
+{
+"chi": "Ange Postecoglou",
+"qid": "Q2849301",
+"da": "2023-07-01",
+"a": "2025-06-06"
+},
+{
+"chi": "Thomas Frank",
+"qid": "Q13469562",
+"da": "2025-06-13",
+"a": "2026-02-11"
+},
+{
+"chi": "Igor Tudor",
+"qid": "Q276544",
+"da": "2026-02-14",
+"a": "2026-03-29"
+},
+{
+"chi": "Roberto De Zerbi",
+"qid": "Q2032119",
+"da": "2026-03-31",
+"a": null
+}
+]
+},
+"QPR": {
+"wikidata": "Q18723",
+"nome": "Queens Park Rangers F.C.",
+"allenatori": [
+{
+"chi": "Ian Holloway",
+"qid": "Q126137",
+"da": "2016-11-11",
+"a": "2018-05-10"
+},
+{
+"chi": "Steve McClaren",
+"qid": "Q311007",
+"da": "2018-05-18",
+"a": "2019-04-01"
+},
+{
+"chi": "Mark Warburton",
+"qid": "Q16194857",
+"da": "2019-05-08",
+"a": "2022-05-02"
+},
+{
+"chi": "Michael Beale",
+"qid": "Q112339753",
+"da": "2022-06-01",
+"a": "2022-11-27"
+},
+{
+"chi": "Neil Critchley",
+"qid": "Q6988438",
+"da": "2022-12-12",
+"a": "2023-02-19"
+},
+{
+"chi": "Gareth Ainsworth",
+"qid": "Q3098290",
+"da": "2023-02-21",
+"a": "2023-10-28"
+},
+{
+"chi": "Martí Cifuentes",
+"qid": "Q68772002",
+"da": "2023-10-31",
+"a": "2025-06-24"
+},
+{
+"chi": "Julien Stéphan",
+"qid": "Q59390957",
+"da": "2025-06-25",
+"a": null
+}
+]
+},
+"Swansea": {
+"wikidata": "Q18659",
+"nome": "Swansea City A.F.C.",
+"allenatori": [
+{
+"chi": "Michael Laudrup",
+"qid": "Q188720",
+"da": "2012-06-15",
+"a": "2014-02-04"
+},
+{
+"chi": "Bob Bradley",
+"qid": "Q442325",
+"da": "2016-10-03",
+"a": "2016-12-27"
+},
+{
+"chi": "Paul Clement",
+"qid": "Q15708728",
+"da": "2017-01-04",
+"a": "2017-12-20"
+},
+{
+"chi": "Graham Potter",
+"qid": "Q5593150",
+"da": "2018-07-01",
+"a": "2019-05-19"
+},
+{
+"chi": "Steve Cooper",
+"qid": "Q24183505",
+"da": "2019-07-01",
+"a": "2021-07-21"
+},
+{
+"chi": "Russell Martin",
+"qid": "Q555382",
+"da": "2021-08-01",
+"a": "2023-06-30"
+},
+{
+"chi": "Michael Duff",
+"qid": "Q983931",
+"da": "2023-07-01",
+"a": "2023-12-04"
+},
+{
+"chi": "Luke Williams",
+"qid": "Q22007424",
+"da": "2024-01-05",
+"a": "2025-02-17"
+},
+{
+"chi": "Alan Sheehan",
+"qid": "Q3607774",
+"da": "2025-02-18",
+"a": null
+}
+]
+},
+"Reading": {
+"wikidata": "Q18729",
+"nome": "Reading F.C.",
+"allenatori": [
+{
+"chi": "Jaap Stam",
+"qid": "Q216917",
+"da": "2016-07-01",
+"a": "2018-03-21"
+},
+{
+"chi": "José Manuel Gomes",
+"qid": "Q4342579",
+"da": "2018-12-22",
+"a": "2019-10-09"
+},
+{
+"chi": "Mark Bowen",
+"qid": "Q1092611",
+"da": "2019-10-14",
+"a": "2020-08-28"
+},
+{
+"chi": "Paul Ince",
+"qid": "Q311171",
+"da": "2022-02-20",
+"a": "2023-04-11"
+},
+{
+"chi": "Noel Hunt",
+"qid": "Q2624547",
+"da": "2023-04-11",
+"a": "2023-05-08"
+},
+{
+"chi": "Rubén Sellés",
+"qid": "Q115156958",
+"da": "2023-06-26",
+"a": "2024-12-05"
+},
+{
+"chi": "Noel Hunt",
+"qid": "Q2624547",
+"da": "2024-12-06",
+"a": "2025-10-27"
+},
+{
+"chi": "Leam Richardson",
+"qid": "Q6509390",
+"da": "2025-10-28",
+"a": null
+}
+]
+},
+"Stoke": {
+"wikidata": "Q18736",
+"nome": "Stoke City F.C.",
+"allenatori": [
+{
+"chi": "Gary Rowett",
+"qid": "Q5525857",
+"da": "2018-05-22",
+"a": "2019-01-08"
+},
+{
+"chi": "Nathan Jones",
+"qid": "Q10387537",
+"da": "2019-01-01",
+"a": "2019-11-01"
+},
+{
+"chi": "Michael O'Neill",
+"qid": "Q1778362",
+"da": "2019-11-20",
+"a": "2022-08-25"
+},
+{
+"chi": "Alex Neil",
+"qid": "Q1828808",
+"da": "2022-08-28",
+"a": "2023-12-10"
+},
+{
+"chi": "Steven Schumacher",
+"qid": "Q7615248",
+"da": "2023-12-19",
+"a": "2024-09-16"
+},
+{
+"chi": "Narcís Pelach",
+"qid": "Q114049138",
+"da": "2024-09-18",
+"a": "2024-12-27"
+},
+{
+"chi": "Ryan Shawcross",
+"qid": "Q247462",
+"da": "2024-12-27",
+"a": "2024-12-31"
+},
+{
+"chi": "Mark Robins",
+"qid": "Q1900410",
+"da": "2025-01-01",
+"a": null
+}
+]
+},
+"West Brom": {
+"wikidata": "Q18744",
+"nome": "West Bromwich Albion F.C.",
+"allenatori": [
+{
+"chi": "Darren Moore",
+"qid": "Q725692",
+"da": "2018-04-02",
+"a": "2019-03-09"
+},
+{
+"chi": "James Shan",
+"qid": "Q62081702",
+"da": "2019-03-10",
+"a": "2019-06-13"
+},
+{
+"chi": "Slaven Bilić",
+"qid": "Q489107",
+"da": "2019-07-01",
+"a": "2020-12-16"
+},
+{
+"chi": "Sam Allardyce",
+"qid": "Q334388",
+"da": "2020-12-16",
+"a": "2021-06-30"
+},
+{
+"chi": "Valérien Ismaël",
+"qid": "Q456652",
+"da": "2021-07-01",
+"a": "2022-02-02"
+},
+{
+"chi": "Steve Bruce",
+"qid": "Q331904",
+"da": "2022-02-03",
+"a": "2022-10-10"
+},
+{
+"chi": "Carlos Corberán",
+"qid": "Q27983031",
+"da": "2022-10-25",
+"a": "2024-12-24"
+},
+{
+"chi": "Chris Brunt",
+"qid": "Q372140",
+"da": "2024-12-25",
+"a": "2025-01-18"
+},
+{
+"chi": "Tony Mowbray",
+"qid": "Q717959",
+"da": "2025-01-19",
+"a": "2025-04-21"
+},
+{
+"chi": "Ryan Mason",
+"qid": "Q4459692",
+"da": "2025-06-02",
+"a": null
+}
+]
+},
+"Liverpool": {
+"wikidata": "Q1130849",
+"nome": "Liverpool F.C.",
+"allenatori": [
+{
+"chi": "Kenny Dalglish",
+"qid": "Q187198",
+"da": "2011-01-08",
+"a": "2012-05-16"
+},
+{
+"chi": "Brendan Rodgers",
+"qid": "Q310623",
+"da": "2012-06-01",
+"a": "2015-10-04"
+},
+{
+"chi": "Jürgen Klopp",
+"qid": "Q83106",
+"da": "2015-10-08",
+"a": "2024-05-19"
+},
+{
+"chi": "Arne Slot",
+"qid": "Q1029223",
+"da": "2024-06-01",
+"a": "2026-05-30"
+},
+{
+"chi": "Andoni Iraola",
+"qid": "Q317216",
+"da": "2026-06-04",
+"a": null
+}
+]
+},
+"West Ham": {
+"wikidata": "Q18747",
+"nome": "West Ham United F.C.",
+"allenatori": [
+{
+"chi": "Gianfranco Zola",
+"qid": "Q9354",
+"da": "2008-09-11",
+"a": "2010-05-11"
+},
+{
+"chi": "Manuel Pellegrini",
+"qid": "Q296036",
+"da": "2018-07-01",
+"a": "2019-12-28"
+},
+{
+"chi": "David Moyes",
+"qid": "Q297252",
+"da": "2019-12-29",
+"a": "2024-06-30"
+},
+{
+"chi": "Julen Lopetegui",
+"qid": "Q115119",
+"da": "2024-07-01",
+"a": "2025-01-08"
+},
+{
+"chi": "Graham Potter",
+"qid": "Q5593150",
+"da": "2025-01-09",
+"a": "2025-09-27"
+},
+{
+"chi": "Nuno Espírito Santo",
+"qid": "Q372372",
+"da": "2025-09-27",
+"a": null
+}
+]
+},
+"Aston Villa": {
+"wikidata": "Q18711",
+"nome": "Aston Villa F.C.",
+"allenatori": [
+{
+"chi": "Alex McLeish",
+"qid": "Q316701",
+"da": "2011-06-17",
+"a": "2012-05-14"
+},
+{
+"chi": "Dean Smith",
+"qid": "Q5246473",
+"da": "2018-10-10",
+"a": "2021-11-07"
+},
+{
+"chi": "Steven Gerrard",
+"qid": "Q459830",
+"da": "2021-11-11",
+"a": "2022-10-20"
+},
+{
+"chi": "Unai Emery",
+"qid": "Q295610",
+"da": "2022-11-01",
+"a": null
+}
+]
+},
+"Man City": {
+"wikidata": "Q50602",
+"nome": "Manchester City F.C.",
+"allenatori": [
+{
+"chi": "Roberto Mancini",
+"qid": "Q48330",
+"da": "2009-12-19",
+"a": "2013-05-13"
+},
+{
+"chi": "Pep Guardiola",
+"qid": "Q164038",
+"da": "2016-07-01",
+"a": "2026-05-01"
+},
+{
+"chi": "Enzo Maresca",
+"qid": "Q317282",
+"da": "2026-06-29",
+"a": null
+}
+]
+},
+"Southampton": {
+"wikidata": "Q18732",
+"nome": "Southampton F.C.",
+"allenatori": [
+{
+"chi": "Mauricio Pochettino",
+"qid": "Q313000",
+"da": "2013-01-18",
+"a": "2014-05-26"
+},
+{
+"chi": "Ralph Hasenhüttl",
+"qid": "Q874628",
+"da": "2018-12-06",
+"a": "2022-11-07"
+},
+{
+"chi": "Nathan Jones",
+"qid": "Q10387537",
+"da": "2022-11-10",
+"a": "2023-02-12"
+},
+{
+"chi": "Rubén Sellés",
+"qid": "Q115156958",
+"da": "2023-02-13",
+"a": "2023-06-30"
+},
+{
+"chi": "Russell Martin",
+"qid": "Q555382",
+"da": "2023-07-01",
+"a": "2024-12-15"
+},
+{
+"chi": "Simon Rusk",
+"qid": "Q7519709",
+"da": "2024-12-15",
+"a": "2024-12-22"
+},
+{
+"chi": "Ivan Jurić",
+"qid": "Q556688",
+"da": "2024-12-22",
+"a": "2025-04-07"
+},
+{
+"chi": "Simon Rusk",
+"qid": "Q7519709",
+"da": "2025-04-07",
+"a": "2025-05-01"
+},
+{
+"chi": "Will Still",
+"qid": "Q42097340",
+"da": "2025-05-25",
+"a": "2025-11-02"
+},
+{
+"chi": "Tonda Eckert",
+"qid": "Q136700977",
+"da": "2025-11-03",
+"a": null
+}
+]
+},
+"Wigan": {
+"wikidata": "Q18750",
+"nome": "Wigan Athletic F.C.",
+"allenatori": [
+{
+"chi": "Uwe Rösler",
+"qid": "Q566127",
+"da": "2013-12-08",
+"a": "2014-11-13"
+},
+{
+"chi": "Gary Caldwell",
+"qid": "Q334628",
+"da": "2015-04-07",
+"a": "2016-10-25"
+},
+{
+"chi": "Warren Joyce",
+"qid": "Q2427511",
+"da": "2016-11-03",
+"a": "2017-03-13"
+},
+{
+"chi": "Paul Cook",
+"qid": "Q3305315",
+"da": "2017-07-01",
+"a": "2020-08-01"
+},
+{
+"chi": "Leam Richardson",
+"qid": "Q6509390",
+"da": "2020-08-04",
+"a": "2020-09-10"
+},
+{
+"chi": "John Sheridan",
+"qid": "Q552767",
+"da": "2020-09-12",
+"a": "2020-11-12"
+},
+{
+"chi": "Leam Richardson",
+"qid": "Q6509390",
+"da": "2020-11-13",
+"a": "2022-11-10"
+},
+{
+"chi": "Kolo Touré",
+"qid": "Q147589",
+"da": "2022-11-29",
+"a": "2023-01-26"
+},
+{
+"chi": "Shaun Maloney",
+"qid": "Q37717",
+"da": "2023-01-28",
+"a": "2025-03-02"
+}
+]
+},
+"Chelsea": {
+"wikidata": "Q2669653",
+"nome": "Chelsea F.C. Development Squad and Academy",
+"allenatori": []
+},
+"Everton": {
+"wikidata": "Q5794",
+"nome": "Everton F.C.",
+"allenatori": [
+{
+"chi": "Sam Allardyce",
+"qid": "Q334388",
+"da": "2017-11-30",
+"a": "2018-05-16"
+},
+{
+"chi": "Marco Silva",
+"qid": "Q6757714",
+"da": "2018-05-31",
+"a": "2019-12-05"
+},
+{
+"chi": "Duncan Ferguson",
+"qid": "Q465623",
+"da": "2019-12-05",
+"a": "2019-12-21"
+},
+{
+"chi": "Carlo Ancelotti",
+"qid": "Q174614",
+"da": "2019-12-22",
+"a": "2021-06-30"
+},
+{
+"chi": "Rafa Benítez",
+"qid": "Q144048",
+"da": "2021-06-30",
+"a": "2022-01-16"
+},
+{
+"chi": "Frank Lampard",
+"qid": "Q41533",
+"da": "2022-01-31",
+"a": "2023-01-23"
+},
+{
+"chi": "Sean Dyche",
+"qid": "Q10599",
+"da": "2023-01-30",
+"a": "2025-01-09"
+},
+{
+"chi": "David Moyes",
+"qid": "Q297252",
+"da": "2025-01-11",
+"a": null
+}
+]
+},
+"Man United": {
+"wikidata": "Q18656",
+"nome": "Manchester United F.C.",
+"allenatori": [
+{
+"chi": "Alex Ferguson",
+"qid": "Q44980",
+"da": "1986-11-06",
+"a": "2013-06-30"
+},
+{
+"chi": "David Moyes",
+"qid": "Q297252",
+"da": "2013-07-01",
+"a": "2014-04-22"
+},
+{
+"chi": "Louis van Gaal",
+"qid": "Q207431",
+"da": "2014-07-01",
+"a": "2016-05-23"
+},
+{
+"chi": "José Mourinho",
+"qid": "Q79983",
+"da": "2016-05-27",
+"a": "2018-12-18"
+},
+{
+"chi": "Ole Gunnar Solskjær",
+"qid": "Q18976",
+"da": "2018-12-19",
+"a": "2021-11-21"
+},
+{
+"chi": "Michael Carrick",
+"qid": "Q29566",
+"da": "2021-11-21",
+"a": "2021-11-29"
+},
+{
+"chi": "Ralf Rangnick",
+"qid": "Q57902",
+"da": "2021-12-03",
+"a": "2022-05-31"
+},
+{
+"chi": "Erik ten Hag",
+"qid": "Q2844569",
+"da": "2022-07-01",
+"a": "2024-10-28"
+},
+{
+"chi": "Ruud van Nistelrooy",
+"qid": "Q45626",
+"da": "2024-10-28",
+"a": "2024-11-11"
+},
+{
+"chi": "Ruben Amorim",
+"qid": "Q368682",
+"da": "2024-11-11",
+"a": "2026-01-05"
+},
+{
+"chi": "Darren Fletcher",
+"qid": "Q172792",
+"da": "2026-01-05",
+"a": "2026-01-13"
+},
+{
+"chi": "Michael Carrick",
+"qid": "Q29566",
+"da": "2026-01-13",
+"a": null
+}
+]
+},
+"Cardiff": {
+"wikidata": "Q18662",
+"nome": "Cardiff City F.C.",
+"allenatori": [
+{
+"chi": "Ole Gunnar Solskjær",
+"qid": "Q18976",
+"da": "2014-01-02",
+"a": "2014-09-18"
+},
+{
+"chi": "Neil Warnock",
+"qid": "Q948505",
+"da": "2016-10-05",
+"a": "2019-11-11"
+},
+{
+"chi": "Neil Harris",
+"qid": "Q1018476",
+"da": "2019-11-16",
+"a": "2021-01-21"
+},
+{
+"chi": "Mick McCarthy",
+"qid": "Q437925",
+"da": "2021-01-22",
+"a": "2021-10-23"
+},
+{
+"chi": "Steve Morison",
+"qid": "Q715041",
+"da": "2021-10-23",
+"a": "2022-09-18"
+},
+{
+"chi": "Mark Hudson",
+"qid": "Q302325",
+"da": "2022-09-19",
+"a": "2023-01-14"
+},
+{
+"chi": "Sabri Lamouchi",
+"qid": "Q1883",
+"da": "2023-01-27",
+"a": "2023-06-02"
+},
+{
+"chi": "Erol Bulut",
+"qid": "Q562157",
+"da": "2023-07-01",
+"a": "2024-09-22"
+},
+{
+"chi": "Ömer Rıza",
+"qid": "Q297499",
+"da": "2024-09-23",
+"a": "2025-04-19"
+},
+{
+"chi": "Aaron Ramsey",
+"qid": "Q213427",
+"da": "2025-04-19",
+"a": null
+}
+]
+},
+"Huddersfield": {
+"wikidata": "Q19473",
+"nome": "Huddersfield Town A.F.C.",
+"allenatori": [
+{
+"chi": "David Wagner",
+"qid": "Q871069",
+"da": "2015-11-09",
+"a": "2019-01-14"
+},
+{
+"chi": "Jan Siewert",
+"qid": "Q60738841",
+"da": "2019-01-21",
+"a": "2019-08-16"
+},
+{
+"chi": "Danny Cowley",
+"qid": "Q28925194",
+"da": "2019-09-09",
+"a": "2020-07-19"
+},
+{
+"chi": "Danny Schofield",
+"qid": "Q5220807",
+"da": "2020-07-20",
+"a": "2022-09-14"
+},
+{
+"chi": "Carlos Corberán",
+"qid": "Q27983031",
+"da": "2020-07-23",
+"a": "2022-07-07"
+},
+{
+"chi": "Mark Fotheringham",
+"qid": "Q325447",
+"da": "2022-09-28",
+"a": "2023-02-08"
+},
+{
+"chi": "Narcís Pelach",
+"qid": "Q114049138",
+"da": "2023-02-09",
+"a": "2023-02-15"
+},
+{
+"chi": "Neil Warnock",
+"qid": "Q948505",
+"da": "2023-02-16",
+"a": "2023-09-21"
+},
+{
+"chi": "Darren Moore",
+"qid": "Q725692",
+"da": "2023-09-21",
+"a": "2024-01-29"
+},
+{
+"chi": "Jon Worthington",
+"qid": "Q6271786",
+"da": "2024-01-29",
+"a": "2024-02-18"
+},
+{
+"chi": "André Breitenreiter",
+"qid": "Q517257",
+"da": "2024-02-19",
+"a": "2024-05-10"
+},
+{
+"chi": "Michael Duff",
+"qid": "Q983931",
+"da": "2024-05-13",
+"a": "2025-03-09"
+},
+{
+"chi": "Jon Worthington",
+"qid": "Q6271786",
+"da": "2025-03-09",
+"a": "2025-01-01"
+},
+{
+"chi": "Liam Manning",
+"qid": "Q97138662",
+"da": "2026-01-20",
+"a": null
+}
+]
+},
+"Barnsley": {
+"wikidata": "Q19442",
+"nome": "Barnsley F.C.",
+"allenatori": [
+{
+"chi": "Paul Heckingbottom",
+"qid": "Q7151218",
+"da": "2016-02-06",
+"a": "2018-02-05"
+},
+{
+"chi": "Daniel Stendel",
+"qid": "Q879042",
+"da": "2018-06-06",
+"a": "2019-10-08"
+},
+{
+"chi": "Gerhard Struber",
+"qid": "Q5550774",
+"da": "2019-11-20",
+"a": "2020-10-05"
+},
+{
+"chi": "Valérien Ismaël",
+"qid": "Q456652",
+"da": "2020-10-25",
+"a": "2021-06-30"
+},
+{
+"chi": "Markus Schopp",
+"qid": "Q701256",
+"da": "2021-07-01",
+"a": "2021-11-01"
+},
+{
+"chi": "Poya Asbaghi",
+"qid": "Q25935708",
+"da": "2021-11-17",
+"a": "2022-04-24"
+},
+{
+"chi": "Michael Duff",
+"qid": "Q983931",
+"da": "2022-06-15",
+"a": "2023-06-30"
+},
+{
+"chi": "Neill Collins",
+"qid": "Q1365656",
+"da": "2023-07-10",
+"a": "2024-04-22"
+},
+{
+"chi": "Darrell Clarke",
+"qid": "Q5224602",
+"da": "2024-05-23",
+"a": "2025-03-12"
+},
+{
+"chi": "Conor Hourihane",
+"qid": "Q3687117",
+"da": "2025-03-12",
+"a": null
+}
+]
+},
+"Middlesbrough": {
+"wikidata": "Q18661",
+"nome": "Middlesbrough F.C.",
+"allenatori": [
+{
+"chi": "Tony Pulis",
+"qid": "Q334541",
+"da": "2017-12-27",
+"a": "2019-05-17"
+},
+{
+"chi": "Jonathan Woodgate",
+"qid": "Q296635",
+"da": "2019-07-01",
+"a": "2020-06-23"
+},
+{
+"chi": "Neil Warnock",
+"qid": "Q948505",
+"da": "2020-07-01",
+"a": "2021-11-06"
+},
+{
+"chi": "Chris Wilder",
+"qid": "Q5108471",
+"da": "2021-11-07",
+"a": "2022-10-03"
+},
+{
+"chi": "Leo Percovich",
+"qid": "Q6524134",
+"da": "2022-10-04",
+"a": "2022-10-24"
+},
+{
+"chi": "Michael Carrick",
+"qid": "Q29566",
+"da": "2022-10-25",
+"a": "2025-06-04"
+},
+{
+"chi": "Rob Edwards",
+"qid": "Q2067092",
+"da": "2025-06-24",
+"a": "2025-11-12"
+},
+{
+"chi": "Kim Hellberg",
+"qid": "Q47068280",
+"da": "2025-11-26",
+"a": null
+}
+]
+},
+"Birmingham": {
+"wikidata": "Q19444",
+"nome": "Birmingham City F.C.",
+"allenatori": [
+{
+"chi": "Alex McLeish",
+"qid": "Q316701",
+"da": "2007-11-27",
+"a": "2011-06-12"
+},
+{
+"chi": "Garry Monk",
+"qid": "Q1340803",
+"da": "2018-03-04",
+"a": "2019-06-18"
+},
+{
+"chi": "Josep Clotet",
+"qid": "Q968148",
+"da": "2019-07-01",
+"a": "2020-07-08"
+},
+{
+"chi": "Aitor Karanka",
+"qid": "Q373064",
+"da": "2020-07-31",
+"a": "2021-03-16"
+},
+{
+"chi": "Lee Bowyer",
+"qid": "Q353520",
+"da": "2021-03-16",
+"a": "2022-07-02"
+},
+{
+"chi": "John Eustace",
+"qid": "Q10718",
+"da": "2022-07-03",
+"a": "2023-10-09"
+},
+{
+"chi": "Wayne Rooney",
+"qid": "Q266613",
+"da": "2023-10-11",
+"a": "2024-01-02"
+},
+{
+"chi": "Tony Mowbray",
+"qid": "Q717959",
+"da": "2024-01-08",
+"a": "2024-05-21"
+},
+{
+"chi": "Gary Rowett",
+"qid": "Q5525857",
+"da": "2024-03-19",
+"a": "2024-06-30"
+},
+{
+"chi": "Chris Davies",
+"qid": "Q18637275",
+"da": "2024-06-06",
+"a": null
+}
+]
+},
+"Charlton": {
+"wikidata": "Q19462",
+"nome": "Charlton Athletic F.C.",
+"allenatori": [
+{
+"chi": "Karl Robinson",
+"qid": "Q6372198",
+"da": "2016-11-28",
+"a": "2018-03-22"
+},
+{
+"chi": "Lee Bowyer",
+"qid": "Q353520",
+"da": "2018-03-22",
+"a": "2021-03-15"
+},
+{
+"chi": "Nigel Adkins",
+"qid": "Q520843",
+"da": "2021-03-18",
+"a": "2021-10-21"
+},
+{
+"chi": "Johnnie Jackson",
+"qid": "Q182558",
+"da": "2021-10-21",
+"a": "2022-05-03"
+},
+{
+"chi": "Ben Garner",
+"qid": "Q41787482",
+"da": "2022-06-08",
+"a": "2022-12-05"
+},
+{
+"chi": "Dean Holden",
+"qid": "Q767662",
+"da": "2022-12-22",
+"a": "2023-08-27"
+},
+{
+"chi": "Jason Pearce",
+"qid": "Q2756571",
+"da": "2023-08-27",
+"a": "2023-09-07"
+},
+{
+"chi": "Michael Appleton",
+"qid": "Q6828245",
+"da": "2023-09-08",
+"a": "2024-01-23"
+},
+{
+"chi": "Curtis Fleming",
+"qid": "Q3007800",
+"da": "2024-01-24",
+"a": "2024-02-03"
+},
+{
+"chi": "Nathan Jones",
+"qid": "Q10387537",
+"da": "2024-02-04",
+"a": null
+}
+]
+},
+"Burnley": {
+"wikidata": "Q19458",
+"nome": "Burnley F.C.",
+"allenatori": [
+{
+"chi": "Sean Dyche",
+"qid": "Q10599",
+"da": "2012-10-30",
+"a": "2022-04-15"
+},
+{
+"chi": "Vincent Kompany",
+"qid": "Q201381",
+"da": "2022-07-01",
+"a": "2024-06-30"
+},
+{
+"chi": "Scott Parker",
+"qid": "Q213989",
+"da": "2024-07-05",
+"a": "2026-04-30"
+},
+{
+"chi": "Michael Jackson",
+"qid": "Q6831556",
+"da": "2026-04-30",
+"a": "2026-05-01"
+},
+{
+"chi": "Nicky Hayen",
+"qid": "Q605304",
+"da": "2026-07-10",
+"a": "2026-10-24"
+}
+]
+},
+"Bolton": {
+"wikidata": "Q19451",
+"nome": "Bolton Wanderers F.C.",
+"allenatori": [
+{
+"chi": "Phil Parkinson",
+"qid": "Q797757",
+"da": "2016-06-10",
+"a": "2019-08-21"
+},
+{
+"chi": "Keith Hill",
+"qid": "Q1114037",
+"da": "2019-09-01",
+"a": "2020-06-30"
+},
+{
+"chi": "Ian Evatt",
+"qid": "Q1324468",
+"da": "2020-07-01",
+"a": "2025-01-22"
+},
+{
+"chi": "Julian Darby",
+"qid": "Q6307091",
+"da": "2025-01-23",
+"a": "2025-01-29"
+},
+{
+"chi": "Steven Schumacher",
+"qid": "Q7615248",
+"da": "2025-01-30",
+"a": null
+}
+]
+},
+"Crystal Palace": {
+"wikidata": "Q19467",
+"nome": "Crystal Palace F.C.",
+"allenatori": [
+{
+"chi": "Patrick Vieira",
+"qid": "Q46347",
+"da": "2021-07-04",
+"a": "2023-03-17"
+},
+{
+"chi": "Roy Hodgson",
+"qid": "Q203781",
+"da": "2023-03-21",
+"a": "2024-02-19"
+},
+{
+"chi": "Oliver Glasner",
+"qid": "Q874777",
+"da": "2024-02-20",
+"a": "2026-05-01"
+},
+{
+"chi": "Pierre Sage",
+"qid": "Q123584452",
+"da": "2026-06-15",
+"a": null
+}
+]
+},
+"Watford": {
+"wikidata": "Q2714",
+"nome": "Watford F.C.",
+"allenatori": [
+{
+"chi": "Gianfranco Zola",
+"qid": "Q9354",
+"da": "2012-07-08",
+"a": "2013-12-16"
+},
+{
+"chi": "Quique Sánchez Flores",
+"qid": "Q352313",
+"da": "2015-07-01",
+"a": "2016-06-30"
+},
+{
+"chi": "Walter Mazzarri",
+"qid": "Q370838",
+"da": "2016-07-01",
+"a": "2017-05-22"
+},
+{
+"chi": "Javi Gracia",
+"qid": "Q4886441",
+"da": "2018-01-21",
+"a": "2019-09-07"
+},
+{
+"chi": "Quique Sánchez Flores",
+"qid": "Q352313",
+"da": "2019-09-07",
+"a": "2019-12-01"
+},
+{
+"chi": "Nigel Pearson",
+"qid": "Q154126",
+"da": "2019-12-09",
+"a": "2020-07-19"
+},
+{
+"chi": "Hayden Mullins",
+"qid": "Q945233",
+"da": "2020-07-19",
+"a": "2020-07-27"
+},
+{
+"chi": "Vladimir Ivić",
+"qid": "Q2061129",
+"da": "2020-08-15",
+"a": "2020-12-19"
+},
+{
+"chi": "Xisco",
+"qid": "Q301390",
+"da": "2020-12-20",
+"a": "2021-10-03"
+},
+{
+"chi": "Claudio Ranieri",
+"qid": "Q235068",
+"da": "2021-10-04",
+"a": "2022-01-24"
+},
+{
+"chi": "Roy Hodgson",
+"qid": "Q203781",
+"da": "2022-01-25",
+"a": "2022-06-30"
+},
+{
+"chi": "Rob Edwards",
+"qid": "Q2067092",
+"da": "2022-07-01",
+"a": "2022-09-26"
+},
+{
+"chi": "Slaven Bilić",
+"qid": "Q489107",
+"da": "2022-09-26",
+"a": "2023-03-07"
+},
+{
+"chi": "Chris Wilder",
+"qid": "Q5108471",
+"da": "2023-03-07",
+"a": "2023-05-10"
+},
+{
+"chi": "Valérien Ismaël",
+"qid": "Q456652",
+"da": "2023-07-01",
+"a": "2024-03-09"
+},
+{
+"chi": "Tom Cleverley",
+"qid": "Q10577",
+"da": "2024-03-10",
+"a": "2025-05-06"
+},
+{
+"chi": "Paulo Pezzolano",
+"qid": "Q2740889",
+"da": "2025-05-13",
+"a": "2025-10-08"
+},
+{
+"chi": "Javi Gracia",
+"qid": "Q4886441",
+"da": "2025-10-08",
+"a": "2026-02-01"
+},
+{
+"chi": "Edward Still",
+"qid": "Q42097417",
+"da": "2026-02-09",
+"a": "2026-05-03"
+},
+{
+"chi": "Alessio Dionisi",
+"qid": "Q65127311",
+"da": "2026-06-15",
+"a": null
+}
+]
+},
+"Derby": {
+"wikidata": "Q19470",
+"nome": "Derby County F.C.",
+"allenatori": [
+{
+"chi": "Gary Rowett",
+"qid": "Q5525857",
+"da": "2017-03-14",
+"a": "2018-05-22"
+},
+{
+"chi": "Frank Lampard",
+"qid": "Q41533",
+"da": "2018-05-31",
+"a": "2019-07-04"
+},
+{
+"chi": "Phillip Cocu",
+"qid": "Q11958",
+"da": "2019-07-05",
+"a": "2020-11-14"
+},
+{
+"chi": "Wayne Rooney",
+"qid": "Q266613",
+"da": "2020-11-15",
+"a": "2022-06-24"
+},
+{
+"chi": "Liam Rosenior",
+"qid": "Q1336865",
+"da": "2022-06-24",
+"a": "2022-09-22"
+},
+{
+"chi": "Paul Warne",
+"qid": "Q7154234",
+"da": "2022-09-22",
+"a": "2025-02-07"
+},
+{
+"chi": "Matt Hamshaw",
+"qid": "Q6788756",
+"da": "2025-02-08",
+"a": "2025-02-13"
+},
+{
+"chi": "John Eustace",
+"qid": "Q10718",
+"da": "2025-02-13",
+"a": null
+}
+]
+},
+"Sheffield Weds": {
+"wikidata": "Q19498",
+"nome": "Sheffield Wednesday F.C.",
+"allenatori": [
+{
+"chi": "Jos Luhukay",
+"qid": "Q820948",
+"da": "2018-01-01",
+"a": "2018-12-01"
+},
+{
+"chi": "Steve Bruce",
+"qid": "Q331904",
+"da": "2019-02-01",
+"a": "2019-07-16"
+},
+{
+"chi": "Garry Monk",
+"qid": "Q1340803",
+"da": "2019-09-06",
+"a": "2020-11-09"
+},
+{
+"chi": "Tony Pulis",
+"qid": "Q334541",
+"da": "2020-11-13",
+"a": "2020-12-28"
+},
+{
+"chi": "Darren Moore",
+"qid": "Q725692",
+"da": "2021-03-01",
+"a": "2023-06-19"
+},
+{
+"chi": "Xisco",
+"qid": "Q301390",
+"da": "2023-07-04",
+"a": "2023-10-04"
+},
+{
+"chi": "Danny Röhl",
+"qid": "Q107447008",
+"da": "2023-10-13",
+"a": "2025-07-29"
+},
+{
+"chi": "Henrik Pedersen",
+"qid": "Q20033277",
+"da": "2025-07-31",
+"a": null
+}
+]
+},
+"Hull": {
+"wikidata": "Q19477",
+"nome": "Hull City A.F.C.",
+"allenatori": [
+{
+"chi": "Steve Bruce",
+"qid": "Q331904",
+"da": "2012-07-01",
+"a": "2016-07-22"
+},
+{
+"chi": "Nigel Adkins",
+"qid": "Q520843",
+"da": "2017-12-07",
+"a": "2019-06-30"
+},
+{
+"chi": "Grant McCann",
+"qid": "Q2710509",
+"da": "2019-07-01",
+"a": "2022-01-25"
+},
+{
+"chi": "Shota Arveladze",
+"qid": "Q314365",
+"da": "2022-01-27",
+"a": "2022-09-30"
+},
+{
+"chi": "Andy Dawson",
+"qid": "Q179024",
+"da": "2022-10-01",
+"a": "2022-11-03"
+},
+{
+"chi": "Liam Rosenior",
+"qid": "Q1336865",
+"da": "2022-11-03",
+"a": "2024-05-07"
+},
+{
+"chi": "Tim Walter",
+"qid": "Q54087426",
+"da": "2024-07-01",
+"a": "2024-11-27"
+},
+{
+"chi": "Rubén Sellés",
+"qid": "Q115156958",
+"da": "2024-12-06",
+"a": "2025-05-01"
+},
+{
+"chi": "Sergej Jakirović",
+"qid": "Q1444714",
+"da": "2025-06-01",
+"a": null
+}
+]
+},
+"Brighton": {
+"wikidata": "Q19453",
+"nome": "Brighton & Hove Albion F.C.",
+"allenatori": [
+{
+"chi": "Chris Hughton",
+"qid": "Q351004",
+"da": "2014-12-31",
+"a": "2019-05-13"
+},
+{
+"chi": "Graham Potter",
+"qid": "Q5593150",
+"da": "2019-05-20",
+"a": "2022-09-07"
+},
+{
+"chi": "Roberto De Zerbi",
+"qid": "Q2032119",
+"da": "2022-09-18",
+"a": "2024-05-20"
+},
+{
+"chi": "Fabian Hürzeler",
+"qid": "Q115819313",
+"da": "2024-07-01",
+"a": null
+}
+]
+},
+"Ipswich": {
+"wikidata": "Q9653",
+"nome": "Ipswich Town F.C.",
+"allenatori": [
+{
+"chi": "Mick McCarthy",
+"qid": "Q437925",
+"da": "2012-11-01",
+"a": "2018-04-10"
+},
+{
+"chi": "Paul Hurst",
+"qid": "Q7151437",
+"da": "2018-05-30",
+"a": "2018-10-25"
+},
+{
+"chi": "Paul Lambert",
+"qid": "Q246724",
+"da": "2018-10-28",
+"a": "2021-02-28"
+},
+{
+"chi": "Paul Cook",
+"qid": "Q3305315",
+"da": "2021-03-02",
+"a": "2021-12-04"
+},
+{
+"chi": "John McGreal",
+"qid": "Q6247850",
+"da": "2021-12-06",
+"a": "2021-12-19"
+},
+{
+"chi": "Kieran McKenna",
+"qid": "Q57017948",
+"da": "2021-12-20",
+"a": "2026-06-10"
+},
+{
+"chi": "Gary O'Neil",
+"qid": "Q731946",
+"da": "2026-06-23",
+"a": null
+}
+]
+},
+"Blackburn": {
+"wikidata": "Q19446",
+"nome": "Blackburn Rovers F.C.",
+"allenatori": [
+{
+"chi": "John Eustace",
+"qid": "Q10718",
+"da": "2024-02-11",
+"a": "2025-02-13"
+},
+{
+"chi": "Valérien Ismaël",
+"qid": "Q456652",
+"da": "2025-02-25",
+"a": null
+}
+]
+},
+"Leeds": {
+"wikidata": "Q1128631",
+"nome": "Leeds United F.C.",
+"allenatori": [
+{
+"chi": "Jesse Marsch",
+"qid": "Q1336179",
+"da": "2022-02-28",
+"a": "2023-02-06"
+},
+{
+"chi": "Javi Gracia",
+"qid": "Q4886441",
+"da": "2023-02-24",
+"a": "2023-05-02"
+},
+{
+"chi": "Sam Allardyce",
+"qid": "Q334388",
+"da": "2023-05-03",
+"a": "2023-06-30"
+},
+{
+"chi": "Daniel Farke",
+"qid": "Q30015253",
+"da": "2023-07-04",
+"a": null
+}
+]
+},
+"Wolves": {
+"wikidata": "Q19500",
+"nome": "Wolverhampton Wanderers F.C.",
+"allenatori": [
+{
+"chi": "Walter Zenga",
+"qid": "Q294302",
+"da": "2016-08-01",
+"a": "2016-10-25"
+},
+{
+"chi": "Nuno Espírito Santo",
+"qid": "Q372372",
+"da": "2017-07-01",
+"a": "2021-05-23"
+},
+{
+"chi": "Bruno Lage",
+"qid": "Q56434101",
+"da": "2021-07-01",
+"a": "2022-10-02"
+},
+{
+"chi": "Steve Davis",
+"qid": "Q7612354",
+"da": "2022-10-03",
+"a": "2022-11-13"
+},
+{
+"chi": "Julen Lopetegui",
+"qid": "Q115119",
+"da": "2022-11-14",
+"a": "2023-08-08"
+},
+{
+"chi": "Gary O'Neil",
+"qid": "Q731946",
+"da": "2023-08-09",
+"a": "2024-12-15"
+},
+{
+"chi": "Vítor Pereira",
+"qid": "Q556610",
+"da": "2024-12-19",
+"a": "2025-11-02"
+},
+{
+"chi": "Rob Edwards",
+"qid": "Q2067092",
+"da": "2025-11-12",
+"a": "2026-06-11"
+},
+{
+"chi": "César Peixoto",
+"qid": "Q981657",
+"da": "2026-06-15",
+"a": null
+}
+]
+},
+"Leicester": {
+"wikidata": "Q19481",
+"nome": "Leicester City F.C.",
+"allenatori": [
+{
+"chi": "Nigel Pearson",
+"qid": "Q154126",
+"da": "2008-07-01",
+"a": "2010-06-29"
+},
+{
+"chi": "Paulo Sousa",
+"qid": "Q314440",
+"da": "2010-07-05",
+"a": "2010-10-01"
+},
+{
+"chi": "Sven-Göran Eriksson",
+"qid": "Q218369",
+"da": "2010-10-02",
+"a": "2011-10-24"
+},
+{
+"chi": "Nigel Pearson",
+"qid": "Q154126",
+"da": "2011-11-15",
+"a": "2015-06-30"
+},
+{
+"chi": "Claudio Ranieri",
+"qid": "Q235068",
+"da": "2015-07-13",
+"a": "2017-02-23"
+},
+{
+"chi": "Claude Puel",
+"qid": "Q128898",
+"da": "2017-10-25",
+"a": "2019-02-24"
+},
+{
+"chi": "Brendan Rodgers",
+"qid": "Q310623",
+"da": "2019-02-27",
+"a": "2023-04-02"
+},
+{
+"chi": "Dean Smith",
+"qid": "Q5246473",
+"da": "2023-04-11",
+"a": "2023-06-30"
+},
+{
+"chi": "Enzo Maresca",
+"qid": "Q317282",
+"da": "2023-07-01",
+"a": "2024-06-30"
+},
+{
+"chi": "Steve Cooper",
+"qid": "Q24183505",
+"da": "2024-07-01",
+"a": "2024-11-24"
+},
+{
+"chi": "Ruud van Nistelrooy",
+"qid": "Q45626",
+"da": "2024-11-29",
+"a": "2025-06-27"
+},
+{
+"chi": "Martí Cifuentes",
+"qid": "Q68772002",
+"da": "2025-07-15",
+"a": "2026-01-25"
+},
+{
+"chi": "Gary Rowett",
+"qid": "Q5525857",
+"da": "2026-02-18",
+"a": null
+}
+]
+},
+"Millwall": {
+"wikidata": "Q19487",
+"nome": "Millwall F.C.",
+"allenatori": [
+{
+"chi": "Neil Harris",
+"qid": "Q1018476",
+"da": "2015-03-10",
+"a": "2019-10-21"
+},
+{
+"chi": "Gary Rowett",
+"qid": "Q5525857",
+"da": "2019-10-23",
+"a": "2023-10-18"
+},
+{
+"chi": "Adam Barrett",
+"qid": "Q3604972",
+"da": "2023-10-04",
+"a": "2023-10-21"
+},
+{
+"chi": "Joe Edwards",
+"qid": "Q123509665",
+"da": "2023-11-06",
+"a": "2024-02-21"
+},
+{
+"chi": "Neil Harris",
+"qid": "Q1018476",
+"da": "2024-02-21",
+"a": "2024-12-15"
+},
+{
+"chi": "David Livermore",
+"qid": "Q5236676",
+"da": "2024-12-16",
+"a": "2024-12-30"
+},
+{
+"chi": "Alex Neil",
+"qid": "Q1828808",
+"da": "2024-12-30",
+"a": null
+}
+]
+},
+"Blackpool": {
+"wikidata": "Q19449",
+"nome": "Blackpool F.C.",
+"allenatori": [
+{
+"chi": "Gary Bowyer",
+"qid": "Q5524735",
+"da": "2016-06-01",
+"a": "2018-08-06"
+},
+{
+"chi": "Terry McPhillips",
+"qid": "Q7704792",
+"da": "2018-09-10",
+"a": "2019-07-05"
+},
+{
+"chi": "Simon Grayson",
+"qid": "Q971981",
+"da": "2019-07-06",
+"a": "2020-02-12"
+},
+{
+"chi": "Neil Critchley",
+"qid": "Q6988438",
+"da": "2020-03-02",
+"a": "2022-06-02"
+},
+{
+"chi": "Michael Appleton",
+"qid": "Q6828245",
+"da": "2022-06-17",
+"a": "2023-01-18"
+},
+{
+"chi": "Mick McCarthy",
+"qid": "Q437925",
+"da": "2023-01-19",
+"a": "2023-04-08"
+},
+{
+"chi": "Neil Critchley",
+"qid": "Q6988438",
+"da": "2023-05-23",
+"a": "2024-08-20"
+},
+{
+"chi": "Steve Bruce",
+"qid": "Q331904",
+"da": "2024-09-03",
+"a": null
+}
+]
+},
+"Nott'm Forest": {
+"wikidata": "Q19490",
+"nome": "Nottingham Forest F.C.",
+"allenatori": [
+{
+"chi": "Alex McLeish",
+"qid": "Q316701",
+"da": "2012-12-28",
+"a": "2013-02-05"
+},
+{
+"chi": "Mark Warburton",
+"qid": "Q16194857",
+"da": "2017-03-14",
+"a": "2017-12-31"
+},
+{
+"chi": "Aitor Karanka",
+"qid": "Q373064",
+"da": "2018-01-08",
+"a": "2019-01-11"
+},
+{
+"chi": "Martin O'Neill",
+"qid": "Q310263",
+"da": "2019-01-15",
+"a": "2019-06-30"
+},
+{
+"chi": "Sabri Lamouchi",
+"qid": "Q1883",
+"da": "2019-07-01",
+"a": "2020-10-06"
+},
+{
+"chi": "Chris Hughton",
+"qid": "Q351004",
+"da": "2020-10-06",
+"a": "2021-09-16"
+},
+{
+"chi": "Steve Cooper",
+"qid": "Q24183505",
+"da": "2021-09-21",
+"a": "2023-12-19"
+},
+{
+"chi": "Nuno Espírito Santo",
+"qid": "Q372372",
+"da": "2023-12-20",
+"a": "2025-09-09"
+},
+{
+"chi": "Ange Postecoglou",
+"qid": "Q2849301",
+"da": "2025-09-09",
+"a": "2025-10-18"
+},
+{
+"chi": "Sean Dyche",
+"qid": "Q10599",
+"da": "2025-10-21",
+"a": "2026-02-12"
+},
+{
+"chi": "Vítor Pereira",
+"qid": "Q556610",
+"da": "2026-02-15",
+"a": "2026-07-01"
+},
+{
+"chi": "Oliver Glasner",
+"qid": "Q874777",
+"da": "2026-07-06",
+"a": null
+}
+]
+},
+"Bristol City": {
+"wikidata": "Q19456",
+"nome": "Bristol City F.C.",
+"allenatori": [
+{
+"chi": "Nigel Pearson",
+"qid": "Q154126",
+"da": "2021-02-24",
+"a": "2023-10-29"
+},
+{
+"chi": "Curtis Fleming",
+"qid": "Q3007800",
+"da": "2023-10-29",
+"a": "2023-11-06"
+},
+{
+"chi": "Liam Manning",
+"qid": "Q97138662",
+"da": "2023-11-07",
+"a": "2025-05-01"
+},
+{
+"chi": "Gerhard Struber",
+"qid": "Q5550774",
+"da": "2025-06-19",
+"a": "2026-03-27"
+},
+{
+"chi": "Roy Hodgson",
+"qid": "Q203781",
+"da": "2026-03-27",
+"a": null
+}
+]
+},
+"Celta": {
+"wikidata": "Q8749",
+"nome": "RC Celta de Vigo",
+"allenatori": [
+{
+"chi": "Eduardo Coudet",
+"qid": "Q2547652",
+"da": "2020-11-12",
+"a": "2022-11-03"
+},
+{
+"chi": "Carlos Carvalhal",
+"qid": "Q1042799",
+"da": "2022-11-02",
+"a": "2023-06-30"
+},
+{
+"chi": "Rafa Benítez",
+"qid": "Q144048",
+"da": "2023-07-01",
+"a": "2024-03-12"
+},
+{
+"chi": "Claudio Giráldez González",
+"qid": "Q20534503",
+"da": "2024-03-12",
+"a": null
+}
+]
+},
+"Malaga": {
+"wikidata": "Q8857",
+"nome": "Málaga CF",
+"allenatori": [
+{
+"chi": "Pablo Guede",
+"qid": "Q6056049",
+"da": "2022-04-03",
+"a": "2022-09-20"
+},
+{
+"chi": "Pepe Mel",
+"qid": "Q2409599",
+"da": "2022-09-21",
+"a": "2023-01-25"
+},
+{
+"chi": "Sergio Pellicer",
+"qid": "Q28094306",
+"da": "2023-01-26",
+"a": "2025-11-01"
+},
+{
+"chi": "Juan Francisco Funes Arjona",
+"qid": "Q111423428",
+"da": "2025-11-01",
+"a": null
+}
+]
+},
+"Mallorca": {
+"wikidata": "Q8835",
+"nome": "RCD Mallorca",
+"allenatori": [
+{
+"chi": "Luis García Plaza",
+"qid": "Q2531438",
+"da": "2020-08-06",
+"a": "2022-03-22"
+},
+{
+"chi": "Javier Aguirre",
+"qid": "Q194311",
+"da": "2022-03-24",
+"a": "2024-06-30"
+},
+{
+"chi": "Jagoba Arrasate",
+"qid": "Q13422032",
+"da": "2024-07-01",
+"a": "2026-02-23"
+},
+{
+"chi": "Martín Demichelis",
+"qid": "Q150947",
+"da": "2026-02-26",
+"a": "2026-06-22"
+},
+{
+"chi": "Luis García Fernández",
+"qid": "Q440855",
+"da": "2026-06-01",
+"a": null
+}
+]
+},
+"Espanol": {
+"wikidata": "Q8780",
+"nome": "RCD Espanyol de Barcelona",
+"allenatori": [
+{
+"chi": "Mauricio Pochettino",
+"qid": "Q313000",
+"da": "2009-01-20",
+"a": "2012-11-26"
+},
+{
+"chi": "Joan Francesc Ferrer Sicilia",
+"qid": "Q5573535",
+"da": "2018-07-01",
+"a": "2019-06-30"
+},
+{
+"chi": "David Gallego",
+"qid": "Q17030351",
+"da": "2019-07-01",
+"a": "2019-10-07"
+},
+{
+"chi": "Pablo Machín",
+"qid": "Q11697229",
+"da": "2019-10-07",
+"a": "2019-12-23"
+},
+{
+"chi": "Abelardo Fernández",
+"qid": "Q318546",
+"da": "2019-12-27",
+"a": "2020-06-27"
+},
+{
+"chi": "Francisco Rufete",
+"qid": "Q534178",
+"da": "2020-06-27",
+"a": "2020-07-20"
+},
+{
+"chi": "Vicente Moreno",
+"qid": "Q3321444",
+"da": "2020-08-04",
+"a": "2022-05-13"
+},
+{
+"chi": "Luis Blanco Garrido",
+"qid": "Q111660241",
+"da": "2022-05-13",
+"a": "2022-06-30"
+},
+{
+"chi": "Diego Martínez Penas",
+"qid": "Q23939734",
+"da": "2022-07-01",
+"a": "2023-04-03"
+},
+{
+"chi": "Luis García Fernández",
+"qid": "Q440855",
+"da": "2023-04-03",
+"a": "2023-11-05"
+},
+{
+"chi": "Luis Miguel Ramis",
+"qid": "Q3323952",
+"da": "2023-11-06",
+"a": "2024-03-12"
+},
+{
+"chi": "Manolo González",
+"qid": "Q107613083",
+"da": "2024-03-12",
+"a": null
+}
+]
+},
+"Sevilla": {
+"wikidata": "Q10329",
+"nome": "Sevilla FC",
+"allenatori": [
+{
+"chi": "Unai Emery",
+"qid": "Q295610",
+"da": "2013-01-01",
+"a": "2016-06-01"
+},
+{
+"chi": "Vincenzo Montella",
+"qid": "Q297768",
+"da": "2017-12-28",
+"a": "2018-04-28"
+},
+{
+"chi": "Pablo Machín",
+"qid": "Q11697229",
+"da": "2018-07-01",
+"a": "2019-03-01"
+},
+{
+"chi": "Joaquín Caparrós",
+"qid": "Q358692",
+"da": "2019-03-01",
+"a": "2019-06-01"
+},
+{
+"chi": "Julen Lopetegui",
+"qid": "Q115119",
+"da": "2019-07-01",
+"a": "2022-10-01"
+},
+{
+"chi": "Jorge Sampaoli",
+"qid": "Q1089864",
+"da": "2022-10-06",
+"a": "2023-03-20"
+},
+{
+"chi": "José Luis Mendilibar",
+"qid": "Q460576",
+"da": "2023-03-21",
+"a": "2023-10-08"
+},
+{
+"chi": "Diego Alonso",
+"qid": "Q2144609",
+"da": "2023-10-10",
+"a": "2023-12-16"
+},
+{
+"chi": "Quique Sánchez Flores",
+"qid": "Q352313",
+"da": "2023-12-18",
+"a": "2024-06-30"
+},
+{
+"chi": "García Pimienta",
+"qid": "Q2671442",
+"da": "2024-07-01",
+"a": "2025-04-13"
+},
+{
+"chi": "Joaquín Caparrós",
+"qid": "Q358692",
+"da": "2025-04-13",
+"a": "2025-06-01"
+},
+{
+"chi": "Matías Almeyda",
+"qid": "Q359494",
+"da": "2025-06-16",
+"a": "2026-03-23"
+},
+{
+"chi": "Luis García Plaza",
+"qid": "Q2531438",
+"da": "2026-03-25",
+"a": null
+}
+]
+},
+"Getafe": {
+"wikidata": "Q8806",
+"nome": "Getafe CF",
+"allenatori": [
+{
+"chi": "Quique Sánchez Flores",
+"qid": "Q352313",
+"da": "2021-10-06",
+"a": "2023-04-27"
+},
+{
+"chi": "José Bordalás",
+"qid": "Q3323802",
+"da": "2023-04-29",
+"a": null
+}
+]
+},
+"Ath Bilbao": {
+"wikidata": "Q8687",
+"nome": "Athletic Club",
+"allenatori": [
+{
+"chi": "Ernesto Valverde",
+"qid": "Q359118",
+"da": "2013-07-01",
+"a": "2017-06-30"
+},
+{
+"chi": "José Ángel Ziganda",
+"qid": "Q704571",
+"da": "2017-07-01",
+"a": "2018-06-30"
+},
+{
+"chi": "Eduardo Berizzo",
+"qid": "Q586415",
+"da": "2018-07-01",
+"a": "2018-12-04"
+},
+{
+"chi": "Gaizka Garitano Aguirre",
+"qid": "Q742677",
+"da": "2018-12-05",
+"a": "2021-01-03"
+},
+{
+"chi": "Marcelino García Toral",
+"qid": "Q1339589",
+"da": "2021-01-04",
+"a": "2022-06-30"
+},
+{
+"chi": "Edin Terzić",
+"qid": "Q61709977",
+"da": "2026-05-01",
+"a": null
+}
+]
+},
+"Betis": {
+"wikidata": "Q8723",
+"nome": "Real Betis Balompié",
+"allenatori": [
+{
+"chi": "Manuel Pellegrini",
+"qid": "Q296036",
+"da": "2020-08-01",
+"a": null
+}
+]
+},
+"Barcelona": {
+"wikidata": "Q950835",
+"nome": "FC barcelona",
+"allenatori": []
+},
+"Sociedad": {
+"wikidata": "Q10315",
+"nome": "Real Sociedad",
+"allenatori": [
+{
+"chi": "Asier Garitano",
+"qid": "Q4806891",
+"da": "2018-07-01",
+"a": "2018-12-26"
+},
+{
+"chi": "Imanol Alguacil",
+"qid": "Q9008053",
+"da": "2018-12-27",
+"a": "2025-06-30"
+},
+{
+"chi": "Sergio Francisco",
+"qid": "Q3824000",
+"da": "2025-07-01",
+"a": "2025-12-14"
+},
+{
+"chi": "Pellegrino Matarazzo",
+"qid": "Q80310717",
+"da": "2025-12-20",
+"a": null
+}
+]
+},
+"Levante": {
+"wikidata": "Q8823",
+"nome": "Levante UD",
+"allenatori": [
+{
+"chi": "Paco López",
+"qid": "Q2519433",
+"da": "2018-03-05",
+"a": "2021-10-03"
+},
+{
+"chi": "Javier Pereira",
+"qid": "Q104853253",
+"da": "2021-10-07",
+"a": "2021-11-29"
+},
+{
+"chi": "Alessio Lisci",
+"qid": "Q109890596",
+"da": "2021-11-30",
+"a": "2022-06-30"
+},
+{
+"chi": "Mehdi Nafti",
+"qid": "Q380173",
+"da": "2022-07-01",
+"a": "2022-10-10"
+},
+{
+"chi": "Felipe Miñambres",
+"qid": "Q1339327",
+"da": "2022-10-11",
+"a": "2022-10-16"
+},
+{
+"chi": "Javier Calleja",
+"qid": "Q1332523",
+"da": "2022-10-17",
+"a": "2024-02-19"
+},
+{
+"chi": "Felipe Miñambres",
+"qid": "Q1339327",
+"da": "2024-02-19",
+"a": "2024-06-30"
+},
+{
+"chi": "Julián Calero Fernández",
+"qid": "Q24565063",
+"da": "2024-07-01",
+"a": "2025-11-30"
+},
+{
+"chi": "Luís Manuel Ferreira de Castro",
+"qid": "Q112860643",
+"da": "2025-12-20",
+"a": null
+}
+]
+},
+"Ath Madrid": {
+"wikidata": "Q8701",
+"nome": "Atlético Madrid",
+"allenatori": [
+{
+"chi": "Quique Sánchez Flores",
+"qid": "Q352313",
+"da": "2009-10-23",
+"a": "2011-05-01"
+},
+{
+"chi": "Gregorio Manzano",
+"qid": "Q516332",
+"da": "2011-06-08",
+"a": "2011-12-22"
+},
+{
+"chi": "Diego Simeone",
+"qid": "Q258115",
+"da": "2011-12-23",
+"a": null
+}
+]
+},
+"Real Madrid": {
+"wikidata": "Q8682",
+"nome": "Real Madrid Club de Fútbol",
+"allenatori": [
+{
+"chi": "José Mourinho",
+"qid": "Q79983",
+"da": "2010-07-01",
+"a": "2013-06-30"
+},
+{
+"chi": "Carlo Ancelotti",
+"qid": "Q174614",
+"da": "2013-07-01",
+"a": "2015-05-25"
+},
+{
+"chi": "Zinedine Zidane",
+"qid": "Q1835",
+"da": "2016-01-04",
+"a": "2018-06-30"
+},
+{
+"chi": "Julen Lopetegui",
+"qid": "Q115119",
+"da": "2018-07-01",
+"a": "2018-10-29"
+},
+{
+"chi": "Santiago Solari",
+"qid": "Q315471",
+"da": "2018-10-29",
+"a": "2019-03-11"
+},
+{
+"chi": "Zinedine Zidane",
+"qid": "Q1835",
+"da": "2019-03-11",
+"a": "2021-06-30"
+},
+{
+"chi": "Carlo Ancelotti",
+"qid": "Q174614",
+"da": "2021-07-01",
+"a": "2025-05-24"
+},
+{
+"chi": "Xabi Alonso",
+"qid": "Q208104",
+"da": "2025-05-25",
+"a": "2026-01-12"
+},
+{
+"chi": "José Mourinho",
+"qid": "Q79983",
+"da": "2026-01-01",
+"a": null
+},
+{
+"chi": "Álvaro Arbeloa",
+"qid": "Q250901",
+"da": "2026-01-13",
+"a": "2026-01-01"
+}
+]
+},
+"Valencia": {
+"wikidata": "Q10333",
+"nome": "Valencia CF",
+"allenatori": [
+{
+"chi": "Ernesto Valverde",
+"qid": "Q359118",
+"da": "2012-12-03",
+"a": "2013-06-20"
+},
+{
+"chi": "Marcelino García Toral",
+"qid": "Q1339589",
+"da": "2017-07-01",
+"a": "2019-09-11"
+},
+{
+"chi": "Albert Celades",
+"qid": "Q459099",
+"da": "2019-09-11",
+"a": "2020-06-29"
+},
+{
+"chi": "Voro",
+"qid": "Q460497",
+"da": "2020-06-29",
+"a": "2020-07-20"
+},
+{
+"chi": "Javi Gracia",
+"qid": "Q4886441",
+"da": "2020-07-27",
+"a": "2021-05-03"
+},
+{
+"chi": "Voro",
+"qid": "Q460497",
+"da": "2021-05-03",
+"a": "2021-06-30"
+},
+{
+"chi": "José Bordalás",
+"qid": "Q3323802",
+"da": "2021-05-27",
+"a": "2022-06-03"
+},
+{
+"chi": "Gennaro Gattuso",
+"qid": "Q116980",
+"da": "2022-07-01",
+"a": "2023-01-30"
+},
+{
+"chi": "Voro",
+"qid": "Q460497",
+"da": "2023-01-31",
+"a": "2023-02-13"
+},
+{
+"chi": "Rubén Baraja",
+"qid": "Q299488",
+"da": "2023-02-14",
+"a": "2024-12-23"
+},
+{
+"chi": "Carlos Corberán",
+"qid": "Q27983031",
+"da": "2024-12-24",
+"a": "2026-09-13"
+},
+{
+"chi": "Óscar Sánchez Fuentes",
+"qid": "Q293476",
+"da": "2026-09-13",
+"a": "2026-09-23"
+},
+{
+"chi": "Javier Aguirre",
+"qid": "Q194311",
+"da": "2026-09-23",
+"a": null
+}
+]
+},
+"La Coruna": {
+"wikidata": "Q8760",
+"nome": "Deportivo de A Coruña",
+"allenatori": [
+{
+"chi": "Natxo González",
+"qid": "Q11929086",
+"da": "2018-07-01",
+"a": "2019-04-07"
+},
+{
+"chi": "José Luis Martí",
+"qid": "Q705601",
+"da": "2019-04-08",
+"a": "2019-06-30"
+},
+{
+"chi": "Juan Antonio Anquela",
+"qid": "Q283997",
+"da": "2019-07-02",
+"a": "2019-10-07"
+},
+{
+"chi": "Luis César Sampedro",
+"qid": "Q3392030",
+"da": "2019-10-07",
+"a": "2019-12-28"
+},
+{
+"chi": "Fernando Vázquez",
+"qid": "Q977909",
+"da": "2019-12-29",
+"a": "2021-01-11"
+},
+{
+"chi": "Rubén de la Barrera",
+"qid": "Q24090734",
+"da": "2021-01-12",
+"a": "2021-06-30"
+},
+{
+"chi": "Borja Jiménez Sáez",
+"qid": "Q66752039",
+"da": "2021-07-01",
+"a": "2022-10-11"
+},
+{
+"chi": "Óscar Cano",
+"qid": "Q11705577",
+"da": "2022-10-12",
+"a": "2023-05-15"
+},
+{
+"chi": "Rubén de la Barrera",
+"qid": "Q24090734",
+"da": "2023-05-16",
+"a": "2023-06-30"
+},
+{
+"chi": "Imanol Idiakez",
+"qid": "Q16214008",
+"da": "2023-07-01",
+"a": "2024-10-28"
+},
+{
+"chi": "Óscar Gilsanz",
+"qid": "Q117853573",
+"da": "2024-11-05",
+"a": "2025-06-10"
+},
+{
+"chi": "Antonio Hidalgo",
+"qid": "Q602465",
+"da": "2025-06-10",
+"a": null
+}
+]
+},
+"Osasuna": {
+"wikidata": "Q10286",
+"nome": "Club Atlético Osasuna",
+"allenatori": [
+{
+"chi": "Jagoba Arrasate",
+"qid": "Q13422032",
+"da": "2018-07-01",
+"a": "2024-06-30"
+},
+{
+"chi": "Vicente Moreno",
+"qid": "Q3321444",
+"da": "2024-07-01",
+"a": "2025-05-24"
+},
+{
+"chi": "Alessio Lisci",
+"qid": "Q109890596",
+"da": "2025-07-01",
+"a": "2026-05-25"
+},
+{
+"chi": "Luis Miguel Ramis",
+"qid": "Q3323952",
+"da": "2026-06-10",
+"a": "2026-10-12"
+},
+{
+"chi": "Jagoba Arrasate",
+"qid": "Q13422032",
+"da": "2026-10-12",
+"a": null
+}
+]
+},
+"Vallecano": {
+"wikidata": "Q10300",
+"nome": "Rayo Vallecano",
+"allenatori": [
+{
+"chi": "Miguel Ángel Sánchez Muñoz",
+"qid": "Q2637295",
+"da": "2017-02-21",
+"a": "2019-03-18"
+},
+{
+"chi": "Andoni Iraola",
+"qid": "Q317216",
+"da": "2020-08-06",
+"a": "2023-06-30"
+},
+{
+"chi": "Francisco Javier Rodríguez Vílchez",
+"qid": "Q3823451",
+"da": "2023-07-01",
+"a": "2024-02-13"
+},
+{
+"chi": "Iñigo Pérez",
+"qid": "Q2499750",
+"da": "2024-02-14",
+"a": "2026-06-01"
+},
+{
+"chi": "Beñat San José",
+"qid": "Q10556689",
+"da": "2026-06-18",
+"a": null
+}
+]
+},
+"Granada": {
+"wikidata": "Q8812",
+"nome": "Granada CF",
+"allenatori": [
+{
+"chi": "Diego Martínez Penas",
+"qid": "Q23939734",
+"da": "2018-07-01",
+"a": "2021-06-30"
+},
+{
+"chi": "Rubén Torrecilla",
+"qid": "Q4888917",
+"da": "2022-03-07",
+"a": "2022-04-17"
+},
+{
+"chi": "Aitor Karanka",
+"qid": "Q373064",
+"da": "2022-04-18",
+"a": "2022-11-08"
+},
+{
+"chi": "Paco López",
+"qid": "Q2519433",
+"da": "2022-11-09",
+"a": "2023-11-26"
+},
+{
+"chi": "Alexander Medina",
+"qid": "Q371399",
+"da": "2023-11-27",
+"a": "2024-03-19"
+},
+{
+"chi": "José Ramón Sandoval",
+"qid": "Q302532",
+"da": "2024-03-19",
+"a": "2024-06-30"
+},
+{
+"chi": "Guillermo Abascal",
+"qid": "Q51844726",
+"da": "2024-07-01",
+"a": "2024-09-21"
+},
+{
+"chi": "Fran Escribá",
+"qid": "Q3259945",
+"da": "2024-09-23",
+"a": "2025-05-14"
+},
+{
+"chi": "Pacheta",
+"qid": "Q1704254",
+"da": "2025-05-14",
+"a": null
+}
+]
+},
+"Zaragoza": {
+"wikidata": "Q10308",
+"nome": "Real Zaragoza",
+"allenatori": [
+{
+"chi": "Lucas Alcaraz",
+"qid": "Q775389",
+"da": "2018-10-22",
+"a": "2018-12-17"
+},
+{
+"chi": "Víctor Fernández",
+"qid": "Q470994",
+"da": "2018-12-18",
+"a": "2020-08-18"
+},
+{
+"chi": "Rubén Baraja",
+"qid": "Q299488",
+"da": "2020-08-20",
+"a": "2020-11-09"
+},
+{
+"chi": "Iván Martínez Puyol",
+"qid": "Q101814422",
+"da": "2020-11-09",
+"a": "2020-12-13"
+},
+{
+"chi": "Juan Ignacio Martínez",
+"qid": "Q973107",
+"da": "2020-12-14",
+"a": "2022-06-30"
+},
+{
+"chi": "Juan Carlos Carcedo",
+"qid": "Q5948229",
+"da": "2022-07-01",
+"a": "2022-11-06"
+},
+{
+"chi": "Fran Escribá",
+"qid": "Q3259945",
+"da": "2022-11-07",
+"a": "2023-11-20"
+},
+{
+"chi": "Julio Velázquez",
+"qid": "Q901237",
+"da": "2023-11-20",
+"a": "2024-03-11"
+},
+{
+"chi": "Víctor Fernández",
+"qid": "Q470994",
+"da": "2024-03-11",
+"a": "2024-12-18"
+},
+{
+"chi": "Miguel Ángel Ramírez",
+"qid": "Q69414067",
+"da": "2024-12-27",
+"a": "2025-03-16"
+},
+{
+"chi": "Gabriel Fernández Arena",
+"qid": "Q358688",
+"da": "2025-03-17",
+"a": "2025-10-11"
+},
+{
+"chi": "Emilio Larraz",
+"qid": "Q21711792",
+"da": "2025-10-12",
+"a": null
+}
+]
+},
+"Valladolid": {
+"wikidata": "Q10319",
+"nome": "Real Valladolid",
+"allenatori": [
+{
+"chi": "Sergio González Soriano",
+"qid": "Q145808",
+"da": "2018-04-10",
+"a": "2021-06-30"
+},
+{
+"chi": "Pacheta",
+"qid": "Q1704254",
+"da": "2021-07-01",
+"a": "2023-04-03"
+},
+{
+"chi": "Paulo Pezzolano",
+"qid": "Q2740889",
+"da": "2023-04-04",
+"a": "2024-12-01"
+},
+{
+"chi": "Álvaro Rubio",
+"qid": "Q27777",
+"da": "2024-12-02",
+"a": "2024-12-15"
+},
+{
+"chi": "Diego Cocca",
+"qid": "Q772376",
+"da": "2024-12-15",
+"a": "2025-02-17"
+},
+{
+"chi": "Fran Escribá",
+"qid": "Q3259945",
+"da": "2026-02-16",
+"a": null
+}
+]
+},
+"Dortmund": {
+"wikidata": "Q41420",
+"nome": "Borussia Dortmund",
+"allenatori": [
+{
+"chi": "Jürgen Klopp",
+"qid": "Q83106",
+"da": "2008-07-01",
+"a": "2015-06-30"
+},
+{
+"chi": "Thomas Tuchel",
+"qid": "Q702233",
+"da": "2015-07-01",
+"a": "2017-06-30"
+},
+{
+"chi": "Peter Bosz",
+"qid": "Q1029982",
+"da": "2017-07-01",
+"a": "2017-12-09"
+},
+{
+"chi": "Peter Stöger",
+"qid": "Q697397",
+"da": "2017-12-10",
+"a": "2018-06-30"
+},
+{
+"chi": "Lucien Favre",
+"qid": "Q539920",
+"da": "2018-07-01",
+"a": "2020-12-13"
+},
+{
+"chi": "Edin Terzić",
+"qid": "Q61709977",
+"da": "2020-12-13",
+"a": "2021-06-30"
+},
+{
+"chi": "Marco Rose",
+"qid": "Q542990",
+"da": "2021-07-01",
+"a": "2022-05-20"
+},
+{
+"chi": "Edin Terzić",
+"qid": "Q61709977",
+"da": "2022-05-23",
+"a": "2024-06-30"
+},
+{
+"chi": "Nuri Şahin",
+"qid": "Q75857",
+"da": "2024-06-14",
+"a": "2025-01-22"
+},
+{
+"chi": "Mike Tullberg",
+"qid": "Q460260",
+"da": "2025-01-22",
+"a": "2025-01-30"
+},
+{
+"chi": "Niko Kovač",
+"qid": "Q154305",
+"da": "2025-01-30",
+"a": null
+}
+]
+},
+"Werder Bremen": {
+"wikidata": "Q51976",
+"nome": "SV Werder Bremen",
+"allenatori": [
+{
+"chi": "Florian Kohfeldt",
+"qid": "Q23061384",
+"da": "2017-10-31",
+"a": "2021-05-16"
+},
+{
+"chi": "Thomas Schaaf",
+"qid": "Q157370",
+"da": "2021-05-16",
+"a": "2021-05-31"
+},
+{
+"chi": "Markus Anfang",
+"qid": "Q1568284",
+"da": "2021-06-01",
+"a": "2021-11-19"
+},
+{
+"chi": "Danijel Zenkovic",
+"qid": "Q109651255",
+"da": "2021-11-20",
+"a": "2021-11-27"
+},
+{
+"chi": "Ole Werner",
+"qid": "Q27050003",
+"da": "2021-11-28",
+"a": "2025-05-27"
+},
+{
+"chi": "Horst Steffen",
+"qid": "Q1629978",
+"da": "2025-05-29",
+"a": "2026-02-01"
+},
+{
+"chi": "Daniel Thioune",
+"qid": "Q123126",
+"da": "2026-02-04",
+"a": null
+}
+]
+},
+"Fortuna Dusseldorf": {
+"wikidata": "Q151747",
+"nome": "Fortuna Düsseldorf",
+"allenatori": [
+{
+"chi": "Uwe Rösler",
+"qid": "Q566127",
+"da": "2020-01-29",
+"a": "2021-06-30"
+},
+{
+"chi": "Christian Preußer",
+"qid": "Q20744639",
+"da": "2021-07-01",
+"a": "2022-02-07"
+},
+{
+"chi": "Daniel Thioune",
+"qid": "Q123126",
+"da": "2022-02-08",
+"a": "2025-10-06"
+},
+{
+"chi": "Markus Anfang",
+"qid": "Q1568284",
+"da": "2025-10-06",
+"a": "2026-04-12"
+},
+{
+"chi": "Alexander Ende",
+"qid": "Q121249351",
+"da": "2026-04-13",
+"a": "2026-10-18"
+},
+{
+"chi": "Jens Langeneke",
+"qid": "Q320820",
+"da": "2026-10-18",
+"a": null
+}
+]
+},
+"Ein Frankfurt": {
+"wikidata": "Q38245",
+"nome": "Eintracht Frankfurt",
+"allenatori": [
+{
+"chi": "Michael Skibbe",
+"qid": "Q550732",
+"da": "2009-07-01",
+"a": "2011-03-21"
+},
+{
+"chi": "Christoph Daum",
+"qid": "Q76651",
+"da": "2011-03-22",
+"a": "2011-06-30"
+},
+{
+"chi": "Armin Veh",
+"qid": "Q61392",
+"da": "2011-07-01",
+"a": "2014-06-30"
+},
+{
+"chi": "Thomas Schaaf",
+"qid": "Q157370",
+"da": "2014-07-01",
+"a": "2015-05-26"
+},
+{
+"chi": "Armin Veh",
+"qid": "Q61392",
+"da": "2015-06-14",
+"a": "2016-03-06"
+},
+{
+"chi": "Niko Kovač",
+"qid": "Q154305",
+"da": "2016-03-08",
+"a": "2018-06-30"
+},
+{
+"chi": "Adi Hütter",
+"qid": "Q362506",
+"da": "2018-07-01",
+"a": "2021-06-30"
+},
+{
+"chi": "Oliver Glasner",
+"qid": "Q874777",
+"da": "2021-07-01",
+"a": "2023-06-30"
+},
+{
+"chi": "Dino Toppmöller",
+"qid": "Q877918",
+"da": "2023-07-01",
+"a": "2026-01-18"
+},
+{
+"chi": "Albert Riera",
+"qid": "Q215435",
+"da": "2026-02-02",
+"a": "2026-05-01"
+},
+{
+"chi": "Adi Hütter",
+"qid": "Q362506",
+"da": "2026-05-31",
+"a": null
+}
+]
+},
+"Leverkusen": {
+"wikidata": "Q104761",
+"nome": "Bayer 04 Leverkusen",
+"allenatori": [
+{
+"chi": "Jupp Heynckes",
+"qid": "Q152107",
+"da": "2009-07-01",
+"a": "2011-06-30"
+},
+{
+"chi": "Heiko Herrlich",
+"qid": "Q677546",
+"da": "2017-07-01",
+"a": "2018-12-23"
+},
+{
+"chi": "Peter Bosz",
+"qid": "Q1029982",
+"da": "2018-12-23",
+"a": "2021-03-23"
+},
+{
+"chi": "Hannes Wolf",
+"qid": "Q26945754",
+"da": "2021-03-23",
+"a": "2021-06-30"
+},
+{
+"chi": "Gerardo Seoane",
+"qid": "Q339173",
+"da": "2021-07-01",
+"a": "2022-10-05"
+},
+{
+"chi": "Xabi Alonso",
+"qid": "Q208104",
+"da": "2022-10-05",
+"a": "2025-05-25"
+},
+{
+"chi": "Erik ten Hag",
+"qid": "Q2844569",
+"da": "2025-07-01",
+"a": "2025-09-01"
+},
+{
+"chi": "Kasper Hjulmand",
+"qid": "Q2406011",
+"da": "2025-09-08",
+"a": "2026-06-04"
+},
+{
+"chi": "Carles Martínez Novell",
+"qid": "Q119505783",
+"da": "2026-06-04",
+"a": null
+}
+]
+},
+"Freiburg": {
+"wikidata": "Q106394",
+"nome": "SC Freiburg",
+"allenatori": [
+{
+"chi": "Robin Dutt",
+"qid": "Q664521",
+"da": "2007-07-01",
+"a": "2011-06-30"
+},
+{
+"chi": "Marcus Sorg",
+"qid": "Q764179",
+"da": "2011-07-01",
+"a": "2011-12-29"
+},
+{
+"chi": "Christian Streich",
+"qid": "Q129121",
+"da": "2011-12-29",
+"a": "2024-06-30"
+},
+{
+"chi": "Julian Schuster",
+"qid": "Q66301",
+"da": "2024-07-01",
+"a": null
+}
+]
+},
+"Mainz": {
+"wikidata": "Q105254",
+"nome": "1. FSV Mainz 05",
+"allenatori": [
+{
+"chi": "Thomas Tuchel",
+"qid": "Q702233",
+"da": "2009-08-03",
+"a": "2014-05-10"
+},
+{
+"chi": "Martin Schmidt",
+"qid": "Q17352998",
+"da": "2015-02-17",
+"a": "2017-05-22"
+},
+{
+"chi": "Sandro Schwarz",
+"qid": "Q1582732",
+"da": "2017-07-01",
+"a": "2019-11-10"
+},
+{
+"chi": "Jan-Moritz Lichte",
+"qid": "Q72200628",
+"da": "2019-11-10",
+"a": "2019-11-18"
+},
+{
+"chi": "Achim Beierlorzer",
+"qid": "Q19257969",
+"da": "2019-11-18",
+"a": "2020-09-28"
+},
+{
+"chi": "Jan-Moritz Lichte",
+"qid": "Q72200628",
+"da": "2020-09-28",
+"a": "2020-12-28"
+},
+{
+"chi": "Bo Svensson",
+"qid": "Q887456",
+"da": "2021-01-04",
+"a": "2023-11-02"
+},
+{
+"chi": "Jan Siewert",
+"qid": "Q60738841",
+"da": "2023-11-03",
+"a": "2024-02-12"
+},
+{
+"chi": "Bo Henriksen",
+"qid": "Q4931102",
+"da": "2024-02-13",
+"a": "2025-12-03"
+},
+{
+"chi": "Urs Fischer",
+"qid": "Q347771",
+"da": "2025-12-07",
+"a": null
+}
+]
+},
+"Greuther Furth": {
+"wikidata": "Q153539",
+"nome": "SpVgg Greuther Fürth",
+"allenatori": [
+{
+"chi": "Thomas Kleine",
+"qid": "Q543119",
+"da": "2025-05-05",
+"a": null
+}
+]
+},
+"Bayern Munich": {
+"wikidata": "Q15789",
+"nome": "FC Bayern Munich",
+"allenatori": [
+{
+"chi": "Louis van Gaal",
+"qid": "Q207431",
+"da": "2009-07-01",
+"a": "2011-04-10"
+},
+{
+"chi": "Andries Jonker",
+"qid": "Q510529",
+"da": "2011-04-11",
+"a": "2011-06-30"
+},
+{
+"chi": "Jupp Heynckes",
+"qid": "Q152107",
+"da": "2011-07-01",
+"a": "2013-06-30"
+},
+{
+"chi": "Pep Guardiola",
+"qid": "Q164038",
+"da": "2013-06-01",
+"a": "2016-05-30"
+},
+{
+"chi": "Carlo Ancelotti",
+"qid": "Q174614",
+"da": "2016-07-01",
+"a": "2017-09-28"
+},
+{
+"chi": "Jupp Heynckes",
+"qid": "Q152107",
+"da": "2017-10-09",
+"a": "2018-06-30"
+},
+{
+"chi": "Niko Kovač",
+"qid": "Q154305",
+"da": "2018-07-01",
+"a": "2019-11-03"
+},
+{
+"chi": "Hansi Flick",
+"qid": "Q577384",
+"da": "2019-11-03",
+"a": "2021-06-30"
+},
+{
+"chi": "Julian Nagelsmann",
+"qid": "Q21226404",
+"da": "2021-07-01",
+"a": "2023-03-24"
+},
+{
+"chi": "Thomas Tuchel",
+"qid": "Q702233",
+"da": "2023-03-24",
+"a": "2024-06-30"
+},
+{
+"chi": "Vincent Kompany",
+"qid": "Q201381",
+"da": "2024-07-01",
+"a": null
+}
+]
+},
+"Hamburg": {
+"wikidata": "Q51974",
+"nome": "Hamburger SV",
+"allenatori": [
+{
+"chi": "Steffen Baumgart",
+"qid": "Q2338559",
+"da": "2024-02-20",
+"a": "2024-11-24"
+},
+{
+"chi": "Merlin Polzin",
+"qid": "Q124514448",
+"da": "2024-11-25",
+"a": null
+}
+]
+},
+"Nurnberg": {
+"wikidata": "Q15786",
+"nome": "1. FC Nürnberg",
+"allenatori": [
+{
+"chi": "Alois Schwartz",
+"qid": "Q875077",
+"da": "2016-06-01",
+"a": "2017-03-01"
+},
+{
+"chi": "Michael Köllner",
+"qid": "Q21055706",
+"da": "2017-03-01",
+"a": "2019-02-01"
+},
+{
+"chi": "Damir Canadi",
+"qid": "Q16765990",
+"da": "2019-05-01",
+"a": "2019-11-05"
+},
+{
+"chi": "Jens Keller",
+"qid": "Q63028",
+"da": "2019-11-13",
+"a": "2020-06-29"
+},
+{
+"chi": "Michael Wiesinger",
+"qid": "Q651506",
+"da": "2020-06-29",
+"a": "2020-07-11"
+},
+{
+"chi": "Robert Klauß",
+"qid": "Q55443134",
+"da": "2020-07-30",
+"a": "2022-10-03"
+},
+{
+"chi": "Miroslav Klose",
+"qid": "Q80471",
+"da": "2024-06-11",
+"a": null
+}
+]
+},
+"Hoffenheim": {
+"wikidata": "Q22707",
+"nome": "TSG 1899 Hoffenheim",
+"allenatori": [
+{
+"chi": "Julian Nagelsmann",
+"qid": "Q21226404",
+"da": "2016-02-11",
+"a": "2019-06-30"
+},
+{
+"chi": "Alfred Schreuder",
+"qid": "Q348301",
+"da": "2019-07-01",
+"a": "2020-06-09"
+},
+{
+"chi": "Marcel Rapp",
+"qid": "Q1893160",
+"da": "2020-06-09",
+"a": "2020-07-26"
+},
+{
+"chi": "Sebastian Hoeneß",
+"qid": "Q64626953",
+"da": "2020-07-27",
+"a": "2022-06-30"
+},
+{
+"chi": "André Breitenreiter",
+"qid": "Q517257",
+"da": "2022-07-01",
+"a": "2023-02-06"
+},
+{
+"chi": "Pellegrino Matarazzo",
+"qid": "Q80310717",
+"da": "2023-02-08",
+"a": "2024-11-11"
+},
+{
+"chi": "Christian Ilzer",
+"qid": "Q32592613",
+"da": "2024-11-15",
+"a": null
+}
+]
+},
+"Stuttgart": {
+"wikidata": "Q4512",
+"nome": "VfB Stuttgart",
+"allenatori": [
+{
+"chi": "Christian Gross",
+"qid": "Q115587",
+"da": "2009-12-06",
+"a": "2010-10-13"
+},
+{
+"chi": "Jens Keller",
+"qid": "Q63028",
+"da": "2010-10-14",
+"a": "2010-12-11"
+},
+{
+"chi": "Bruno Labbadia",
+"qid": "Q57548",
+"da": "2010-12-13",
+"a": "2013-08-26"
+},
+{
+"chi": "Thomas Schneider",
+"qid": "Q2427151",
+"da": "2013-08-27",
+"a": "2014-03-09"
+},
+{
+"chi": "Huub Stevens",
+"qid": "Q436057",
+"da": "2014-03-10",
+"a": "2014-06-30"
+},
+{
+"chi": "Armin Veh",
+"qid": "Q61392",
+"da": "2014-07-01",
+"a": "2014-11-24"
+},
+{
+"chi": "Jos Luhukay",
+"qid": "Q820948",
+"da": "2016-07-01",
+"a": "2016-09-15"
+},
+{
+"chi": "Hannes Wolf",
+"qid": "Q26945754",
+"da": "2016-09-21",
+"a": "2018-01-28"
+},
+{
+"chi": "Tayfun Korkut",
+"qid": "Q708808",
+"da": "2018-01-30",
+"a": "2018-10-07"
+},
+{
+"chi": "Markus Weinzierl",
+"qid": "Q15772",
+"da": "2018-10-09",
+"a": "2019-04-20"
+},
+{
+"chi": "Nico Willig",
+"qid": "Q63244015",
+"da": "2019-04-21",
+"a": "2019-06-30"
+},
+{
+"chi": "Tim Walter",
+"qid": "Q54087426",
+"da": "2019-07-01",
+"a": "2019-12-23"
+},
+{
+"chi": "Pellegrino Matarazzo",
+"qid": "Q80310717",
+"da": "2019-12-30",
+"a": "2022-10-10"
+},
+{
+"chi": "Bruno Labbadia",
+"qid": "Q57548",
+"da": "2022-12-05",
+"a": "2023-04-03"
+},
+{
+"chi": "Sebastian Hoeneß",
+"qid": "Q64626953",
+"da": "2023-04-03",
+"a": null
+}
+]
+},
+"Wolfsburg": {
+"wikidata": "Q101859",
+"nome": "VfL Wolfsburg",
+"allenatori": [
+{
+"chi": "Martin Schmidt",
+"qid": "Q17352998",
+"da": "2017-09-18",
+"a": "2018-02-19"
+},
+{
+"chi": "Bruno Labbadia",
+"qid": "Q57548",
+"da": "2018-02-20",
+"a": "2019-06-30"
+},
+{
+"chi": "Oliver Glasner",
+"qid": "Q874777",
+"da": "2019-07-01",
+"a": "2021-06-30"
+},
+{
+"chi": "Mark van Bommel",
+"qid": "Q151853",
+"da": "2021-07-01",
+"a": "2021-10-24"
+},
+{
+"chi": "Florian Kohfeldt",
+"qid": "Q23061384",
+"da": "2021-10-26",
+"a": "2022-05-15"
+},
+{
+"chi": "Niko Kovač",
+"qid": "Q154305",
+"da": "2022-07-01",
+"a": "2024-03-17"
+},
+{
+"chi": "Ralph Hasenhüttl",
+"qid": "Q874628",
+"da": "2024-03-17",
+"a": "2025-05-04"
+},
+{
+"chi": "Daniel Bauer",
+"qid": "Q831115",
+"da": "2025-05-04",
+"a": "2025-06-30"
+},
+{
+"chi": "Paul Simonis",
+"qid": "Q129485667",
+"da": "2025-07-01",
+"a": "2025-11-09"
+},
+{
+"chi": "Daniel Bauer",
+"qid": "Q831115",
+"da": "2025-11-09",
+"a": "2026-03-08"
+},
+{
+"chi": "Dieter Hecking",
+"qid": "Q73135",
+"da": "2026-03-08",
+"a": null
+}
+]
+},
+"Hannover": {
+"wikidata": "Q33748",
+"nome": "Hannover 96",
+"allenatori": [
+{
+"chi": "Kenan Koçak",
+"qid": "Q16259764",
+"da": "2019-11-14",
+"a": "2021-06-30"
+},
+{
+"chi": "Jan Zimmermann",
+"qid": "Q106779234",
+"da": "2021-07-01",
+"a": "2021-11-29"
+},
+{
+"chi": "Stefan Leitl",
+"qid": "Q2336933",
+"da": "2022-07-01",
+"a": "2024-12-29"
+},
+{
+"chi": "André Breitenreiter",
+"qid": "Q517257",
+"da": "2024-12-29",
+"a": "2025-04-23"
+},
+{
+"chi": "Christian Titz",
+"qid": "Q50404825",
+"da": "2025-06-15",
+"a": "2026-09-14"
+},
+{
+"chi": "Lars Barlemann",
+"qid": "Q134373663",
+"da": "2026-09-14",
+"a": "2026-09-21"
+},
+{
+"chi": "Sandro Wagner",
+"qid": "Q523555",
+"da": "2026-09-21",
+"a": null
+}
+]
+},
+"Schalke 04": {
+"wikidata": "Q32494",
+"nome": "Schalke 04",
+"allenatori": [
+{
+"chi": "Huub Stevens",
+"qid": "Q436057",
+"da": "2011-09-27",
+"a": "2012-12-16"
+},
+{
+"chi": "Domenico Tedesco",
+"qid": "Q28916689",
+"da": "2017-06-09",
+"a": "2019-03-14"
+},
+{
+"chi": "Huub Stevens",
+"qid": "Q436057",
+"da": "2019-03-15",
+"a": "2019-05-18"
+},
+{
+"chi": "David Wagner",
+"qid": "Q871069",
+"da": "2019-07-01",
+"a": "2020-09-27"
+},
+{
+"chi": "Manuel Baum",
+"qid": "Q15896593",
+"da": "2020-09-30",
+"a": "2020-12-18"
+},
+{
+"chi": "Huub Stevens",
+"qid": "Q436057",
+"da": "2020-12-18",
+"a": "2020-12-22"
+},
+{
+"chi": "Christian Gross",
+"qid": "Q115587",
+"da": "2020-12-27",
+"a": "2021-02-28"
+},
+{
+"chi": "Dimitris Grammozis",
+"qid": "Q470558",
+"da": "2021-03-02",
+"a": "2022-03-06"
+},
+{
+"chi": "Mike Büskens",
+"qid": "Q551610",
+"da": "2022-03-07",
+"a": "2022-05-15"
+},
+{
+"chi": "Frank Kramer",
+"qid": "Q1443598",
+"da": "2022-06-07",
+"a": "2022-10-19"
+},
+{
+"chi": "Thomas Reis",
+"qid": "Q2426747",
+"da": "2022-10-27",
+"a": "2023-09-27"
+},
+{
+"chi": "Karel Geraerts",
+"qid": "Q642325",
+"da": "2023-10-09",
+"a": "2024-09-21"
+},
+{
+"chi": "Jakob Fimpel",
+"qid": "Q130337238",
+"da": "2024-09-21",
+"a": "2024-10-06"
+},
+{
+"chi": "Kees van Wonderen",
+"qid": "Q675519",
+"da": "2024-10-07",
+"a": "2025-05-03"
+},
+{
+"chi": "Jakob Fimpel",
+"qid": "Q130337238",
+"da": "2025-05-03",
+"a": "2025-05-30"
+}
+]
+},
+"Montpellier": {
+"wikidata": "Q19513",
+"nome": "Montpellier Hérault Sport Club",
+"allenatori": [
+{
+"chi": "Michel Der Zakarian",
+"qid": "Q965558",
+"da": "2017-05-23",
+"a": "2021-05-24"
+},
+{
+"chi": "Olivier Dall'Oglio",
+"qid": "Q2399059",
+"da": "2021-06-01",
+"a": "2022-10-17"
+},
+{
+"chi": "Romain Pitau",
+"qid": "Q2213222",
+"da": "2022-10-17",
+"a": "2023-02-07"
+},
+{
+"chi": "Michel Der Zakarian",
+"qid": "Q965558",
+"da": "2023-02-08",
+"a": "2024-10-20"
+},
+{
+"chi": "Jean-Louis Gasset",
+"qid": "Q2732465",
+"da": "2024-10-22",
+"a": "2025-04-07"
+},
+{
+"chi": "Zoumana Camara",
+"qid": "Q227053",
+"da": "2025-04-08",
+"a": null
+}
+]
+},
+"Toulouse": {
+"wikidata": "Q19518",
+"nome": "Toulouse FC",
+"allenatori": [
+{
+"chi": "Michaël Debève",
+"qid": "Q3311772",
+"da": "2018-01-22",
+"a": "2018-05-30"
+},
+{
+"chi": "Alain Casanova",
+"qid": "Q128842",
+"da": "2018-06-25",
+"a": "2019-10-10"
+},
+{
+"chi": "Antoine Kombouaré",
+"qid": "Q586555",
+"da": "2019-10-14",
+"a": "2020-01-05"
+},
+{
+"chi": "Denis Zanko",
+"qid": "Q3022980",
+"da": "2020-01-05",
+"a": "2020-06-22"
+},
+{
+"chi": "Patrice Garande",
+"qid": "Q933813",
+"da": "2020-06-22",
+"a": "2021-06-02"
+},
+{
+"chi": "Philippe Montanier",
+"qid": "Q746357",
+"da": "2021-06-23",
+"a": "2023-06-30"
+},
+{
+"chi": "Carles Martínez Novell",
+"qid": "Q119505783",
+"da": "2023-07-01",
+"a": "2026-05-17"
+},
+{
+"chi": "Jens Berthel Askou",
+"qid": "Q3807922",
+"da": "2026-05-21",
+"a": null
+}
+]
+},
+"Evian Thonon Gaillard": {
+"wikidata": "Q333838",
+"nome": "Evian Thonon Gaillard F.C.",
+"allenatori": []
+},
+"Bordeaux": {
+"wikidata": "Q172476",
+"nome": "FC Girondins de Bordeaux",
+"allenatori": [
+{
+"chi": "Ricardo Gomes",
+"qid": "Q440999",
+"da": "2018-09-05",
+"a": "2019-03-01"
+},
+{
+"chi": "Paulo Sousa",
+"qid": "Q314440",
+"da": "2019-03-01",
+"a": "2020-08-10"
+},
+{
+"chi": "Jean-Louis Gasset",
+"qid": "Q2732465",
+"da": "2020-08-12",
+"a": "2021-07-27"
+},
+{
+"chi": "Vladimir Petković",
+"qid": "Q123937",
+"da": "2021-07-27",
+"a": "2022-02-12"
+},
+{
+"chi": "David Guion",
+"qid": "Q5234461",
+"da": "2022-02-17",
+"a": "2023-10-07"
+},
+{
+"chi": "Albert Riera",
+"qid": "Q215435",
+"da": "2023-10-12",
+"a": null
+}
+]
+},
+"Nancy": {
+"wikidata": "Q19523",
+"nome": "A.S. Nancy-Lorraine",
+"allenatori": [
+{
+"chi": "Didier Tholot",
+"qid": "Q1210598",
+"da": "2018-04-03",
+"a": "2018-10-01"
+},
+{
+"chi": "Jean-Louis Garcia",
+"qid": "Q3166782",
+"da": "2019-01-01",
+"a": "2021-05-20"
+},
+{
+"chi": "Albert Cartier",
+"qid": "Q2831027",
+"da": "2022-01-04",
+"a": "2023-01-01"
+},
+{
+"chi": "Oswald Tanchot",
+"qid": "Q7108172",
+"da": "2026-07-01",
+"a": null
+}
+]
+},
+"Brest": {
+"wikidata": "Q218372",
+"nome": "Stade Brestois 29",
+"allenatori": [
+{
+"chi": "Jean-Marc Furlan",
+"qid": "Q129086",
+"da": "2016-07-01",
+"a": "2019-05-31"
+},
+{
+"chi": "Olivier Dall'Oglio",
+"qid": "Q2399059",
+"da": "2019-05-31",
+"a": "2021-05-31"
+},
+{
+"chi": "Michel Der Zakarian",
+"qid": "Q965558",
+"da": "2021-06-22",
+"a": "2022-10-11"
+},
+{
+"chi": "Bruno Grougi",
+"qid": "Q39730",
+"da": "2022-10-11",
+"a": "2023-01-03"
+},
+{
+"chi": "Éric Roy",
+"qid": "Q2410614",
+"da": "2023-01-03",
+"a": "2026-06-17"
+},
+{
+"chi": "Julien Lachuer",
+"qid": "Q3189545",
+"da": "2026-06-27",
+"a": null
+}
+]
+},
+"Nice": {
+"wikidata": "Q185163",
+"nome": "OGC Nice",
+"allenatori": [
+{
+"chi": "Patrick Vieira",
+"qid": "Q46347",
+"da": "2018-07-01",
+"a": "2020-12-04"
+},
+{
+"chi": "Adrian Ursea",
+"qid": "Q27307092",
+"da": "2020-12-04",
+"a": "2021-05-24"
+},
+{
+"chi": "Christophe Galtier",
+"qid": "Q129023",
+"da": "2021-07-01",
+"a": "2022-06-30"
+},
+{
+"chi": "Lucien Favre",
+"qid": "Q539920",
+"da": "2022-07-01",
+"a": "2023-01-09"
+},
+{
+"chi": "Didier Digard",
+"qid": "Q267128",
+"da": "2023-01-10",
+"a": "2023-06-30"
+},
+{
+"chi": "Francesco Farioli",
+"qid": "Q106247695",
+"da": "2023-07-01",
+"a": "2024-06-30"
+},
+{
+"chi": "Franck Haise",
+"qid": "Q3082153",
+"da": "2024-07-01",
+"a": "2025-12-29"
+},
+{
+"chi": "Claude Puel",
+"qid": "Q128898",
+"da": "2025-12-29",
+"a": "2026-06-17"
+},
+{
+"chi": "Olivier Pantaloni",
+"qid": "Q2073968",
+"da": "2026-06-17",
+"a": null
+}
+]
+},
+"Ajaccio": {
+"wikidata": "Q270051",
+"nome": "A.C. Ajaccio",
+"allenatori": [
+{
+"chi": "Olivier Pantaloni",
+"qid": "Q2073968",
+"da": "2014-11-06",
+"a": null
+}
+]
+},
+"Paris SG": {
+"wikidata": "Q483020",
+"nome": "Paris Saint-Germain FC",
+"allenatori": [
+{
+"chi": "Antoine Kombouaré",
+"qid": "Q586555",
+"da": "2009-07-01",
+"a": "2011-12-29"
+},
+{
+"chi": "Carlo Ancelotti",
+"qid": "Q174614",
+"da": "2011-12-30",
+"a": "2013-05-19"
+},
+{
+"chi": "Laurent Blanc",
+"qid": "Q1839",
+"da": "2013-06-25",
+"a": "2016-06-22"
+},
+{
+"chi": "Unai Emery",
+"qid": "Q295610",
+"da": "2016-07-01",
+"a": "2018-06-30"
+},
+{
+"chi": "Thomas Tuchel",
+"qid": "Q702233",
+"da": "2018-07-01",
+"a": "2020-12-29"
+},
+{
+"chi": "Mauricio Pochettino",
+"qid": "Q313000",
+"da": "2021-01-02",
+"a": "2022-07-05"
+},
+{
+"chi": "Christophe Galtier",
+"qid": "Q129023",
+"da": "2022-07-05",
+"a": "2023-06-30"
+},
+{
+"chi": "Luis Enrique",
+"qid": "Q222789",
+"da": "2023-07-05",
+"a": null
+}
+]
+},
+"Lorient": {
+"wikidata": "Q48911",
+"nome": "F.C. Lorient",
+"allenatori": [
+{
+"chi": "Christian Gourcuff",
+"qid": "Q128900",
+"da": "2003-01-01",
+"a": "2014-05-24"
+},
+{
+"chi": "Sylvain Ripoll",
+"qid": "Q3507117",
+"da": "2014-05-24",
+"a": "2016-10-23"
+},
+{
+"chi": "Bernard Casoni",
+"qid": "Q748541",
+"da": "2016-11-08",
+"a": "2017-05-30"
+},
+{
+"chi": "Mickaël Landreau",
+"qid": "Q149933",
+"da": "2017-05-30",
+"a": "2019-05-01"
+},
+{
+"chi": "Christophe Pélissier",
+"qid": "Q25201554",
+"da": "2019-05-01",
+"a": "2022-06-26"
+},
+{
+"chi": "Régis Le Bris",
+"qid": "Q3455749",
+"da": "2022-06-27",
+"a": "2024-06-30"
+},
+{
+"chi": "Olivier Pantaloni",
+"qid": "Q2073968",
+"da": "2024-07-01",
+"a": "2026-05-17"
+},
+{
+"chi": "Alexandre Dujeux",
+"qid": "Q2833638",
+"da": "2026-06-09",
+"a": null
+}
+]
+},
+"Rennes": {
+"wikidata": "Q19509",
+"nome": "Stade Rennais F.C.",
+"allenatori": [
+{
+"chi": "Julien Stéphan",
+"qid": "Q59390957",
+"da": "2018-12-03",
+"a": "2021-03-01"
+},
+{
+"chi": "Philippe Bizeul",
+"qid": "Q130916868",
+"da": "2021-03-01",
+"a": "2021-03-03"
+},
+{
+"chi": "Bruno Génésio",
+"qid": "Q2926833",
+"da": "2021-03-04",
+"a": "2023-11-19"
+},
+{
+"chi": "Julien Stéphan",
+"qid": "Q59390957",
+"da": "2023-11-19",
+"a": "2024-11-07"
+},
+{
+"chi": "Sébastien Tambouret",
+"qid": "Q131143401",
+"da": "2024-11-07",
+"a": "2024-11-11"
+},
+{
+"chi": "Jorge Sampaoli",
+"qid": "Q1089864",
+"da": "2024-11-11",
+"a": "2025-01-30"
+},
+{
+"chi": "Habib Beye",
+"qid": "Q314643",
+"da": "2025-01-30",
+"a": "2026-02-09"
+},
+{
+"chi": "Franck Haise",
+"qid": "Q3082153",
+"da": "2026-02-18",
+"a": null
+}
+]
+},
+"Lyon": {
+"wikidata": "Q704",
+"nome": "Olympique Lyonnais",
+"allenatori": [
+{
+"chi": "Bruno Génésio",
+"qid": "Q2926833",
+"da": "2015-12-24",
+"a": "2019-06-30"
+},
+{
+"chi": "Sylvinho",
+"qid": "Q312002",
+"da": "2019-07-01",
+"a": "2019-10-07"
+},
+{
+"chi": "Rudi Garcia",
+"qid": "Q923131",
+"da": "2019-10-14",
+"a": "2021-05-24"
+},
+{
+"chi": "Peter Bosz",
+"qid": "Q1029982",
+"da": "2021-05-29",
+"a": "2022-10-09"
+},
+{
+"chi": "Laurent Blanc",
+"qid": "Q1839",
+"da": "2022-10-09",
+"a": "2023-09-11"
+},
+{
+"chi": "Jean-François Vulliez",
+"qid": "Q130914360",
+"da": "2023-09-11",
+"a": "2023-09-17"
+},
+{
+"chi": "Fabio Grosso",
+"qid": "Q230529",
+"da": "2023-09-18",
+"a": "2023-11-30"
+},
+{
+"chi": "Pierre Sage",
+"qid": "Q123584452",
+"da": "2023-11-30",
+"a": "2025-01-27"
+},
+{
+"chi": "Paulo Fonseca",
+"qid": "Q10346582",
+"da": "2025-01-31",
+"a": null
+}
+]
+},
+"Sochaux": {
+"wikidata": "Q19512",
+"nome": "FC Sochaux-Montbéliard",
+"allenatori": [
+{
+"chi": "Omar Daf",
+"qid": "Q465144",
+"da": "2018-11-01",
+"a": "2022-06-01"
+},
+{
+"chi": "Frédéric Bompard",
+"qid": "Q106161984",
+"da": "2025-02-01",
+"a": "2025-06-01"
+},
+{
+"chi": "Vincent Hognon",
+"qid": "Q1383750",
+"da": "2025-06-01",
+"a": null
+}
+]
+},
+"Bastia": {
+"wikidata": "Q208399",
+"nome": "SC Bastia",
+"allenatori": [
+{
+"chi": "François Ciccolini",
+"qid": "Q3084263",
+"da": "2016-01-28",
+"a": "2017-02-27"
+},
+{
+"chi": "Stéphane Rossi",
+"qid": "Q14249907",
+"da": "2017-08-17",
+"a": "2019-10-01"
+},
+{
+"chi": "Mathieu Chabert",
+"qid": "Q55820332",
+"da": "2019-10-01",
+"a": "2021-10-01"
+},
+{
+"chi": "Régis Brouard",
+"qid": "Q3455701",
+"da": "2021-10-01",
+"a": "2024-01-29"
+},
+{
+"chi": "Michel Moretti",
+"qid": "Q98605692",
+"da": "2024-01-29",
+"a": "2024-06-05"
+},
+{
+"chi": "Benoît Tavenot",
+"qid": "Q127420708",
+"da": "2024-06-05",
+"a": "2025-10-30"
+},
+{
+"chi": "Réginald Ray",
+"qid": "Q3455482",
+"da": "2025-11-15",
+"a": null
+}
+]
+},
+"St Etienne": {
+"wikidata": "Q19521",
+"nome": "AS Saint-Étienne",
+"allenatori": [
+{
+"chi": "Ghislain Printant",
+"qid": "Q18704794",
+"da": "2019-06-06",
+"a": "2019-10-04"
+},
+{
+"chi": "Claude Puel",
+"qid": "Q128898",
+"da": "2019-10-04",
+"a": "2021-12-05"
+},
+{
+"chi": "Pascal Dupraz",
+"qid": "Q3367394",
+"da": "2021-12-14",
+"a": "2022-06-30"
+},
+{
+"chi": "Laurent Batlles",
+"qid": "Q732431",
+"da": "2022-07-01",
+"a": "2023-12-06"
+},
+{
+"chi": "Olivier Dall'Oglio",
+"qid": "Q2399059",
+"da": "2023-12-12",
+"a": "2024-12-14"
+},
+{
+"chi": "Laurent Huard",
+"qid": "Q1253294",
+"da": "2024-12-14",
+"a": "2024-12-31"
+},
+{
+"chi": "Eirik Horneland",
+"qid": "Q17629332",
+"da": "2025-01-01",
+"a": "2026-01-31"
+},
+{
+"chi": "Philippe Montanier",
+"qid": "Q746357",
+"da": "2026-02-01",
+"a": "2026-06-06"
+},
+{
+"chi": "Ian Cathro",
+"qid": "Q18205458",
+"da": "2026-06-08",
+"a": null
+}
+]
+},
+"Lille": {
+"wikidata": "Q19516",
+"nome": "Lille OSC",
+"allenatori": [
+{
+"chi": "Christophe Galtier",
+"qid": "Q129023",
+"da": "2017-12-29",
+"a": "2021-05-25"
+},
+{
+"chi": "Jocelyn Gourvennec",
+"qid": "Q2702339",
+"da": "2021-07-05",
+"a": "2022-06-16"
+},
+{
+"chi": "Paulo Fonseca",
+"qid": "Q10346582",
+"da": "2022-07-01",
+"a": "2024-06-30"
+},
+{
+"chi": "Bruno Génésio",
+"qid": "Q2926833",
+"da": "2024-07-01",
+"a": "2026-05-25"
+},
+{
+"chi": "Davide Ancelotti",
+"qid": "Q113627113",
+"da": "2026-06-01",
+"a": null
+}
+]
+},
+"Troyes": {
+"wikidata": "Q501693",
+"nome": "ES Troyes AC",
+"allenatori": [
+{
+"chi": "Laurent Batlles",
+"qid": "Q732431",
+"da": "2019-06-14",
+"a": "2021-12-30"
+},
+{
+"chi": "Bruno Irles",
+"qid": "Q2926839",
+"da": "2022-01-03",
+"a": "2022-11-08"
+},
+{
+"chi": "Patrick Kisnorbo",
+"qid": "Q553373",
+"da": "2022-11-23",
+"a": "2023-11-01"
+},
+{
+"chi": "David Guion",
+"qid": "Q5234461",
+"da": "2023-12-05",
+"a": "2024-08-01"
+},
+{
+"chi": "Stéphane Dumont",
+"qid": "Q2180092",
+"da": "2024-08-01",
+"a": null
+}
+]
+},
+"Valenciennes": {
+"wikidata": "Q212269",
+"nome": "Valenciennes F.C.",
+"allenatori": [
+{
+"chi": "Olivier Guégan",
+"qid": "Q3351091",
+"da": "2019-06-06",
+"a": "2021-11-05"
+},
+{
+"chi": "Christophe Delmotte",
+"qid": "Q2966196",
+"da": "2021-11-05",
+"a": "2022-06-01"
+},
+{
+"chi": "Nicolas Rabuel",
+"qid": "Q2740192",
+"da": "2022-06-03",
+"a": "2023-04-01"
+},
+{
+"chi": "Ahmed Kantari",
+"qid": "Q44656",
+"da": "2023-04-01",
+"a": "2023-06-01"
+},
+{
+"chi": "Jorge Maciel",
+"qid": "Q120402245",
+"da": "2023-07-01",
+"a": "2023-12-01"
+},
+{
+"chi": "Ahmed Kantari",
+"qid": "Q44656",
+"da": "2023-12-01",
+"a": "2024-11-01"
+},
+{
+"chi": "Vincent Hognon",
+"qid": "Q1383750",
+"da": "2024-12-01",
+"a": "2025-06-01"
+},
+{
+"chi": "Stéphane Moulin",
+"qid": "Q3501975",
+"da": "2025-06-01",
+"a": "2026-01-01"
+}
+]
+},
+"Reims": {
+"wikidata": "Q208228",
+"nome": "Stade de Reims",
+"allenatori": [
+{
+"chi": "Olivier Guégan",
+"qid": "Q3351091",
+"da": "2015-04-07",
+"a": "2016-04-23"
+},
+{
+"chi": "David Guion",
+"qid": "Q5234461",
+"da": "2016-04-23",
+"a": "2016-06-30"
+},
+{
+"chi": "Michel Der Zakarian",
+"qid": "Q965558",
+"da": "2016-07-01",
+"a": "2017-05-22"
+},
+{
+"chi": "David Guion",
+"qid": "Q5234461",
+"da": "2017-04-23",
+"a": "2021-06-30"
+},
+{
+"chi": "Sébastien Desmazeau",
+"qid": "Q130917257",
+"da": "2018-07-01",
+"a": "2019-03-30"
+},
+{
+"chi": "Óscar García Junyent",
+"qid": "Q293353",
+"da": "2021-06-23",
+"a": "2022-10-13"
+},
+{
+"chi": "Will Still",
+"qid": "Q42097340",
+"da": "2022-10-13",
+"a": "2024-05-02"
+},
+{
+"chi": "Samba Diawara",
+"qid": "Q3470677",
+"da": "2024-05-02",
+"a": "2024-06-30"
+},
+{
+"chi": "Luka Elsner",
+"qid": "Q1695581",
+"da": "2024-07-01",
+"a": "2025-02-03"
+},
+{
+"chi": "Samba Diawara",
+"qid": "Q3470677",
+"da": "2025-02-03",
+"a": "2025-06-30"
+},
+{
+"chi": "Karel Geraerts",
+"qid": "Q642325",
+"da": "2025-07-01",
+"a": "2026-05-14"
+},
+{
+"chi": "Nicolas Usaï",
+"qid": "Q24192128",
+"da": "2026-05-21",
+"a": null
+}
+]
+},
+"Marseille": {
+"wikidata": "Q132885",
+"nome": "Olympique de Marseille",
+"allenatori": [
+{
+"chi": "Didier Deschamps",
+"qid": "Q508711",
+"da": "2009-07-01",
+"a": "2012-07-02"
+},
+{
+"chi": "Élie Baup",
+"qid": "Q128932",
+"da": "2012-07-04",
+"a": "2013-12-07"
+},
+{
+"chi": "José Anigo",
+"qid": "Q518454",
+"da": "2013-12-09",
+"a": "2014-06-30"
+},
+{
+"chi": "Marcelo Bielsa",
+"qid": "Q31575",
+"da": "2014-07-01",
+"a": "2015-08-10"
+},
+{
+"chi": "Míchel",
+"qid": "Q558689",
+"da": "2015-08-19",
+"a": "2016-04-19"
+},
+{
+"chi": "Franck Passi",
+"qid": "Q3082242",
+"da": "2016-04-19",
+"a": "2016-10-19"
+},
+{
+"chi": "Rudi Garcia",
+"qid": "Q923131",
+"da": "2016-10-20",
+"a": "2019-06-30"
+},
+{
+"chi": "André Villas-Boas",
+"qid": "Q212914",
+"da": "2019-07-01",
+"a": "2021-02-02"
+},
+{
+"chi": "Nasser Larguet",
+"qid": "Q3336239",
+"da": "2021-02-03",
+"a": "2021-03-07"
+},
+{
+"chi": "Jorge Sampaoli",
+"qid": "Q1089864",
+"da": "2021-03-08",
+"a": "2022-07-01"
+},
+{
+"chi": "Igor Tudor",
+"qid": "Q276544",
+"da": "2022-07-04",
+"a": "2023-06-30"
+},
+{
+"chi": "Marcelino García Toral",
+"qid": "Q1339589",
+"da": "2023-07-01",
+"a": "2023-09-20"
+},
+{
+"chi": "Jacques Abardonado",
+"qid": "Q368200",
+"da": "2023-09-20",
+"a": "2023-09-26"
+},
+{
+"chi": "Gennaro Gattuso",
+"qid": "Q116980",
+"da": "2023-09-27",
+"a": "2024-02-20"
+},
+{
+"chi": "Jean-Louis Gasset",
+"qid": "Q2732465",
+"da": "2024-02-20",
+"a": "2024-06-30"
+},
+{
+"chi": "Roberto De Zerbi",
+"qid": "Q2032119",
+"da": "2024-07-01",
+"a": "2026-02-11"
+},
+{
+"chi": "Habib Beye",
+"qid": "Q314643",
+"da": "2026-02-19",
+"a": "2026-06-30"
+},
+{
+"chi": "Bruno Génésio",
+"qid": "Q2926833",
+"da": "2026-07-01",
+"a": null
+}
+]
+},
+"Avellino": {
+"wikidata": "Q298217",
+"nome": "U.S. Avellino 1912",
+"allenatori": []
+},
+"Latina": {
+"wikidata": "Q2118510",
+"nome": "Latina Calcio 1932",
+"allenatori": []
+},
+"Bournemouth": {
+"wikidata": "Q19568",
+"nome": "AFC Bournemouth",
+"allenatori": [
+{
+"chi": "Eddie Howe",
+"qid": "Q5336135",
+"da": "2012-10-14",
+"a": "2020-08-01"
+},
+{
+"chi": "Jason Tindall",
+"qid": "Q6163630",
+"da": "2020-08-08",
+"a": "2021-02-03"
+},
+{
+"chi": "Jonathan Woodgate",
+"qid": "Q296635",
+"da": "2021-02-04",
+"a": "2021-06-30"
+},
+{
+"chi": "Scott Parker",
+"qid": "Q213989",
+"da": "2021-07-01",
+"a": "2022-08-30"
+},
+{
+"chi": "Gary O'Neil",
+"qid": "Q731946",
+"da": "2022-08-30",
+"a": "2022-11-27"
+},
+{
+"chi": "Gary O'Neil",
+"qid": "Q731946",
+"da": "2022-11-28",
+"a": "2023-06-19"
+},
+{
+"chi": "Andoni Iraola",
+"qid": "Q317216",
+"da": "2023-07-01",
+"a": "2026-05-01"
+},
+{
+"chi": "Marco Rose",
+"qid": "Q542990",
+"da": "2026-06-03",
+"a": null
+}
+]
+},
+"Doncaster": {
+"wikidata": "Q19589",
+"nome": "Doncaster Rovers F.C.",
+"allenatori": [
+{
+"chi": "Grant McCann",
+"qid": "Q2710509",
+"da": "2018-07-01",
+"a": "2019-06-30"
+},
+{
+"chi": "Darren Moore",
+"qid": "Q725692",
+"da": "2019-07-10",
+"a": "2021-02-28"
+},
+{
+"chi": "Andy Butler",
+"qid": "Q2849071",
+"da": "2021-03-01",
+"a": "2021-05-16"
+},
+{
+"chi": "Richie Wellens",
+"qid": "Q81356",
+"da": "2021-05-17",
+"a": "2021-12-02"
+},
+{
+"chi": "Gary McSheffrey",
+"qid": "Q606902",
+"da": "2021-12-02",
+"a": "2022-10-17"
+},
+{
+"chi": "Paul Green",
+"qid": "Q455979",
+"da": "2022-10-17",
+"a": "2022-10-20"
+},
+{
+"chi": "Danny Schofield",
+"qid": "Q5220807",
+"da": "2022-10-20",
+"a": "2023-05-09"
+},
+{
+"chi": "Grant McCann",
+"qid": "Q2710509",
+"da": "2023-05-12",
+"a": null
+}
+]
+},
+"Yeovil": {
+"wikidata": "Q19651",
+"nome": "Yeovil Town F.C.",
+"allenatori": []
+},
+"Almeria": {
+"wikidata": "Q10407",
+"nome": "Unión Deportiva Almería",
+"allenatori": [
+{
+"chi": "Guti",
+"qid": "Q194461",
+"da": "2019-11-05",
+"a": "2020-06-27"
+},
+{
+"chi": "Mário Silva",
+"qid": "Q3054646",
+"da": "2020-06-28",
+"a": "2020-07-27"
+},
+{
+"chi": "José Manuel Gomes",
+"qid": "Q4342579",
+"da": "2020-07-27",
+"a": "2021-04-27"
+},
+{
+"chi": "Joan Francesc Ferrer Sicilia",
+"qid": "Q5573535",
+"da": "2021-04-28",
+"a": "2023-06-30"
+},
+{
+"chi": "Vicente Moreno",
+"qid": "Q3321444",
+"da": "2023-07-01",
+"a": "2023-09-29"
+},
+{
+"chi": "Alberto Lasarte",
+"qid": "Q122854664",
+"da": "2023-09-29",
+"a": "2023-10-08"
+},
+{
+"chi": "Gaizka Garitano Aguirre",
+"qid": "Q742677",
+"da": "2023-10-08",
+"a": "2024-03-13"
+},
+{
+"chi": "Pepe Mel",
+"qid": "Q2409599",
+"da": "2024-03-13",
+"a": "2024-06-30"
+},
+{
+"chi": "Joan Francesc Ferrer Sicilia",
+"qid": "Q5573535",
+"da": "2024-07-01",
+"a": "2026-01-01"
+},
+{
+"chi": "García Pimienta",
+"qid": "Q2671442",
+"da": "2026-01-01",
+"a": null
+}
+]
+},
+"Villarreal": {
+"wikidata": "Q12297",
+"nome": "Villarreal CF",
+"allenatori": [
+{
+"chi": "Ernesto Valverde",
+"qid": "Q359118",
+"da": "2009-06-02",
+"a": "2010-01-31"
+},
+{
+"chi": "Javier Calleja",
+"qid": "Q1332523",
+"da": "2017-09-25",
+"a": "2018-12-10"
+},
+{
+"chi": "Luis García Plaza",
+"qid": "Q2531438",
+"da": "2018-12-10",
+"a": "2019-01-29"
+},
+{
+"chi": "Javier Calleja",
+"qid": "Q1332523",
+"da": "2019-01-29",
+"a": "2020-07-20"
+},
+{
+"chi": "Unai Emery",
+"qid": "Q295610",
+"da": "2020-07-23",
+"a": "2022-10-25"
+},
+{
+"chi": "Quique Setién",
+"qid": "Q2444534",
+"da": "2022-10-25",
+"a": "2023-09-05"
+},
+{
+"chi": "Pacheta",
+"qid": "Q1704254",
+"da": "2023-09-09",
+"a": "2023-11-10"
+},
+{
+"chi": "Miguel Ángel Tena",
+"qid": "Q2551128",
+"da": "2023-11-10",
+"a": "2023-11-12"
+},
+{
+"chi": "Marcelino García Toral",
+"qid": "Q1339589",
+"da": "2023-11-13",
+"a": "2026-05-31"
+},
+{
+"chi": "Iñigo Pérez",
+"qid": "Q2499750",
+"da": "2026-06-01",
+"a": null
+}
+]
+},
+"Elche": {
+"wikidata": "Q10512",
+"nome": "Elche CF",
+"allenatori": [
+{
+"chi": "Pacheta",
+"qid": "Q1704254",
+"da": "2018-02-27",
+"a": "2020-08-25"
+},
+{
+"chi": "Jorge Almirón",
+"qid": "Q6277636",
+"da": "2020-08-26",
+"a": "2021-02-12"
+},
+{
+"chi": "Fran Escribá",
+"qid": "Q3259945",
+"da": "2021-02-14",
+"a": "2021-11-21"
+},
+{
+"chi": "Pablo Manusovich",
+"qid": "Q130903735",
+"da": "2021-11-25",
+"a": "2021-11-29"
+},
+{
+"chi": "Sergio Mantecón",
+"qid": "Q7454313",
+"da": "2021-11-25",
+"a": "2021-11-29"
+},
+{
+"chi": "Francisco Javier Rodríguez Vílchez",
+"qid": "Q3823451",
+"da": "2021-11-30",
+"a": "2022-10-04"
+},
+{
+"chi": "Alberto Gallego",
+"qid": "Q96624646",
+"da": "2022-10-05",
+"a": "2022-10-12"
+},
+{
+"chi": "Jorge Almirón",
+"qid": "Q6277636",
+"da": "2022-10-12",
+"a": "2022-11-07"
+},
+{
+"chi": "Sergio Mantecón",
+"qid": "Q7454313",
+"da": "2022-11-07",
+"a": "2022-11-16"
+},
+{
+"chi": "Pablo Machín",
+"qid": "Q11697229",
+"da": "2022-11-17",
+"a": "2023-03-20"
+},
+{
+"chi": "Sebastián Beccacece",
+"qid": "Q7442628",
+"da": "2023-03-21",
+"a": "2024-06-30"
+},
+{
+"chi": "Eder Sarabia",
+"qid": "Q106834887",
+"da": "2024-07-01",
+"a": "2026-05-27"
+},
+{
+"chi": "Martín Anselmi",
+"qid": "Q110278664",
+"da": "2026-06-13",
+"a": null
+}
+]
+},
+"Braunschweig": {
+"wikidata": "Q154053",
+"nome": "Eintracht Braunschweig",
+"allenatori": [
+{
+"chi": "Torsten Lieberknecht",
+"qid": "Q1673975",
+"da": "2008-05-12",
+"a": "2018-05-14"
+},
+{
+"chi": "Henrik Pedersen",
+"qid": "Q20033277",
+"da": "2018-07-01",
+"a": "2018-10-10"
+},
+{
+"chi": "André Schubert",
+"qid": "Q522759",
+"da": "2018-10-10",
+"a": null
+}
+]
+},
+"Hertha": {
+"wikidata": "Q102720",
+"nome": "Hertha BSC",
+"allenatori": [
+{
+"chi": "Pál Dárdai",
+"qid": "Q742429",
+"da": "2015-02-05",
+"a": "2019-06-30"
+},
+{
+"chi": "Ante Čović",
+"qid": "Q571639",
+"da": "2019-07-01",
+"a": "2019-11-27"
+},
+{
+"chi": "Jürgen Klinsmann",
+"qid": "Q57079",
+"da": "2019-11-27",
+"a": "2020-02-11"
+},
+{
+"chi": "Alexander Nouri",
+"qid": "Q2642761",
+"da": "2020-02-11",
+"a": "2020-04-09"
+},
+{
+"chi": "Bruno Labbadia",
+"qid": "Q57548",
+"da": "2020-04-09",
+"a": "2021-01-24"
+},
+{
+"chi": "Pál Dárdai",
+"qid": "Q742429",
+"da": "2021-01-25",
+"a": "2021-11-29"
+},
+{
+"chi": "Tayfun Korkut",
+"qid": "Q708808",
+"da": "2021-11-29",
+"a": "2022-03-13"
+},
+{
+"chi": "Felix Magath",
+"qid": "Q153293",
+"da": "2022-03-13",
+"a": "2022-06-02"
+},
+{
+"chi": "Sandro Schwarz",
+"qid": "Q1582732",
+"da": "2022-06-02",
+"a": "2023-04-16"
+},
+{
+"chi": "Pál Dárdai",
+"qid": "Q742429",
+"da": "2023-04-16",
+"a": "2024-07-01"
+},
+{
+"chi": "Cristian Fiél",
+"qid": "Q317071",
+"da": "2024-07-01",
+"a": "2025-02-16"
+},
+{
+"chi": "Stefan Leitl",
+"qid": "Q2336933",
+"da": "2025-02-17",
+"a": null
+}
+]
+},
+"Nantes": {
+"wikidata": "Q192071",
+"nome": "FC Nantes",
+"allenatori": [
+{
+"chi": "Sérgio Conceição",
+"qid": "Q317298",
+"da": "2016-12-08",
+"a": "2017-06-30"
+},
+{
+"chi": "Claudio Ranieri",
+"qid": "Q235068",
+"da": "2017-07-01",
+"a": "2018-06-30"
+},
+{
+"chi": "Miguel Cardoso",
+"qid": "Q30612224",
+"da": "2018-06-13",
+"a": "2018-10-02"
+},
+{
+"chi": "Vahid Halilhodžić",
+"qid": "Q463933",
+"da": "2018-10-02",
+"a": "2019-08-02"
+},
+{
+"chi": "Christian Gourcuff",
+"qid": "Q128900",
+"da": "2019-08-08",
+"a": "2020-12-08"
+},
+{
+"chi": "Raymond Domenech",
+"qid": "Q192648",
+"da": "2020-12-26",
+"a": "2021-02-10"
+},
+{
+"chi": "Antoine Kombouaré",
+"qid": "Q586555",
+"da": "2021-02-11",
+"a": "2023-05-09"
+},
+{
+"chi": "Pierre Aristouy",
+"qid": "Q3383764",
+"da": "2023-05-09",
+"a": "2023-11-29"
+},
+{
+"chi": "Jocelyn Gourvennec",
+"qid": "Q2702339",
+"da": "2023-11-29",
+"a": "2024-03-17"
+},
+{
+"chi": "Antoine Kombouaré",
+"qid": "Q586555",
+"da": "2024-03-17",
+"a": "2025-05-20"
+},
+{
+"chi": "Luís Castro",
+"qid": "Q15896123",
+"da": "2025-06-11",
+"a": "2025-12-11"
+},
+{
+"chi": "Ahmed Kantari",
+"qid": "Q44656",
+"da": "2025-12-11",
+"a": "2026-03-10"
+},
+{
+"chi": "Vahid Halilhodžić",
+"qid": "Q463933",
+"da": "2026-03-10",
+"a": "2026-06-01"
+},
+{
+"chi": "Michel Der Zakarian",
+"qid": "Q965558",
+"da": "2026-06-17",
+"a": "2026-08-25"
+},
+{
+"chi": "Grégory Poirier",
+"qid": "Q5612783",
+"da": "2026-08-25",
+"a": null
+}
+]
+},
+"Guingamp": {
+"wikidata": "Q459148",
+"nome": "En Avant de Guingamp",
+"allenatori": [
+{
+"chi": "Jocelyn Gourvennec",
+"qid": "Q2702339",
+"da": "2018-11-08",
+"a": "2019-05-01"
+},
+{
+"chi": "Patrice Lair",
+"qid": "Q3368970",
+"da": "2019-05-01",
+"a": "2019-09-23"
+},
+{
+"chi": "Sylvain Didot",
+"qid": "Q3506979",
+"da": "2019-09-24",
+"a": "2020-08-30"
+},
+{
+"chi": "Mehmed Baždarević",
+"qid": "Q518054",
+"da": "2020-08-30",
+"a": "2021-02-01"
+},
+{
+"chi": "Stéphane Dumont",
+"qid": "Q2180092",
+"da": "2021-05-27",
+"a": "2024-01-01"
+},
+{
+"chi": "Sylvain Ripoll",
+"qid": "Q3507117",
+"da": "2024-01-01",
+"a": null
+}
+]
+},
+"Perugia": {
+"wikidata": "Q16344",
+"nome": "A.C. Perugia Calcio",
+"allenatori": [
+{
+"chi": "Alessandro Nesta",
+"qid": "Q227892",
+"da": "2018-05-14",
+"a": "2019-05-21"
+},
+{
+"chi": "Massimo Oddo",
+"qid": "Q125438",
+"da": "2019-06-07",
+"a": "2020-01-04"
+},
+{
+"chi": "Massimo Oddo",
+"qid": "Q125438",
+"da": "2020-07-19",
+"a": "2020-08-19"
+},
+{
+"chi": "Fabio Caserta",
+"qid": "Q267797",
+"da": "2020-08-26",
+"a": "2021-06-14"
+},
+{
+"chi": "Massimiliano Alvini",
+"qid": "Q98581426",
+"da": "2021-06-16",
+"a": "2022-06-08"
+},
+{
+"chi": "Fabrizio Castori",
+"qid": "Q3737975",
+"da": "2022-06-08",
+"a": null
+}
+]
+},
+"Frosinone": {
+"wikidata": "Q845043",
+"nome": "Frosinone Calcio",
+"allenatori": [
+{
+"chi": "Moreno Longo",
+"qid": "Q3862936",
+"da": "2017-06-14",
+"a": "2018-12-19"
+},
+{
+"chi": "Marco Baroni",
+"qid": "Q1317738",
+"da": "2018-12-19",
+"a": "2019-06-02"
+},
+{
+"chi": "Alessandro Nesta",
+"qid": "Q227892",
+"da": "2019-07-01",
+"a": "2021-03-22"
+},
+{
+"chi": "Eusebio Di Francesco",
+"qid": "Q396154",
+"da": "2023-07-01",
+"a": "2024-06-25"
+},
+{
+"chi": "Vincenzo Vivarini",
+"qid": "Q26972310",
+"da": "2024-07-01",
+"a": "2024-10-22"
+},
+{
+"chi": "Leandro Greco",
+"qid": "Q935117",
+"da": "2024-10-22",
+"a": null
+}
+]
+},
+"Brentford": {
+"wikidata": "Q19571",
+"nome": "Brentford F.C.",
+"allenatori": [
+{
+"chi": "Mark Warburton",
+"qid": "Q16194857",
+"da": "2013-12-10",
+"a": "2015-05-30"
+},
+{
+"chi": "Dean Smith",
+"qid": "Q5246473",
+"da": "2015-12-01",
+"a": "2018-10-09"
+},
+{
+"chi": "Thomas Frank",
+"qid": "Q13469562",
+"da": "2018-10-16",
+"a": "2025-06-12"
+},
+{
+"chi": "Keith Andrews",
+"qid": "Q316704",
+"da": "2025-06-27",
+"a": null
+}
+]
+},
+"Rotherham": {
+"wikidata": "Q48950",
+"nome": "Rotherham United F.C.",
+"allenatori": [
+{
+"chi": "Steve Evans",
+"qid": "Q7612500",
+"da": "2012-04-09",
+"a": "2015-09-28"
+},
+{
+"chi": "Neil Redfearn",
+"qid": "Q6065586",
+"da": "2015-10-09",
+"a": "2016-02-08"
+},
+{
+"chi": "Neil Warnock",
+"qid": "Q948505",
+"da": "2016-02-11",
+"a": "2016-05-18"
+},
+{
+"chi": "Alan Stubbs",
+"qid": "Q575488",
+"da": "2016-06-01",
+"a": "2016-10-19"
+},
+{
+"chi": "Kenny Jackett",
+"qid": "Q10601",
+"da": "2016-10-21",
+"a": "2016-11-28"
+},
+{
+"chi": "Paul Warne",
+"qid": "Q7154234",
+"da": "2016-11-28",
+"a": "2022-09-21"
+},
+{
+"chi": "Matt Taylor",
+"qid": "Q6789414",
+"da": "2022-10-04",
+"a": "2023-11-13"
+},
+{
+"chi": "Leam Richardson",
+"qid": "Q6509390",
+"da": "2023-12-11",
+"a": "2024-04-17"
+},
+{
+"chi": "Steve Evans",
+"qid": "Q7612500",
+"da": "2024-04-17",
+"a": "2025-03-30"
+},
+{
+"chi": "Matt Hamshaw",
+"qid": "Q6788756",
+"da": "2025-03-30",
+"a": "2026-01-01"
+},
+{
+"chi": "Alex Bruce",
+"qid": "Q2733524",
+"da": "2026-06-29",
+"a": null
+}
+]
+},
+"Eibar": {
+"wikidata": "Q770740",
+"nome": "SD Eibar",
+"allenatori": [
+{
+"chi": "José Luis Mendilibar",
+"qid": "Q460576",
+"da": "2015-07-01",
+"a": "2021-06-30"
+},
+{
+"chi": "Gaizka Garitano Aguirre",
+"qid": "Q742677",
+"da": "2021-07-01",
+"a": "2023-06-30"
+},
+{
+"chi": "Joseba Etxeberria",
+"qid": "Q310354",
+"da": "2023-07-01",
+"a": "2025-02-16"
+},
+{
+"chi": "Beñat San José",
+"qid": "Q10556689",
+"da": "2025-02-16",
+"a": null
+}
+]
+},
+"Cordoba": {
+"wikidata": "Q10499",
+"nome": "Córdoba CF",
+"allenatori": [
+{
+"chi": "José Luis Oltra",
+"qid": "Q1377271",
+"da": "2015-07-01",
+"a": "2016-11-27"
+},
+{
+"chi": "Luis Carrión",
+"qid": "Q2310536",
+"da": "2016-11-29",
+"a": "2017-10-17"
+},
+{
+"chi": "Juan Merino",
+"qid": "Q3323965",
+"da": "2017-10-18",
+"a": "2017-12-04"
+},
+{
+"chi": "Jorge Romero Sáez",
+"qid": "Q45040013",
+"da": "2017-12-05",
+"a": "2018-02-12"
+},
+{
+"chi": "José Ramón Sandoval",
+"qid": "Q302532",
+"da": "2018-02-13",
+"a": "2018-06-30"
+},
+{
+"chi": "Francisco Javier Rodríguez Vílchez",
+"qid": "Q3823451",
+"da": "2018-07-01",
+"a": "2018-08-02"
+},
+{
+"chi": "José Ramón Sandoval",
+"qid": "Q302532",
+"da": "2018-08-03",
+"a": "2018-11-18"
+},
+{
+"chi": "Curro Torres",
+"qid": "Q169983",
+"da": "2018-11-19",
+"a": "2019-02-25"
+},
+{
+"chi": "Rafael Navarro Rivas",
+"qid": "Q61890826",
+"da": "2019-01-25",
+"a": "2019-06-30"
+},
+{
+"chi": "Enrique Martín Monreal",
+"qid": "Q3814015",
+"da": "2019-07-01",
+"a": "2019-10-21"
+},
+{
+"chi": "Raúl Agné",
+"qid": "Q3324067",
+"da": "2019-10-23",
+"a": "2020-03-10"
+},
+{
+"chi": "Juan Sabas",
+"qid": "Q4886381",
+"da": "2020-03-10",
+"a": "2020-12-01"
+},
+{
+"chi": "Pablo Alfaro Armengot",
+"qid": "Q667399",
+"da": "2020-12-03",
+"a": "2021-04-19"
+},
+{
+"chi": "Germán Crespo",
+"qid": "Q107585767",
+"da": "2021-04-20",
+"a": "2023-04-10"
+},
+{
+"chi": "Manuel Mosquera Bastida",
+"qid": "Q11934979",
+"da": "2023-04-10",
+"a": "2023-06-30"
+},
+{
+"chi": "Iván Ania",
+"qid": "Q3779635",
+"da": "2023-07-01",
+"a": null
+}
+]
+},
+"FC Koln": {
+"wikidata": "Q104770",
+"nome": "1. FC Köln",
+"allenatori": [
+{
+"chi": "Markus Anfang",
+"qid": "Q1568284",
+"da": "2018-07-01",
+"a": "2019-04-27"
+},
+{
+"chi": "Achim Beierlorzer",
+"qid": "Q19257969",
+"da": "2019-07-01",
+"a": "2019-11-09"
+},
+{
+"chi": "André Pawlak",
+"qid": "Q63382856",
+"da": "2019-11-09",
+"a": "2019-11-18"
+},
+{
+"chi": "Markus Gisdol",
+"qid": "Q9318057",
+"da": "2019-11-18",
+"a": "2021-04-11"
+},
+{
+"chi": "Friedhelm Funkel",
+"qid": "Q679901",
+"da": "2021-04-11",
+"a": "2021-06-30"
+},
+{
+"chi": "Steffen Baumgart",
+"qid": "Q2338559",
+"da": "2021-07-01",
+"a": "2023-12-31"
+},
+{
+"chi": "Timo Schultz",
+"qid": "Q487074",
+"da": "2024-01-04",
+"a": "2024-06-30"
+},
+{
+"chi": "Gerhard Struber",
+"qid": "Q5550774",
+"da": "2024-07-01",
+"a": "2025-05-04"
+},
+{
+"chi": "Friedhelm Funkel",
+"qid": "Q679901",
+"da": "2025-05-05",
+"a": "2025-06-30"
+},
+{
+"chi": "Lukas Kwasniok",
+"qid": "Q27960236",
+"da": "2025-07-01",
+"a": "2026-03-22"
+},
+{
+"chi": "René Wagner",
+"qid": "Q138763771",
+"da": "2026-03-23",
+"a": null
+}
+]
+},
+"Paderborn": {
+"wikidata": "Q160532",
+"nome": "SC Paderborn 07",
+"allenatori": [
+{
+"chi": "Stephan Schmidt",
+"qid": "Q2343828",
+"da": "2012-07-09",
+"a": "2013-05-05"
+},
+{
+"chi": "Steffen Baumgart",
+"qid": "Q2338559",
+"da": "2017-04-16",
+"a": "2021-01-01"
+},
+{
+"chi": "Lukas Kwasniok",
+"qid": "Q27960236",
+"da": "2021-01-01",
+"a": "2025-01-01"
+},
+{
+"chi": "Ralf Kettemann",
+"qid": "Q2129274",
+"da": "2025-01-01",
+"a": null
+}
+]
+},
+"Caen": {
+"wikidata": "Q193377",
+"nome": "Stade Malherbe Caen",
+"allenatori": [
+{
+"chi": "Rui Almeida",
+"qid": "Q20723081",
+"da": "2019-07-01",
+"a": "2019-09-28"
+},
+{
+"chi": "Pascal Dupraz",
+"qid": "Q3367394",
+"da": "2019-10-01",
+"a": "2021-03-23"
+},
+{
+"chi": "Stéphane Moulin",
+"qid": "Q3501975",
+"da": "2021-06-04",
+"a": "2023-01-01"
+},
+{
+"chi": "Jean-Marc Furlan",
+"qid": "Q129086",
+"da": "2023-01-01",
+"a": "2023-11-01"
+},
+{
+"chi": "Nicolas Seube",
+"qid": "Q2548784",
+"da": "2023-11-01",
+"a": "2024-12-29"
+},
+{
+"chi": "Bruno Baltazar",
+"qid": "Q4979321",
+"da": "2024-12-29",
+"a": null
+}
+]
+},
+"Metz": {
+"wikidata": "Q221525",
+"nome": "FC Metz",
+"allenatori": [
+{
+"chi": "Frédéric Antonetti",
+"qid": "Q128824",
+"da": "2018-01-01",
+"a": "2019-06-30"
+},
+{
+"chi": "Vincent Hognon",
+"qid": "Q1383750",
+"da": "2019-05-18",
+"a": "2020-10-12"
+},
+{
+"chi": "Frédéric Antonetti",
+"qid": "Q128824",
+"da": "2020-10-13",
+"a": "2022-06-09"
+},
+{
+"chi": "László Bölöni",
+"qid": "Q353222",
+"da": "2022-06-16",
+"a": "2024-07-04"
+},
+{
+"chi": "Stéphane Le Mignan",
+"qid": "Q3501900",
+"da": "2024-07-04",
+"a": "2026-01-20"
+},
+{
+"chi": "Benoît Tavenot",
+"qid": "Q127420708",
+"da": "2026-01-20",
+"a": "2026-06-05"
+},
+{
+"chi": "Luc Holtz",
+"qid": "Q981251",
+"da": "2026-06-05",
+"a": null
+}
+]
+},
+"Lens": {
+"wikidata": "Q191843",
+"nome": "R.C. Lens",
+"allenatori": [
+{
+"chi": "Franck Haise",
+"qid": "Q3082153",
+"da": "2020-02-25",
+"a": "2024-06-30"
+},
+{
+"chi": "Will Still",
+"qid": "Q42097340",
+"da": "2024-07-01",
+"a": "2025-05-18"
+},
+{
+"chi": "Pierre Sage",
+"qid": "Q123584452",
+"da": "2025-06-02",
+"a": "2026-06-01"
+},
+{
+"chi": "Dino Toppmöller",
+"qid": "Q877918",
+"da": "2026-06-16",
+"a": "2026-09-15"
+},
+{
+"chi": "Yannick Cahuzac",
+"qid": "Q27789",
+"da": "2026-09-15",
+"a": null
+}
+]
+},
+"Como": {
+"wikidata": "Q1120838",
+"nome": "Como 1907",
+"allenatori": [
+{
+"chi": "Fabio Gallo",
+"qid": "Q3737721",
+"da": "2016-07-01",
+"a": "2017-05-26"
+},
+{
+"chi": "Osian Roberts",
+"qid": "Q16199536",
+"da": "2023-12-20",
+"a": "2024-07-18"
+},
+{
+"chi": "Cesc Fàbregas",
+"qid": "Q17499",
+"da": "2024-07-19",
+"a": null
+}
+]
+},
+"Salernitana": {
+"wikidata": "Q847587",
+"nome": "U.S. Salernitana 1919",
+"allenatori": [
+{
+"chi": "Fabrizio Castori",
+"qid": "Q3737975",
+"da": "2020-08-10",
+"a": "2021-10-17"
+},
+{
+"chi": "Davide Nicola",
+"qid": "Q3019103",
+"da": "2022-02-15",
+"a": "2023-02-15"
+},
+{
+"chi": "Paulo Sousa",
+"qid": "Q314440",
+"da": "2023-02-15",
+"a": "2023-10-09"
+},
+{
+"chi": "Filippo Inzaghi",
+"qid": "Q126503",
+"da": "2023-10-10",
+"a": "2024-02-11"
+},
+{
+"chi": "Fabio Liverani",
+"qid": "Q381262",
+"da": "2024-02-11",
+"a": "2024-03-19"
+},
+{
+"chi": "Roberto Breda",
+"qid": "Q1466614",
+"da": "2025-01-03",
+"a": "2025-04-07"
+},
+{
+"chi": "Pasquale Marino",
+"qid": "Q2305065",
+"da": "2025-04-07",
+"a": null
+}
+]
+},
+"Milton Keynes Dons": {
+"wikidata": "Q248188",
+"nome": "Milton Keynes Dons F.C.",
+"allenatori": [
+{
+"chi": "Graham Alexander",
+"qid": "Q553382",
+"da": "2023-05-27",
+"a": "2023-10-16"
+},
+{
+"chi": "Mike Williamson",
+"qid": "Q459959",
+"da": "2023-10-17",
+"a": "2024-09-18"
+},
+{
+"chi": "Dean Lewington",
+"qid": "Q5246307",
+"da": "2024-09-18",
+"a": "2024-09-24"
+},
+{
+"chi": "Scott Lindsey",
+"qid": "Q7436701",
+"da": "2024-09-25",
+"a": "2025-03-02"
+}
+]
+},
+"Preston": {
+"wikidata": "Q19612",
+"nome": "Preston North End F.C.",
+"allenatori": [
+{
+"chi": "Alex Neil",
+"qid": "Q1828808",
+"da": "2017-07-04",
+"a": "2021-03-21"
+},
+{
+"chi": "Frankie McAvoy",
+"qid": "Q106588049",
+"da": "2021-03-21",
+"a": "2021-12-06"
+},
+{
+"chi": "Ryan Lowe",
+"qid": "Q647873",
+"da": "2021-12-07",
+"a": "2024-08-12"
+},
+{
+"chi": "Mike Marsh",
+"qid": "Q1338918",
+"da": "2024-08-12",
+"a": "2024-08-17"
+},
+{
+"chi": "Paul Heckingbottom",
+"qid": "Q7151218",
+"da": "2024-08-20",
+"a": "2026-09-13"
+},
+{
+"chi": "Jason Euell",
+"qid": "Q982625",
+"da": "2026-09-13",
+"a": "2026-09-28"
+},
+{
+"chi": "Graham Alexander",
+"qid": "Q553382",
+"da": "2026-09-28",
+"a": null
+}
+]
+},
+"Las Palmas": {
+"wikidata": "Q11979",
+"nome": "UD Las Palmas",
+"allenatori": [
+{
+"chi": "Paco Herrera",
+"qid": "Q3235400",
+"da": "2014-07-04",
+"a": "2015-10-19"
+},
+{
+"chi": "Pako Ayestarán",
+"qid": "Q723458",
+"da": "2017-09-28",
+"a": "2017-11-30"
+},
+{
+"chi": "Paco Jémez",
+"qid": "Q2311040",
+"da": "2018-01-01",
+"a": "2018-06-30"
+},
+{
+"chi": "Manuel Jiménez Jiménez",
+"qid": "Q27687",
+"da": "2018-07-01",
+"a": "2018-11-16"
+},
+{
+"chi": "Paco Herrera",
+"qid": "Q3235400",
+"da": "2018-11-17",
+"a": "2019-03-04"
+},
+{
+"chi": "Pepe Mel",
+"qid": "Q2409599",
+"da": "2019-03-05",
+"a": "2022-01-23"
+},
+{
+"chi": "García Pimienta",
+"qid": "Q2671442",
+"da": "2022-01-24",
+"a": "2024-06-30"
+},
+{
+"chi": "Luis Carrión",
+"qid": "Q2310536",
+"da": "2024-07-01",
+"a": "2024-10-08"
+},
+{
+"chi": "Diego Martínez Penas",
+"qid": "Q23939734",
+"da": "2024-10-08",
+"a": "2025-06-05"
+},
+{
+"chi": "Luis García Fernández",
+"qid": "Q440855",
+"da": "2025-07-01",
+"a": null
+}
+]
+},
+"Sp Gijon": {
+"wikidata": "Q12278",
+"nome": "Sporting de Gijón",
+"allenatori": [
+{
+"chi": "Rubén Baraja",
+"qid": "Q299488",
+"da": "2017-12-12",
+"a": "2018-11-18"
+},
+{
+"chi": "José Alberto López Menéndez",
+"qid": "Q58839682",
+"da": "2018-11-18",
+"a": "2019-12-21"
+},
+{
+"chi": "Miroslav Đukić",
+"qid": "Q431287",
+"da": "2019-12-22",
+"a": "2020-07-21"
+},
+{
+"chi": "David Gallego",
+"qid": "Q17030351",
+"da": "2020-07-21",
+"a": "2022-02-22"
+},
+{
+"chi": "José Luis Martí",
+"qid": "Q705601",
+"da": "2022-02-23",
+"a": "2022-05-03"
+},
+{
+"chi": "Abelardo Fernández",
+"qid": "Q318546",
+"da": "2022-05-03",
+"a": "2023-01-15"
+},
+{
+"chi": "Miguel Ángel Ramírez",
+"qid": "Q69414067",
+"da": "2023-01-17",
+"a": "2024-06-30"
+},
+{
+"chi": "Rubén Albés",
+"qid": "Q20021323",
+"da": "2024-07-01",
+"a": "2025-04-06"
+},
+{
+"chi": "Asier Garitano",
+"qid": "Q4806891",
+"da": "2025-04-08",
+"a": "2025-10-05"
+},
+{
+"chi": "Borja Jiménez Sáez",
+"qid": "Q66752039",
+"da": "2025-10-08",
+"a": null
+}
+]
+},
+"Darmstadt": {
+"wikidata": "Q479351",
+"nome": "SV Darmstadt 98",
+"allenatori": [
+{
+"chi": "Torsten Frings",
+"qid": "Q107076",
+"da": "2017-01-03",
+"a": "2017-12-09"
+},
+{
+"chi": "Dirk Schuster",
+"qid": "Q463936",
+"da": "2017-12-12",
+"a": "2019-02-18"
+},
+{
+"chi": "Dimitris Grammozis",
+"qid": "Q470558",
+"da": "2019-02-24",
+"a": "2020-06-30"
+},
+{
+"chi": "Torsten Lieberknecht",
+"qid": "Q1673975",
+"da": "2021-07-01",
+"a": "2024-09-01"
+},
+{
+"chi": "Florian Kohfeldt",
+"qid": "Q23061384",
+"da": "2024-09-07",
+"a": null
+}
+]
+},
+"Ingolstadt": {
+"wikidata": "Q170117",
+"nome": "FC Ingolstadt 04",
+"allenatori": [
+{
+"chi": "Ralph Hasenhüttl",
+"qid": "Q874628",
+"da": "2013-10-07",
+"a": "2016-06-30"
+},
+{
+"chi": "Stefan Leitl",
+"qid": "Q2336933",
+"da": "2017-08-22",
+"a": "2018-09-22"
+},
+{
+"chi": "Jens Keller",
+"qid": "Q63028",
+"da": "2018-12-02",
+"a": "2019-04-02"
+},
+{
+"chi": "Tomas Oral",
+"qid": "Q1557988",
+"da": "2019-04-03",
+"a": "2019-06-30"
+},
+{
+"chi": "Jeff Saibene",
+"qid": "Q535093",
+"da": "2019-07-01",
+"a": "2020-03-09"
+},
+{
+"chi": "Tomas Oral",
+"qid": "Q1557988",
+"da": "2020-03-11",
+"a": "2021-06-30"
+},
+{
+"chi": "Roberto Pätzold",
+"qid": "Q59310930",
+"da": "2021-07-01",
+"a": "2021-09-25"
+},
+{
+"chi": "Rüdiger Rehm",
+"qid": "Q2203726",
+"da": "2021-12-08",
+"a": "2023-01-31"
+},
+{
+"chi": "Guerino Capretti",
+"qid": "Q99494292",
+"da": "2023-02-01",
+"a": "2023-04-04"
+},
+{
+"chi": "Michael Köllner",
+"qid": "Q21055706",
+"da": "2023-04-06",
+"a": "2024-05-02"
+},
+{
+"chi": "Sabrina Wittmann",
+"qid": "Q125748607",
+"da": "2024-05-02",
+"a": "2026-09-24"
+},
+{
+"chi": "Achim Beierlorzer",
+"qid": "Q19257969",
+"da": "2026-09-25",
+"a": null
+}
+]
+},
+"Angers": {
+"wikidata": "Q845137",
+"nome": "Angers SCO",
+"allenatori": [
+{
+"chi": "Jean-Louis Garcia",
+"qid": "Q3166782",
+"da": "2006-07-01",
+"a": "2011-05-31"
+},
+{
+"chi": "Stéphane Moulin",
+"qid": "Q3501975",
+"da": "2011-07-01",
+"a": "2021-05-24"
+},
+{
+"chi": "Gérald Baticle",
+"qid": "Q2019843",
+"da": "2021-05-27",
+"a": "2022-12-23"
+},
+{
+"chi": "Abdel Bouhazama",
+"qid": "Q116059330",
+"da": "2022-11-28",
+"a": "2023-03-07"
+},
+{
+"chi": "Alexandre Dujeux",
+"qid": "Q2833638",
+"da": "2023-03-07",
+"a": "2026-06-03"
+},
+{
+"chi": "Stéphane Gilli",
+"qid": "Q121891089",
+"da": "2026-06-09",
+"a": null
+}
+]
+},
+"Ajaccio GFCO": {
+"wikidata": "Q627334",
+"nome": "Gazélec Ajaccio",
+"allenatori": []
+},
+"Benevento": {
+"wikidata": "Q652516",
+"nome": "Benevento Calcio",
+"allenatori": [
+{
+"chi": "Filippo Inzaghi",
+"qid": "Q126503",
+"da": "2019-06-22",
+"a": "2021-06-08"
+},
+{
+"chi": "Fabio Caserta",
+"qid": "Q267797",
+"da": "2021-06-15",
+"a": null
+}
+]
+},
+"Spal": {
+"wikidata": "Q13385",
+"nome": "Ars et Labor Ferrara Calcio",
+"allenatori": [
+{
+"chi": "Oscar Brevi",
+"qid": "Q1467050",
+"da": "2014-07-01",
+"a": "2014-12-08"
+},
+{
+"chi": "Leonardo Semplici",
+"qid": "Q26696437",
+"da": "2014-12-08",
+"a": "2020-02-10"
+},
+{
+"chi": "Luigi Di Biagio",
+"qid": "Q314053",
+"da": "2020-02-10",
+"a": "2020-08-12"
+},
+{
+"chi": "Pasquale Marino",
+"qid": "Q2305065",
+"da": "2020-08-12",
+"a": "2021-03-01"
+}
+]
+},
+"Pisa": {
+"wikidata": "Q289613",
+"nome": "Pisa SC",
+"allenatori": [
+{
+"chi": "Leonardo Semplici",
+"qid": "Q26696437",
+"da": "2010-11-30",
+"a": "2011-02-21"
+},
+{
+"chi": "Gennaro Gattuso",
+"qid": "Q116980",
+"da": "2015-08-20",
+"a": "2016-07-31"
+},
+{
+"chi": "Gennaro Gattuso",
+"qid": "Q116980",
+"da": "2016-09-02",
+"a": "2017-06-30"
+},
+{
+"chi": "Carmine Gautieri",
+"qid": "Q3660370",
+"da": "2017-06-14",
+"a": "2017-10-19"
+},
+{
+"chi": "Michele Pazienza",
+"qid": "Q381747",
+"da": "2017-10-19",
+"a": "2018-03-26"
+},
+{
+"chi": "Mario Petrone",
+"qid": "Q21076846",
+"da": "2018-03-26",
+"a": "2018-06-24"
+},
+{
+"chi": "Luca D'Angelo",
+"qid": "Q3838092",
+"da": "2018-06-24",
+"a": "2022-06-14"
+},
+{
+"chi": "Rolando Maran",
+"qid": "Q3940276",
+"da": "2022-07-01",
+"a": "2022-09-19"
+},
+{
+"chi": "Luca D'Angelo",
+"qid": "Q3838092",
+"da": "2022-09-19",
+"a": "2023-06-02"
+},
+{
+"chi": "Alberto Aquilani",
+"qid": "Q191151",
+"da": "2023-06-29",
+"a": "2024-06-18"
+},
+{
+"chi": "Filippo Inzaghi",
+"qid": "Q126503",
+"da": "2024-07-03",
+"a": "2025-06-13"
+},
+{
+"chi": "Alberto Gilardino",
+"qid": "Q182451",
+"da": "2025-06-26",
+"a": "2026-02-01"
+},
+{
+"chi": "Oscar Hiljemark",
+"qid": "Q152067",
+"da": "2026-02-03",
+"a": "2026-06-08"
+},
+{
+"chi": "Paolo Bianco",
+"qid": "Q1444184",
+"da": "2026-06-22",
+"a": null
+}
+]
+},
+"Burton": {
+"wikidata": "Q48929",
+"nome": "Burton Albion F.C.",
+"allenatori": [
+{
+"chi": "Noureddine Maamria",
+"qid": "Q5278525",
+"da": "2022-09-05",
+"a": "2022-12-09"
+},
+{
+"chi": "Gary Mills",
+"qid": "Q507121",
+"da": "2023-12-11",
+"a": "2024-01-10"
+},
+{
+"chi": "Martin Paterson",
+"qid": "Q1061071",
+"da": "2024-01-11",
+"a": "2024-05-31"
+},
+{
+"chi": "Mark Robinson",
+"qid": "Q106448334",
+"da": "2024-06-04",
+"a": "2024-10-23"
+},
+{
+"chi": "Tom Hounsell",
+"qid": "Q130744897",
+"da": "2024-10-24",
+"a": "2024-12-17"
+},
+{
+"chi": "Gary Bowyer",
+"qid": "Q5524735",
+"da": "2024-12-17",
+"a": null
+}
+]
+},
+"Alaves": {
+"wikidata": "Q223620",
+"nome": "Deportivo Alavés",
+"allenatori": [
+{
+"chi": "Asier Garitano",
+"qid": "Q4806891",
+"da": "2019-07-01",
+"a": "2020-07-05"
+},
+{
+"chi": "Pablo Machín",
+"qid": "Q11697229",
+"da": "2020-08-05",
+"a": "2021-01-12"
+},
+{
+"chi": "Abelardo Fernández",
+"qid": "Q318546",
+"da": "2021-01-12",
+"a": "2021-04-05"
+},
+{
+"chi": "Javier Calleja",
+"qid": "Q1332523",
+"da": "2021-04-05",
+"a": "2021-12-28"
+},
+{
+"chi": "José Luis Mendilibar",
+"qid": "Q460576",
+"da": "2021-12-28",
+"a": "2022-04-04"
+},
+{
+"chi": "Julio Velázquez",
+"qid": "Q901237",
+"da": "2022-04-05",
+"a": "2022-06-30"
+},
+{
+"chi": "Luis García Plaza",
+"qid": "Q2531438",
+"da": "2022-07-01",
+"a": "2024-12-02"
+},
+{
+"chi": "Eduardo Coudet",
+"qid": "Q2547652",
+"da": "2024-12-02",
+"a": "2026-03-03"
+},
+{
+"chi": "Quique Sánchez Flores",
+"qid": "Q352313",
+"da": "2026-03-03",
+"a": null
+}
+]
+},
+"Leganes": {
+"wikidata": "Q856119",
+"nome": "CD Leganés",
+"allenatori": [
+{
+"chi": "José Luis Martí",
+"qid": "Q705601",
+"da": "2020-08-03",
+"a": "2021-01-26"
+},
+{
+"chi": "Asier Garitano",
+"qid": "Q4806891",
+"da": "2021-01-26",
+"a": "2021-10-30"
+},
+{
+"chi": "Mehdi Nafti",
+"qid": "Q380173",
+"da": "2021-10-31",
+"a": "2022-06-30"
+},
+{
+"chi": "Imanol Idiakez",
+"qid": "Q16214008",
+"da": "2022-07-01",
+"a": "2023-04-03"
+},
+{
+"chi": "Carlos Martínez Fernández",
+"qid": "Q5042351",
+"da": "2023-04-04",
+"a": "2023-06-30"
+},
+{
+"chi": "Borja Jiménez Sáez",
+"qid": "Q66752039",
+"da": "2023-07-01",
+"a": "2025-06-30"
+},
+{
+"chi": "Igor Oca",
+"qid": "Q115487074",
+"da": "2025-12-05",
+"a": "2026-05-26"
+},
+{
+"chi": "Rubén Albés",
+"qid": "Q20021323",
+"da": "2026-07-01",
+"a": null
+}
+]
+},
+"RB Leipzig": {
+"wikidata": "Q30033219",
+"nome": "RB Leipzig (women)",
+"allenatori": []
+},
+"Dijon": {
+"wikidata": "Q503317",
+"nome": "Dijon FCO",
+"allenatori": [
+{
+"chi": "Antoine Kombouaré",
+"qid": "Q586555",
+"da": "2019-01-10",
+"a": "2019-06-20"
+},
+{
+"chi": "Stéphane Jobard",
+"qid": "Q66021525",
+"da": "2019-06-20",
+"a": "2020-11-05"
+},
+{
+"chi": "David Linarès",
+"qid": "Q3018303",
+"da": "2020-11-06",
+"a": "2021-08-23"
+},
+{
+"chi": "Patrice Garande",
+"qid": "Q933813",
+"da": "2021-08-23",
+"a": "2022-05-15"
+},
+{
+"chi": "Omar Daf",
+"qid": "Q465144",
+"da": "2022-06-17",
+"a": "2023-04-03"
+},
+{
+"chi": "Benoît Tavenot",
+"qid": "Q127420708",
+"da": "2023-01-01",
+"a": "2026-01-01"
+},
+{
+"chi": "Baptiste Ridira",
+"qid": "Q139827258",
+"da": "2026-01-01",
+"a": null
+}
+]
+},
+"Cremonese": {
+"wikidata": "Q759482",
+"nome": "US Cremonese",
+"allenatori": [
+{
+"chi": "Marco Giampaolo",
+"qid": "Q2704759",
+"da": "2014-11-17",
+"a": "2015-06-14"
+},
+{
+"chi": "Fulvio Pea",
+"qid": "Q3754317",
+"da": "2015-06-21",
+"a": "2016-01-26"
+},
+{
+"chi": "Marco Baroni",
+"qid": "Q1317738",
+"da": "2019-10-08",
+"a": "2020-01-08"
+},
+{
+"chi": "Massimiliano Alvini",
+"qid": "Q98581426",
+"da": "2022-06-09",
+"a": "2023-01-14"
+},
+{
+"chi": "Giovanni Stroppa",
+"qid": "Q2656692",
+"da": "2023-09-19",
+"a": "2024-10-08"
+},
+{
+"chi": "Davide Nicola",
+"qid": "Q3019103",
+"da": "2025-07-02",
+"a": "2026-03-18"
+},
+{
+"chi": "Marco Giampaolo",
+"qid": "Q2704759",
+"da": "2026-03-18",
+"a": "2026-09-01"
+},
+{
+"chi": "Fabio Pecchia",
+"qid": "Q1087530",
+"da": "2026-09-02",
+"a": null
+}
+]
+},
+"Venezia": {
+"wikidata": "Q501245",
+"nome": "Venezia F.C.",
+"allenatori": [
+{
+"chi": "Filippo Inzaghi",
+"qid": "Q126503",
+"da": "2016-06-07",
+"a": "2018-01-01"
+},
+{
+"chi": "Walter Zenga",
+"qid": "Q294302",
+"da": "2018-10-12",
+"a": "2019-03-05"
+},
+{
+"chi": "Alessio Dionisi",
+"qid": "Q65127311",
+"da": "2019-07-03",
+"a": "2020-08-14"
+},
+{
+"chi": "Paolo Zanetti",
+"qid": "Q1494098",
+"da": "2020-08-14",
+"a": "2022-04-27"
+},
+{
+"chi": "Ivan Javorčić",
+"qid": "Q3804721",
+"da": "2022-06-09",
+"a": "2022-10-01"
+},
+{
+"chi": "Paolo Vanoli",
+"qid": "Q3362674",
+"da": "2022-11-07",
+"a": "2024-06-20"
+},
+{
+"chi": "Eusebio Di Francesco",
+"qid": "Q396154",
+"da": "2024-06-26",
+"a": "2025-06-26"
+},
+{
+"chi": "Giovanni Stroppa",
+"qid": "Q2656692",
+"da": "2025-07-01",
+"a": "2026-10-13"
+},
+{
+"chi": "Davide Nicola",
+"qid": "Q3019103",
+"da": "2026-10-14",
+"a": null
+}
+]
+},
+"Foggia": {
+"wikidata": "Q139399",
+"nome": "Calcio Foggia 1920",
+"allenatori": [
+{
+"chi": "Zdeněk Zeman",
+"qid": "Q169092",
+"da": "2010-07-21",
+"a": "2011-06-10"
+}
+]
+},
+"Sheffield United": {
+"wikidata": "Q19607",
+"nome": "Sheffield United F.C.",
+"allenatori": [
+{
+"chi": "David Weir",
+"qid": "Q464467",
+"da": "2013-06-10",
+"a": "2013-10-11"
+},
+{
+"chi": "Chris Wilder",
+"qid": "Q5108471",
+"da": "2016-05-12",
+"a": "2021-03-12"
+},
+{
+"chi": "Slaviša Jokanović",
+"qid": "Q944426",
+"da": "2021-05-27",
+"a": "2021-11-25"
+},
+{
+"chi": "Paul Heckingbottom",
+"qid": "Q7151218",
+"da": "2021-11-25",
+"a": "2023-12-05"
+},
+{
+"chi": "Chris Wilder",
+"qid": "Q5108471",
+"da": "2023-12-05",
+"a": "2025-06-18"
+},
+{
+"chi": "Rubén Sellés",
+"qid": "Q115156958",
+"da": "2025-06-18",
+"a": "2025-09-14"
+},
+{
+"chi": "Chris Wilder",
+"qid": "Q5108471",
+"da": "2025-09-15",
+"a": null
+}
+]
+},
+"Girona": {
+"wikidata": "Q11945",
+"nome": "Girona FC",
+"allenatori": [
+{
+"chi": "Eusebio Sacristán",
+"qid": "Q366816",
+"da": "2018-07-01",
+"a": "2019-06-30"
+},
+{
+"chi": "Juan Carlos Unzué",
+"qid": "Q560712",
+"da": "2019-07-01",
+"a": "2019-10-21"
+},
+{
+"chi": "Juan Carlos Moreno Rodríguez",
+"qid": "Q2494806",
+"da": "2019-10-21",
+"a": "2019-10-28"
+},
+{
+"chi": "José Luis Martí",
+"qid": "Q705601",
+"da": "2019-10-28",
+"a": "2020-06-30"
+},
+{
+"chi": "Francisco Javier Rodríguez Vílchez",
+"qid": "Q3823451",
+"da": "2020-07-01",
+"a": "2021-06-30"
+},
+{
+"chi": "Miguel Ángel Sánchez Muñoz",
+"qid": "Q2637295",
+"da": "2021-07-09",
+"a": "2026-06-30"
+},
+{
+"chi": "Quique Álvarez",
+"qid": "Q939408",
+"da": "2026-07-01",
+"a": null
+}
+]
+},
+"Strasbourg": {
+"wikidata": "Q126334",
+"nome": "RC Strasbourg Alsace",
+"allenatori": [
+{
+"chi": "Thierry Laurey",
+"qid": "Q3524369",
+"da": "2016-07-01",
+"a": "2021-05-24"
+},
+{
+"chi": "Julien Stéphan",
+"qid": "Q59390957",
+"da": "2021-05-28",
+"a": "2023-01-09"
+},
+{
+"chi": "Mathieu Le Scornet",
+"qid": "Q116282627",
+"da": "2023-01-09",
+"a": "2023-06-30"
+},
+{
+"chi": "Frédéric Antonetti",
+"qid": "Q128824",
+"da": "2023-02-13",
+"a": "2023-06-30"
+},
+{
+"chi": "Patrick Vieira",
+"qid": "Q46347",
+"da": "2023-07-02",
+"a": "2024-07-18"
+},
+{
+"chi": "Liam Rosenior",
+"qid": "Q1336865",
+"da": "2024-07-25",
+"a": "2026-01-06"
+},
+{
+"chi": "Gary O'Neil",
+"qid": "Q731946",
+"da": "2026-01-07",
+"a": "2026-06-01"
+},
+{
+"chi": "Hugo Oliveira",
+"qid": "Q131452135",
+"da": "2026-07-15",
+"a": null
+}
+]
+},
+"Amiens": {
+"wikidata": "Q866884",
+"nome": "Amiens SC",
+"allenatori": [
+{
+"chi": "Christophe Pélissier",
+"qid": "Q25201554",
+"da": "2014-12-31",
+"a": "2019-05-28"
+},
+{
+"chi": "Luka Elsner",
+"qid": "Q1695581",
+"da": "2019-07-01",
+"a": "2020-09-20"
+},
+{
+"chi": "Philippe Hinschberger",
+"qid": "Q977105",
+"da": "2021-06-17",
+"a": "2023-04-01"
+},
+{
+"chi": "Omar Daf",
+"qid": "Q465144",
+"da": "2023-06-01",
+"a": null
+}
+]
+},
+"Lecce": {
+"wikidata": "Q13391",
+"nome": "US Lecce",
+"allenatori": [
+{
+"chi": "Eusebio Di Francesco",
+"qid": "Q396154",
+"da": "2011-06-24",
+"a": "2011-12-04"
+},
+{
+"chi": "Fabio Liverani",
+"qid": "Q381262",
+"da": "2017-09-17",
+"a": "2020-08-19"
+},
+{
+"chi": "Eugenio Corini",
+"qid": "Q511092",
+"da": "2020-08-22",
+"a": "2021-05-22"
+},
+{
+"chi": "Marco Baroni",
+"qid": "Q1317738",
+"da": "2021-07-01",
+"a": "2023-06-27"
+},
+{
+"chi": "Roberto D'Aversa",
+"qid": "Q573195",
+"da": "2023-06-27",
+"a": "2024-03-11"
+},
+{
+"chi": "Luca Gotti",
+"qid": "Q3838152",
+"da": "2024-03-13",
+"a": "2024-11-09"
+},
+{
+"chi": "Marco Giampaolo",
+"qid": "Q2704759",
+"da": "2024-11-11",
+"a": "2025-06-01"
+},
+{
+"chi": "Eusebio Di Francesco",
+"qid": "Q396154",
+"da": "2025-06-26",
+"a": null
+}
+]
+},
+"Huesca": {
+"wikidata": "Q11971",
+"nome": "Sociedad Deportiva Huesca",
+"allenatori": [
+{
+"chi": "Jorge D'Alessandro",
+"qid": "Q3320968",
+"da": "2012-12-26",
+"a": "2013-06-30"
+},
+{
+"chi": "Francisco Javier Rodríguez Vílchez",
+"qid": "Q3823451",
+"da": "2018-10-10",
+"a": "2019-06-30"
+},
+{
+"chi": "Miguel Ángel Sánchez Muñoz",
+"qid": "Q2637295",
+"da": "2019-07-01",
+"a": "2021-01-11"
+},
+{
+"chi": "Xisco",
+"qid": "Q301390",
+"da": "2021-10-27",
+"a": "2022-06-30"
+},
+{
+"chi": "José Ángel Ziganda",
+"qid": "Q704571",
+"da": "2022-06-13",
+"a": "2023-10-07"
+},
+{
+"chi": "Antonio Hidalgo",
+"qid": "Q602465",
+"da": "2023-10-11",
+"a": null
+}
+]
+},
+"Nimes": {
+"wikidata": "Q730809",
+"nome": "Nîmes Olympique",
+"allenatori": [
+{
+"chi": "Bernard Blaquart",
+"qid": "Q2897549",
+"da": "2015-01-01",
+"a": "2020-06-23"
+},
+{
+"chi": "Pascal Plancque",
+"qid": "Q3367563",
+"da": "2021-02-06",
+"a": "2022-01-04"
+},
+{
+"chi": "Nicolas Usaï",
+"qid": "Q24192128",
+"da": "2022-01-05",
+"a": "2022-11-16"
+},
+{
+"chi": "Frédéric Bompard",
+"qid": "Q106161984",
+"da": "2022-11-21",
+"a": "2024-04-08"
+},
+{
+"chi": "Adil Hermach",
+"qid": "Q662053",
+"da": "2024-04-08",
+"a": null
+}
+]
+},
+"Luton": {
+"wikidata": "Q18520",
+"nome": "Luton Town F.C.",
+"allenatori": [
+{
+"chi": "Nathan Jones",
+"qid": "Q707158",
+"da": "2020-05-28",
+"a": "2022-11-10"
+},
+{
+"chi": "Rob Edwards",
+"qid": "Q2067092",
+"da": "2022-11-17",
+"a": "2025-01-08"
+},
+{
+"chi": "Matt Bloomfield",
+"qid": "Q6788368",
+"da": "2025-01-14",
+"a": "2025-10-06"
+},
+{
+"chi": "Alex Lawless",
+"qid": "Q4717348",
+"da": "2025-10-06",
+"a": "2025-10-13"
+},
+{
+"chi": "Jack Wilshere",
+"qid": "Q15199",
+"da": "2025-10-13",
+"a": null
+}
+]
+},
+"Union Berlin": {
+"wikidata": "Q141971",
+"nome": "1. FC Union Berlin",
+"allenatori": [
+{
+"chi": "Uwe Neuhaus",
+"qid": "Q113305",
+"da": "2007-07-20",
+"a": "2014-06-30"
+},
+{
+"chi": "Norbert Düwel",
+"qid": "Q16879980",
+"da": "2014-07-01",
+"a": "2015-08-31"
+},
+{
+"chi": "Sascha Lewandowski",
+"qid": "Q820271",
+"da": "2015-09-01",
+"a": "2016-03-04"
+},
+{
+"chi": "André Hofschneider",
+"qid": "Q519675",
+"da": "2016-03-04",
+"a": "2016-06-30"
+},
+{
+"chi": "Jens Keller",
+"qid": "Q63028",
+"da": "2016-07-01",
+"a": "2017-12-04"
+},
+{
+"chi": "André Hofschneider",
+"qid": "Q519675",
+"da": "2017-12-05",
+"a": "2018-06-30"
+},
+{
+"chi": "Urs Fischer",
+"qid": "Q347771",
+"da": "2018-07-01",
+"a": "2023-11-15"
+},
+{
+"chi": "Marco Grote",
+"qid": "Q97601443",
+"da": "2023-11-15",
+"a": "2023-11-26"
+},
+{
+"chi": "Nenad Bjelica",
+"qid": "Q269404",
+"da": "2023-11-27",
+"a": "2024-05-06"
+},
+{
+"chi": "Marco Grote",
+"qid": "Q97601443",
+"da": "2024-05-06",
+"a": "2024-06-30"
+},
+{
+"chi": "Bo Svensson",
+"qid": "Q887456",
+"da": "2024-07-01",
+"a": "2024-12-27"
+},
+{
+"chi": "Marco Grote",
+"qid": "Q97601443",
+"da": "2024-12-27",
+"a": "2024-12-30"
+},
+{
+"chi": "Steffen Baumgart",
+"qid": "Q2338559",
+"da": "2025-01-02",
+"a": "2026-04-11"
+},
+{
+"chi": "Marie-Louise Eta",
+"qid": "Q1897161",
+"da": "2026-04-11",
+"a": "2026-06-30"
+},
+{
+"chi": "Mauro Lustrinelli",
+"qid": "Q578345",
+"da": "2026-07-01",
+"a": null
+}
+]
+},
+"Monza": {
+"wikidata": "Q289482",
+"nome": "AC Monza",
+"allenatori": [
+{
+"chi": "Marco Zaffaroni",
+"qid": "Q3846591",
+"da": "2016-05-24",
+"a": "2018-10-22"
+},
+{
+"chi": "Cristian Brocchi",
+"qid": "Q311619",
+"da": "2018-10-22",
+"a": "2021-05-28"
+},
+{
+"chi": "Giovanni Stroppa",
+"qid": "Q2656692",
+"da": "2021-07-01",
+"a": "2022-09-13"
+},
+{
+"chi": "Raffaele Palladino",
+"qid": "Q282551",
+"da": "2022-09-13",
+"a": "2024-06-30"
+},
+{
+"chi": "Alessandro Nesta",
+"qid": "Q227892",
+"da": "2024-07-01",
+"a": "2024-12-23"
+},
+{
+"chi": "Salvatore Bocchetti",
+"qid": "Q314744",
+"da": "2024-12-23",
+"a": "2025-02-10"
+},
+{
+"chi": "Alessandro Nesta",
+"qid": "Q227892",
+"da": "2025-02-10",
+"a": "2025-06-11"
+},
+{
+"chi": "Paolo Bianco",
+"qid": "Q1444184",
+"da": "2025-07-01",
+"a": "2026-06-01"
+},
+{
+"chi": "Ivan Jurić",
+"qid": "Q556688",
+"da": "2026-06-29",
+"a": null
+}
+]
+},
+"Reggiana": {
+"wikidata": "Q289707",
+"nome": "A.C. Reggiana 1919",
+"allenatori": [
+{
+"chi": "Lamberto Zauli",
+"qid": "Q3826352",
+"da": "2013-01-01",
+"a": "2013-01-01"
+}
+]
+},
+"Wycombe": {
+"wikidata": "Q48953",
+"nome": "Wycombe Wanderers F.C.",
+"allenatori": [
+{
+"chi": "Gareth Ainsworth",
+"qid": "Q3098290",
+"da": "2012-09-24",
+"a": "2023-02-20"
+},
+{
+"chi": "Matt Bloomfield",
+"qid": "Q6788368",
+"da": "2023-02-22",
+"a": "2025-01-14"
+},
+{
+"chi": "Sam Grace",
+"qid": "Q131831296",
+"da": "2025-01-15",
+"a": "2025-02-03"
+},
+{
+"chi": "Mike Dodds",
+"qid": "Q111180951",
+"da": "2025-02-04",
+"a": "2025-09-18"
+},
+{
+"chi": "Michael Duff",
+"qid": "Q983931",
+"da": "2025-09-18",
+"a": null
+}
+]
+},
+"Coventry": {
+"wikidata": "Q19580",
+"nome": "Coventry City F.C.",
+"allenatori": [
+{
+"chi": "Mark Robins",
+"qid": "Q1900410",
+"da": "2017-01-01",
+"a": "2024-11-07"
+},
+{
+"chi": "Frank Lampard",
+"qid": "Q41533",
+"da": "2024-11-28",
+"a": null
+}
+]
+},
+"Cadiz": {
+"wikidata": "Q460448",
+"nome": "Cádiz Club de Fútbol",
+"allenatori": [
+{
+"chi": "Mauricio Pellegrino",
+"qid": "Q313131",
+"da": "2024-01-24",
+"a": "2024-06-30"
+},
+{
+"chi": "Paco López",
+"qid": "Q2519433",
+"da": "2024-07-01",
+"a": "2024-12-08"
+},
+{
+"chi": "Gaizka Garitano Aguirre",
+"qid": "Q742677",
+"da": "2024-12-08",
+"a": "2026-03-09"
+},
+{
+"chi": "Sergio González Soriano",
+"qid": "Q145808",
+"da": "2026-03-09",
+"a": "2026-04-22"
+},
+{
+"chi": "Imanol Idiakez",
+"qid": "Q16214008",
+"da": "2026-04-22",
+"a": "2026-08-11"
+},
+{
+"chi": "Albert Celades",
+"qid": "Q459099",
+"da": "2026-08-12",
+"a": null
+}
+]
+},
+"Bielefeld": {
+"wikidata": "Q105844",
+"nome": "Arminia Bielefeld",
+"allenatori": [
+{
+"chi": "Jeff Saibene",
+"qid": "Q535093",
+"da": "2017-03-19",
+"a": "2018-12-10"
+},
+{
+"chi": "Uwe Neuhaus",
+"qid": "Q113305",
+"da": "2018-12-10",
+"a": "2021-03-01"
+},
+{
+"chi": "Frank Kramer",
+"qid": "Q1443598",
+"da": "2021-03-02",
+"a": "2022-04-20"
+},
+{
+"chi": "Daniel Scherning",
+"qid": "Q107153253",
+"da": "2022-08-18",
+"a": null
+}
+]
+},
+"Alessandria": {
+"wikidata": "Q16348",
+"nome": "US Alessandria Calcio 1912",
+"allenatori": [
+{
+"chi": "Maurizio Sarri",
+"qid": "Q3852721",
+"da": "2010-06-06",
+"a": "2011-05-24"
+}
+]
+},
+"Bochum": {
+"wikidata": "Q105861",
+"nome": "VfL Bochum",
+"allenatori": [
+{
+"chi": "Jens Rasiejewski",
+"qid": "Q1687342",
+"da": "2017-10-10",
+"a": "2018-02-07"
+},
+{
+"chi": "Robin Dutt",
+"qid": "Q664521",
+"da": "2018-02-12",
+"a": "2019-08-26"
+},
+{
+"chi": "Thomas Reis",
+"qid": "Q2426747",
+"da": "2019-09-06",
+"a": "2022-09-12"
+},
+{
+"chi": "Thomas Letsch",
+"qid": "Q22692810",
+"da": "2022-09-22",
+"a": "2024-04-08"
+},
+{
+"chi": "Heiko Butscher",
+"qid": "Q719435",
+"da": "2024-04-09",
+"a": "2024-06-30"
+},
+{
+"chi": "Peter Zeidler",
+"qid": "Q3376975",
+"da": "2024-07-01",
+"a": "2024-10-21"
+},
+{
+"chi": "Markus Feldhoff",
+"qid": "Q1901472",
+"da": "2024-10-21",
+"a": "2024-11-03"
+},
+{
+"chi": "Dieter Hecking",
+"qid": "Q73135",
+"da": "2024-11-04",
+"a": "2025-09-15"
+},
+{
+"chi": "Uwe Rösler",
+"qid": "Q566127",
+"da": "2025-10-06",
+"a": null
+}
+]
+},
+"Clermont": {
+"wikidata": "Q870182",
+"nome": "Clermont Foot 63",
+"allenatori": [
+{
+"chi": "Corinne Diacre",
+"qid": "Q1132878",
+"da": "2014-01-01",
+"a": "2017-01-01"
+},
+{
+"chi": "Pascal Gastien",
+"qid": "Q3367427",
+"da": "2017-09-01",
+"a": "2024-06-30"
+},
+{
+"chi": "Laurent Batlles",
+"qid": "Q732431",
+"da": "2024-10-30",
+"a": "2025-01-01"
+},
+{
+"chi": "David Guion",
+"qid": "Q5234461",
+"da": "2026-07-01",
+"a": null
+}
+]
+},
+"Sudtirol": {
+"wikidata": "Q1387710",
+"nome": "F.C. Südtirol",
+"allenatori": [
+{
+"chi": "Giovanni Stroppa",
+"qid": "Q2656692",
+"da": "2011-01-01",
+"a": "2012-01-01"
+},
+{
+"chi": "Maurizio Pellegrino",
+"qid": "Q3852681",
+"da": "2011-01-01",
+"a": "2011-01-01"
+},
+{
+"chi": "Stefano Vecchi",
+"qid": "Q15706885",
+"da": "2012-01-01",
+"a": "2013-01-01"
+},
+{
+"chi": "Lorenzo D'Anna",
+"qid": "Q3836930",
+"da": "2013-01-01",
+"a": "2013-01-01"
+},
+{
+"chi": "Adolfo Sormani",
+"qid": "Q3605476",
+"da": "2014-01-01",
+"a": "2015-01-01"
+},
+{
+"chi": "Giovanni Stroppa",
+"qid": "Q2656692",
+"da": "2015-01-01",
+"a": "2016-01-01"
+},
+{
+"chi": "William Viali",
+"qid": "Q683423",
+"da": "2016-01-01",
+"a": "2017-01-01"
+},
+{
+"chi": "Paolo Zanetti",
+"qid": "Q1494098",
+"da": "2017-01-01",
+"a": "2019-01-01"
+},
+{
+"chi": "Alberto Colombo",
+"qid": "Q1871054",
+"da": "2017-01-01",
+"a": "2017-01-01"
+},
+{
+"chi": "Stefano Vecchi",
+"qid": "Q15706885",
+"da": "2019-01-01",
+"a": null
+}
+]
+},
+"Auxerre": {
+"wikidata": "Q182876",
+"nome": "AJ Auxerre",
+"allenatori": [
+{
+"chi": "Jean-Marc Furlan",
+"qid": "Q129086",
+"da": "2019-07-01",
+"a": "2022-10-11"
+},
+{
+"chi": "Michel Padovani",
+"qid": "Q3310493",
+"da": "2022-10-11",
+"a": "2022-10-25"
+},
+{
+"chi": "Christophe Pélissier",
+"qid": "Q25201554",
+"da": "2022-10-26",
+"a": "2026-06-04"
+},
+{
+"chi": "Will Still",
+"qid": "Q42097340",
+"da": "2026-06-12",
+"a": null
+}
+]
+},
+"Catanzaro": {
+"wikidata": "Q501372",
+"nome": "Unione Sportiva Catanzaro",
+"allenatori": [
+{
+"chi": "Antonio Calabro",
+"qid": "Q33821072",
+"da": "2020-08-06",
+"a": "2021-11-29"
+},
+{
+"chi": "Vincenzo Vivarini",
+"qid": "Q26972310",
+"da": "2021-11-30",
+"a": null
+}
+]
+},
+"Plymouth": {
+"wikidata": "Q48947",
+"nome": "Plymouth Argyle F.C.",
+"allenatori": [
+{
+"chi": "Steven Schumacher",
+"qid": "Q7615248",
+"da": "2021-12-07",
+"a": "2023-12-19"
+},
+{
+"chi": "Neil Dewsnip",
+"qid": "Q60923794",
+"da": "2023-12-19",
+"a": "2024-01-05"
+},
+{
+"chi": "Ian Foster",
+"qid": "Q10458830",
+"da": "2024-01-05",
+"a": "2024-04-01"
+},
+{
+"chi": "Neil Dewsnip",
+"qid": "Q60923794",
+"da": "2024-04-02",
+"a": "2024-05-24"
+},
+{
+"chi": "Wayne Rooney",
+"qid": "Q266613",
+"da": "2024-05-25",
+"a": "2024-12-31"
+},
+{
+"chi": "Kevin Nancekivell",
+"qid": "Q6397072",
+"da": "2025-01-01",
+"a": "2025-01-11"
+},
+{
+"chi": "Miron Muslić",
+"qid": "Q59336294",
+"da": "2025-01-12",
+"a": null
+}
+]
+},
+"Heidenheim": {
+"wikidata": "Q162251",
+"nome": "1. FC Heidenheim 1846",
+"allenatori": [
+{
+"chi": "Frank Schmidt",
+"qid": "Q212139",
+"da": "2007-09-17",
+"a": null
+}
+]
+},
+"Le Havre": {
+"wikidata": "Q328658",
+"nome": "Le Havre AC",
+"allenatori": [
+{
+"chi": "Bob Bradley",
+"qid": "Q442325",
+"da": "2015-11-10",
+"a": "2016-10-03"
+},
+{
+"chi": "Oswald Tanchot",
+"qid": "Q7108172",
+"da": "2016-10-04",
+"a": "2019-05-28"
+},
+{
+"chi": "Paul Le Guen",
+"qid": "Q239958",
+"da": "2019-07-01",
+"a": "2022-06-30"
+},
+{
+"chi": "Luka Elsner",
+"qid": "Q1695581",
+"da": "2022-06-20",
+"a": "2024-06-30"
+},
+{
+"chi": "Didier Digard",
+"qid": "Q267128",
+"da": "2024-07-01",
+"a": null
+}
+]
+},
+"Carrarese": {
+"wikidata": "Q650365",
+"nome": "Carrarese Calcio",
+"allenatori": [
+{
+"chi": "Antonio Calabro",
+"qid": "Q33821072",
+"da": "2024-01-17",
+"a": null
+}
+]
+},
+"Portsmouth": {
+"wikidata": "Q19604",
+"nome": "Portsmouth F.C.",
+"allenatori": [
+{
+"chi": "Paul Cook",
+"qid": "Q3305315",
+"da": "2015-05-01",
+"a": "2017-05-01"
+},
+{
+"chi": "Kenny Jackett",
+"qid": "Q10601",
+"da": "2017-06-02",
+"a": "2021-03-13"
+},
+{
+"chi": "Joe Gallen",
+"qid": "Q6209962",
+"da": "2021-03-15",
+"a": "2021-03-18"
+},
+{
+"chi": "Danny Cowley",
+"qid": "Q28925194",
+"da": "2021-03-19",
+"a": "2023-01-02"
+},
+{
+"chi": "Simon Bassey",
+"qid": "Q16200800",
+"da": "2023-01-03",
+"a": "2023-01-20"
+},
+{
+"chi": "John Mousinho",
+"qid": "Q6249659",
+"da": "2023-01-20",
+"a": null
+}
+]
+},
+"Oxford": {
+"wikidata": "Q5213276",
+"nome": "Oxford City F.C.",
+"allenatori": []
+},
+"Holstein Kiel": {
+"wikidata": "Q157828",
+"nome": "Holstein Kiel",
+"allenatori": [
+{
+"chi": "Marcel Rapp",
+"qid": "Q1893160",
+"da": "2021-10-04",
+"a": "2026-02-24"
+},
+{
+"chi": "Tim Walter",
+"qid": "Q54087426",
+"da": "2026-02-25",
+"a": null
+}
+]
+},
+"St Pauli": {
+"wikidata": "Q6463",
+"nome": "FC St. Pauli",
+"allenatori": [
+{
+"chi": "Markus Kauczinski",
+"qid": "Q996002",
+"da": "2017-12-08",
+"a": "2019-04-10"
+},
+{
+"chi": "Jos Luhukay",
+"qid": "Q820948",
+"da": "2019-04-11",
+"a": "2020-06-30"
+},
+{
+"chi": "Timo Schultz",
+"qid": "Q487074",
+"da": "2020-07-12",
+"a": "2022-12-06"
+},
+{
+"chi": "Fabian Hürzeler",
+"qid": "Q115819313",
+"da": "2022-12-06",
+"a": "2024-06-30"
+},
+{
+"chi": "Alexander Blessin",
+"qid": "Q1560347",
+"da": "2024-07-01",
+"a": "2026-06-05"
+},
+{
+"chi": "Marcel Rapp",
+"qid": "Q1893160",
+"da": "2026-06-05",
+"a": null
+}
+]
+},
+"Wrexham": {
+"wikidata": "Q18529",
+"nome": "Wrexham A.F.C.",
+"allenatori": [
+{
+"chi": "Dean Keates",
+"qid": "Q5246265",
+"da": "2019-10-06",
+"a": "2021-05-30"
+},
+{
+"chi": "Phil Parkinson",
+"qid": "Q797757",
+"da": "2021-07-01",
+"a": null
+}
+]
+},
+"Oviedo": {
+"wikidata": "Q271574",
+"nome": "Real Oviedo",
+"allenatori": [
+{
+"chi": "Juan Antonio Anquela",
+"qid": "Q283997",
+"da": "2017-06-23",
+"a": "2019-04-22"
+},
+{
+"chi": "Sergio Egea Rueda",
+"qid": "Q7454244",
+"da": "2019-04-22",
+"a": "2019-09-15"
+},
+{
+"chi": "Javi Rozada",
+"qid": "Q67940463",
+"da": "2019-09-15",
+"a": "2020-02-18"
+},
+{
+"chi": "José Ángel Ziganda",
+"qid": "Q704571",
+"da": "2020-02-18",
+"a": "2022-08-06"
+},
+{
+"chi": "Bolo",
+"qid": "Q2722024",
+"da": "2022-06-15",
+"a": "2022-10-16"
+},
+{
+"chi": "Álvaro Cervera",
+"qid": "Q250859",
+"da": "2022-10-18",
+"a": "2023-09-21"
+},
+{
+"chi": "Luis Carrión",
+"qid": "Q2310536",
+"da": "2023-09-21",
+"a": "2024-06-30"
+},
+{
+"chi": "Javier Calleja",
+"qid": "Q1332523",
+"da": "2024-07-06",
+"a": "2025-03-25"
+},
+{
+"chi": "Veljko Paunovićhshsjs",
+"qid": "Q612930",
+"da": "2025-03-26",
+"a": "2025-10-09"
+},
+{
+"chi": "Luis Carrión",
+"qid": "Q2310536",
+"da": "2025-10-09",
+"a": "2025-12-14"
+},
+{
+"chi": "Guillermo Almada",
+"qid": "Q5888276",
+"da": "2025-12-16",
+"a": "2026-05-23"
+},
+{
+"chi": "Julián Calero Fernández",
+"qid": "Q24565063",
+"da": "2026-07-01",
+"a": null
+}
+]
+},
+"Paris FC": {
+"wikidata": "Q483020",
+"nome": "Paris Saint-Germain FC",
+"allenatori": [
+{
+"chi": "Antoine Kombouaré",
+"qid": "Q586555",
+"da": "2009-07-01",
+"a": "2011-12-29"
+},
+{
+"chi": "Carlo Ancelotti",
+"qid": "Q174614",
+"da": "2011-12-30",
+"a": "2013-05-19"
+},
+{
+"chi": "Laurent Blanc",
+"qid": "Q1839",
+"da": "2013-06-25",
+"a": "2016-06-22"
+},
+{
+"chi": "Unai Emery",
+"qid": "Q295610",
+"da": "2016-07-01",
+"a": "2018-06-30"
+},
+{
+"chi": "Thomas Tuchel",
+"qid": "Q702233",
+"da": "2018-07-01",
+"a": "2020-12-29"
+},
+{
+"chi": "Mauricio Pochettino",
+"qid": "Q313000",
+"da": "2021-01-02",
+"a": "2022-07-05"
+},
+{
+"chi": "Christophe Galtier",
+"qid": "Q129023",
+"da": "2022-07-05",
+"a": "2023-06-30"
+},
+{
+"chi": "Luis Enrique",
+"qid": "Q222789",
+"da": "2023-07-05",
+"a": null
+}
+]
+}
+},
+"non_trovate": [
+"Varese",
+"Peterboro",
+"Augsburg",
+"M'gladbach",
+"Trapani",
+"Carpi",
+"Monaco",
+"Virtus Entella",
+"Cosenza",
+"Pordenone",
+"FeralpiSalo",
+"Lecco",
+"Mantova"
+]
+}

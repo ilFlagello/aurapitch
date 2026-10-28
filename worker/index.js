@@ -72,7 +72,7 @@ function stato(ev) {
   const rossi = (c.details || []).filter((d) => d.redCard).map((d) => ({ min: (d.clock && d.clock.displayValue) || "", chi: ((d.athletesInvolved || [])[0] || {}).displayName || "", casa: (d.team || {}).id === h.team.id }));
   return { st: t.state, half: t.name === "STATUS_HALFTIME", g: [Number(h.score || 0), Number(a.score || 0)], clock: ev.status.displayClock || "", goals, rossi, ko: Date.parse(ev.date) };
 }
-const PREF0 = { inizio: true, gol: true, rossi: true, intervallo: true, finale: true, formazioni: true };
+const PREF0 = { promemoria: true, inizio: true, gol: true, rossi: true, intervallo: true, finale: true, formazioni: true };
 const vuole = (sub, tipo) => ((sub && sub.pref) || PREF0)[tipo] !== false;
 /* dati dell'app (probabilita IA e marcatori) per arricchire l'avviso delle formazioni; letti al massimo ogni 5 minuti */
 async function giornata() {
@@ -109,10 +109,18 @@ async function controlla(env) {
     const ev = eventi[k];
     if (!ev) { if (old[k]) nuovo[k] = old[k]; continue; }
     const s = stato(ev), o = old[k];
-    nuovo[k] = { st: s.st, g: s.g, half: s.half, rossi: s.rossi.length, form: o ? o.form : false };
+    nuovo[k] = { st: s.st, g: s.g, half: s.half, rossi: s.rossi.length, form: o ? o.form : false, prom: o ? o.prom : false };
     if (!o) continue; // prima volta che la vediamo: nessun avviso
     const nomi = `${f.h} ${s.g[0]} - ${s.g[1]} ${f.a}`;
     const push = (title, body, tipo) => msgs.push({ ids: ids.filter((id) => vuole(subs[id], tipo)), msg: { title, body, tag: k + "|" + title + "|" + body.length, url: "./" } });
+    // promemoria un'ora prima, con il consiglio dell'IA
+    if (s.st === "pre" && !o.prom && s.ko - Date.now() < 62 * 60000 && s.ko - Date.now() > 40 * 60000) {
+      nuovo[k].prom = true;
+      G = G || (await giornata()) || { matches: [] };
+      const m = G.matches.find((x) => piano(x.h) === piano(f.h) && piano(x.a) === piano(f.a));
+      const t = m && m.tip && m.tip.consiglio;
+      push("Tra un'ora", `${f.h} - ${f.a}` + (t ? `. Consiglio IA: ${t.l} (${Math.round(t.p * 100)}%).` : "."), "promemoria");
+    }
     // formazioni ufficiali: da 75 minuti prima del calcio d'inizio, controllo ogni 3 minuti finche escono
     if (s.st === "pre" && !o.form && s.ko - Date.now() < 75 * 60000 && new Date().getUTCMinutes() % 3 === 0) {
       const tit = await formazioni(k.split("|")[0], k.split("|")[1]);
@@ -296,12 +304,14 @@ export default {
       for (const m of (G1 && G1.matches) || []) if (m.st === "FT" && m.g && !ris[m.id]) { ris[m.id] = [m.g[0] > m.g[1] ? 0 : m.g[0] === m.g[1] ? 1 : 2, m.date]; nuovi = true; }
       if (nuovi) await env.KV.put("ris", JSON.stringify(ris));
       const lun = new Date(); lun.setUTCHours(0, 0, 0, 0); lun.setUTCDate(lun.getUTCDate() - ((lun.getUTCDay() + 6) % 7));
-      const da = per === "settimana" ? lun.toISOString().slice(0, 10) : "0000";
+      const lunPrima = new Date(lun.getTime() - 7 * 86400000);
+      const da = per === "settimana" ? lun.toISOString().slice(0, 10) : per === "scorsa" ? lunPrima.toISOString().slice(0, 10) : "0000";
+      const a_ = per === "scorsa" ? lun.toISOString().slice(0, 10) : "9999";
       const punteggio = (u) => {
         let pt = 0, giuste = 0, giocate = 0, ia = 0, iaG = 0;
         for (const [id, v] of Object.entries(u.voti || {})) {
           const r = ris[id];
-          if (!r || r[1] < da) continue;
+          if (!r || r[1] < da || r[1] >= a_) continue;
           giocate++;
           if (v.s === r[0]) { giuste++; pt += 3 + (v.p && v.p[v.s] < 0.3 ? 2 : 0); }
           if (v.ia != null) { iaG++; if (v.ia === r[0]) ia++; }

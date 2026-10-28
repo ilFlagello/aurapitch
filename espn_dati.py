@@ -309,8 +309,8 @@ def giro_voti(base="data", giorni=4, massimo=350):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(arch, f, ensure_ascii=False, separators=(",", ":"))
-    # file leggero per l'app: id -> [voto medio, partite con voto, minuti, gol, assist]
-    app = {i: [round(x["sv"] / x["nv"], 2), x["nv"], x["min"], x["g"], x["a"]] for i, x in G.items() if x["nv"]}
+    # file leggero per l'app: id -> [voto medio, partite con voto, minuti, gol, assist, nome, squadra, campionato, ruolo]
+    app = {i: [round(x["sv"] / x["nv"], 2), x["nv"], x["min"], x["g"], x["a"], x["n"], x["t"], x["lg"], x.get("pos")] for i, x in G.items() if x["nv"]}
     os.makedirs(os.path.join("app", "data"), exist_ok=True)
     with open(os.path.join("app", "data", "voti.json"), "w", encoding="utf-8") as f:
         json.dump(app, f, separators=(",", ":"))

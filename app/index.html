@@ -35,6 +35,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 :root[data-theme="dark"] .dock { background: rgba(25,22,38,0.86); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.07); }
 @keyframes respiro { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.8); } }
 .pulse { animation: respiro 1.6s ease-in-out infinite; }
+@keyframes da-destra { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+@keyframes da-sinistra { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
+.entra-dx { animation: da-destra 0.22s ease-out; }
+.entra-sx { animation: da-sinistra 0.22s ease-out; }
 #boot { padding: 48px 16px; text-align: center; color: #6E6A85; font-size: 14px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>

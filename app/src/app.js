@@ -166,8 +166,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const base = "Handicap " + (meno ? "−" : "+") + k + " " + m.h + ": " + e;
       if (short) return base;
       const sq = meno ? m.h : m.a, sc = k === 1 ? "1 gol" : k + " gol";
-      const sp = meno ? { 1: `${sq} vince con almeno ${k + 1} gol di scarto`, X: `${sq} vince con esattamente ${sc} di scarto`, 2: `${sq} non vince con ${sc} o più di scarto` }
-        : { 1: `${sq} non vince con ${sc} o più di scarto`, X: `${sq} vince con esattamente ${sc} di scarto`, 2: `${sq} vince con almeno ${k + 1} gol di scarto` };
+      const nonVince = k === 1 ? `${sq} non vince (pareggio o sconfitta)` : `${sq} non vince con ${sc} o più di scarto`;
+      const sp = meno ? { 1: `${sq} vince con almeno ${k + 1} gol di scarto`, X: `${sq} vince con esattamente ${sc} di scarto`, 2: nonVince }
+        : { 1: nonVince, X: `${sq} vince con esattamente ${sc} di scarto`, 2: `${sq} vince con almeno ${k + 1} gol di scarto` };
       return base + " (" + sp[e] + ")"; }
     if (c.startsWith("MV")) { const [l, n] = c.slice(2).split(":"); return (l === "1" ? m.h : m.a) + " vince " + (n === "3P" ? "di 3 o più gol" : n === "1" ? "di 1 gol" : "di " + n + " gol"); }
     if (c.startsWith("GE")) return c === "GE6P" ? "6 o più gol nella partita" : "Gol esatti nella partita: " + c.slice(2);
@@ -190,6 +191,46 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     if (/^[HA][OU]/.test(c)) return (c[0] === "H" ? m.h : m.a) + (c[1] === "O" ? " Over " : " Under ") + nf(c.slice(2)) + " gol";
     if (/^[OU]/.test(c)) return (c[0] === "O" ? "Over " : "Under ") + nf(c.slice(1));
     return c;
+  }
+  /* "Spiegamelo semplice": cosa deve succedere perché la giocata sia vinta, in parole di tutti i giorni */
+  function spiega(m, c, dentro) {
+    c = norm(c);
+    const min1 = (t) => (/^(Nella|Nel|Si |La |Il |In |Una |Almeno|Segnano|All')/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t);
+    const fine = (t) => t.replace(/\.$/, "");
+    const sq = (x) => (x === "H" ? m.h : m.a);
+    const almeno = (n) => Math.ceil(parseFloat(n)), almassimo = (n) => Math.floor(parseFloat(n));
+    const gol = (k) => (k === 1 ? "un gol" : k + " gol");
+    let t;
+    if (c.includes("+")) t = c.split("+").map((x, i) => (i ? min1(fine(spiega(m, x, true))) : fine(spiega(m, x, true)))).join(" e ") + ".";
+    else if (c.startsWith("MARC:")) t = `${c.slice(5)} segna almeno un gol.`;
+    else if (/^[KCF][HA][OU]/.test(c)) { const v = { K: ["riceve", "cartellini"], C: ["batte", "calci d'angolo"], F: ["commette", "falli"] }[c[0]]; t = `${sq(c[1])} ${v[0]} ${c[2] === "O" ? "almeno " + almeno(c.slice(3)) : "al massimo " + almassimo(c.slice(3))} ${v[1]}.`; }
+    else if (/^[KCF][OU]/.test(c)) { const v = { K: "cartellini", C: "calci d'angolo", F: "falli" }[c[0]]; t = `In tutta la partita ci sono ${c[1] === "O" ? "almeno " + almeno(c.slice(2)) : "al massimo " + almassimo(c.slice(2))} ${v}.`; }
+    else if (/^T1:(1|X|2|1X|X2|12)$/.test(c)) t = { 1: `${m.h} chiude il primo tempo in vantaggio.`, X: "Il primo tempo finisce in parità.", 2: `${m.a} chiude il primo tempo in vantaggio.`, "1X": `All'intervallo ${m.h} non è in svantaggio.`, X2: `All'intervallo ${m.a} non è in svantaggio.`, 12: "All'intervallo una delle due squadre è in vantaggio." }[c.slice(3)];
+    else if (/^T2:(1|X|2|1X|X2|12)$/.test(c)) t = { 1: `Nel secondo tempo ${m.h} segna più gol di ${m.a}.`, X: "Nel secondo tempo le due squadre segnano gli stessi gol.", 2: `Nel secondo tempo ${m.a} segna più gol di ${m.h}.`, "1X": `Nel secondo tempo ${m.h} segna almeno quanto ${m.a}.`, X2: `Nel secondo tempo ${m.a} segna almeno quanto ${m.h}.`, 12: "Nel secondo tempo una squadra segna più dell'altra." }[c.slice(3)];
+    else if (c.startsWith("T1:") || c.startsWith("T2:")) t = (c[1] === "1" ? "Nel primo tempo " : "Nel secondo tempo ") + min1(spiega(m, c.slice(3), true)).replace(/^nella partita /, "").replace(/^la partita finisce/, "si chiude");
+    else if (c.startsWith("PF")) { const [x, y] = c.slice(2).split("/"); t = `All'intervallo ${{ 1: m.h + " è in vantaggio", X: "si è in parità", 2: m.a + " è in vantaggio" }[x]} e alla fine ${{ 1: "vince " + m.h, X: "è pareggio", 2: "vince " + m.a }[y]}.`; }
+    else if (c.startsWith("TPG")) t = { 1: "Si segnano più gol nel primo tempo che nel secondo.", X: "Si segnano tanti gol nel primo tempo quanti nel secondo.", 2: "Si segnano più gol nel secondo tempo che nel primo." }[c.slice(3)];
+    else if (c === "HSET" || c === "ASET") t = `${sq(c[0])} segna sia nel primo sia nel secondo tempo.`;
+    else if (c === "HVET" || c === "AVET") t = `${sq(c[0])} vince sia il primo sia il secondo tempo.`;
+    else if (c.startsWith("EH")) { const l = mLabel(m, c); t = l.includes("(") ? l.slice(l.indexOf("(") + 1, -1).replace(/^./, (x) => x.toUpperCase()) + "." : l; }
+    else if (c.startsWith("MV")) { const [l, n] = c.slice(2).split(":"); t = `${l === "1" ? m.h : m.a} vince con ${n === "3P" ? "3 o più gol" : "esattamente " + gol(Number(n))} di scarto.`; }
+    else if (c.startsWith("GE")) t = c === "GE6P" ? "Nella partita si segnano 6 o più gol." : `Nella partita si segnano esattamente ${gol(Number(c.slice(2)))}.`;
+    else if (/^[HA]GE/.test(c)) t = c.slice(3) === "3P" ? `${sq(c[0])} segna 3 o più gol.` : c.slice(3) === "0" ? `${sq(c[0])} non segna.` : `${sq(c[0])} segna esattamente ${gol(Number(c.slice(3)))}.`;
+    else if (c === "1") t = `Vince ${m.h}.`;
+    else if (c === "X") t = "La partita finisce in pareggio.";
+    else if (c === "2") t = `Vince ${m.a}.`;
+    else if (c === "1X") t = `${m.h} vince o pareggia: basta che non perda.`;
+    else if (c === "X2") t = `${m.a} vince o pareggia: basta che non perda.`;
+    else if (c === "12") t = "Una delle due squadre vince: basta che non finisca in pareggio.";
+    else if (c === "GG") t = "Segnano tutte e due le squadre.";
+    else if (c === "NG") t = "Almeno una delle due squadre non segna.";
+    else if (c === "PARI" || c === "DISPARI") t = `Il totale dei gol è un numero ${c === "PARI" ? "pari (zero compreso)" : "dispari"}.`;
+    else if (c.startsWith("CS")) t = `La partita finisce esattamente ${c.slice(2)}.`;
+    else if (c.startsWith("MG")) { const [x, y] = c.slice(2).split("-"); t = `Nella partita si segnano tra ${x} e ${y} gol.`; }
+    else if (/^[HA][OU]/.test(c)) { const n = c.slice(2); t = c[1] === "O" ? `${sq(c[0])} segna almeno ${gol(almeno(n))}.` : almassimo(n) === 0 ? `${sq(c[0])} non segna.` : `${sq(c[0])} segna al massimo ${gol(almassimo(n))}.`; }
+    else if (/^[OU]/.test(c)) { const n = c.slice(1), k = c[0] === "O" ? almeno(n) : almassimo(n); t = c[0] === "O" ? `Nella partita si ${k === 1 ? "segna" : "segnano"} almeno ${gol(k)}.` : k === 0 ? "Nella partita non si segna." : `Nella partita si ${k === 1 ? "segna" : "segnano"} al massimo ${gol(k)}.`; }
+    else t = mLabel(m, c) + ".";
+    return t;
   }
   const GROUPS = ["Esito finale", "Doppia chance", "Under/Over", "Goal/No Goal", "Multigol", "Gol squadra", "Combo", "Primo tempo", "Secondo tempo", "Parziale/finale", "Tempo con più gol", "Tempi",
     "Handicap", "Margine di vittoria", "Gol esatti", "Risultato esatto", "Marcatori", "Cartellini", "Cartellini squadra", "Falli", "Falli squadra", "Calci d'angolo", "Calci d'angolo squadra", "Pari/Dispari"];
@@ -370,6 +411,19 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       ${days.map((d) => { const dt = new Date(d.k + "T12:00:00"); const on = day === d.k; return html`<button key=${d.k} role="tab" aria-selected=${on} onClick=${() => setDay(d.k)} className=${btn(on)}>
         <span className=${"text-[11px] font-semibold " + (on ? "opacity-80" : "opacity-60")}>${d.label === "Oggi" || d.label === "Domani" ? d.label : GS[dt.getDay()]}</span>
         <span className="num text-[24px] font-bold leading-none mt-0.5">${dt.getDate()}</span></button>`; })}</div>`;
+  }
+
+  /* schede scorrevoli col dito (stesso comportamento della scheda partita), con la scheda scelta ricordata */
+  function Schede({ id, items, children }) {
+    const [i, setI0] = useState(Math.min(store.get("sch:" + id, 0), items.length - 1));
+    const [dir, setDir] = useState(0);
+    const sw = useRef(null);
+    const setI = (n) => { setDir(n > i ? 1 : -1); setI0(n); store.set("sch:" + id, n); };
+    const ts = (e) => { const t = e.touches[0]; sw.current = e.target.closest("[data-noswipe]") ? null : [t.clientX, t.clientY]; };
+    const te = (e) => { if (!sw.current) return; const t = e.changedTouches[0], dx = t.clientX - sw.current[0], dy = t.clientY - sw.current[1]; sw.current = null;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) { const n = Math.max(0, Math.min(items.length - 1, i + (dx < 0 ? 1 : -1))); if (n !== i) setI(n); } };
+    return html`<${React.Fragment}><${Tabs} items=${items} val=${i} set=${setI} sticky=${true} />
+      <div key=${i} onTouchStart=${ts} onTouchEnd=${te} className=${"space-y-3 min-h-[60vh] " + (dir > 0 ? "entra-dx" : dir < 0 ? "entra-sx" : "")}>${children[i]}</div><//>`;
   }
 
   const Ctx = React.createContext(null);
@@ -994,7 +1048,10 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
 
     /* ---- pagina squadra ---- */
     function TeamView() {
-      const { team, setTeam } = React.useContext(Ctx);
+      const { team, setTeam, D } = React.useContext(Ctx);
+      const V = usaVoti();
+      const notizie = [];
+      for (const m of D.matches) for (const f of m.fattori || []) { const sq = f.lato ? m.a : m.h; if (sq === team.name && !notizie.some((x) => x.chi === f.chi)) notizie.push(f); }
       const [t, setT] = useState(0);
       const [d, setDd] = useState(null);
       const [err, setErr] = useState("");
@@ -1019,22 +1076,28 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <div className=${C.card + " p-4 flex items-center gap-3"}><${Crest} t=${team.name} size=${52} />
           <div className="flex-1 min-w-0"><div className=${"text-xl font-semibold truncate " + C.tx}>${team.name}</div>
             ${form.length > 0 && html`<div className="mt-1.5"><${Form} list=${form} /></div>`}</div></div>
-        <${Seg} items=${["Partite", "Rosa"]} val=${t} set=${setT} />
+        <${Seg} items=${["Partite", "Rosa", "Indisponibili"]} val=${t} set=${setT} />
         ${!d ? html`<div className=${C.card + " p-4 text-sm " + C.mu}>${err || "Caricamento..."}</div>`
           : t === 0 ? html`<${React.Fragment}>
             <div className=${C.lab}>Prossime partite</div>
-            <div className=${C.card + " px-4 py-1"}>${d.prossime.length ? d.prossime.slice(0, 6).map((r, i) => html`<div key=${r.id} className=${"flex items-center gap-2 py-2 text-sm " + (i ? "border-t " + C.bd : "") + " " + C.tx}>
+            <div className=${C.card + " px-4 py-1"}>${d.prossime.length ? d.prossime.map((r, i) => html`<div key=${r.id} className=${"flex items-center gap-2 py-2 text-sm " + (i ? "border-t " + C.bd : "") + " " + C.tx}>
               <span className=${"w-24 text-xs tabular-nums " + C.mu}>${dt(r.date)}</span><span className="flex-1 truncate">${r.casa ? "vs" : "@"} ${r.avv}</span><span className=${"text-[11px] " + C.mu}>${r.comp}</span></div>`)
               : html`<div className=${"py-2 text-sm " + C.mu}>Nessuna partita in calendario.</div>`}</div>
             <div className=${C.lab}>Risultati</div>
-            <div className=${C.card + " px-4 py-1"}>${d.risultati.slice(0, 12).map((r, i) => html`<div key=${r.id} className=${"flex items-center gap-2 py-2 text-sm " + (i ? "border-t " + C.bd : "") + " " + C.tx}>
+            <div className=${C.card + " px-4 py-1"}>${d.risultati.map((r, i) => html`<div key=${r.id} className=${"flex items-center gap-2 py-2 text-sm " + (i ? "border-t " + C.bd : "") + " " + C.tx}>
               <span className=${"w-6 h-6 rounded-md border text-[11px] font-semibold flex items-center justify-center " + TONE[r.esito === "V" ? "good" : r.esito === "N" ? "warn" : "bad"]}>${r.esito}</span>
               <span className=${"w-12 text-xs tabular-nums " + C.mu}>${new Date(r.date).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" })}</span>
               <span className="flex-1 truncate">${r.casa ? "vs" : "@"} ${r.avv}</span><b className="tabular-nums">${r.g[0]}-${r.g[1]}</b></div>`)}</div><//>`
+          : t === 2 ? html`<div className=${C.card + " p-4 space-y-3"}>
+              ${[...d.rosa.filter((p) => p.inf).map((p) => ({ chi: p.name, tipo: /out|injur/i.test(p.inf) ? "Infortunato" : p.inf, fonte: "ESPN" })), ...notizie.filter((f) => !d.rosa.some((p) => p.inf && p.name === f.chi)).map((f) => ({ chi: f.chi, tipo: { infortunio: "Indisponibile", squalifica: "Squalificato", dubbio: "In dubbio", rientro: "Rientra", smentita: "Smentita" }[f.tipo] || f.tipo, fonte: f.fonte || "Notizie", titolo: f.titolo, link: f.link }))]
+                .map((x, i) => html`<div key=${i}><div className="flex items-center gap-2"><span className=${"flex-1 text-[15px] font-semibold " + C.tx}>${x.chi}</span><span className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + (x.tipo === "Rientra" || x.tipo === "Smentita" ? TONE.good : x.tipo === "In dubbio" ? TONE.warn : TONE.bad)}>${x.tipo}</span></div>
+                  ${x.titolo && (x.link ? html`<a href=${x.link} target="_blank" rel="noopener" className=${"block text-[12px] mt-0.5 " + C.acc}>${x.fonte}: ${x.titolo}</a>` : html`<div className=${"text-[12px] mt-0.5 " + C.mu}>${x.titolo}</div>`)}</div>`)}
+              ${!d.rosa.some((p) => p.inf) && !notizie.length && html`<div className=${"text-[14px] " + C.mu}>Nessun indisponibile segnalato da ESPN o dalle notizie degli ultimi giorni.</div>`}
+              <p className=${"text-[11px] " + C.mu}>Fonti: rosa ESPN e titoli delle notizie letti dall'IA (solo le squadre che giocano nei prossimi giorni).</p></div>`
           : html`<${React.Fragment}>${RUOLI.map((ru) => { const ps = d.rosa.filter((p) => p.ruolo === ru); if (!ps.length) return null; return html`<div key=${ru}>
             <div className=${C.lab + " mb-1.5"}>${ru === "Attaccante" ? "Attaccanti" : ru === "Portiere" ? "Portieri" : ru === "Difensore" ? "Difensori" : "Centrocampisti"}</div>
             <div className=${C.card + " px-4 py-1"}>${ps.map((p, i) => html`<button key=${p.id} onClick=${() => setPl(p)} className=${"w-full flex items-center gap-2 py-2 text-left text-sm " + (i ? "border-t " + C.bd : "") + " " + C.tx}>
-              <span className=${"w-6 text-xs tabular-nums " + C.mu}>${p.num || ""}</span><span className="flex-1 truncate">${p.name}</span>
+              <span className=${"w-6 text-xs tabular-nums " + C.mu}>${p.num || ""}</span><span className="flex-1 truncate">${p.name}</span>${V && V[p.id] && V[p.id][1] >= 2 && html`<${VotoChip} v=${V[p.id][0]} />`}
               ${p.inf && html`<span className=${"text-[10px] font-semibold px-1.5 py-0.5 rounded-full border " + TONE.bad}>${/out|injur/i.test(p.inf) ? "Infortunato" : p.inf}</span>`}
               <span className=${"text-xs " + C.mu}>${[p.naz, p.eta ? p.eta + " a" : ""].filter(Boolean).join(" - ")}</span><${Ic.ChevronRight} size=${14} className=${C.mu} /></button>`)}</div></div>`; })}<//>`}
         ${pl && html`<${PlayerSheet} p=${pl} side=${0} col=${d && d.colore} m=${{ h: team.name, a: "" }} noMatch=${true} onClose=${() => setPl(null)} />`}
@@ -1043,7 +1106,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
 
     /* ---- consiglio IA motivato e tutti i mercati ---- */
     function TipView({ m, sm }) {
-      const { D } = React.useContext(Ctx);
+      const { D, setGloss } = React.useContext(Ctx);
       const { mySlip, addLeg, aff } = React.useContext(Ctx);
       const [why, setWhy] = useState("consiglio");
       const affid = (c, p) => { const rows = aff && aff.mercati && aff.mercati[c]; const r = rows && rows.find((x) => p >= x[0] && p < x[1]);
@@ -1059,6 +1122,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
             ${main && html`<span className=${"w-9 h-9 rounded-xl flex items-center justify-center border shrink-0 " + TONE.info}><${Ic.Sparkles} size=${17} /></span>`}
             <div className="flex-1 min-w-0"><div className=${C.lab}>${t.titolo}</div>
               <div className=${(main ? "text-base " : "text-sm ") + "font-semibold leading-tight " + C.tx}>${mLabel(m, t.c)}</div>
+              <div className=${"text-[13px] leading-snug mt-0.5 " + C.mu}>${spiega(m, t.c)}</div>
               <div className=${"text-xs tabular-nums " + C.mu}>Probabilità ${pct(t.p)}% - quota ${t.qm ? "media" : "stimata"} ${odd(t.q)}</div></div>
             <${AddBtn} c=${t.c} /></div>
           <button onClick=${() => setWhy(o ? null : k)} className="mt-2 text-xs font-semibold text-[#5B2EE6] dark:text-[#A58BFF] flex items-center gap-1">${o ? "Nascondi motivazione" : "Perché questo consiglio?"}<${o ? Ic.ChevronUp : Ic.ChevronDown} size=${13} /></button>
@@ -1084,7 +1148,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           ${scelte.map(([g, x], i) => { const o = ap === g; return html`<div key=${g} className=${i ? "border-t " + C.bd : ""}>
             <div className="flex items-center gap-2.5 py-2.5 cursor-pointer" onClick=${() => setAp(o ? null : g)}>
               <${Punti} v=${x.s} />
-              <span className="flex-1 min-w-0"><span className=${"block text-[12px] " + C.mu}>${g}</span><span className=${"block text-[15px] font-semibold leading-tight " + C.tx}>${mLabel(m, x.c)}</span></span>
+              <span className="flex-1 min-w-0"><span className=${"block text-[12px] " + C.mu}>${g}</span><span className=${"block text-[15px] font-semibold leading-tight " + C.tx}>${mLabel(m, x.c)}</span>${o && html`<span className=${"block text-[13px] mt-0.5 " + C.tx}>${spiega(m, x.c)}</span>`}</span>
               <span className="text-right"><span className=${"block num text-[17px] font-bold " + C.tx}>${odd(x.q)}</span><span className=${"block text-[11px] " + C.mu}>${pct(x.p)}%</span></span>
               <${AddBtn} c=${x.c} /></div>
             ${o && html`<div className="pb-3 pl-[42px] space-y-1.5 text-[14px] leading-snug">
@@ -1093,7 +1157,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
               ${x.no.map((t) => html`<div key=${t} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 " + DOT.warn}></span><span className=${C.tx}><b>Da tenere d'occhio:</b> ${t}</span></div>`)}
               ${affid(x.c, x.p) && html`<div className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 " + DOT.info}></span><span className=${C.tx}>${affid(x.c, x.p)}</span></div>`}
               ${!x.si.length && !x.no.length && html`<div className=${C.mu}>Per questo tipo di scommessa non ci sono statistiche dedicate: conta solo la probabilità.</div>`}</div>`}</div>`; })}</div>`}
-        <div className="flex items-baseline pt-1"><span className=${C.lab + " flex-1"}>Tutti i mercati</span><span className=${"text-[12px] " + C.mu}>${opts.length} giocate</span></div>
+        <div className="flex items-baseline pt-1"><span className=${C.lab + " flex-1"}>Tutti i mercati</span><button onClick=${() => setGloss(true)} className=${"text-[13px] font-semibold " + C.acc}>Cosa vogliono dire?</button></div>
         <div className=${C.card + " px-4 py-1"}>${groups.map(([g, l], i) => { const o = grp === g; return html`<div key=${g} className=${i ? "border-t " + C.bd : ""}>
           <button onClick=${() => setGrp(o ? null : g)} className=${"w-full flex items-center py-3 text-[15px] font-semibold " + C.tx}><span className="flex-1 text-left">${g}</span><span className=${"num text-[15px] font-semibold mr-2 " + C.mu}>${l.length}</span><${o ? Ic.ChevronUp : Ic.ChevronDown} size=${16} className=${C.mu} /></button>
           ${o && html`<div className="pb-2">${l.map((x) => html`<div key=${x.k} className="flex items-center gap-2 py-1.5">
@@ -1115,7 +1179,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const [pl, setPl] = useState(null);
       const { d: sm } = useSummary(m.lgE, m.eid, m.st === "LIVE");
       const sw = useRef(null);
-      const TABS = ["Panoramica", "Cronaca", "Formazioni", "Analisi IA", "Classifiche"];
+      const TABS = ["In breve", "Partita", "Formazioni", "IA", "Statistiche", "Cronaca"];
+      const [dir, setDir] = useState(0);
+      const vai = (i) => { setDir(i > mt ? 1 : -1); setMt(i); const el = document.querySelector("[data-schede]"); if (el && el.getBoundingClientRect().top < 60) window.scrollTo({ top: Math.max(0, window.scrollY + el.getBoundingClientRect().top - 120), behavior: "smooth" }); };
       // in diretta la pillola mostra la probabilita aggiornata (punteggio, minuto, espulsioni), non quella pre-partita
       const pLive = (() => {
         if (m.st !== "LIVE" || !m.xg || m.xg[0] == null) return null;
@@ -1126,7 +1192,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       })();
       const onTS = (e) => { const t = e.touches[0]; sw.current = e.target.closest("[data-noswipe]") ? null : [t.clientX, t.clientY]; };
       const onTE = (e) => { if (!sw.current) return; const t = e.changedTouches[0], dx = t.clientX - sw.current[0], dy = t.clientY - sw.current[1]; sw.current = null;
-        if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6) setMt(Math.max(0, Math.min(TABS.length - 1, mt + (dx < 0 ? 1 : -1)))); };
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) { const n = Math.max(0, Math.min(TABS.length - 1, mt + (dx < 0 ? 1 : -1))); if (n !== mt) { vai(n); store.set("swipeOk", true); } } };
       const fav = m.p.indexOf(Math.max(...m.p));
       const S = D.standings[m.lg];
       const st = S ? S[["generale", "casa", "trasferta"][filt]] : [];
@@ -1175,38 +1241,21 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           <div className="flex items-center justify-center flex-wrap gap-2 mt-3"><span className=${"text-[12px] " + C.mu}>${pLive ? "Probabilità in diretta" : "Probabilità dalle quote"}, favorito IA</span><${FavPill} m=${m} unlocked=${unlocked(m)} pp=${pLive} />
             ${m.free && html`<span className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + TONE.good}>Gratis oggi</span>`}
             ${m.st === "FT" && unlocked(m) && html`<span className=${"text-xs " + (m.res === fav ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>${m.res === fav ? "Favorito rispettato" : "Sorpresa"}</span>`}</div></div></div>
-        <${Tabs} items=${TABS} val=${mt} set=${setMt} sticky=${true} />
-        <div onTouchStart=${onTS} onTouchEnd=${onTE} className="space-y-3 min-h-[50vh]">
+        <div data-schede="1" className="h-0"></div>
+        <${Tabs} items=${TABS} val=${mt} set=${vai} sticky=${true} />
+        ${!store.get("swipeOk", false) && mt === 0 && html`<div className=${"text-[12px] text-center -mt-1 " + C.mu}>Scorri con il dito a sinistra per approfondire: Partita, Formazioni, IA, Statistiche, Cronaca.</div>`}
+        <div key=${mt} onTouchStart=${onTS} onTouchEnd=${onTE} className=${"space-y-3 min-h-[50vh] " + (dir > 0 ? "entra-dx" : dir < 0 ? "entra-sx" : "")}>
 
-        ${mt === 0 && html`<${React.Fragment}>
-          ${sm && sm.st === "NS" && html`<${AssenzeCard} m=${m} sm=${sm} />`}
+        ${mt === 0 && html`<${InBreve} m=${m} sm=${sm} pLive=${pLive} vai=${vai} onPlayer=${(p, j) => setPl({ p, side: j })} />`}
+
+        ${mt === 1 && html`<${React.Fragment}>
+          ${(!sm || sm.st === "NS") && html`<div className=${C.card + " p-4 text-[14px] " + C.mu}>${m.st === "FT" ? "Il resoconto della partita non è disponibile." : `La partita inizia ${m.date === new Date().toISOString().slice(0, 10) ? "oggi" : "il " + m.date.slice(8) + "/" + m.date.slice(5, 7)} alle ${m.time}: qui troverai azione in diretta, andamento, eventi, migliori in campo, mappa dei tiri e statistiche.`}</div>`}
           ${sm && sm.st === "LIVE" && html`<${LiveAction} sm=${sm} m=${m} />`}
           ${sm && sm.st !== "NS" && html`<${Andamento} sm=${sm} m=${m} />`}
           ${sm && sm.st !== "NS" && html`<${KeyEvents} sm=${sm} m=${m} />`}
           ${sm && sm.st !== "NS" && html`<${Migliori} sm=${sm} m=${m} onPlayer=${(p, j) => setPl({ p, side: j })} />`}
           ${sm && sm.st !== "NS" && html`<${TiriCard} sm=${sm} m=${m} />`}
-          ${sm && sm.st !== "NS" && html`<${StatsCard} sm=${sm} m=${m} />`}
-          ${m.st === "NS" && html`<${Sondaggio} m=${m} />`}
-          ${m.st === "NS" && html`<${Curiosita} m=${m} />`}
-          ${sm && sm.st === "LIVE" && html`<${AssenzeCard} m=${m} sm=${sm} />`}
-          <div className=${C.card + " p-4 space-y-3"}><div className="flex justify-between items-baseline"><span className=${C.lab}>Probabilità dalle quote</span><span className=${"text-[11px] " + C.mu}>Over 2.5: <b className=${C.tx}>${pct(m.mo)}%</b></span></div>
-            <${AuraLine} m=${m} h=${6} labels=${true} />
-            ${!D.demo && m.nb ? html`<div className=${"text-[11px] " + C.mu}>Quota media di ${m.nb} bookmaker${m.prepartita ? ", aggiornata alle " + new Date(m.prepartita).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }) + " (prima del calcio d'inizio)" : ", fotografata al mattino"}.</div>` : null}
-            ${m.mk_mattino && html`<div className=${"text-[12px] rounded-lg p-2 " + C.ch + " " + C.tx}><b>Movimento delle quote</b> dal mattino: ${["1", "X", "2"].map((e, i) => { const dd = m.mk[i] - m.mk_mattino[i]; return html`<span key=${e} className="mr-2 whitespace-nowrap tabular-nums">${e} ${pct(m.mk_mattino[i])}% → <b>${pct(m.mk[i])}%</b>${Math.abs(dd) >= 0.02 ? html`<span className=${dd > 0 ? " text-emerald-600 dark:text-emerald-300" : " text-rose-600 dark:text-rose-300"}> ${dd > 0 ? "▲" : "▼"}</span>` : ""}</span>`; })}
-              <div className=${"text-[11px] " + C.mu}>Le quote vicine al calcio d'inizio sono le più precise: contengono formazioni e notizie dell'ultima ora.</div></div>`}
-            <div className=${"text-[14px] font-semibold pt-1 " + C.tx}>Aggiungi alla tua schedina</div>
-            <div className="flex flex-wrap gap-1.5">${opts.filter((o) => !o.stima).map((o) => html`<button key=${o.k} onClick=${() => addLeg(m, o.k)}
-              className=${"inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border " + (inSlip && inSlip.k === o.k ? TONE.good : C.ch + " " + C.tx + " border-transparent")}>
-              ${inSlip && inSlip.k === o.k ? html`<${Ic.Check} size=${12} />` : html`<${Ic.Plus} size=${12} />`}${mLabel(m, o.k, true)}<span className=${"font-normal " + C.mu}>${odd(o.q)}</span></button>`)}</div></div>
-          <div className="flex items-baseline pt-1"><span className=${C.lab + " flex-1"}>Lettura in 10 secondi</span><span className=${"text-[12px] " + C.mu}>Tocca una voce per aprirla</span></div>
-          <${Gate} m=${m} title="Lettura IA: forma reale, attese, precedenti, contesto">
-            <div className="grid grid-cols-2 gap-2">${tiles.map((t, i) => { const o = pOpen === i; return html`<button key=${t.k} onClick=${() => setPOpen(o ? null : i)} className=${C.card + " p-3 text-left " + (o ? "col-span-2" : "")}>
-              <div className="flex items-center gap-2"><span className=${"w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border " + TONE[t.tone]}><${t.i} size=${15} /></span>
-                <span className=${"flex-1 text-[13px] font-semibold leading-tight " + C.tx}>${t.k}</span><span className=${"w-2 h-2 rounded-full " + DOT[t.tone]}></span></div>
-              ${o && html`<div className=${"text-sm mt-2 leading-relaxed " + C.tx}>${t.body}</div>`}</button>`; })}</div>
-            ${m.flags.length > 0 && html`<div className="flex flex-wrap gap-1.5">${m.flags.map((f) => html`<span key=${f.text} className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + TONE[f.tone]}>${f.text}</span>`)}</div>`}
-          <//>
-          <${InfoCard} m=${m} sm=${sm} L=${L} /><//>`}
+          ${sm && sm.st !== "NS" && html`<${StatsCard} sm=${sm} m=${m} />`}<//>`}
 
         ${mt === 3 && html`<${Gate} m=${m} title="Analisi IA: probabilità, gol attesi e consiglio">
           <${TipView} m=${m} sm=${sm} />
@@ -1227,7 +1276,27 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
             ${[["Gol attesi " + m.h, (m.xg[0] || 0).toFixed(2).replace(".", ",")], ["Gol attesi " + m.a, (m.xg[1] || 0).toFixed(2).replace(".", ",")], ...(m.elo[0] ? [["Elo casa", m.elo[0]], ["Elo ospiti", m.elo[1]]] : [])].map(([a, b]) => html`<div key=${a} className=${"rounded-xl p-2 " + C.ch}>
               <div className=${"text-base font-semibold tabular-nums " + C.tx}>${b}</div><div className=${"text-[10px] " + C.mu}>${a}</div></div>`)}</div>`}<//>`}
 
+
         ${mt === 4 && html`<${React.Fragment}>
+          <div className=${C.card + " p-4 space-y-3"}><div className="flex justify-between items-baseline"><span className=${C.lab}>Probabilità dalle quote</span><span className=${"text-[11px] " + C.mu}>Over 2.5: <b className=${C.tx}>${pct(m.mo)}%</b></span></div>
+            <${AuraLine} m=${m} h=${6} labels=${true} />
+            ${!D.demo && m.nb ? html`<div className=${"text-[11px] " + C.mu}>Quota media di ${m.nb} bookmaker${m.prepartita ? ", aggiornata alle " + new Date(m.prepartita).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }) + " (prima del calcio d'inizio)" : ", fotografata al mattino"}.</div>` : null}
+            ${m.mk_mattino && html`<div className=${"text-[12px] rounded-lg p-2 " + C.ch + " " + C.tx}><b>Movimento delle quote</b> dal mattino: ${["1", "X", "2"].map((e, i) => { const dd = m.mk[i] - m.mk_mattino[i]; return html`<span key=${e} className="mr-2 whitespace-nowrap tabular-nums">${e} ${pct(m.mk_mattino[i])}% → <b>${pct(m.mk[i])}%</b>${Math.abs(dd) >= 0.02 ? html`<span className=${dd > 0 ? " text-emerald-600 dark:text-emerald-300" : " text-rose-600 dark:text-rose-300"}> ${dd > 0 ? "▲" : "▼"}</span>` : ""}</span>`; })}
+              <div className=${"text-[11px] " + C.mu}>Le quote vicine al calcio d'inizio sono le più precise: contengono formazioni e notizie dell'ultima ora.</div></div>`}
+            <div className=${"text-[14px] font-semibold pt-1 " + C.tx}>Aggiungi alla tua schedina</div>
+            <div className="flex flex-wrap gap-1.5">${opts.filter((o) => !o.stima).map((o) => html`<button key=${o.k} onClick=${() => addLeg(m, o.k)}
+              className=${"inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border " + (inSlip && inSlip.k === o.k ? TONE.good : C.ch + " " + C.tx + " border-transparent")}>
+              ${inSlip && inSlip.k === o.k ? html`<${Ic.Check} size=${12} />` : html`<${Ic.Plus} size=${12} />`}${mLabel(m, o.k, true)}<span className=${"font-normal " + C.mu}>${odd(o.q)}</span></button>`)}</div></div>
+          <div className="flex items-baseline pt-1"><span className=${C.lab + " flex-1"}>Lettura in 10 secondi</span><span className=${"text-[12px] " + C.mu}>Tocca una voce per aprirla</span></div>
+          <${Gate} m=${m} title="Lettura IA: forma reale, attese, precedenti, contesto">
+            <div className="grid grid-cols-2 gap-2">${tiles.map((t, i) => { const o = pOpen === i; return html`<button key=${t.k} onClick=${() => setPOpen(o ? null : i)} className=${C.card + " p-3 text-left " + (o ? "col-span-2" : "")}>
+              <div className="flex items-center gap-2"><span className=${"w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border " + TONE[t.tone]}><${t.i} size=${15} /></span>
+                <span className=${"flex-1 text-[13px] font-semibold leading-tight " + C.tx}>${t.k}</span><span className=${"w-2 h-2 rounded-full " + DOT[t.tone]}></span></div>
+              ${o && html`<div className=${"text-sm mt-2 leading-relaxed " + C.tx}>${t.body}</div>`}</button>`; })}</div>
+            ${m.flags.length > 0 && html`<div className="flex flex-wrap gap-1.5">${m.flags.map((f) => html`<span key=${f.text} className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + TONE[f.tone]}>${f.text}</span>`)}</div>`}
+          <//>
+          <${Curiosita} m=${m} />
+
           <div className=${"flex items-center gap-2 text-sm font-semibold " + C.tx}><${Flag} k=${L.flag} />Classifica ${L.name}</div>
           ${!(S && S.solo_generale) && html`<${Seg} items=${["Generale", "Solo Casa", "Solo Trasferta"]} val=${filt} set=${setFilt} />`}
           <div className=${C.card + " p-2 overflow-x-auto"}><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}>
@@ -1242,19 +1311,117 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           <div className=${C.card + " p-4"}><div className=${C.lab + " mb-2"}>Scontri diretti</div>
             ${m.h2h.length ? m.h2h.map((z, q) => html`<div key=${q} className=${"flex justify-between text-sm py-1 tabular-nums " + C.tx}><span className=${C.mu + " w-16"}>${z.data}</span><span className="flex-1 text-right pr-2 truncate">${z.casa}</span><b>${z.ris}</b><span className="flex-1 pl-2 truncate">${z.ospite}</span></div>`)
               : html`<div className=${"text-sm " + C.mu}>${D.demo ? "Nessun precedente negli ultimi 8 anni." : "Nessun precedente nei dati disponibili."}</div>`}</div>
-          ${!S && html`<div className=${C.card + " p-4 text-sm " + C.mu}>Classifica, ultime 5 e precedenti non sono disponibili per questo campionato nella fonte dati gratuita.</div>`}<//>`}
+          ${!S && html`<div className=${C.card + " p-4 text-sm " + C.mu}>Classifica, ultime 5 e precedenti non sono disponibili per questo campionato nella fonte dati gratuita.</div>`}          <${InfoCard} m=${m} sm=${sm} L=${L} /><//>`}
 
-        ${mt === 1 && (sm ? html`<${Cronaca} sm=${sm} m=${m} />` : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${m.eid ? "Caricamento della cronaca..." : "La cronaca scritta compare quando la partita è collegata alla diretta: di solito dal giorno della partita, con le formazioni ufficiali."}</div>`)}
+        ${mt === 5 && (sm ? html`<${Cronaca} sm=${sm} m=${m} />` : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${m.eid ? "Caricamento della cronaca..." : "La cronaca scritta compare quando la partita è collegata alla diretta: di solito dal giorno della partita, con le formazioni ufficiali."}</div>`)}
 
         ${mt === 2 && (sm ? html`<${Lineups} sm=${sm} m=${m} onPlayer=${(p) => setPl({ p, side: sm.formazioni[0] && sm.formazioni[0].all.includes(p) ? 0 : 1 })} />` : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${m.eid ? "Caricamento delle formazioni..." : "Le formazioni compaiono il giorno della partita, circa un'ora prima del calcio d'inizio."}</div>`)}
+        ${mt === 2 && sm && html`<${AssenzeCard} m=${m} sm=${sm} />`}
         </div>
         ${pl && html`<${PlayerSheet} p=${pl.p} side=${pl.side} col=${sm && sm.colors[pl.side]} m=${m} onClose=${() => setPl(null)} />`}
       </div>`;
     }
 
+    /* ---- "In breve": solo l'essenziale, diverso prima, durante e dopo la partita; il resto si scopre scorrendo ---- */
+    function Vai({ onClick, children }) {
+      return html`<button onClick=${onClick} className=${"mt-3 w-full flex items-center justify-between rounded-[14px] px-3.5 py-2.5 text-[14px] font-semibold " + C.ch + " " + C.tx}><span>${children}</span><${Ic.ChevronRight} size=${17} className=${C.mu} /></button>`;
+    }
+    function InBreve({ m, sm, vai, onPlayer }) {
+      const { unlocked, setUnlock, addLeg, mySlip } = React.useContext(Ctx);
+      const st = sm && sm.st !== "NS" ? sm.st : m.st;
+      const tip = m.tip && m.tip.consiglio;
+      const inSlip = mySlip.find((x) => x.id === m.id);
+      const sapere = [];
+      for (const f of (m.fattori || []).filter((f) => f.delta || f.delta_avv).slice(0, 1)) sapere.push(`${f.chi} (${f.lato ? m.a : m.h}) ${f.tipo === "dubbio" ? "è in dubbio" : f.tipo === "squalifica" ? "è squalificato" : "potrebbe non esserci"}.`);
+      for (const t of (m.curiosita || []).slice(0, 3 - sapere.length)) sapere.push(t);
+      if (m.arbitro && m.arbitro.ratio && m.arbitro.n >= 8 && Math.abs(m.arbitro.ratio.K - 1) > 0.08 && sapere.length < 4) sapere.push(`Arbitra ${m.arbitro.nome}, ${m.arbitro.ratio.K > 1 ? "di solito più severo" : "di solito meno severo"} della media con i cartellini.`);
+      const evs = sm ? sm.eventi.filter((e) => /gol|rigore$|autogol|rosso/.test(e.k) && !/sbagliato|parato/.test(e.k)).slice(-3).reverse() : [];
+      const stat = (n) => (sm ? sm.statistiche.find((r) => r[0] === n) : null);
+      const best = sm && sm.st !== "NS" ? [0, 1].flatMap((j) => (sm.formazioni[j] ? sm.formazioni[j].all.filter((p) => p.voto != null).map((p) => ({ p, j })) : [])).sort((a, b) => b.p.voto - a.p.voto)[0] : null;
+      const { D: DD } = React.useContext(Ctx);
+      const grande = st === "NS" && (partitaSettimana(DD) || {}).id === m.id;
+      return html`<${React.Fragment}>
+        ${grande && html`<${Anteprima} m=${m} />`}
+        ${st === "NS" && tip && html`<div className=${C.card + " p-4"}>
+          <div className="flex items-center gap-2 mb-2"><${Ic.Sparkles} size=${17} className=${C.acc} /><span className=${C.lab + " flex-1"}>Il consiglio dell'IA</span>
+            ${unlocked(m) && html`<button aria-label="Aggiungi alla schedina" onClick=${() => addLeg(m, tip.c)} className=${"w-9 h-9 rounded-full flex items-center justify-center " + (inSlip && norm(inSlip.k) === tip.c ? C.on : C.ch + " " + C.tx)}>${inSlip && norm(inSlip.k) === tip.c ? html`<${Ic.Check} size=${16} />` : html`<${Ic.Plus} size=${16} />`}</button>`}</div>
+          ${unlocked(m) ? html`<div className=${"text-[20px] font-bold leading-tight " + C.tx}>${mLabel(m, tip.c)}</div>
+            <div className=${"text-[14px] mt-1 " + C.tx}>${spiega(m, tip.c)}</div>
+            <div className="flex gap-4 mt-2.5"><span className=${"text-[13px] " + C.mu}>Probabilità <b className=${"num text-[19px] " + C.tx}>${pct(tip.p)}%</b></span><span className=${"text-[13px] " + C.mu}>Quota ${tip.qm ? "" : "stimata "}<b className=${"num text-[19px] " + C.tx}>${odd(tip.q)}</b></span></div>`
+          : html`<button onClick=${() => setUnlock(true)} className=${"w-full text-left text-[14px] rounded-xl p-3 " + C.ch + " " + C.tx}><${Ic.Lock} size=${13} className="inline mr-1" />Sblocca con PRO o con un video di 15 secondi per vedere il consiglio.</button>`}
+          <${Vai} onClick=${() => vai(3)}>Perché, e tutte le altre giocate<//></div>`}
+        ${st !== "NS" && html`<${LiveTips} m=${m} sm=${sm} />`}
+        ${st !== "NS" && sm && html`<div className=${C.card + " p-4"}>
+          <div className=${C.lab + " mb-2"}>${st === "FT" ? "Com'è finita" : "In questo momento"}</div>
+          ${evs.length ? evs.map((e, i) => html`<div key=${i} className="flex items-center gap-2.5 py-1">
+              <span className=${"num w-12 text-[17px] font-bold " + C.mu}>${e.min}</span>${e.k === "rosso" ? html`<i className="block w-2.5 h-3.5 rounded-[2px] bg-[#FF3D5A]"></i>` : html`<${Ic.BallIn} size=${16} c=${auraCol(m)[e.side] || "#888"} />`}
+              <span className=${"flex-1 text-[15px] " + C.tx}>${e.a.split(" ").slice(-1)[0]}<span className=${C.mu}>, ${e.side ? m.a : m.h}${e.k === "rigore" ? ", su rigore" : e.k === "autogol" ? ", autogol" : e.k === "rosso" ? ", espulso" : ""}</span></span></div>`)
+            : html`<div className=${"text-[14px] " + C.mu}>Nessun gol finora.</div>`}
+          ${[stat("Possesso palla"), stat("Tiri in porta")].filter(Boolean).length > 0 && html`<div className=${"grid grid-cols-2 gap-2 mt-3"}>${[stat("Possesso palla"), stat("Tiri in porta")].filter(Boolean).map((r) => html`<div key=${r[0]} className=${"rounded-[14px] p-2.5 " + C.ch}>
+            <div className=${"text-[11px] " + C.mu}>${r[0]}</div><div className=${"num text-[20px] font-bold " + C.tx}>${Math.round(r[1])}${r[3] || ""} <span className=${C.mu}>–</span> ${Math.round(r[2])}${r[3] || ""}</div></div>`)}</div>`}
+          ${best && html`<button onClick=${() => onPlayer(best.p, best.j)} className="w-full flex items-center gap-2.5 mt-3 text-left"><span className=${"text-[13px] " + C.mu}>${st === "FT" ? "Migliore in campo" : "Il migliore finora"}</span><span className=${"flex-1 text-[15px] font-semibold truncate " + C.tx}>${best.p.name}</span><${VotoChip} v=${best.p.voto} /></button>`}
+          <${Vai} onClick=${() => vai(1)}>Andamento, eventi, tiri e statistiche<//></div>`}
+        ${st === "NS" && html`<${Sondaggio} m=${m} />`}
+        ${st === "NS" && sapere.length > 0 && html`<div className=${C.card + " p-4"}><div className=${C.lab + " mb-2"}>Da sapere</div>
+          <div className="space-y-2.5">${sapere.map((t, i) => html`<div key=${i} className="flex gap-3"><i className="block w-[3px] self-stretch rounded-full shrink-0 bg-[#5B2EE6] dark:bg-[#A58BFF]"></i><span className=${"text-[15px] leading-snug " + C.tx}>${t}</span></div>`)}</div>
+          <${Vai} onClick=${() => vai(4)}>Forma, classifica e precedenti<//></div>`}
+        ${st === "NS" && sm && sm.formazioni[0] && html`<div className=${C.card + " p-4"}><div className=${C.lab}>Formazioni ufficiali uscite</div>
+          <div className=${"text-[14px] mt-1 " + C.mu}>${m.h} ${sm.formazioni[0].formation || ""}, ${m.a} ${(sm.formazioni[1] || {}).formation || ""}.</div><${Vai} onClick=${() => vai(2)}>Guarda le formazioni<//></div>`}
+      <//>`;
+    }
+
+    /* ---- voti AuraPitch della stagione per campionato (almeno 4 partite con voto) ---- */
+    function usaVoti() { const [V, setV] = useState(null); useEffect(() => { caricaVoti().then(setV); }, []); return V; }
+    function VotiLega({ k }) {
+      const V = usaVoti();
+      const [ruolo, setRuolo] = useState(0);
+      if (!V) return html`<div className=${C.card + " p-4 text-sm " + C.mu}>Caricamento dei voti...</div>`;
+      const R = ["Tutti", "Attaccanti", "Centrocampisti", "Difensori", "Portieri"];
+      const ok = (pos) => { const p = String(pos || ""); return ruolo === 0 || (ruolo === 4 ? p === "G" : ruolo === 3 ? /^(D|CB|CD|LB|RB|SW|LWB|RWB)/.test(p) : ruolo === 1 ? /^(F|CF|ST|LW|RW|SS)/.test(p) : /^(M|CM|DM|AM|LM|RM|CDM|CAM)/.test(p)); };
+      const L = Object.entries(V).filter(([, x]) => x[7] === k && x[1] >= 4 && ok(x[8])).sort((a, b) => b[1][0] - a[1][0]).slice(0, 25);
+      return html`<${React.Fragment}>
+        <div className="flex gap-1.5 overflow-x-auto noscroll -mx-4 px-4">${R.map((r, i) => html`<button key=${r} onClick=${() => setRuolo(i)} className=${"shrink-0 px-3 py-1.5 rounded-full text-[13px] font-semibold " + (ruolo === i ? C.seg : "bg-white dark:bg-[#191626] " + C.tx)}>${r}</button>`)}</div>
+        <div className=${C.card + " px-4 py-1"}>${L.length ? L.map(([id, x], i) => html`<div key=${id} className=${"flex items-center gap-2.5 py-2 " + (i ? "border-t " + C.bd : "")}>
+          <span className=${"num w-6 text-[16px] font-bold " + C.mu}>${i + 1}</span><${Crest} t=${x[6]} size=${16} />
+          <span className="flex-1 min-w-0"><span className=${"block text-[14px] font-semibold truncate " + C.tx}>${x[5]}</span><span className=${"block text-[11px] truncate " + C.mu}>${x[6]}, ${x[1]} partite${x[3] ? ", " + x[3] + " gol" : ""}${x[4] ? ", " + x[4] + " assist" : ""}</span></span>
+          <${VotoChip} v=${x[0]} /></div>`) : html`<div className=${"py-3 text-sm " + C.mu}>Ancora pochi voti per questo campionato.</div>`}</div>
+        <p className=${"text-[11px] " + C.mu}>Voti AuraPitch calcolati dalle statistiche di ogni partita della stagione (ESPN), media su almeno 4 partite.</p><//>`;
+    }
+    /* ---- confronta due squadre o due giocatori ---- */
+    function Confronta({ k }) {
+      const { D } = React.useContext(Ctx);
+      const V = usaVoti();
+      const [tipo, setTipo] = useState(0);
+      const S = D.standings[k];
+      const squadre = S ? S.generale.map((r) => r.team) : [...new Set(D.matches.filter((m) => m.lg === k).flatMap((m) => [m.h, m.a]))];
+      const [a, setA] = useState(squadre[0]); const [b, setB] = useState(squadre[1]);
+      const gioc = V ? Object.entries(V).filter(([, x]) => x[7] === k && x[1] >= 3).sort((p, q) => q[1][2] - p[1][2]) : [];
+      const [pa, setPa] = useState(""); const [pb, setPb] = useState("");
+      const riga = (l, x, y, fmt, meglioBasso) => { const vx = Number(x) || 0, vy = Number(y) || 0, t = Math.abs(vx) + Math.abs(vy) || 1; const wx = meglioBasso ? vx < vy : vx > vy, wy = meglioBasso ? vy < vx : vy > vx;
+        return html`<div key=${l} className="py-2"><div className="flex items-center justify-between"><span className=${"num text-[19px] font-bold " + (wx ? C.acc : C.tx)}>${fmt ? fmt(x) : x}</span><span className=${"text-[13px] " + C.mu}>${l}</span><span className=${"num text-[19px] font-bold " + (wy ? C.acc : C.tx)}>${fmt ? fmt(y) : y}</span></div>
+          <div className="flex gap-[3px] mt-1.5 h-[5px]"><i className="block rounded-full bg-[#5B2EE6] dark:bg-[#A58BFF]" style=${{ width: (Math.abs(vx) / t) * 100 + "%", opacity: wx ? 1 : 0.35 }}></i><i className="block rounded-full bg-[#17152B] dark:bg-[#F4F2FF]" style=${{ width: (Math.abs(vy) / t) * 100 + "%", opacity: wy ? 1 : 0.35 }}></i></div></div>`; };
+      const sel = (v, set, opts) => html`<select value=${v} onChange=${(e) => set(e.target.value)} className=${"w-full min-w-0 rounded-xl px-3 py-2.5 text-[14px] font-semibold " + C.ch + " " + C.tx}>${opts.map(([val, lab]) => html`<option key=${val} value=${val}>${lab}</option>`)}</select>`;
+      const rs = (t) => (S ? S.generale.find((r) => r.team === t) : null);
+      const f2 = (x) => nf(Number(x).toFixed(2));
+      return html`<${React.Fragment}>
+        <${Seg} small=${true} items=${["Squadre", "Giocatori"]} val=${tipo} set=${setTipo} />
+        ${tipo === 0 ? html`<div className=${C.card + " p-4"}>
+            <div className="grid grid-cols-2 gap-2 mb-2">${sel(a, setA, squadre.map((t) => [t, t]))}${sel(b, setB, squadre.map((t) => [t, t]))}</div>
+            ${rs(a) && rs(b) ? html`<div>${[["Posizione", S.generale.indexOf(rs(a)) + 1, S.generale.indexOf(rs(b)) + 1, null, true], ["Punti", rs(a).pt, rs(b).pt], ["Vittorie", rs(a).v, rs(b).v], ["Gol fatti", rs(a).gf, rs(b).gf], ["Gol subiti", rs(a).gs, rs(b).gs, null, true],
+                ["Punti a partita", rs(a).pt / (rs(a).pg || 1), rs(b).pt / (rs(b).pg || 1), f2], ["Gol a partita", rs(a).gf / (rs(a).pg || 1), rs(b).gf / (rs(b).pg || 1), f2]].map(([l, x, y, fmt, mb]) => riga(l, x, y, fmt, mb))}</div>`
+              : html`<div className=${"text-sm " + C.mu}>Classifica non disponibile per questa competizione.</div>`}</div>`
+          : html`<div className=${C.card + " p-4"}>${!V ? html`<div className=${"text-sm " + C.mu}>Caricamento...</div>` : html`<${React.Fragment}>
+            <div className="grid grid-cols-2 gap-2 mb-2">${sel(pa || (gioc[0] || [""])[0], setPa, gioc.map(([id, x]) => [id, x[5] + " (" + x[6] + ")"]))}${sel(pb || (gioc[1] || [""])[0], setPb, gioc.map(([id, x]) => [id, x[5] + " (" + x[6] + ")"]))}</div>
+            ${(() => { const x = V[pa || (gioc[0] || [""])[0]], y = V[pb || (gioc[1] || [""])[0]]; if (!x || !y) return null;
+              return html`<div>${[["Voto medio", x[0], y[0], (v) => nf(Number(v).toFixed(2))], ["Partite", x[1], y[1]], ["Minuti", x[2], y[2]], ["Gol", x[3], y[3]], ["Assist", x[4], y[4]], ["Gol + assist ogni 90'", ((x[3] + x[4]) * 90) / (x[2] || 1), ((y[3] + y[4]) * 90) / (y[2] || 1), f2]].map(([l, p, q, fmt]) => riga(l, p, q, fmt))}</div>`; })()}<//>`}</div>`}<//>`;
+    }
+
     /* ---- campionati ---- */
     function LeaguesView() {
       const { D, lg, fav, setTeam } = React.useContext(Ctx);
+      const V = usaVoti();
+      const pn = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const votoDi = (n) => { if (!V) return null; const t = pn(n); const x = Object.values(V).find((v) => pn(v[5]) === t) || Object.values(V).find((v) => pn(v[5]).split(" ").slice(-1)[0] === t.split(" ").slice(-1)[0] && pn(v[5])[0] === t[0]); return x && x[1] >= 3 ? x[0] : null; };
       const [vista, setVista] = useState(0);
       const [k, setK] = useState(() => { const s0 = store.get("lgSel", null); return D.leagues.some((l) => l.k === s0) ? s0 : D.leagues[0].k; });
       const [filt, setFilt] = useState(0);
@@ -1265,10 +1432,12 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       return html`<div className="px-4 space-y-3">
         <div className="flex gap-2 overflow-x-auto noscroll -mx-4 px-4">${D.leagues.map((l) => html`<${Chip} key=${l.k} on=${k === l.k} onClick=${() => { setK(l.k); store.set("lgSel", l.k); }}><${Flag} k=${l.flag} w=${16} />${l.name}<//>`)}</div>
         <div className=${"flex items-center gap-2 text-sm font-semibold " + C.tx}><${Flag} k=${L.flag} w=${22} />${L.country} - ${L.name} 2026/27</div>
-        <${Seg} items=${["Classifica", "Marcatori", "Assist"]} val=${vista} set=${setVista} />
-        ${vista > 0 && (() => { const sc = ((D.scorers || {})[k] || []).slice().sort((a, b) => (vista === 1 ? b.g - a.g || b.a - a.a : b.a - a.a || b.g - a.g)).filter((r) => (vista === 1 ? r.g : r.a) > 0);
+        <${Tabs} items=${["Classifica", "Marcatori", "Assist", "Voti", "Confronta"]} val=${vista} set=${setVista} />
+        ${vista === 3 && html`<${VotiLega} k=${k} />`}
+        ${vista === 4 && html`<${Confronta} k=${k} />`}
+        ${(vista === 1 || vista === 2) && (() => { const sc = ((D.scorers || {})[k] || []).slice().sort((a, b) => (vista === 1 ? b.g - a.g || b.a - a.a : b.a - a.a || b.g - a.g)).filter((r) => (vista === 1 ? r.g : r.a) > 0);
           return sc.length ? html`<div className=${C.card + " px-4 py-1"}>${sc.slice(0, 20).map((r, i) => html`<div key=${r.n + r.t} className=${"flex items-center gap-2 py-2 text-sm " + (i ? "border-t " + C.bd : "") + " " + C.tx}>
-            <span className=${"w-5 text-xs tabular-nums " + C.mu}>${i + 1}</span><${Crest} t=${r.t} size=${16} /><span className="flex-1 min-w-0"><span className="block truncate font-semibold">${r.n}</span><span className=${"block text-[11px] truncate " + C.mu}>${r.t} - ${r.pg} presenze${vista === 1 && r.r ? " - " + r.r + " su rigore" : ""}</span></span>
+            <span className=${"w-5 text-xs tabular-nums " + C.mu}>${i + 1}</span><${Crest} t=${r.t} size=${16} /><span className="flex-1 min-w-0"><span className="flex items-center gap-1.5 min-w-0"><span className="block truncate font-semibold">${r.n}</span>${votoDi(r.n) != null && html`<${VotoChip} v=${votoDi(r.n)} />`}</span><span className=${"block text-[11px] truncate " + C.mu}>${r.t} - ${r.pg} presenze${vista === 1 && r.r ? " - " + r.r + " su rigore" : ""}</span></span>
             <span className="text-right tabular-nums"><b className="text-base">${vista === 1 ? r.g : r.a}</b><span className=${"block text-[10px] " + C.mu}>${vista === 1 ? (r.a ? r.a + " assist" : "") : r.g + " gol"}</span></span></div>`)}</div>`
             : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${D.scorers ? "Classifica marcatori non disponibile per questo campionato nella fonte dati gratuita." : "La classifica marcatori arriva con il prossimo aggiornamento dei dati (ogni mattina)."}</div>`; })()}
         ${vista === 0 && html`<${React.Fragment}>
@@ -1352,6 +1521,56 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
             className=${"px-3 rounded-xl text-[13px] font-semibold disabled:opacity-50 " + C.on}>Usa</button></div>
         ${msg && html`<div className=${"text-[12px] " + C.mu}>${msg}</div>`}</div>`;
     }
+    /* ---- la tua settimana: pronostici, gruppo, diario e IA della settimana scorsa ---- */
+    function Riepilogo() {
+      const { pushUrl, diario, byId, stor } = React.useContext(Ctx);
+      const [cl, setCl] = useState(null);
+      const chi = store.get("chi", null), gr = store.get("garaGruppo", "");
+      useEffect(() => { if (pushUrl && chi) fetch(pushUrl + "/classifica?chi=" + chi + "&gruppo=" + gr + "&periodo=scorsa").then((r) => r.json()).then((x) => x.ok && setCl(x)).catch(() => {}); }, [pushUrl]);
+      const lun = new Date(); lun.setHours(0, 0, 0, 0); lun.setDate(lun.getDate() - ((lun.getDay() + 6) % 7)); const da = lun.getTime() - 7 * 86400e3, a = lun.getTime();
+      const gioc = diario.filter((x) => x.t >= da && x.t < a), chiuse = gioc.filter((x) => statoGiocata(x, byId) !== "aperta");
+      const resa = chiuse.reduce((s0, x) => s0 + (statoGiocata(x, byId) === "vinta" ? x.imp * x.q : 0) - x.imp, 0);
+      const ia = stor ? stor.lista.filter((v) => { const t = new Date(v.date + "T12:00:00").getTime(); return t >= da && t < a; }) : [];
+      const iaOk = ia.filter((v) => v.esiti && v.esiti.consiglio).length, iaN = ia.filter((v) => v.esiti && "consiglio" in v.esiti).length;
+      const io = cl && cl.io, pos = cl && cl.righe.findIndex((r) => r.io);
+      const righe = [];
+      if (io && io.giocate) righe.push(`Hai indovinato ${io.giuste} pronostici su ${io.giocate} (${io.pt} punti); l'IA ${io.ia} su ${io.iaG}.`);
+      if (cl && cl.righe.length > 1 && pos >= 0) righe.push(`Nel tuo gruppo sei arrivato ${pos + 1}° su ${cl.righe.length}.`);
+      if (chiuse.length) righe.push(`Diario: ${chiuse.length} giocate chiuse, resa ${(resa >= 0 ? "+" : "") + resa.toLocaleString("it-IT", { style: "currency", currency: "EUR" })}.`);
+      if (iaN) righe.push(`Il consiglio principale dell'IA è passato ${iaOk} volte su ${iaN}.`);
+      if (!righe.length) return null;
+      return html`<div className=${C.card + " p-4"}><div className=${"text-[12px] font-semibold " + C.acc}>La tua settimana</div>
+        <div className=${C.lab + " mt-0.5 mb-2"}>Com'è andata</div>
+        <div className="space-y-2">${righe.map((t, i) => html`<div key=${i} className=${"text-[15px] leading-snug " + C.tx}>${t}</div>`)}</div></div>`;
+    }
+    /* ---- medaglie: piccoli traguardi, calcolati sul telefono ---- */
+    function Medaglie() {
+      const { diario, byId, favM, pushUrl } = React.useContext(Ctx);
+      const [cl, setCl] = useState(null);
+      const chi = store.get("chi", null);
+      useEffect(() => { if (pushUrl && chi) fetch(pushUrl + "/classifica?chi=" + chi + "&periodo=tutto").then((r) => r.json()).then((x) => x.ok && setCl(x)).catch(() => {}); }, [pushUrl]);
+      const io = (cl && cl.io) || { giocate: 0, giuste: 0, ia: 0, iaG: 0, pt: 0 };
+      const vinte = diario.filter((x) => statoGiocata(x, byId) === "vinta").length;
+      const L = [
+        ["Primo pronostico", "Fai un pronostico nella gara", io.giocate >= 1],
+        ["Pronostici da 10", "10 pronostici giocati", io.giocate >= 10],
+        ["Occhio fino", "10 pronostici indovinati", io.giuste >= 10],
+        ["Meglio dell'IA", "Indovina più dell'IA su almeno 10 partite", io.giocate >= 10 && io.giuste > io.ia],
+        ["Cinquanta punti", "Arriva a 50 punti nella gara", io.pt >= 50],
+        ["In gruppo", "Entra o crea un gruppo di amici", !!store.get("garaGruppo", "")],
+        ["Prima schedina", "Segna una schedina nel diario", diario.length >= 1],
+        ["Schedina vinta", "Vinci una schedina del diario", vinte >= 1],
+        ["Cinque vittorie", "5 schedine vinte nel diario", vinte >= 5],
+        ["Tifoso attento", "Segui 5 partite con la stella", favM.length >= 5],
+      ];
+      const fatte = L.filter((x) => x[2]).length;
+      return html`<div className=${C.card + " p-4"}>
+        <div className="flex items-baseline mb-3"><span className=${C.lab + " flex-1"}>Medaglie</span><span className=${"num text-[18px] font-bold " + C.mu}>${fatte}/${L.length}</span></div>
+        <div className="grid grid-cols-5 gap-2">${L.map(([n, d, ok]) => html`<div key=${n} title=${n + ": " + d} className="flex flex-col items-center text-center gap-1">
+          <span className=${"w-11 h-11 rounded-full flex items-center justify-center " + (ok ? "bg-[#5B2EE6] text-white dark:bg-[#A58BFF] dark:text-[#0E0C18]" : C.ch + " " + C.mu)} style=${ok ? { boxShadow: "0 6px 16px -6px #7B5CFF" } : null}>${ok ? html`<${Ic.Crown} size=${18} />` : html`<${Ic.Lock} size=${14} />`}</span>
+          <span className=${"text-[10px] leading-tight " + (ok ? C.tx + " font-semibold" : C.mu)}>${n}</span></div>`)}</div>
+        <p className=${"text-[12px] mt-3 " + C.mu}>Prossima: ${(L.find((x) => !x[2]) || ["", "le hai tutte!"])[1]}.</p></div>`;
+    }
     function ClubView() {
       const { D, lg, fav, setFav, setTeam } = React.useContext(Ctx);
       const lgK = Object.keys(D.standings).find((k) => D.standings[k].generale.some((r) => r.team === fav));
@@ -1360,8 +1579,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const row = lgK && D.standings[lgK].generale[pos - 1];
       const m = D.matches.find((x) => x.h === fav || x.a === fav);
       const l5 = m ? m.last5[m.h === fav ? 0 : 1] : [];
-      return html`<div className="px-4 space-y-3">
-        <${Gara} />
+      return html`<div className="px-4 space-y-3"><${Schede} id="club" items=${["La mia squadra", "Gara", "Traguardi", "Account"]}>${[html`<${React.Fragment}>
         <div className=${C.card + " p-4"}><div className="flex items-center gap-3"><${Crest} t=${fav} size=${52} />
           <div className="flex-1 min-w-0"><div className=${"text-xs " + C.mu}>Squadra del cuore</div><div className=${"text-xl font-semibold truncate " + C.tx}>${fav}</div>
             ${L && html`<div className=${"text-xs flex items-center gap-1.5 " + C.mu}><${Flag} k=${L.flag} w=${14} />${L.name} - ${pos}° con ${row.pt} punti</div>`}</div></div>
@@ -1369,10 +1587,12 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           ${lgK && ESPN_LG[lgK] && html`<button onClick=${() => setTeam({ lgE: ESPN_LG[lgK], name: fav })} className=${"mt-4 w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}>Calendario, risultati e rosa<${Ic.ChevronRight} size=${15} /></button>`}</div>
         ${m ? html`<div className=${C.lab}>Partita della giornata</div><div className=${C.card + " overflow-hidden"}><${Row} m=${m} i=${0} /></div>`
           : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${fav} non gioca in questa giornata.</div>`}
-        <${Codice} />
         <div className=${C.card + " p-4 space-y-2"}><label htmlFor="fav" className=${C.lab}>Cambia squadra</label>
           <select id="fav" value=${fav} onChange=${(e) => { setFav(e.target.value); store.set("fav", e.target.value); }} className=${"w-full rounded-xl px-3 py-2 text-sm " + C.ch + " " + C.tx}>
-            ${D.leagues.map((l) => html`<optgroup key=${l.k} label=${l.name}>${(D.standings[l.k] ? D.standings[l.k].generale.map((r) => r.team) : [...new Set(D.matches.filter((x) => x.lg === l.k).flatMap((x) => [x.h, x.a]))]).slice().sort().map((t) => html`<option key=${t} value=${t}>${t}</option>`)}</optgroup>`)}</select></div></div>`;
+            ${D.leagues.map((l) => html`<optgroup key=${l.k} label=${l.name}>${(D.standings[l.k] ? D.standings[l.k].generale.map((r) => r.team) : [...new Set(D.matches.filter((x) => x.lg === l.k).flatMap((x) => [x.h, x.a]))]).slice().sort().map((t) => html`<option key=${t} value=${t}>${t}</option>`)}</optgroup>`)}</select></div><//>`,
+        html`<${Gara} />`,
+        html`<${React.Fragment}><${Riepilogo} /><${Medaglie} /><//>`,
+        html`<${React.Fragment}><${Codice} /><${GiocoResponsabile} /><//>`]}<//></div>`;
     }
 
     /* ---- schedina ---- */
@@ -1402,9 +1622,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <span className=${"text-sm font-semibold text-right max-w-[45%] leading-tight " + C.tx}>${mLabel(l.m, l.k, true)}</span><span className=${"text-sm tabular-nums w-11 text-right " + C.mu}>${odd(l.q)}</span>
         ${h === null ? null : h ? html`<${Ic.CheckCircle2} size=${17} className="text-emerald-500" />` : html`<${Ic.XCircle} size=${17} className="text-rose-500" />`}
         ${onDel && html`<button aria-label="Rimuovi" onClick=${onDel} className=${C.mu}><${Ic.Trash2} size=${15} /></button>`}</div>`; };
-      return html`<div className="px-4 space-y-3">
-        <${StoricoCard} />
-        <div className=${C.lab}>Schedina IA</div>
+      return html`<div className="px-4 space-y-3"><${Schede} id="schedina" items=${["Crea con l'IA", "La mia schedina", "Diario", "Storico IA"]}>${[html`<${React.Fragment}>
         <div className="flex gap-2 overflow-x-auto noscroll -mx-4 px-4">${D.leagues.map((l) => html`<${Chip} key=${l.k} on=${!off.includes(l.k)} onClick=${() => { const nx = off.includes(l.k) ? off.filter((q) => q !== l.k) : [...off, l.k]; setOff(nx); store.set("slipOff", nx); }}><${Flag} k=${l.flag} w=${16} />${l.name}<//>`)}</div>
         <div className=${"text-[14px] font-semibold " + C.tx}>Partite di</div>
         <div className="flex gap-1.5 overflow-x-auto noscroll -mx-4 px-4">${PERIODI.map(([k, l]) => html`<button key=${k} onClick=${() => { setPer(k); store.set("slipPer", k); setVr(0); }}
@@ -1430,7 +1648,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           <div className="grid grid-cols-2 gap-2 pt-1">
             <button onClick=${() => doCopy(text(legs, false))} className=${"py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Copy} size=${15} />Copia testo</button>
             <button onClick=${() => doCopy(text(legs, true))} className=${"py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Smartphone} size=${15} />Testo WhatsApp</button></div></div>`}
-        <div className=${C.lab + " pt-2"}>La mia schedina</div>
+        <p className=${"text-[11px] " + C.mu}>Le probabilità sono stime: nessuna schedina è sicura. Gioca solo cifre che puoi permetterti di perdere.</p><//>`,
+        html`<${React.Fragment}>
         <div className=${C.card + " px-4 py-2"}>${mine.length ? mine.map((l) => html`<${LegRow} key=${l.id} l=${l} onDel=${() => setMySlip(mySlip.filter((x) => x.id !== l.id))} />`)
           : html`<div className=${"py-3 text-sm " + C.mu}>Vuota. Apri una partita e tocca un esito in "Aggiungi alla tua schedina".</div>`}</div>
         ${mine.length > 0 && html`<div className=${C.card + " p-4 space-y-2"}>
@@ -1440,9 +1659,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
             <button onClick=${() => doCopy(text(mine, false))} className=${"py-2 rounded-xl border text-xs font-semibold " + TONE.good}>Copia</button>
             <button onClick=${() => doCopy(text(mine, true))} className=${"py-2 rounded-xl border text-xs font-semibold " + TONE.good}>WhatsApp</button>
             <button onClick=${() => setMySlip([])} className=${"py-2 rounded-xl text-xs font-semibold " + C.ch + " " + C.tx}>Svuota</button></div>
-          <${Gioca} legs=${mine.filter((l) => l.q)} /></div>`}
-        <${Diario} />
-        <p className=${"text-[11px] " + C.mu}>Le probabilità sono stime: nessuna schedina è sicura. Gioca solo cifre che puoi permetterti di perdere.</p></div>`;
+          <${Gioca} legs=${mine.filter((l) => l.q)} /></div>`}<//>`,
+        html`<${React.Fragment}><${Diario} /><${GiocoResponsabile} compatto=${true} /><//>`,
+        html`<${StoricoCard} />`]}<//></div>`;
     }
 
 
@@ -1526,7 +1745,11 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const [msg, setMsg] = useState("");
     const q = legs.reduce((a, l) => a * l.q, 1);
     const salva = () => { const x = { id: Date.now().toString(36), t: Date.now(), imp: Number(imp) || 0, q, legs: legs.map((l) => ({ id: l.m.id, k: l.k, q: l.q, p: l.p, h: l.m.h, a: l.m.a, l: mLabel(l.m, l.k, true) })) };
-      setDiario([...diario, x]); store.set("impUltimo", Number(imp) || 0); setMsg("Salvata nel diario."); if (onDone) setTimeout(onDone, 800); };
+      setDiario([...diario, x]); store.set("impUltimo", Number(imp) || 0);
+      const lim = store.get("limite", 0), mese = new Date().toISOString().slice(0, 7);
+      const speso = [...diario, x].filter((z) => new Date(z.t).toISOString().slice(0, 7) === mese).reduce((a, z) => a + z.imp, 0);
+      setMsg(lim && speso > lim ? `Salvata. Attenzione: questo mese hai giocato ${speso} €, oltre il tuo limite di ${lim} €.` : lim && speso > lim * 0.8 ? `Salvata. Sei vicino al tuo limite mensile (${speso} € su ${lim} €).` : "Salvata nel diario.");
+      if (onDone) setTimeout(onDone, 800); };
     return html`<div className="space-y-2">
       <div className="flex items-center gap-2"><span className=${"text-[13px] " + C.mu}>Importo</span>${[1, 2, 5, 10, 20].map((v) => html`<button key=${v} onClick=${() => setImp(v)} className=${"num text-[16px] font-bold px-2.5 py-1 rounded-full " + (Number(imp) === v ? C.on : C.ch + " " + C.tx)}>${v}€</button>`)}</div>
       <div className="grid grid-cols-2 gap-2">
@@ -1534,6 +1757,126 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <button onClick=${async () => { try { const r = await immagineSchedina(legs, "Schedina del " + new Date().toLocaleDateString("it-IT", { day: "numeric", month: "long" }), lg); setMsg("Immagine " + r + "."); } catch (e) { setMsg("Condivisione annullata."); } }}
           className=${"py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Share} size=${15} />Condividi immagine</button></div>
       ${msg && html`<div className=${"text-[12px] " + C.mu}>${msg}</div>`}</div>`;
+  }
+
+  /* ---- partita della settimana: la sfida più importante dei prossimi 7 giorni (competizione, classifica delle due squadre, equilibrio) ---- */
+  const PESO_LEGA = { CL: 3, I1: 2.4, E0: 2.4, SP1: 2.1, D1: 2, EL: 1.6, CI: 1.4, ECL: 1.1, I2: 0.6 };
+  function partitaSettimana(D) {
+    const pos = (k, t) => { const S = D.standings[k]; const i = S ? S.generale.findIndex((r) => r.team === t) : -1; return i < 0 ? 12 : i + 1; };
+    let best = null;
+    for (const m of D.matches) {
+      if (m.st !== "NS" || new Date(m.ko).getTime() - Date.now() > 7 * 86400e3 || new Date(m.ko).getTime() < Date.now()) continue;
+      const v = (PESO_LEGA[m.lg] || 1) + Math.max(0, 8 - pos(m.lg, m.h)) * 0.12 + Math.max(0, 8 - pos(m.lg, m.a)) * 0.12 + (1 - Math.abs(m.mk[0] - m.mk[2])) * 0.8;
+      if (!best || v > best.v) best = { m, v };
+    }
+    return best && best.m;
+  }
+  function Anteprima({ m }) {
+    const { D } = React.useContext(Ctx);
+    const S = D.standings[m.lg];
+    const riga = (t) => { const r = S && S.generale.find((x) => x.team === t); return r ? `${S.generale.indexOf(r) + 1}° con ${r.pt} punti` : ""; };
+    const bomber = (j) => Object.entries(m.marcatori || {}).filter(([, x]) => x.lato === j).sort((a, b) => b[1].g - a[1].g)[0];
+    const chiavi = [];
+    for (const j of [0, 1]) { const b = bomber(j); if (b && b[1].g >= 2) chiavi.push(`${b[0].slice(5)} è l'uomo gol di ${j ? m.a : m.h}: ${b[1].g} reti in ${b[1].pres} partite.`); }
+    if (m.forma) chiavi.push(...m.forma.filter((f) => f.tone !== "ok").slice(0, 1).map((f) => f.text));
+    return html`<div className=${C.card + " p-4 relative overflow-hidden"}>
+      <div className=${"text-[12px] font-semibold " + C.acc}>Partita della settimana</div>
+      <div className=${C.lab + " mt-0.5"}>Anteprima</div>
+      ${S && html`<div className=${"text-[14px] mt-2 " + C.tx}>${m.h} arriva ${riga(m.h)}, ${m.a} ${riga(m.a)}.</div>`}
+      <div className="space-y-2 mt-2">${chiavi.slice(0, 3).map((t, i) => html`<div key=${i} className="flex gap-3"><i className="block w-[3px] self-stretch rounded-full shrink-0 bg-[#5B2EE6] dark:bg-[#A58BFF]"></i><span className=${"text-[14px] leading-snug " + C.tx}>${t}</span></div>`)}</div>
+      <div className=${"text-[13px] mt-2 " + C.mu}>Per le quote: ${m.h} ${pct(m.mk[0])}%, pareggio ${pct(m.mk[1])}%, ${m.a} ${pct(m.mk[2])}%.</div></div>`;
+  }
+
+  /* ---- glossario delle scommesse ---- */
+  const GLOSSARIO = [
+    ["1, X, 2", "Vince la squadra di casa (1), pareggio (X), vince la squadra ospite (2)."],
+    ["Doppia chance (1X, X2, 12)", "Copri due esiti su tre: per esempio 1X vince se la squadra di casa vince o pareggia."],
+    ["Under / Over", "Under 2,5: al massimo 2 gol in tutta la partita. Over 2,5: almeno 3. Il numero con la virgola evita i pareggi con il bookmaker."],
+    ["Goal / No Goal", "Goal: segnano tutte e due le squadre. No Goal: almeno una non segna."],
+    ["Multigol", "Il totale dei gol cade in un intervallo, per esempio Multigol 1-3: da 1 a 3 gol."],
+    ["Primo e secondo tempo", "La giocata vale solo per quel tempo: per esempio \"1° tempo: Over 0,5\" vince se c'è almeno un gol prima dell'intervallo."],
+    ["Parziale/finale", "Indovini insieme il risultato all'intervallo e quello finale: 1/1 vuol dire casa in vantaggio all'intervallo e vincente alla fine."],
+    ["Handicap europeo", "Si aggiunge un vantaggio o uno svantaggio di gol a una squadra prima della partita. Handicap −1 a una squadra: per vincere deve fare almeno 2 gol più dell'avversaria."],
+    ["Margine di vittoria", "Una squadra vince con un certo scarto esatto, per esempio di 2 gol."],
+    ["Risultato esatto", "Indovini il punteggio preciso: rischioso, quote alte."],
+    ["Combo", "Due condizioni insieme, devono avverarsi entrambe: per esempio 1 + Over 1,5."],
+    ["Quota", "Quanto ti viene restituito per ogni euro giocato se vinci: quota 2,00 con 10 € = 20 €."],
+    ["Quota stimata", "Calcolata dall'IA dalla probabilità con il margine tipico dei bookmaker: quella reale può essere un po' diversa."],
+    ["Probabilità", "Quante volte su 100 l'IA si aspetta che la giocata passi. In una schedina le probabilità si moltiplicano: 3 giocate al 70% passano tutte insieme circa 1 volta su 3."],
+    ["Punteggio IA", "Da 0 a 100: quanto probabilità e statistiche delle squadre sono d'accordo su quella giocata."],
+    ["Marcatore", "Il giocatore segna almeno un gol nella partita (in qualsiasi momento)."],
+  ];
+  function Glossario({ onClose }) {
+    return html`<${Sheet} title="Glossario delle scommesse" onClose=${onClose}>
+      ${GLOSSARIO.map(([t, d]) => html`<div key=${t} className=${"py-2 border-t first:border-t-0 " + C.bd}><div className=${"text-[15px] font-semibold " + C.tx}>${t}</div><div className=${"text-[14px] mt-0.5 " + C.mu}>${d}</div></div>`)}<//>`;
+  }
+
+  /* ---- gioco responsabile: limite di spesa mensile nel diario ---- */
+  function GiocoResponsabile({ compatto }) {
+    const { diario } = React.useContext(Ctx);
+    const [lim, setLim] = useState(store.get("limite", 0));
+    const mese = new Date().toISOString().slice(0, 7);
+    const speso = diario.filter((x) => new Date(x.t).toISOString().slice(0, 7) === mese).reduce((a, x) => a + x.imp, 0);
+    const eur = (v) => v.toLocaleString("it-IT", { style: "currency", currency: "EUR" });
+    const oltre = lim > 0 && speso > lim;
+    return html`<div className=${C.card + " p-4 " + (oltre ? "ring-2 ring-[#FF3D5A]" : "")}>
+      <div className=${C.lab}>Gioco responsabile</div>
+      ${lim > 0 ? html`<div className=${"text-[14px] mt-1 " + (oltre ? "text-[#FF3D5A] font-semibold" : C.tx)}>Questo mese hai giocato ${eur(speso)} su un limite di ${eur(lim)}.${oltre ? " Hai superato il limite che ti eri dato: fermati per questo mese." : ""}</div>
+        <div className=${"h-[6px] rounded-full mt-2 " + C.ch}><div className="h-[6px] rounded-full" style=${{ width: Math.min(100, (speso / lim) * 100) + "%", background: oltre ? "#FF3D5A" : speso / lim > 0.8 ? "#E8A317" : "#0F9D84" }}></div></div>`
+        : html`<div className=${"text-[14px] mt-1 " + C.mu}>Datti un limite di spesa al mese: l'app ti avvisa quando ti avvicini.</div>`}
+      ${!compatto && html`<div className="flex gap-1.5 mt-3 flex-wrap">${[0, 20, 50, 100, 200].map((v) => html`<button key=${v} onClick=${() => { setLim(v); store.set("limite", v); }} className=${"num px-3 py-1 rounded-full text-[16px] font-bold " + (lim === v ? C.on : C.ch + " " + C.tx)}>${v ? v + "€" : "Nessuno"}</button>`)}</div>
+        <p className=${"text-[12px] mt-3 " + C.mu}>Il gioco può creare dipendenza. Se senti di non riuscire a smettere, chiama il numero gratuito e anonimo dell'Istituto Superiore di Sanità per le dipendenze, 800 940 789 (dal lunedì al venerdì), o il Telefono Verde sul gioco d'azzardo 800 558 822. Il gioco è vietato ai minori.</p>`}</div>`;
+  }
+
+  /* ---- primo avvio: campionati e squadre che ti interessano (mettono in alto le tue partite e attivano gli avvisi) ---- */
+  const TUTTE_LEGHE = [["I1", "Serie A", "it"], ["I2", "Serie B", "it"], ["CL", "Champions League", "eu"], ["EL", "Europa League", "eu"], ["ECL", "Conference League", "eu"], ["CI", "Coppa Italia", "it"],
+    ["E0", "Premier League", "en"], ["SP1", "LaLiga", "es"], ["D1", "Bundesliga", "de"]];
+  function PrimoAvvio({ onFine }) {
+    const { D, setFavTeams, setFavLeagues, setFav } = React.useContext(Ctx);
+    const [passo, setPasso] = useState(0);
+    const [lg, setLg] = useState(["I1"]);
+    const [sq, setSq] = useState([]);
+    const [q, setQ] = useState("");
+    const squadre = [...new Set([...lg.flatMap((k) => ((D.standings[k] || {}).generale || []).map((r) => r.team)), ...D.matches.filter((m) => lg.includes(m.lg)).flatMap((m) => [m.h, m.a])])]
+      .filter((t) => !q || t.toLowerCase().includes(q.toLowerCase())).sort((a, b) => a.localeCompare(b, "it"));
+    const tog = (arr, set, x) => set(arr.includes(x) ? arr.filter((y) => y !== x) : [...arr, x]);
+    const fine = () => { setFavLeagues(lg); setFavTeams(sq); if (sq[0]) { setFav(sq[0]); store.set("fav", sq[0]); } onFine(); };
+    return html`<div className="fixed inset-0 z-[60] overflow-y-auto" style=${{ background: "var(--bg)", paddingTop: "env(safe-area-inset-top, 0px)" }}>
+      <div className="max-w-[480px] mx-auto px-5 pt-8 pb-32 space-y-5">
+        <div className="flex items-center gap-3"><${Marchio} size=${40} /><span className=${"num text-[30px] font-extrabold " + C.tx}>AuraPitch</span></div>
+        ${passo === 0 ? html`<${React.Fragment}>
+          <div><div className=${"text-[26px] font-bold leading-tight tracking-[-0.02em] " + C.tx}>Quali campionati segui?</div>
+            <p className=${"text-[15px] mt-1.5 " + C.mu}>Li mettiamo in cima alle partite. Puoi cambiarli quando vuoi dal profilo.</p></div>
+          <div className="grid grid-cols-2 gap-2">${TUTTE_LEGHE.map(([k, n, f]) => html`<button key=${k} onClick=${() => tog(lg, setLg, k)} aria-pressed=${lg.includes(k)}
+            className=${"flex items-center gap-2.5 rounded-[16px] px-3 py-3 text-left text-[15px] font-semibold " + (lg.includes(k) ? C.seg : "bg-white dark:bg-[#191626] " + C.tx)}><${Flag} k=${f} w=${22} />${n}</button>`)}</div>`
+        : html`<${React.Fragment}>
+          <div><div className=${"text-[26px] font-bold leading-tight tracking-[-0.02em] " + C.tx}>Le tue squadre</div>
+            <p className=${"text-[15px] mt-1.5 " + C.mu}>Le loro partite saranno sempre in alto e riceverai gli avvisi se attivi le notifiche. La prima che scegli è la squadra del cuore.</p></div>
+          <input value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Cerca una squadra" className=${"w-full rounded-xl px-3.5 py-3 text-[16px] outline-none bg-white dark:bg-[#191626] " + C.tx} />
+          <div className="flex flex-wrap gap-2">${squadre.map((t) => html`<button key=${t} onClick=${() => tog(sq, setSq, t)} aria-pressed=${sq.includes(t)}
+            className=${"flex items-center gap-2 rounded-full pl-2 pr-3.5 py-1.5 text-[14px] font-semibold " + (sq.includes(t) ? C.seg : "bg-white dark:bg-[#191626] " + C.tx)}><${Crest} t=${t} size=${18} />${t}${sq[0] === t ? html`<${Ic.Star} size=${13} className="text-amber-400 fill-amber-400" />` : ""}</button>`)}</div>
+          ${!squadre.length && html`<p className=${"text-[14px] " + C.mu}>Nessuna squadra trovata.</p>`}`}
+      </div>
+      <div className="fixed inset-x-0 bottom-0 px-5 pt-3" style=${{ background: "var(--bg)", paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))" }}>
+        <div className="max-w-[440px] mx-auto flex gap-2">
+          <button onClick=${() => (passo ? setPasso(0) : onFine())} className=${"px-4 py-3 rounded-2xl text-[15px] font-semibold " + C.ch + " " + C.tx}>${passo ? "Indietro" : "Salta"}</button>
+          <button disabled=${passo === 0 && !lg.length} onClick=${() => (passo ? fine() : setPasso(1))} className=${"flex-1 py-3 rounded-2xl text-[16px] font-bold disabled:opacity-50 " + C.on}>${passo ? (sq.length ? "Inizia" : "Inizia senza squadre") : "Avanti"}</button></div></div></div>`;
+  }
+
+  /* ---- schedina in diretta: barra sopra il menu quando una tua giocata è in campo ---- */
+  function BarraSchedina({ vaiSchedina }) {
+    const { mySlip, diario, byId } = React.useContext(Ctx);
+    const legs = [...mySlip.map((x) => ({ id: x.id, k: x.k })), ...diario.filter((x) => statoGiocata(x, byId) === "aperta").flatMap((x) => x.legs.filter((g) => g.ok == null).map((g) => ({ id: g.id, k: g.k })))];
+    const vis = [...new Map(legs.map((l) => [l.id + l.k, l])).values()].map((l) => ({ ...l, m: byId[l.id] })).filter((l) => l.m && (l.m.st === "LIVE" || l.m.st === "FT"));
+    if (!vis.some((l) => l.m.st === "LIVE")) return null;
+    const ora = vis.map((l) => { const g = l.m.g || [0, 0]; const v = evalCode(norm(l.k), g[0], g[1]); return l.m.st === "FT" ? (hit(l.m, l.k) ?? null) : v; });
+    const si = ora.filter((v) => v === true).length, no = ora.filter((v) => v === false).length;
+    return html`<button onClick=${vaiSchedina} className="fixed inset-x-0 z-40 px-3" style=${{ bottom: "calc(88px + env(safe-area-inset-bottom, 0px))" }}>
+      <div className=${"dock max-w-[456px] mx-auto rounded-[18px] px-4 py-2.5 flex items-center gap-2.5 text-left"}>
+        <i className="pulse block w-2 h-2 rounded-full bg-[#FF3D5A] shrink-0"></i>
+        <span className=${"flex-1 text-[14px] font-semibold " + C.tx}>Le tue giocate in campo</span>
+        <span className="num text-[18px] font-bold text-[#0F9D84]">${si} ✓</span><span className="num text-[18px] font-bold text-[#FF3D5A]">${no} ✗</span>
+        <span className=${"text-[12px] " + C.mu}>su ${vis.length}</span></div></button>`;
   }
 
   /* ---- ricerca: squadre, partite e giocatori (marcatori delle partite in programma) ---- */
@@ -1606,6 +1949,15 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const [pushMsg, setPushMsg] = useState("");
     const [askPush, setAskPush] = useState(false);
     const [cerca, setCerca] = useState(false);
+    const [gloss, setGloss] = useState(false);
+    const [favTeams, setFavTeams0] = useState(store.get("favTeams", []));
+    const [favLeagues, setFavLeagues0] = useState(store.get("favLeagues", []));
+    const [onb, setOnb] = useState(store.get("onb", false) || store.get("guideSeen", false));
+    const setFavTeams = (x) => { setFavTeams0(x); store.set("favTeams", x); };
+    const setFavLeagues = (x) => { setFavLeagues0(x); store.set("favLeagues", x); };
+    const [tira, setTira] = useState(0);
+    const tiraRef = useRef(null);
+    const ricarica = () => fetch("data/giornata.json?t=" + Date.now(), { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((d) => { if (d) { setD(d); setToast("Partite aggiornate"); } }).catch(() => setToast("Nessuna connessione: riprova tra poco"));
     const [diario, setDiario0] = useState(store.get("diario", []));
     const setDiario = (d) => { setDiario0(d); store.set("diario", d); };
     const ripristina = (x) => {
@@ -1652,7 +2004,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     useEffect(() => { if (toast) { const id = setTimeout(() => setToast(""), 1800); return () => clearTimeout(id); } }, [toast]);
     const flash = (t) => setToast(t);
     // notifiche push: partite seguite = preferite + squadra del cuore, collegate alla diretta e non ancora finite
-    const followList = () => (D ? D.matches.filter((m) => m.eid && m.lgE && m.st !== "FT" && (favM.includes(m.id) || m.h === fav || m.a === fav)).map((m) => ({ lgE: m.lgE, eid: m.eid, h: m.h, a: m.a })) : []);
+    const mia = (m) => favM.includes(m.id) || m.h === fav || m.a === fav || favTeams.includes(m.h) || favTeams.includes(m.a);
+    const followList = () => (D ? D.matches.filter((m) => m.eid && m.lgE && m.st !== "FT" && mia(m)).map((m) => ({ lgE: m.lgE, eid: m.eid, h: m.h, a: m.a })) : []);
     const sendFollow = async (sub, test) => {
       const r = await fetch(pushUrl + "/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sub: sub.toJSON(), follow: followList(), pref }) });
       if (!r.ok) throw new Error("iscrizione");
@@ -1706,7 +2059,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       prev.current = now;
       if (!old || !avvisi) return;
       for (const m of D.matches) {
-        if (!(favM.includes(m.id) || m.h === fav || m.a === fav)) continue;
+        if (!mia(m)) continue;
         const o = old[m.id], n = now[m.id];
         if (!o) continue;
         let msg = null;
@@ -1763,8 +2116,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <button aria-label="Profilo e impostazioni" onClick=${() => setProfile(true)} className=${"w-8 h-8 rounded-full text-[11px] font-semibold " + C.on}>${ini}</button>
       </div></header>`;
 
-    const steps = ["Partite: tocca un campionato per aprirlo. La stella dentro una partita la mette tra le Preferite, in cima, con gli avvisi dei gol.", "Tocca una partita: Panoramica, Cronaca, Formazioni, Analisi IA e Classifiche. Scorri col dito a destra o a sinistra per cambiare sezione.",
-      "Le analisi IA sono libere sulle partite FREE; sulle altre si sbloccano con PRO o con un video da 15 minuti.", "In Schedina IA scegli un profilo o costruisci la tua schedina dalle partite."];
+    const steps = ["Partite: tocca un campionato per aprirlo. La stella dentro una partita la mette tra le Preferite, in cima, con gli avvisi dei gol.", "Tocca una partita: in \"In breve\" trovi l'essenziale. Scorri col dito a destra o a sinistra per approfondire: Partita, Formazioni, IA, Statistiche, Cronaca.",
+      "Le analisi IA sono libere sulle partite FREE; sulle altre si sbloccano con PRO o con un video da 15 minuti.", "In Schedina IA scorri tra Crea, La mia schedina, Diario e Storico IA. Nel Club trovi Gara, Traguardi e Account."];
     const guideBox = guide > 0 && html`<div className=${"mx-4 mb-3 p-3 rounded-2xl border text-sm flex items-start gap-2 " + TONE.info}>
       <div className="flex-1"><b>Guida ${guide}/4.</b> ${steps[guide - 1]}</div>
       <button aria-label="Passo precedente" onClick=${() => setGuide(Math.max(1, guide - 1))}><${Ic.ChevronLeft} size=${18} /></button>
@@ -1772,7 +2125,11 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
 
     /* ---- vista partite ---- */
     const dayMatches = D.matches.filter((m) => (day === "all" || m.date === day) && (!liveOnly || m.st === "LIVE"));
-    const home = html`<div className="px-4 space-y-3">
+    const tsH = (e) => { tiraRef.current = window.scrollY <= 0 ? e.touches[0].clientY : null; };
+    const tmH = (e) => { if (tiraRef.current == null) return; const d = e.touches[0].clientY - tiraRef.current; setTira(d > 0 ? Math.min(110, d * 0.6) : 0); };
+    const teH = () => { if (tira >= 64) { try { if (navigator.vibrate) navigator.vibrate(12); } catch (x) { /* non supportato */ } ricarica(); } setTira(0); tiraRef.current = null; };
+    const home = html`<div className="px-4 space-y-3" onTouchStart=${tsH} onTouchMove=${tmH} onTouchEnd=${teH}>
+      ${tira > 0 && html`<div className="flex justify-center transition-all" style=${{ height: tira }}><span className=${"self-end mb-1 text-[13px] font-semibold flex items-center gap-1.5 " + C.mu}><${Ic.Repeat} size=${14} className=${tira >= 64 ? C.acc : ""} />${tira >= 64 ? "Rilascia per aggiornare" : "Tira giù per aggiornare"}</span></div>`}
       ${banner && html`<div className=${C.card + " p-3 flex gap-3 items-start"}><${Ic.Info} size=${16} className="text-sky-500 shrink-0 mt-0.5" />
         <div className=${"text-[13px] flex-1 " + C.tx}>${D.demo ? html`Beta con <b>dati reali</b> della giornata ${D.label}. Le partite sono già giocate: puoi confrontare le letture dell'IA con i risultati.`
           : html`Beta con <b>dati reali</b>, ${D.label}: quote medie di decine di bookmaker, classifiche e risultati in diretta (ogni 30 secondi). Apri una partita e scorri col dito tra le sezioni.`}</div>
@@ -1781,10 +2138,19 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       <div className="flex items-center gap-2 pt-1"><span className=${"text-[22px] font-bold tracking-[-0.02em] flex-1 " + C.tx}>${day === "all" ? "Tutte le partite" : (D.days.find((d) => d.k === day) || {}).label === "Oggi" ? "Oggi" : new Date(day + "T12:00:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }).replace(/^./, (c) => c.toUpperCase())}</span>
         <button onClick=${() => setLiveOnly(liveOnly ? 0 : 1)} aria-pressed=${!!liveOnly} className=${"inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold " + (liveOnly ? "bg-[#FF3D5A] text-white" : "bg-white dark:bg-[#191626] " + C.tx)}>
         <span className=${"w-2 h-2 rounded-full " + (liveOnly ? "bg-white" : "bg-[#FF3D5A]" + (D.matches.some((m) => m.st === "LIVE") ? " pulse" : ""))}></span>In diretta${D.matches.some((m) => m.st === "LIVE") ? " " + D.matches.filter((m) => m.st === "LIVE").length : ""}</button></div>
-      ${(() => { const fm = dayMatches.filter((m) => favM.includes(m.id) || m.h === fav || m.a === fav); return fm.length > 0 && html`<div className=${C.card + " overflow-hidden"}>
-        <div className="flex items-center gap-3 px-4 pt-3.5 pb-2.5"><${Ic.Star} size=${18} className="text-amber-400 fill-amber-400" /><span className=${"flex-1 text-[16px] font-semibold " + C.tx}>Preferite</span><span className=${"num text-[17px] font-bold " + C.mu}>${fm.length}</span></div>
+      ${(() => { const fm = dayMatches.filter(mia); return fm.length > 0 && html`<div className=${C.card + " overflow-hidden"}>
+        <div className="flex items-center gap-3 px-4 pt-3.5 pb-2.5"><${Ic.Star} size=${18} className="text-amber-400 fill-amber-400" /><span className=${"flex-1 text-[16px] font-semibold " + C.tx}>Le tue partite</span><span className=${"num text-[17px] font-bold " + C.mu}>${fm.length}</span></div>
         <div>${fm.map((m, i) => html`<${Row} key=${m.id} m=${m} i=${i} />`)}</div></div>`; })()}
-      ${D.leagues.map((l) => {
+      ${(() => { const pw = partitaSettimana(D); if (!pw || store.get("pwNo", "") === pw.id || liveOnly) return null;
+        return html`<div className=${C.card + " p-4 relative overflow-hidden"}>
+          <div aria-hidden="true" className="absolute inset-0 opacity-[0.16] dark:opacity-[0.25]" style=${{ background: `radial-gradient(80% 90% at 0% 0%, ${auraCol(pw)[0]}, transparent 70%), radial-gradient(80% 90% at 100% 0%, ${auraCol(pw)[1]}, transparent 70%)` }}></div>
+          <div className="relative"><div className="flex items-center"><span className=${"flex-1 text-[12px] font-semibold " + C.acc}>Partita della settimana</span>
+            <button aria-label="Nascondi" onClick=${() => { store.set("pwNo", pw.id); setToast("Nascosta"); }} className=${C.mu}><${Ic.X} size=${15} /></button></div>
+          <button onClick=${() => goMatch(pw.id)} className="w-full text-left mt-1">
+            <div className="flex items-center gap-2"><${Crest} t=${pw.h} size=${22} /><span className=${"text-[18px] font-bold " + C.tx}>${pw.h}</span><span className=${C.mu}>-</span><span className=${"text-[18px] font-bold " + C.tx}>${pw.a}</span><${Crest} t=${pw.a} size=${22} /></div>
+            <div className=${"text-[13px] mt-1 " + C.mu}>${(lg(pw.lg) || {}).name}, ${new Date(pw.ko).toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" })} alle ${pw.time}</div>
+            <div className="mt-2.5"><${AuraLine} m=${pw} h=${4} /></div></button></div></div>`; })()}
+      ${D.leagues.slice().sort((a, b) => (favLeagues.includes(b.k) ? 1 : 0) - (favLeagues.includes(a.k) ? 1 : 0)).map((l) => {
         const ms = dayMatches.filter((m) => m.lg === l.k);
         if (!ms.length) return null;
         const o = lgOpen.includes(l.k);
@@ -1802,7 +2168,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const views = { partite: home, campionati: html`<${LeaguesView} />`, schedina: html`<${SlipView} />`, club: html`<${ClubView} />` };
     const DOCK = [["partite", "Partite", Ic.Calendar], ["campionati", "Campionati", Ic.Trophy], ["schedina", "Schedina IA", Ic.Sparkles], ["club", "Il Mio Club", Ic.Shield]];
 
-    const ctx = { ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen, mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
+    const ctx = { setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen, mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
     return html`<${Ctx.Provider} value=${ctx}><div className="min-h-screen pb-28">
       ${header}
       <main className="max-w-[480px] mx-auto">${guideBox}${team ? html`<${TeamView} key=${team.name} />` : open_m ? html`<${MatchView} key=${open_m.id} m=${open_m} />` : views[tab]}</main>
@@ -1827,6 +2193,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
             <p className=${"text-[11px] text-center " + C.mu}>Beta: nessun pagamento reale.</p><//>`}<//>`}
 
       ${cerca && html`<${Cerca} onClose=${() => setCerca(false)} />`}
+      ${gloss && html`<${Glossario} onClose=${() => setGloss(false)} />`}
+      ${!onb && html`<${PrimoAvvio} onFine=${() => { setOnb(true); store.set("onb", true); store.set("guideSeen", true); setGuide(0); }} />`}
+      ${!open && !team && html`<${BarraSchedina} vaiSchedina=${() => { setTab("schedina"); window.scrollTo(0, 0); }} />`}
       ${askPush && html`<${Sheet} title="Notifiche della partita" onClose=${() => setAskPush(false)}>
         <p className=${"text-[15px] " + C.tx}>Vuoi ricevere un avviso anche con il telefono bloccato per <b>inizio partita, gol, espulsioni, fine primo tempo e finale</b> delle tue preferite?</p>
         ${/iPhone|iPad/.test(navigator.userAgent) && !navigator.standalone && html`<div className=${"text-[13px] rounded-xl p-3 " + TONE.warn + " border"}>Su iPhone le notifiche funzionano solo aprendo AuraPitch dall'icona sulla schermata Home (Safari, Condividi, Aggiungi alla schermata Home).</div>`}
@@ -1849,10 +2218,12 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           <div className=${"text-xs " + C.mu}>Per le partite con la stella e la squadra del cuore, anche con il telefono bloccato. Scegli qui sotto quali avvisi ricevere.</div>
           <button onClick=${pushOn ? disattivaPush : attivaPush} className=${"w-full py-2.5 rounded-xl text-sm font-semibold " + (pushOn ? "bg-white dark:bg-[#2A2640] " + C.tx : C.on)}>${pushOn ? "Disattiva le notifiche" : "Attiva le notifiche"}</button>
           ${pushMsg && html`<div className=${"text-xs " + C.tx}>${pushMsg}</div>`}
-          ${pushOn && html`<div className="pt-1 space-y-1">${[["formazioni", "Formazioni ufficiali (con la probabilità IA aggiornata)"], ["inizio", "Calcio d'inizio"], ["gol", "Gol"], ["rossi", "Espulsioni"], ["intervallo", "Fine primo tempo"], ["finale", "Risultato finale"]].map(([k, l]) => html`
+          ${pushOn && html`<div className="pt-1 space-y-1">${[["promemoria", "Promemoria un'ora prima, con il consiglio IA"], ["formazioni", "Formazioni ufficiali (con la probabilità IA aggiornata)"], ["inizio", "Calcio d'inizio"], ["gol", "Gol"], ["rossi", "Espulsioni"], ["intervallo", "Fine primo tempo"], ["finale", "Risultato finale"]].map(([k, l]) => html`
             <button key=${k} onClick=${() => { const nx = { ...pref, [k]: pref[k] === false }; setPref(nx); store.set("pushPref", nx); }} className="w-full flex items-center gap-3 py-1.5 text-left">
               <span className=${"flex-1 text-[14px] " + C.tx}>${l}</span>
               <span className=${"w-10 h-6 rounded-full p-0.5 transition-colors " + (pref[k] !== false ? "bg-[#5B2EE6] dark:bg-[#A58BFF]" : "bg-black/20 dark:bg-white/20")}><span className=${"block w-5 h-5 rounded-full bg-white shadow transition-transform " + (pref[k] !== false ? "translate-x-4" : "")}></span></span></button>`)}</div>`}</div>
+        <button onClick=${() => { setProfile(false); setGloss(true); }} className=${"w-full py-2.5 rounded-xl text-sm font-semibold " + C.ch + " " + C.tx}>Glossario delle scommesse</button>
+        <button onClick=${() => { setProfile(false); setOnb(false); }} className=${"w-full py-2.5 rounded-xl text-sm font-semibold " + C.ch + " " + C.tx}>Scegli campionati e squadre che segui</button>
         <div className=${C.lab}>Squadra del cuore</div>
         <div className=${"text-sm " + C.tx}>${fav} <button onClick=${() => { setProfile(false); setOpen(null); setTab("club"); }} className="text-[#5B2EE6] dark:text-[#A58BFF] font-medium ml-1">Cambia</button></div>
         <div className=${C.lab}>Accesso</div>

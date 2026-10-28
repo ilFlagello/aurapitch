@@ -25,21 +25,30 @@ ASSIST = 0.5
 QUOTA_MAX = 0.4  # nessun giocatore vale piu del 40% dei gol della squadra
 
 PAROLE = {
-    "squalifica": ["squalificat", "squalifica", "suspended", "suspension", "sancionad", "gesperrt", "sperre", "red card ban"],
-    "dubbio": ["in dubbio", "a rischio", "in forse", "da valutare", "doubt", "doubtful", "late fitness test", "duda", "fraglich", "en el aire"],
+    "squalifica": ["squalificat", "squalifica", "suspended", "suspension", "sancionad", "gesperrt", "sperre", "red card ban", "suspendu", "suspenso", "geschorst"],
+    "dubbio": ["in dubbio", "a rischio", "in forse", "da valutare", "doubt", "doubtful", "late fitness test", "duda", "fraglich", "en el aire",
+               "incertain", "duvida", "dúvida", "twijfel"],
     "infortunio": ["infortun", "lesione", "stiramento", "frattura", "ko ", " out ", "fermo ai box", "stop per", "indisponibil", "injur", "ruled out",
-                   "sidelined", "hamstring", "lesion", "baja", "verletz", "fällt aus", "fehlt"],
+                   "sidelined", "hamstring", "lesion", "baja", "verletz", "fällt aus", "fehlt", "blesse", "blessé", "lesionado", "desfalque", "geblesseerd"],
     "rientro": ["recupera", "rientra", "torna a disposizione", "torna in gruppo", "convocato", "back in training", "returns", "available again", "recuperado", "vuelve", "zurück", "comeback"],
-    "assenza": ["non convocat", "salter", "non ci sar", "non potr", "assent", "ai box", "forfait", "out per", "out contro", "stagione finita", "fuori dai convocati", "esclus", "salta la", "salta il", "out of the squad", "will miss", "misses", "se pierde", "verpasst"],
+    "assenza": ["non convocat", "salter", "non ci sar", "non potr", "assent", "ai box", "forfait", "out per", "out contro", "stagione finita", "fuori dai convocati", "esclus", "salta la", "salta il", "out of the squad", "will miss", "misses", "se pierde", "verpasst",
+                "assenti", "non nella lista", "left out", "not in the squad", "omitted", "fuera de la convocatoria", "no convocado", "nicht im kader", "absent", "forfait",
+                "fora da lista", "niet in de selectie"],
     "smentita": ["smentit", "nessun infortunio", "sta bene", "non preoccupa", "fit to play", "no injury"],
 }
 LINGUE = {
     "it": ("it", "IT", "IT:it", "(infortunio OR infortunato OR squalificato OR indisponibile OR \"in dubbio\" OR convocati)"),
-    "en": ("en-GB", "GB", "GB:en", "(injury OR injured OR \"ruled out\" OR suspended OR doubt)"),
-    "es": ("es", "ES", "ES:es", "(lesión OR lesionado OR baja OR sancionado OR duda)"),
-    "de": ("de", "DE", "DE:de", "(verletzt OR Verletzung OR gesperrt OR fraglich OR fällt aus)"),
+    "en": ("en-GB", "GB", "GB:en", "(injury OR injured OR \"ruled out\" OR suspended OR doubt OR \"team news\" OR squad)"),
+    "es": ("es", "ES", "ES:es", "(lesión OR lesionado OR baja OR sancionado OR duda OR convocatoria)"),
+    "de": ("de", "DE", "DE:de", "(verletzt OR Verletzung OR gesperrt OR fraglich OR fällt aus OR Kader)"),
+    "fr": ("fr", "FR", "FR:fr", "(blessé OR blessure OR suspendu OR incertain OR forfait OR groupe)"),
+    "pt": ("pt-PT", "PT", "PT:pt-150", "(lesionado OR lesão OR suspenso OR dúvida OR convocados)"),
+    "nl": ("nl", "NL", "NL:nl", "(geblesseerd OR blessure OR geschorst OR twijfelachtig OR selectie)"),
 }
-LINGUA_LEGA = {"I1": "it", "I2": "it", "E0": "en", "SP1": "es", "D1": "de", "CL": "en"}
+# lingua delle notizie per campionato (le nazionali usano l'inglese; Italia e altre si aggiungono in genera)
+LINGUA_LEGA = {"I1": "it", "I2": "it", "CI": "it", "SCI": "it", "E0": "en", "E1": "en", "FAC": "en", "ELC": "en", "SC0": "en", "MLS": "en", "CL": "en", "EL": "en", "ECL": "en",
+               "SP1": "es", "SP2": "es", "CDR": "es", "AR1": "es", "MX1": "es", "D1": "de", "D2": "de", "DFB": "de", "A1": "de", "F1": "fr", "CDF": "fr", "B1": "fr",
+               "P1": "pt", "BR1": "pt", "N1": "nl"}
 
 
 def piano(s):

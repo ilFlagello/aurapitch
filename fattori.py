@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 
-VERSIONE = "fattori-2"
+VERSIONE = "fattori-3"
 SOSTITUTO = 0.5
 AFFIDABILITA = {"squalifica": 0.9, "squalifica_gialli": 0.8, "infortunio": 0.7, "dubbio": 0.3, "assente": 1.0, "panchina": 0.6}
 GIA_NELLE_QUOTE = 0.25
@@ -109,6 +109,19 @@ def _quota(g, gol_squadra):
     return min(QUOTA_MAX, (g["g"] + ASSIST * g["a"]) / max(gol_squadra, g["g"] + g["a"], 1))
 
 
+DIFESA_MAX = 0.12  # fattori-3: un difensore o portiere vale al massimo +12% di gol attesi per l'avversaria
+
+
+def _difesa(g):
+    """Peso difensivo (fattori-3): portieri e difensori titolari con un voto medio AuraPitch sopra 6 nella stagione.
+    Quanto e piu bravo (voto medio - 6) per quanto gioca (quota dei minuti): la sua assenza alza i gol attesi dell'avversaria."""
+    pos = str(g.get("pos") or "")
+    if not (pos.startswith("G") or pos.startswith("D")) or g.get("vm") is None:
+        return 0.0
+    v = max(0.0, g["vm"] - 6.0) * 0.15 * min(1.0, g.get("minq", 0)) * (1.3 if pos.startswith("G") else 1.0)
+    return round(min(DIFESA_MAX, v), 3)
+
+
 ALLENATORE = ["esonerat", "esonero", "nuovo allenatore", "nuovo tecnico", "panchina a ", "sacked", "new manager", "new head coach", "cesado", "destituido", "nuevo entrenador",
               "entlassen", "neuer trainer", "trennt sich von trainer"]
 
@@ -140,7 +153,7 @@ def fattori_squadra(squadra, lato, notizie, giocatori, gol_squadra, foto_utc, ko
             prezzo = GIA_NELLE_QUOTE if foto_utc and t < foto_utc else 1.0
             aff = AFFIDABILITA.get(tipo, 0.0)
             f = {"tipo": tipo or "notizia", "chi": g["n"], "lato": lato, "squadra": squadra, "quota": round(quota, 3), "affidabilita": aff, "prezzo": prezzo,
-                 "delta": round(-quota * (1 - SOSTITUTO) * aff * prezzo, 4), "titolo": n["titolo"], "fonte": n["fonte"], "link": n["link"], "t": n["t"], "fonte_tipo": "notizia"}
+                 "delta": round(-quota * (1 - SOSTITUTO) * aff * prezzo, 4), "delta_avv": round(_difesa(g) * (1 - SOSTITUTO) * aff * prezzo, 4), "titolo": n["titolo"], "fonte": n["fonte"], "link": n["link"], "t": n["t"], "fonte_tipo": "notizia"}
             old = per_giocatore.get(g["n"])
             # per ogni giocatore vale la notizia piu recente (un rientro annulla un infortunio piu vecchio)
             if old is None or f["t"] > old["t"]:
@@ -150,9 +163,9 @@ def fattori_squadra(squadra, lato, notizie, giocatori, gol_squadra, foto_utc, ko
         aff = AFFIDABILITA["squalifica"] if "rosso" in sq["motivo"] else AFFIDABILITA["squalifica_gialli"]
         quota = _quota(g, gol_squadra)
         f = {"tipo": "squalifica", "chi": g["n"], "lato": lato, "squadra": squadra, "quota": round(quota, 3), "affidabilita": aff, "prezzo": GIA_NELLE_QUOTE,
-             "delta": round(-quota * (1 - SOSTITUTO) * aff * GIA_NELLE_QUOTE, 4), "titolo": f"Squalificato: {sq['motivo']}", "fonte": "Cartellini ESPN", "link": "", "t": "", "fonte_tipo": "cartellini"}
+             "delta": round(-quota * (1 - SOSTITUTO) * aff * GIA_NELLE_QUOTE, 4), "delta_avv": round(_difesa(g) * (1 - SOSTITUTO) * aff * GIA_NELLE_QUOTE, 4), "titolo": f"Squalificato: {sq['motivo']}", "fonte": "Cartellini ESPN", "link": "", "t": "", "fonte_tipo": "cartellini"}
         old = per_giocatore.get(g["n"])
-        if old is None or f["delta"] < old["delta"]:  # tra notizia e cartellini vale la correzione piu forte, non la somma
+        if old is None or f["delta"] - f["delta_avv"] < old["delta"] - old.get("delta_avv", 0):  # tra notizia e cartellini vale la correzione piu forte, non la somma
             per_giocatore[g["n"]] = f
     lista = sorted(per_giocatore.values(), key=lambda f: f["delta"])
     somma = sum(f["delta"] for f in lista)
@@ -161,4 +174,8 @@ def fattori_squadra(squadra, lato, notizie, giocatori, gol_squadra, foto_utc, ko
             f["delta"] = round(f["delta"] * TETTO / -somma, 4)
             f["tetto"] = True
         somma = -TETTO
+    avv = sum(f.get("delta_avv", 0) for f in lista)
+    if avv > TETTO:
+        for f in lista:
+            f["delta_avv"] = round(f.get("delta_avv", 0) * TETTO / avv, 4)
     return lista, somma, segnali

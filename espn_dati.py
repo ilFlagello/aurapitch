@@ -15,7 +15,8 @@ from datetime import datetime, timedelta, timezone
 
 SITE = "https://site.api.espn.com/apis/site/v2/sports/soccer/"
 STAND = "https://site.api.espn.com/apis/v2/sports/soccer/"
-ESPN_LG = {"I1": "ita.1", "I2": "ita.2", "E0": "eng.1", "SP1": "esp.1", "D1": "ger.1"}
+ESPN_LG = {"I1": "ita.1", "I2": "ita.2", "E0": "eng.1", "SP1": "esp.1", "D1": "ger.1", "CL": "uefa.champions", "EL": "uefa.europa", "ECL": "uefa.europa.conf", "CI": "ita.coppa_italia"}
+COPPE = ("CL", "EL", "ECL", "CI")
 SOGLIE_GIALLI = (5, 10)  # squalifica alla 5a e alla 10a ammonizione (regola comune a Serie A, Serie B, Premier, LaLiga, Bundesliga)
 STOP = {"fc", "ac", "as", "ss", "us", "ssc", "afc", "cf", "sc", "calcio", "club", "de", "1907", "1909", "1913", "1919", "bc", "vfb", "vfl", "tsg", "sv", "fsv", "rc", "cd", "ud", "rcd", "ca", "sd", "1846", "04", "05", "1899", "hellas"}
 ALIAS = {"internazionale": "inter", "inter milan": "inter", "ac milan": "milan", "manchester united": "man united", "manchester city": "man city", "bayern munich": "bayern", "tottenham hotspur": "tottenham"}
@@ -130,6 +131,121 @@ def classifica_espn(lg):
                       "pt": int(v.get("points") or 0), "rank": int(v.get("rank") or 0)})
     righe.sort(key=lambda r: (r["rank"] or 99, -r["pt"]))
     return righe
+
+
+# ---------- voti AuraPitch della stagione (stessa formula dell'app, live.js votoGiocatore) ----------
+DIFESA = ("D", "CB", "CD", "LB", "RB", "SW", "LWB", "RWB", "CD-L", "CD-R")
+
+
+def _minuto(x):
+    m = re.match(r"(\d+)'", str(x or ""))
+    return int(m.group(1)) if m else None
+
+
+def voto_giocatore(st, pos, starter, minuti, gf, gs):
+    n = lambda k: float(st.get(k) or 0)
+    if minuti < 10 and not (n("totalGoals") or n("goalAssists") or n("redCards")):
+        return None
+    v = (6 + 1.0 * n("totalGoals") + 0.7 * n("goalAssists") + 0.25 * max(0, n("shotsOnTarget") - n("totalGoals")) + 0.05 * max(0, n("totalShots") - n("shotsOnTarget"))
+         + 0.1 * n("foulsSuffered") - 0.1 * n("foulsCommitted") - 0.4 * n("yellowCards") - 1.5 * n("redCards") - 1.0 * n("ownGoals") - 0.05 * n("offsides"))
+    if pos == "G":
+        v += 0.3 * n("saves") - 0.35 * gs + (0.6 if gs == 0 and minuti >= 60 else 0)
+    elif str(pos or "").startswith(DIFESA):
+        v += -0.15 * gs + (0.4 if gs == 0 and minuti >= 60 else 0)
+    v += 0.3 if gf > gs else (-0.2 if gf < gs else 0)
+    if minuti < 30:
+        v = 6 + (v - 6) * max(0.5, minuti / 30)
+    return round(max(3, min(10, v)), 1)
+
+
+def voti_partita(summ):
+    """Voti e minuti di ogni giocatore di una partita finita (scheda ESPN)."""
+    comp = summ["header"]["competitions"][0]
+    lato = {c["team"]["id"]: (0 if c["homeAway"] == "home" else 1) for c in comp["competitors"]}
+    g = [0, 0]
+    for c in comp["competitors"]:
+        g[lato[c["team"]["id"]]] = int(c.get("score") or 0)
+    entra, esce = {}, {}
+    for e in summ.get("keyEvents") or []:
+        if ((e.get("type") or {}).get("type")) == "substitution":
+            ps = [p.get("athlete", {}).get("displayName") for p in e.get("participants") or []]
+            mi = _minuto((e.get("clock") or {}).get("displayValue"))
+            if len(ps) >= 2 and mi is not None:
+                entra[ps[0]], esce[ps[1]] = mi, mi
+    out = []
+    for r in summ.get("rosters") or []:
+        j = 0 if r.get("homeAway") == "home" else 1
+        for p in r.get("roster") or []:
+            a = p.get("athlete") or {}
+            nome = a.get("displayName")
+            if p.get("starter"):
+                minuti = esce.get(nome, 90)
+            elif p.get("subbedIn") or nome in entra:
+                minuti = max(1, 90 - entra.get(nome, 75))
+            else:
+                continue
+            st = {x["name"]: x.get("value") for x in p.get("stats") or []}
+            pos = (p.get("position") or {}).get("abbreviation")
+            v = voto_giocatore(st, pos, p.get("starter"), minuti, g[j], g[1 - j])
+            out.append({"id": a.get("id"), "n": nome, "team": r.get("team", {}).get("displayName"), "pos": pos, "min": minuti, "v": v,
+                        "g": int(st.get("totalGoals") or 0), "a": int(st.get("goalAssists") or 0), "tit": bool(p.get("starter"))})
+    return out
+
+
+def giro_voti(base="data", giorni=4, massimo=350):
+    """Aggiunge all'archivio della stagione i voti delle partite finite negli ultimi giorni (e recupera le precedenti, fino a 'massimo' schede per giro)."""
+    path = os.path.join(base, "espn", "voti.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            arch = json.load(f)
+    except (OSError, ValueError):
+        arch = {"fatte": [], "g": {}, "inizio": None}
+    fatte, G = set(arch.get("fatte", [])), arch.get("g", {})
+    ora = datetime.now(timezone.utc)
+    inizio = datetime(ora.year if ora.month >= 7 else ora.year - 1, 8, 1, tzinfo=timezone.utc)
+    da = max(inizio, ora - timedelta(days=giorni)) if arch.get("completo") else inizio
+    nuove = 0
+    for k, lg in ESPN_LG.items():
+        try:
+            evs = get(f"{SITE}{lg}/scoreboard?dates={da.strftime('%Y%m%d')}-{ora.strftime('%Y%m%d')}&limit=900").get("events", [])
+        except Exception as e:  # noqa: BLE001
+            print(f"Voti {k}: {e}")
+            continue
+        for ev in evs:
+            if nuove >= massimo:
+                break
+            if ev["id"] in fatte or not ev["status"]["type"].get("completed"):
+                continue
+            try:
+                righe = voti_partita(get(f"{SITE}{lg}/summary?event={ev['id']}"))
+            except Exception as e:  # noqa: BLE001
+                print(f"Voti {k} {ev['id']}: {e}")
+                continue
+            fatte.add(ev["id"])
+            nuove += 1
+            for r in righe:
+                if not r["id"]:
+                    continue
+                x = G.setdefault(r["id"], {"n": r["n"], "t": r["team"], "lg": k, "pos": r["pos"], "p": 0, "tit": 0, "min": 0, "sv": 0.0, "nv": 0, "g": 0, "a": 0})
+                x.update({"n": r["n"], "t": r["team"], "lg": k, "pos": x["pos"] if r["pos"] in (None, "SUB") else r["pos"]})
+                x["p"] += 1
+                x["tit"] += 1 if r["tit"] else 0
+                x["min"] += r["min"]
+                x["g"] += r["g"]
+                x["a"] += r["a"]
+                if r["v"] is not None:
+                    x["sv"] = round(x["sv"] + r["v"], 1)
+                    x["nv"] += 1
+    arch = {"fatte": sorted(fatte), "g": G, "completo": nuove < massimo, "agg": ora.isoformat()}
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(arch, f, ensure_ascii=False, separators=(",", ":"))
+    # file leggero per l'app: id -> [voto medio, partite con voto, minuti, gol, assist]
+    app = {i: [round(x["sv"] / x["nv"], 2), x["nv"], x["min"], x["g"], x["a"]] for i, x in G.items() if x["nv"]}
+    os.makedirs(os.path.join("app", "data"), exist_ok=True)
+    with open(os.path.join("app", "data", "voti.json"), "w", encoding="utf-8") as f:
+        json.dump(app, f, separators=(",", ":"))
+    print(f"Voti: {nuove} partite nuove, {len(G)} giocatori, archivio {'completo' if arch['completo'] else 'in recupero'}")
 
 
 def giro_arbitri(base="data", giorni=3):
@@ -285,8 +401,9 @@ def giro_espn(base="data", ore=48):
         except (KeyError, ValueError):
             continue
         if m.get("lg") in ESPN_LG and timedelta(hours=-3) <= ko - ora <= timedelta(hours=ore):
-            squadre[m["h"]] = m["lg"]
-            squadre[m["a"]] = m["lg"]
+            for sq in (m["h"], m["a"]):
+                if sq not in squadre or squadre[sq] in COPPE:  # il campionato vale piu della coppa (rosa, squalifiche)
+                    squadre[sq] = m["lg"]
     out = {"agg": ora.isoformat(), "squadre": {}, "classifiche": {}}
     elenco = {}
     for k in sorted(set(squadre.values())):
@@ -319,7 +436,7 @@ def giro_espn(base="data", ore=48):
         except Exception as e:  # noqa: BLE001
             print(f"ESPN colori {k}: {e}")
     out["risultati_lega"] = {}
-    for k in ("I2",):
+    for k in ("I2",) + COPPE:
         evs = []
         for dd in (-2, -1, 0):
             giorno = (ora + timedelta(days=dd)).strftime("%Y%m%d")
@@ -343,6 +460,10 @@ def giro_espn(base="data", ore=48):
         giro_arbitri(base)
     except Exception as e:  # noqa: BLE001
         print(f"ESPN arbitri: errore {e}")
+    try:
+        giro_voti(base)
+    except Exception as e:  # noqa: BLE001
+        print(f"ESPN voti: errore {e}")
     os.makedirs(os.path.join(base, "espn"), exist_ok=True)
     with open(os.path.join(base, "espn", "squadre.json"), "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))

@@ -30,10 +30,12 @@ OUT = os.path.join("app", "data", "giornata.json")
 # chiave app, nome, paese, bandiera, codice football-data (None = solo quote), nome nel CSV delle quote
 LEAGUES = [
     ("I1", "Serie A", "Italia", "it", "SA", "Serie A"), ("I2", "Serie B", "Italia", "it", None, "Serie B"),
-    ("CL", "Champions League", "Europa", "eu", "CL", "Champions League"), ("E0", "Premier League", "Inghilterra", "en", "PL", "Premier League"),
+    ("CL", "Champions League", "Europa", "eu", "CL", "Champions League"), ("EL", "Europa League", "Europa", "eu", None, "Europa League"),
+    ("ECL", "Conference League", "Europa", "eu", None, "Conference League"), ("CI", "Coppa Italia", "Italia", "it", None, "Coppa Italia"),
+    ("E0", "Premier League", "Inghilterra", "en", "PL", "Premier League"),
     ("SP1", "LaLiga", "Spagna", "es", "PD", "LaLiga"), ("D1", "Bundesliga", "Germania", "de", "BL1", "Bundesliga"),
 ]
-PRIORITA = ["CL", "I1", "E0", "SP1", "D1", "I2"]
+PRIORITA = ["CL", "I1", "EL", "CI", "E0", "SP1", "D1", "ECL", "I2"]
 GG = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"]
 STOP = {"fc", "ac", "as", "ssc", "afc", "cf", "sc", "us", "usd", "calcio", "club", "de", "del", "cd", "ud", "sd", "rc", "rcd", "sv", "vfb", "vfl", "tsg",
         "bc", "fk", "1", "04", "05", "1899", "1909", "1913", "1919", "1929", "and", "hove", "albion", "hotspur", "wanderers", "the"}
@@ -247,6 +249,20 @@ def carica_fd():
     return partite, classifiche
 
 
+def primo_tempo(m):
+    """Risultato del primo tempo da football-data.org, se noto."""
+    ht = (((m or {}).get("score") or {}).get("halfTime") or {})
+    g = [ht.get("home"), ht.get("away")]
+    return g if None not in g else None
+
+
+def esito_sicuro(c, g, g1):
+    try:
+        return M.valuta(c, g[0], g[1], *(g1 or [None, None]))
+    except (ValueError, IndexError):
+        return None  # cartellini, angoli, falli, marcatori: non verificabili dal solo risultato
+
+
 def stato(m):
     s = (m or {}).get("status", "")
     ft = ((m or {}).get("score") or {}).get("fullTime") or {}
@@ -289,7 +305,11 @@ def storico(partite):
             tid = (m.get(lato) or {}).get("id")
             if tid is None:
                 continue
-            per_team.setdefault(tid, []).append({"t": t, "avv": nome_fd(m.get(altro)), "casa": lato == "homeTeam", "gf": gf, "gs": gs})
+            z = {"t": t, "avv": nome_fd(m.get(altro)), "casa": lato == "homeTeam", "gf": gf, "gs": gs}
+            g1 = primo_tempo(m)
+            if g1:
+                z["gf1"], z["gs1"] = (g1[0], g1[1]) if lato == "homeTeam" else (g1[1], g1[0])
+            per_team.setdefault(tid, []).append(z)
     for v in per_team.values():
         v.sort(key=lambda z: z["t"])
     return per_team
@@ -430,7 +450,7 @@ def genera():
     # Serie B (non coperta da football-data): risultati e classifica da ESPN, con id "es:<nome>"
     esd = jload(ESPN, {}) or {}
     for nome, es in (esd.get("squadre") or {}).items():
-        if es.get("lg") == "I2" and es.get("risultati"):
+        if es.get("lg") in ("I2", "EL", "ECL", "CI") and es.get("risultati") and "es:" + nome not in per_team:
             per_team["es:" + nome] = [{"t": utc(x["t"].replace("Z", "+00:00") if x["t"].endswith("Z") else x["t"]), "avv": x["avv"], "casa": x["casa"], "gf": x["gf"], "gs": x["gs"]} for x in es["risultati"]]
     medie_ck = {k: CK.medie_stagione(os.path.join(FD, f"stagione_{k}.csv")) for k in ("I1", "I2", "E0", "SP1", "D1")}
     refs, _ = storia_arbitri(fdp)
@@ -555,13 +575,13 @@ def genera():
         mid = f"{k}-{m_fd['id'] if m_fd else zlib.crc32((h + '|' + a + '|' + loc.date().isoformat()).encode())}"
         out["matches"].append({
             "id": mid, "fd": m_fd["id"] if m_fd else None, "lg": k, "date": loc.strftime("%Y-%m-%d"), "time": loc.strftime("%H:%M"), "ko": t0.isoformat(),
-            "h": h, "a": a, "st": st, "g": g, "res": (None if g is None else (0 if g[0] > g[1] else 1 if g[0] == g[1] else 2)), "free": False,
+            "h": h, "a": a, "st": st, "g": g, "g1": primo_tempo(m_fd) if m_fd and st in ("FT", "LIVE") else None, "res": (None if g is None else (0 if g[0] > g[1] else 1 if g[0] == g[1] else 2)), "free": False,
             "p": q["mk"], "mk": q["mk"], "po": q["mo"] if q["mo"] is not None else 0.5, "mo": q["mo"] if q["mo"] is not None else 0.5,
             "odds": q["odds"], "max": q["max"], "nb": q["nb"], "xg": [lh, la], "elo": [None, None],
             "forma": [testo_forma(l5[0]), testo_forma(l5[1])] if (code or hid or aid) else [{"tone": "ok", "text": "Forma non disponibile per questo campionato nei dati gratuiti."}] * 2,
             "attese": [testo_classifica(tabs, hid), testo_classifica(tabs, aid)] if tabs else [{"tone": "ok", "text": "Classifica non disponibile nei dati gratuiti."}] * 2,
             "prec": prec, "ctx": ctx, "flags": [], "last5": l5, "h2h": h2h, "stats": [],
-            "markets": [[x["c"], x["p"], x["q"], 1 if x["qm"] else 0] for x in mercati] + extra, "tip": tip,
+            "markets": righe_mercati(mercati) + extra, "tip": tip,
             "xg_mercato": [lh, la], "fattori": [], "foto": r["_foto"], "_extra": extra, "cart": cart, "arbitro": arbitro,
             "xgf": [lettura_xg(k, h, t0), lettura_xg(k, a, t0)] if k in xg_lega else None,
             "curiosita": curiosita_partita(per_team, hid, aid, h, a, t0) if (hid or aid) else [],
@@ -609,6 +629,11 @@ def genera():
 NOTIZIE = os.path.join(DATA, "notizie", "notizie.json")
 ESPN = os.path.join(DATA, "espn", "squadre.json")
 ARBITRI = os.path.join(DATA, "arbitri.json")
+
+
+def righe_mercati(mercati):
+    """Righe compatte per l'app: [codice, probabilita, quota raccolta o 0 (= stimata dall'app con margine 6%), raccolta 1/0]."""
+    return [[x["c"], round(x["p"], 3), x["q"] if x["qm"] else 0, 1 if x["qm"] else 0] for x in mercati]
 
 
 def colori_partita(elenco, h, a):
@@ -688,6 +713,7 @@ def applica_fattori(d):
     Base = lettura delle quote; ogni fattore pesa secondo fattori.py e la somma per squadra ha un tetto. Restituisce quante partite cambiano."""
     notizie = jload(NOTIZIE, {}) or {}
     espn = (jload(ESPN, {}) or {}).get("squadre", {})
+    voti = (jload(os.path.join(DATA, "espn", "voti.json"), {}) or {}).get("g", {})
     marc = d.get("scorers") or {}
     cambi = 0
     prossima = {}  # prima partita non iniziata di ogni squadra: e li che si sconta una squalifica
@@ -712,6 +738,12 @@ def applica_fattori(d):
             items = (notizie.get(sq) or {}).get("items", [])
             es = espn.get(sq) or {}
             if es.get("rosa"):
+                # voto medio e quota dei minuti della stagione (archivio dei voti AuraPitch): servono al peso difensivo
+                giornate = max([voti[x["id"]]["min"] for x in es["rosa"] if x.get("id") in voti] or [0]) / 90 or 1
+                for x in es["rosa"]:
+                    v = voti.get(x.get("id"))
+                    if v and v.get("nv", 0) >= 3:
+                        x["vm"], x["minq"] = round(v["sv"] / v["nv"], 2), round(v["min"] / (90 * giornate), 3)
                 gioc, gol = es["rosa"], sum(x["g"] for x in es["rosa"]) or None
                 squal = ES.squalificati(es) if prossima.get(sq) == m["ko"] else []
                 diffidati += [{"chi": p["n"], "lato": lato, "gialli": p["gialli"]} for p in ES.diffidati(es) if p["g"] + p["a"] > 0 or p["tit"] >= 3]
@@ -726,18 +758,19 @@ def applica_fattori(d):
             segnali.append({"tipo": "riposo", "lato": 0 if rr[0] > rr[1] else 1, "titolo": f"{abs(rr[0] - rr[1])} giorni di riposo in più", "fonte": "", "link": "", "t": ""})
         m["segnali"] = segnali[:6]
         m["diffidati"] = diffidati[:8]
-        nuovo = [round(lh0 * (1 + tot[0]), 3), round(la0 * (1 + tot[1]), 3)]
+        avv = [sum(f.get("delta_avv", 0) for f in tutti if f["lato"] == 1), sum(f.get("delta_avv", 0) for f in tutti if f["lato"] == 0)]
+        nuovo = [round(lh0 * (1 + tot[0] + avv[0]), 3), round(la0 * (1 + tot[1] + avv[1]), 3)]
         firma = zlib.crc32(json.dumps([tutti, nuovo, segnali], sort_keys=True).encode())
         if firma == m.get("_firma"):
             continue
         m["_firma"] = firma
         cambi += 1
-        m["fattori"] = [{k: f.get(k) for k in ("tipo", "chi", "lato", "quota", "affidabilita", "prezzo", "delta", "titolo", "fonte", "link", "t", "tetto")} for f in tutti][:10]
+        m["fattori"] = [{k: f.get(k) for k in ("tipo", "chi", "lato", "quota", "affidabilita", "prezzo", "delta", "delta_avv", "titolo", "fonte", "link", "t", "tetto")} for f in tutti][:10]
         lh, la = nuovo
         m["xg"] = nuovo
         mercati = M.calcola_mercati(lh, la, m["h"], m["a"], c.get("raccolte") or {})
         pm = {x["c"]: x["p"] for x in mercati}
-        if any(f["delta"] for f in tutti):
+        if any(f["delta"] or f.get("delta_avv") for f in tutti):
             m["p"] = [round(pm.get("1", 0), 4), round(pm.get("X", 0), 4), round(pm.get("2", 0), 4)]
             m["po"] = round(pm.get("O2.5", 0.5), 4)
         else:
@@ -745,18 +778,34 @@ def applica_fattori(d):
         tip = M.scegli(mercati, m["h"], m["a"], c.get("sh"), c.get("sa"), {"pos_h": c.get("pos_h"), "pos_a": c.get("pos_a")}, m.get("nb"))
         righe = []
         for f in tutti:
-            if not f["delta"]:
+            if not f["delta"] and not f.get("delta_avv"):
                 continue
             sq = m["h"] if f["lato"] == 0 else m["a"]
+            avv = m["a"] if f["lato"] == 0 else m["h"]
+            eff = []
+            if f["delta"]:
+                eff.append(f"gol attesi di {sq} corretti del {str(round(f['delta'] * 100, 1)).replace('.', ',')}%")
+            if f.get("delta_avv"):
+                eff.append(f"gol attesi di {avv} +{str(round(f['delta_avv'] * 100, 1)).replace('.', ',')}% (peso in difesa)")
             righe.append((f"Squalifica: {f['chi']} ({f['titolo'].split(': ', 1)[-1]}). " if f.get("fonte_tipo") == "cartellini" else
                           f"Notizia ({f['fonte'] or 'stampa'}): {f['chi']} {dict(squalifica='squalificato', infortunio='indisponibile', dubbio='in dubbio').get(f['tipo'], f['tipo'])}. ")
-                         + f"Gol attesi di {sq} corretti del {str(round(f['delta'] * 100, 1)).replace('.', ',')}%" + (" (in parte già nelle quote)." if f["prezzo"] < 1 else "."))
+                         + ", ".join(eff).capitalize() + (" (in parte già nelle quote)." if f["prezzo"] < 1 else "."))
         for v in tip.values():
             if not (c.get("sh") and c.get("sa")):
                 v["perche"].append("Statistiche delle squadre non disponibili per questo campionato: il consiglio si basa solo sulle quote.")
             v["perche"] += righe
-        m["markets"] = [[x["c"], x["p"], x["q"], 1 if x["qm"] else 0] for x in mercati] + (m.get("_extra") or [])
+        assenti = {f["chi"] for f in tutti if (f.get("delta") or f.get("delta_avv")) and f.get("affidabilita", 0) >= 0.6}
+        marc_l, marc_info = [], {}
+        for lato, sq in enumerate((m["h"], m["a"])):
+            es = espn.get(sq) or {}
+            for x in M.marcatori(es.get("rosa") or [], lh if lato == 0 else la, assenti):
+                cm = "MARC:" + x["n"]
+                marc_l.append([cm, x["p"], round(max(1.01, 0.88 / x["p"]), 2), 0])
+                marc_info[cm] = {"lato": lato, "g": x["g"], "pres": x["pres"], "tit": x["tit"]}
+        m["markets"] = righe_mercati(mercati) + (m.get("_extra") or []) + marc_l
+        m["marcatori"] = marc_info
         m["tip"] = tip
+        m["ia"] = M.valutazioni(mercati, m["h"], m["a"], c.get("sh"), c.get("sa"), {"pos_h": c.get("pos_h"), "pos_a": c.get("pos_a")}, m.get("cart"), m.get("_extra"), marc_l, marc_info)
     return cambi
 
 
@@ -774,8 +823,9 @@ def aggiorna_live():
             continue
         st, g = stato(v)
         res = None if g is None else (0 if g[0] > g[1] else 1 if g[0] == g[1] else 2)
-        if (st, g) != (m.get("st"), m.get("g")):
-            m["st"], m["g"], m["res"] = st, g, res
+        g1 = primo_tempo(v) if st in ("FT", "LIVE") else None
+        if (st, g, g1) != (m.get("st"), m.get("g"), m.get("g1")):
+            m["st"], m["g"], m["res"], m["g1"] = st, g, res, g1
             cambi += 1
     d["generato"] = datetime.now(timezone.utc).astimezone(ROME).strftime("%d/%m/%Y %H:%M")
     d["label"] = f"aggiornati il {d['generato'][:5]} alle {d['generato'][-5:]}"
@@ -806,9 +856,10 @@ def aggiorna_storico(d):
                  "tips": {k: {x: v[x] for x in ("c", "l", "p", "q", "qm")} for k, v in tip.items()}}
             st[m["id"]] = r
         if m["st"] in ("FT", "LIVE", "RINV"):
-            r["st"], r["g"] = m["st"], m.get("g")
+            r["st"], r["g"], r["g1"] = m["st"], m.get("g"), m.get("g1")
         if r["st"] == "FT" and r.get("g"):
-            r["esiti"] = {k: M.valuta(v["c"], r["g"][0], r["g"][1]) for k, v in r["tips"].items()}
+            es = {k: esito_sicuro(v["c"], r["g"], r.get("g1")) for k, v in r["tips"].items()}
+            r["esiti"] = {k: v for k, v in es.items() if v is not None}
     limite = (datetime.now(timezone.utc).astimezone(ROME).date() - timedelta(days=60)).isoformat()
     st = {k: v for k, v in st.items() if v["date"] >= limite}
     os.makedirs(os.path.dirname(STORICO_IN), exist_ok=True)

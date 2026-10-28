@@ -37,9 +37,13 @@ LEAGUES = [
     {"nome": "Bundesliga", "af": 78, "odds_title": "Bundesliga - Germany", "odds_key": "soccer_germany_bundesliga"},
     {"nome": "2. Bundesliga", "af": 79, "odds_title": "Bundesliga 2 - Germany", "odds_key": "soccer_germany_bundesliga2"},
     {"nome": "Champions League", "af": 2, "odds_title": "UEFA Champions League", "odds_key": "soccer_uefa_champs_league"},
+    {"nome": "Europa League", "af": 3, "odds_title": "UEFA Europa League", "odds_key": "soccer_uefa_europa_league"},
+    {"nome": "Conference League", "af": 848, "odds_title": "UEFA Europa Conference League", "odds_key": "soccer_uefa_europa_conference_league"},
+    {"nome": "Coppa Italia", "af": 137, "odds_title": "Coppa Italia", "odds_key": "soccer_italy_coppa_italia"},
 ]
 # The Odds API: 2 crediti per campionato (mercati h2h + totals, area eu). 6 campionati al giorno = circa 360 crediti al mese su 500.
-ODDS_API_LEAGUES = ["Serie A", "Serie B", "Premier League", "LaLiga", "Bundesliga", "Champions League"]
+ODDS_API_LEAGUES = ["Serie A", "Serie B", "Premier League", "LaLiga", "Bundesliga", "Champions League", "Europa League", "Conference League", "Coppa Italia"]
+COPPE = {"Champions League", "Europa League", "Conference League", "Coppa Italia"}  # quote solo se ci sono partite entro 3 giorni (controllo gratuito)
 AF_BASE = "https://v3.football.api-sports.io"
 FD_BASE = "https://api.football-data.org/v4"
 # football-data.org (piano gratuito, 10 richieste al minuto): risultati, classifiche, precedenti
@@ -81,6 +85,19 @@ def af(path, **params):
         print(f"  [API-Football] {path} {params}: {body['errors']}")
     time.sleep(6.5)  # il piano gratuito limita anche le richieste al minuto
     return body
+
+
+def partite_vicine(chiave, giorni=3):
+    """Elenco eventi di The Odds API (non consuma crediti): ci sono partite nei prossimi giorni?"""
+    ev, _ = odds_api(f"/sports/{chiave}/events", dateFormat="iso")
+    ora = datetime.now(timezone.utc)
+    for e in ev or []:
+        try:
+            if timedelta(0) <= datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")) - ora <= timedelta(days=giorni):
+                return True
+        except (KeyError, ValueError):
+            continue
+    return False
 
 
 def odds_api(path, **params):
@@ -221,10 +238,16 @@ def giro_completo(base="data"):
     chiavi = {}
     if sports:
         per_titolo = {s["title"]: s["key"] for s in sports}
+        esistenti = {s["key"] for s in sports}
         for lg in LEAGUES:
-            chiavi[lg["nome"]] = per_titolo.get(lg["odds_title"], lg["odds_key"])
+            k = per_titolo.get(lg["odds_title"], lg["odds_key"])
+            if k in esistenti:
+                chiavi[lg["nome"]] = k
     for nome in ODDS_API_LEAGUES:
-        if nome not in attivi or nome not in chiavi:
+        if (nome not in attivi and nome not in COPPE) or nome not in chiavi:
+            continue
+        if nome in COPPE and not partite_vicine(chiavi[nome]):
+            print(f"{nome}: nessuna partita nei prossimi 3 giorni, quote non scaricate")
             continue
         ev, _ = odds_api(f"/sports/{chiavi[nome]}/odds", regions="eu", markets="h2h,totals", oddsFormat="decimal", dateFormat="iso")
         if ev is None:
@@ -405,7 +428,8 @@ def giro_notizie(base="data", ore=48):
     print(f"Notizie: {len(squadre)} squadre controllate, {nuove} titoli nuovi")
 
 
-LEGA_APP = {"I1": "Serie A", "I2": "Serie B", "CL": "Champions League", "E0": "Premier League", "SP1": "LaLiga", "D1": "Bundesliga"}
+LEGA_APP = {"I1": "Serie A", "I2": "Serie B", "CL": "Champions League", "EL": "Europa League", "ECL": "Conference League", "CI": "Coppa Italia",
+            "E0": "Premier League", "SP1": "LaLiga", "D1": "Bundesliga"}
 CREDITI_GIORNO = 14  # stima prudente dei crediti The Odds API usati dal giro del mattino
 
 

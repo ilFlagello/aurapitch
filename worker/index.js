@@ -70,7 +70,22 @@ function stato(ev) {
   const h = c.competitors.find((x) => x.homeAway === "home"), a = c.competitors.find((x) => x.homeAway === "away");
   const goals = (c.details || []).filter((d) => d.scoringPlay).map((d) => ({ min: (d.clock && d.clock.displayValue) || "", chi: ((d.athletesInvolved || [])[0] || {}).displayName || "", og: d.ownGoal, pen: d.penaltyKick }));
   const rossi = (c.details || []).filter((d) => d.redCard).map((d) => ({ min: (d.clock && d.clock.displayValue) || "", chi: ((d.athletesInvolved || [])[0] || {}).displayName || "", casa: (d.team || {}).id === h.team.id }));
-  return { st: t.state, half: t.name === "STATUS_HALFTIME", g: [Number(h.score || 0), Number(a.score || 0)], clock: ev.status.displayClock || "", goals, rossi };
+  return { st: t.state, half: t.name === "STATUS_HALFTIME", g: [Number(h.score || 0), Number(a.score || 0)], clock: ev.status.displayClock || "", goals, rossi, ko: Date.parse(ev.date) };
+}
+const PREF0 = { inizio: true, gol: true, rossi: true, intervallo: true, finale: true, formazioni: true };
+const vuole = (sub, tipo) => ((sub && sub.pref) || PREF0)[tipo] !== false;
+/* dati dell'app (probabilita IA e marcatori) per arricchire l'avviso delle formazioni; letti al massimo ogni 5 minuti */
+async function giornata() {
+  try { const r = await fetch("https://ilflagello.github.io/aurapitch/data/giornata.json", { cf: { cacheTtl: 300 } }); return r.ok ? await r.json() : null; } catch (e) { return null; }
+}
+const piano = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+async function formazioni(lg, eid) {
+  try {
+    const d = await (await fetch(`${SITE}${lg}/summary?event=${eid}`, { cf: { cacheTtl: 60 } })).json();
+    const R = d.rosters || [];
+    const tit = R.map((r) => (r.roster || []).filter((p) => p.starter).map((p) => p.athlete && p.athlete.displayName).filter(Boolean));
+    return tit.length === 2 && tit[0].length >= 11 && tit[1].length >= 11 ? tit : null;
+  } catch (e) { return null; }
 }
 async function controlla(env) {
   const subs = (await env.KV.get("subs", "json")) || {};
@@ -88,32 +103,49 @@ async function controlla(env) {
   }));
   const old = (await env.KV.get("state", "json")) || {};
   const nuovo = {};
+  let G = null;
   const msgs = [];
   for (const [k, { f, ids }] of Object.entries(follow)) {
     const ev = eventi[k];
     if (!ev) { if (old[k]) nuovo[k] = old[k]; continue; }
     const s = stato(ev), o = old[k];
-    nuovo[k] = { st: s.st, g: s.g, half: s.half, rossi: s.rossi.length };
+    nuovo[k] = { st: s.st, g: s.g, half: s.half, rossi: s.rossi.length, form: o ? o.form : false };
     if (!o) continue; // prima volta che la vediamo: nessun avviso
     const nomi = `${f.h} ${s.g[0]} - ${s.g[1]} ${f.a}`;
-    const push = (title, body) => msgs.push({ ids, msg: { title, body, tag: k + "|" + title + "|" + body.length, url: "./" } });
-    if (o.st === "pre" && s.st === "in") push("Calcio d'inizio", `${f.h} - ${f.a}`);
+    const push = (title, body, tipo) => msgs.push({ ids: ids.filter((id) => vuole(subs[id], tipo)), msg: { title, body, tag: k + "|" + title + "|" + body.length, url: "./" } });
+    // formazioni ufficiali: da 75 minuti prima del calcio d'inizio, controllo ogni 3 minuti finche escono
+    if (s.st === "pre" && !o.form && s.ko - Date.now() < 75 * 60000 && new Date().getUTCMinutes() % 3 === 0) {
+      const tit = await formazioni(k.split("|")[0], k.split("|")[1]);
+      if (tit) {
+        nuovo[k].form = true;
+        G = G || (await giornata()) || { matches: [] };
+        const m = G.matches.find((x) => piano(x.h) === piano(f.h) && piano(x.a) === piano(f.a));
+        let body = `${f.h} - ${f.a}: sono uscite le formazioni ufficiali.`;
+        if (m && m.p) body += ` IA: ${f.h} ${Math.round(m.p[0] * 100)}%, pari ${Math.round(m.p[1] * 100)}%, ${f.a} ${Math.round(m.p[2] * 100)}%.`;
+        if (m && m.marcatori) {
+          const fuori = Object.entries(m.marcatori).filter(([c, x]) => x.g >= 2 && !tit[x.lato].some((n) => piano(n) === piano(c.slice(5)))).map(([c, x]) => `${c.slice(5)} (${x.lato ? f.a : f.h})`);
+          if (fuori.length) body += ` Non titolari: ${fuori.slice(0, 3).join(", ")}.`;
+        }
+        push("Formazioni ufficiali", body, "formazioni");
+      }
+    }
+    if (o.st === "pre" && s.st === "in") push("Calcio d'inizio", `${f.h} - ${f.a}`, "inizio");
     if (s.st !== "pre" && (s.g[0] !== o.g[0] || s.g[1] !== o.g[1])) {
       const piu = s.g[0] + s.g[1] > o.g[0] + o.g[1];
       const last = s.goals[s.goals.length - 1];
-      push(piu ? "Gol!" : "Gol annullato", nomi + (last && piu ? ` - ${last.min} ${last.chi}${last.pen ? " (rigore)" : ""}${last.og ? " (autogol)" : ""}` : ""));
+      push(piu ? "Gol!" : "Gol annullato", nomi + (last && piu ? ` - ${last.min} ${last.chi}${last.pen ? " (rigore)" : ""}${last.og ? " (autogol)" : ""}` : ""), "gol");
     }
     if (s.rossi.length > (o.rossi || 0)) {
-      for (const r of s.rossi.slice(o.rossi || 0)) push("Espulsione", `${r.chi} (${r.casa ? f.h : f.a}) al ${r.min} - ${nomi}`);
+      for (const r of s.rossi.slice(o.rossi || 0)) push("Espulsione", `${r.chi} (${r.casa ? f.h : f.a}) al ${r.min} - ${nomi}`, "rossi");
     }
-    if (!o.half && s.half) push("Fine primo tempo", nomi);
-    if (o.st === "in" && s.st === "post") push("Finale", nomi);
+    if (!o.half && s.half) push("Fine primo tempo", nomi, "intervallo");
+    if (o.st === "in" && s.st === "post") push("Finale", nomi, "finale");
   }
   if (JSON.stringify(nuovo) !== JSON.stringify(old)) await env.KV.put("state", JSON.stringify(nuovo));
   if (!msgs.length) return "nessuna novità";
   const v = await vapid(env);
   let morte = [];
-  for (const { ids, msg } of msgs) {
+  for (const { ids, msg } of msgs.filter((x) => x.ids.length)) {
     await Promise.all(ids.map(async (id) => {
       try { const st = await invia(env, v, subs[id].sub, msg); if (st === 404 || st === 410) morte.push(id); } catch (e) { /* invio non riuscito */ }
     }));
@@ -161,7 +193,9 @@ export default {
       const id = await sha(d.sub.endpoint);
       if (Object.keys(subs).length > 500 && !subs[id]) return json({ ok: false, err: "troppe iscrizioni" }, 429);
       const prima = JSON.stringify(subs[id] || null);
-      subs[id] = { sub: { endpoint: d.sub.endpoint, keys: d.sub.keys }, follow, t: Date.now() };
+      const pref = {};
+      for (const k of Object.keys(PREF0)) pref[k] = !(d.pref && d.pref[k] === false);
+      subs[id] = { sub: { endpoint: d.sub.endpoint, keys: d.sub.keys }, follow, pref, t: Date.now() };
       if (prima !== JSON.stringify(subs[id]) || !subs[id].t0) { subs[id].t0 = (JSON.parse(prima) || {}).t0 || Date.now(); await env.KV.put("subs", JSON.stringify(subs)); }
       return json({ ok: true, seguite: follow.length });
     }
@@ -199,8 +233,14 @@ export default {
       const d = await req.json().catch(() => null);
       const id = d && String(d.id || ""), s = d && Number(d.s), chi = d && String(d.chi || "");
       if (!/^[A-Za-z0-9_-]{1,40}$/.test(id) || ![0, 1, 2].includes(s) || !/^[a-z0-9]{8,40}$/.test(chi)) return json({ ok: false }, 400);
+      const G0 = await giornata();
+      const mt = G0 && G0.matches.find((x) => x.id === id);
+      if (mt && (mt.st !== "NS" || Date.parse(mt.ko) <= Date.now())) return json({ ok: false, err: "votazione chiusa" }, 409);
       const k = "v:" + id, kc = "vc:" + id + ":" + chi;
       const v = (await env.KV.get(k, "json")) || [0, 0, 0];
+      const u = (await env.KV.get("u:" + chi, "json")) || { nome: "", gruppi: [], voti: {} };
+      u.voti[id] = { s, d: mt ? mt.date : new Date().toISOString().slice(0, 10), p: mt ? mt.mk || mt.p : null, ia: mt && mt.p ? mt.p.indexOf(Math.max(...mt.p)) : null };
+      await env.KV.put("u:" + chi, JSON.stringify(u));
       const prima = await env.KV.get(kc);
       if (prima !== null && Number(prima) === s) return json({ ok: true, v });
       if (prima !== null) v[Number(prima)] = Math.max(0, v[Number(prima)] - 1);
@@ -208,6 +248,89 @@ export default {
       await env.KV.put(k, JSON.stringify(v), { expirationTtl: 60 * 60 * 24 * 21 });
       await env.KV.put(kc, String(s), { expirationTtl: 60 * 60 * 24 * 21 });
       return json({ ok: true, v });
+    }
+    // ---------- gara dei pronostici ----------
+    const okChi = (c) => /^[a-z0-9]{8,40}$/.test(String(c || ""));
+    if (url.pathname === "/profilo" && req.method === "POST") {
+      const d = await req.json().catch(() => null);
+      if (!d || !okChi(d.chi)) return json({ ok: false }, 400);
+      const u = (await env.KV.get("u:" + d.chi, "json")) || { nome: "", gruppi: [], voti: {} };
+      if (typeof d.nome === "string") u.nome = d.nome.replace(/[^\p{L}\p{N} ._-]/gu, "").trim().slice(0, 20);
+      await env.KV.put("u:" + d.chi, JSON.stringify(u));
+      return json({ ok: true, u: { nome: u.nome, gruppi: u.gruppi } });
+    }
+    if (url.pathname === "/profilo") {
+      const chi = url.searchParams.get("chi");
+      if (!okChi(chi)) return json({ ok: false }, 400);
+      const u = await env.KV.get("u:" + chi, "json");
+      if (!u) return json({ ok: false, err: "codice non trovato" }, 404);
+      const gr = await Promise.all((u.gruppi || []).map(async (g) => ({ code: g, ...((await env.KV.get("g:" + g, "json")) || {}) })));
+      return json({ ok: true, u: { nome: u.nome, gruppi: gr.map((g) => ({ code: g.code, nome: g.nome, n: (g.membri || []).length })), voti: Object.fromEntries(Object.entries(u.voti || {}).map(([k, v]) => [k, v.s])) } });
+    }
+    if (url.pathname === "/gruppo" && req.method === "POST") {
+      const d = await req.json().catch(() => null);
+      if (!d || !okChi(d.chi)) return json({ ok: false }, 400);
+      const u = (await env.KV.get("u:" + d.chi, "json")) || { nome: "", gruppi: [], voti: {} };
+      let code = String(d.code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+      let g;
+      if (d.azione === "crea") {
+        code = Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join("");
+        g = { nome: String(d.nome || "Gruppo").replace(/[^\p{L}\p{N} ._-]/gu, "").trim().slice(0, 24) || "Gruppo", membri: [] };
+      } else {
+        g = await env.KV.get("g:" + code, "json");
+        if (!g) return json({ ok: false, err: "gruppo non trovato" }, 404);
+      }
+      if (d.azione === "esci") { g.membri = g.membri.filter((x) => x !== d.chi); u.gruppi = u.gruppi.filter((x) => x !== code); }
+      else { if (!g.membri.includes(d.chi)) { if (g.membri.length >= 50) return json({ ok: false, err: "gruppo pieno" }, 409); g.membri.push(d.chi); } if (!u.gruppi.includes(code)) u.gruppi.push(code); }
+      await env.KV.put("g:" + code, JSON.stringify(g));
+      await env.KV.put("u:" + d.chi, JSON.stringify(u));
+      return json({ ok: true, code, nome: g.nome });
+    }
+    if (url.pathname === "/classifica") {
+      const chi = url.searchParams.get("chi"), code = String(url.searchParams.get("gruppo") || "").toUpperCase(), per = url.searchParams.get("periodo") || "settimana";
+      if (!okChi(chi)) return json({ ok: false }, 400);
+      // risultati: archivio "ris" aggiornato con le partite finite del file dell'app
+      const ris = (await env.KV.get("ris", "json")) || {};
+      const G1 = await giornata();
+      let nuovi = false;
+      for (const m of (G1 && G1.matches) || []) if (m.st === "FT" && m.g && !ris[m.id]) { ris[m.id] = [m.g[0] > m.g[1] ? 0 : m.g[0] === m.g[1] ? 1 : 2, m.date]; nuovi = true; }
+      if (nuovi) await env.KV.put("ris", JSON.stringify(ris));
+      const lun = new Date(); lun.setUTCHours(0, 0, 0, 0); lun.setUTCDate(lun.getUTCDate() - ((lun.getUTCDay() + 6) % 7));
+      const da = per === "settimana" ? lun.toISOString().slice(0, 10) : "0000";
+      const punteggio = (u) => {
+        let pt = 0, giuste = 0, giocate = 0, ia = 0, iaG = 0;
+        for (const [id, v] of Object.entries(u.voti || {})) {
+          const r = ris[id];
+          if (!r || r[1] < da) continue;
+          giocate++;
+          if (v.s === r[0]) { giuste++; pt += 3 + (v.p && v.p[v.s] < 0.3 ? 2 : 0); }
+          if (v.ia != null) { iaG++; if (v.ia === r[0]) ia++; }
+        }
+        return { pt, giuste, giocate, ia, iaG };
+      };
+      const io = (await env.KV.get("u:" + chi, "json")) || { nome: "", voti: {} };
+      let membri = [];
+      if (code) {
+        const g = await env.KV.get("g:" + code, "json");
+        if (!g || !g.membri.includes(chi)) return json({ ok: false, err: "non sei nel gruppo" }, 403);
+        membri = await Promise.all(g.membri.map(async (c) => ({ c, u: (await env.KV.get("u:" + c, "json")) || { nome: "", voti: {} } })));
+      }
+      const righe = membri.map(({ c, u }) => ({ nome: u.nome || "Anonimo", io: c === chi, ...punteggio(u) })).sort((a, b) => b.pt - a.pt || b.giuste - a.giuste);
+      return json({ ok: true, io: { nome: io.nome, ...punteggio(io) }, righe, da });
+    }
+    // ---------- sincronizzazione tra dispositivi (codice personale) ----------
+    if (url.pathname === "/sync" && req.method === "POST") {
+      const d = await req.json().catch(() => null);
+      if (!d || !okChi(d.chi) || typeof d.dati !== "object") return json({ ok: false }, 400);
+      const txt = JSON.stringify(d.dati);
+      if (txt.length > 200000) return json({ ok: false, err: "troppi dati" }, 413);
+      await env.KV.put("s:" + d.chi, txt);
+      return json({ ok: true });
+    }
+    if (url.pathname === "/sync") {
+      const chi = url.searchParams.get("chi");
+      if (!okChi(chi)) return json({ ok: false }, 400);
+      return json({ ok: true, dati: (await env.KV.get("s:" + chi, "json")) || null });
     }
     if (url.pathname === "/stato") return json({ orologio: (await env.KV.get("orologio", "json")) || null, token: !!env.GH_TOKEN });
     if (url.pathname === "/") return json({ ok: true, servizio: "AuraPitch notifiche" });

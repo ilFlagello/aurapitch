@@ -110,7 +110,21 @@ def linee(k, mu):
         po = 1 - sum(_pmf(i, mu, M["r"]) for i in range(int(L) + 1))
         for c, p in ((f"{k}O{L}", po), (f"{k}U{L}", 1 - po)):
             if 0.03 < p < 0.97:
-                out.append([c, round(p, 4), round(max(1.01, 0.94 / p), 2), 0])
+                out.append([c, round(p, 3), 0, 0])
+    return out
+
+
+LINEE_SQUADRA = {"K": (0.5, 1.5, 2.5, 3.5), "C": (2.5, 3.5, 4.5, 5.5, 6.5), "F": (9.5, 10.5, 11.5, 12.5, 13.5, 14.5)}
+
+
+def linee_squadra(k, lato, mu):
+    """Over/Under di una sola squadra: codici KHO1.5 (cartellini casa oltre 1,5), CAU4.5, FHO11.5..."""
+    M, out = MODELLI[k], []
+    for L in LINEE_SQUADRA[k]:
+        po = 1 - sum(_pmf(i, mu, M["r"]) for i in range(int(L) + 1))
+        for c, p in ((f"{k}{lato}O{L}", po), (f"{k}{lato}U{L}", 1 - po)):
+            if 0.03 < p < 0.97:
+                out.append([c, round(p, 3), 0, 0])
     return out
 
 
@@ -123,11 +137,16 @@ def con_arbitro(m, arb):
     for k, beta in ARBITRO["beta"].items():
         if k in cart and cart[k].get("senza_arbitro"):
             mu = cart[k]["senza_arbitro"] * arb["ratio"][k] ** beta
+            f = mu / max(0.01, cart[k]["attesi"])
             cart[k]["attesi"] = round(mu, 2)
             nuove[k] = linee(k, mu)
+            if cart[k].get("squadre"):
+                sq = [x * f for x in cart[k]["squadre"]]
+                cart[k]["squadre"] = [round(x, 2) for x in sq]
+                nuove[k] += linee_squadra(k, "H", sq[0]) + linee_squadra(k, "A", sq[1])
     if not nuove:
         return False
-    tieni = lambda x: not (isinstance(x, list) and str(x[0])[:1] in nuove and str(x[0])[1:2] in ("O", "U"))
+    tieni = lambda x: not (isinstance(x, list) and str(x[0])[:1] in nuove and (str(x[0])[1:2] in ("O", "U") or (str(x[0])[1:2] in ("H", "A") and str(x[0])[2:3] in ("O", "U"))))
     agg = [r for k in nuove for r in nuove[k]]
     m["markets"] = [x for x in m.get("markets", []) if tieni(x)] + agg
     m["_extra"] = [x for x in m.get("_extra", []) if tieni(x)] + agg
@@ -157,4 +176,8 @@ def mercati(med, casa, ospite, p1, p2, arb=None):
             mu *= arb["ratio"][k] ** ARBITRO["beta"][k]
         info[k] = {"attesi": round(mu, 2), "senza_arbitro": round(senza, 2), "media_lega": round(lg, 2), "casa": [round(h[k + "f"], 2), round(h[k + "s"], 2)], "ospite": [round(a[k + "f"], 2), round(a[k + "s"], 2)]}
         out += linee(k, mu)
+        # per squadra: la media attesa si divide secondo fatti (squadra) + subiti (avversaria)
+        qh = (h[k + "f"] + a[k + "s"]) / max(0.1, h[k + "f"] + a[k + "s"] + a[k + "f"] + h[k + "s"])
+        info[k]["squadre"] = [round(mu * qh, 2), round(mu * (1 - qh), 2)]
+        out += linee_squadra(k, "H", mu * qh) + linee_squadra(k, "A", mu * (1 - qh))
     return out, info

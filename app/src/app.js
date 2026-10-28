@@ -5,10 +5,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import htm from "htm";
 import { useLiveScores, useSummary, loadPlayer, loadCareer, ruolo, findTeam, loadTeam, minuto, ESPN_LG, andamento } from "./live.js";
-import { LuActivity, LuCalculator, LuCalendar, LuChartColumn, LuCheck, LuChevronDown, LuChevronLeft, LuChevronRight, LuChevronUp, LuCircleCheck, LuCircleDot, LuCircleHelp, LuCircleX, LuClock, LuCopy, LuCrown, LuInfo, LuLock, LuMoon, LuNewspaper, LuPlay, LuPlus, LuRepeat, LuShield, LuShieldCheck, LuShirt, LuSmartphone, LuSparkles, LuStar, LuSun, LuSwords, LuTrash2, LuTrendingUp, LuTriangleAlert, LuTrophy, LuUsers, LuX, LuZap } from "react-icons/lu";
+import { LuActivity, LuCalculator, LuCalendar, LuChartColumn, LuCheck, LuChevronDown, LuChevronLeft, LuChevronRight, LuChevronUp, LuCircleCheck, LuCircleDot, LuCircleHelp, LuCircleX, LuClock, LuCopy, LuCrown, LuInfo, LuLock, LuMoon, LuNewspaper, LuPlay, LuPlus, LuRepeat, LuSearch, LuShare2, LuBookOpen, LuShield, LuShieldCheck, LuShirt, LuSmartphone, LuSparkles, LuStar, LuSun, LuSwords, LuTrash2, LuTrendingUp, LuTriangleAlert, LuTrophy, LuUsers, LuX, LuZap } from "react-icons/lu";
 
 const html = htm.bind(React.createElement);
-const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shield: LuShield, Sun: LuSun, Moon: LuMoon, HelpCircle: LuCircleHelp, X: LuX, ChevronLeft: LuChevronLeft, ChevronRight: LuChevronRight, ChevronDown: LuChevronDown, ChevronUp: LuChevronUp, Lock: LuLock, Play: LuPlay, Crown: LuCrown, Zap: LuZap, Copy: LuCopy, Check: LuCheck, Plus: LuPlus, Trash2: LuTrash2, TrendingUp: LuTrendingUp, Swords: LuSwords, Users: LuUsers, Activity: LuActivity, Newspaper: LuNewspaper, Calculator: LuCalculator, BarChart3: LuChartColumn, AlertTriangle: LuTriangleAlert, Info: LuInfo, Star: LuStar, ShieldCheck: LuShieldCheck, CircleDot: LuCircleDot, Shirt: LuShirt, Smartphone: LuSmartphone, CheckCircle2: LuCircleCheck, XCircle: LuCircleX, Clock: LuClock, Repeat: LuRepeat };
+const Ic = { Calendar: LuCalendar, Trophy: LuTrophy, Sparkles: LuSparkles, Shield: LuShield, Sun: LuSun, Moon: LuMoon, HelpCircle: LuCircleHelp, X: LuX, ChevronLeft: LuChevronLeft, ChevronRight: LuChevronRight, ChevronDown: LuChevronDown, ChevronUp: LuChevronUp, Lock: LuLock, Play: LuPlay, Crown: LuCrown, Zap: LuZap, Copy: LuCopy, Check: LuCheck, Plus: LuPlus, Trash2: LuTrash2, TrendingUp: LuTrendingUp, Swords: LuSwords, Users: LuUsers, Activity: LuActivity, Newspaper: LuNewspaper, Calculator: LuCalculator, BarChart3: LuChartColumn, AlertTriangle: LuTriangleAlert, Info: LuInfo, Star: LuStar, ShieldCheck: LuShieldCheck, CircleDot: LuCircleDot, Shirt: LuShirt, Smartphone: LuSmartphone, CheckCircle2: LuCircleCheck, XCircle: LuCircleX, Clock: LuClock, Repeat: LuRepeat, Search: LuSearch, Share: LuShare2, Book: LuBookOpen };
 Ic.BallIn = ({ size = 14, c = "#17152B" }) => html`<svg width=${size} height=${size} viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#fff" /><path d="M12 7.2l3.3 2.4-1.3 3.9h-4l-1.3-3.9z" fill=${c} /><path d="M12 2v5.2M15.3 9.6l4.6-1.8M14 13.5l2.6 4.3M10 13.5l-2.6 4.3M8.7 9.6L4.1 7.8" stroke=${c} strokeWidth="1.2" fill="none" /></svg>`;
 Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${size} viewBox="0 0 24 24" className=${className} aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor" /><path d="M12 7.2l3.3 2.4-1.3 3.9h-4l-1.3-3.9z" fill="#fff" /><path d="M12 2v5.2M15.3 9.6l4.6-1.8M14 13.5l2.6 4.3M10 13.5l-2.6 4.3M8.7 9.6L4.1 7.8" stroke="#fff" strokeWidth="1.2" fill="none" /></svg>`;
 
@@ -121,9 +121,20 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   const LEGACY = { "Over 2.5": "O2.5", "Under 2.5": "U2.5" };
   const norm = (c) => LEGACY[c] || c;
   const nf = (x) => String(x).replace(".", ",");
-  function evalCode(c, h, a) {
-    if (/^[KCF][OU]\d/.test(c)) return null; // cartellini, angoli e falli: non verificabili dal solo risultato
-    if (c.includes("+")) return c.split("+").every((x) => evalCode(x, h, a));
+  const TEMPI = ["T1:", "T2:", "PF", "TPG", "HSET", "ASET", "HVET", "AVET"];
+  // stessa logica di valuta() in mercati.py; h1/a1 = risultato del primo tempo (se noto)
+  function evalCode(c, h, a, h1, a1) {
+    if (/^[KCF][HA]?[OU]\d/.test(c) || c.startsWith("MARC:")) return null; // cartellini, angoli, falli, marcatori: non verificabili dal solo risultato
+    if (c.includes("+")) { const r = c.split("+").map((x) => evalCode(x, h, a, h1, a1)); return r.includes(null) ? null : r.every(Boolean); }
+    if (TEMPI.some((t) => c.startsWith(t))) {
+      if (h1 == null || a1 == null) return null;
+      const h2 = h - h1, a2 = a - a1;
+      if (c.startsWith("T1:")) return evalCode(c.slice(3), h1, a1);
+      if (c.startsWith("T2:")) return evalCode(c.slice(3), h2, a2);
+      if (c.startsWith("PF")) { const [x, y] = c.slice(2).split("/"); return evalCode(x, h1, a1) && evalCode(y, h, a); }
+      if (c.startsWith("TPG")) { const g1 = h1 + a1, g2 = h2 + a2; return { 1: g1 > g2, X: g1 === g2, 2: g2 > g1 }[c.slice(3)]; }
+      return { HSET: h1 > 0 && h2 > 0, ASET: a1 > 0 && a2 > 0, HVET: h1 > a1 && h2 > a2, AVET: a1 > h1 && a2 > h2 }[c];
+    }
     const t = h + a;
     if (["1", "X", "2", "1X", "X2", "12"].includes(c)) return c.includes(h > a ? "1" : h === a ? "X" : "2");
     if (c === "GG") return h > 0 && a > 0;
@@ -132,14 +143,35 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     if (c === "DISPARI") return t % 2 === 1;
     if (c.startsWith("CS")) { const [x, y] = c.slice(2).split("-").map(Number); return h === x && a === y; }
     if (c.startsWith("MG")) { const [x, y] = c.slice(2).split("-").map(Number); return t >= x && t <= y; }
+    if (c.startsWith("EH")) { const [hd, e] = c.slice(2).split(":"); return evalCode(e, h + (hd[0] === "M" ? -1 : 1) * Number(hd.slice(1)), a); }
+    if (c.startsWith("MV")) { const [l, n] = c.slice(2).split(":"); const d = l === "1" ? h - a : a - h; return n === "3P" ? d >= 3 : d === Number(n); }
+    if (c.startsWith("GE")) return c === "GE6P" ? t >= 6 : t === Number(c.slice(2));
+    if (/^[HA]GE/.test(c)) { const g = c[0] === "H" ? h : a; return c.slice(3) === "3P" ? g >= 3 : g === Number(c.slice(3)); }
     if (/^[HA][OU]/.test(c)) { const g = c[0] === "H" ? h : a, n = parseFloat(c.slice(2)); return c[1] === "O" ? g > n : g < n; }
     if (/^[OU]/.test(c)) { const n = parseFloat(c.slice(1)); return c[0] === "O" ? t > n : t < n; }
     return null;
   }
   function mLabel(m, c, short) {
     c = norm(c);
+    if (c.startsWith("MARC:")) return "Segna " + c.slice(5) + (short ? "" : " (in qualsiasi momento)");
+    if (/^[KCF][HA][OU]\d/.test(c)) return ({ K: "Cartellini ", C: "Angoli ", F: "Falli " })[c[0]] + (c[1] === "H" ? m.h : m.a) + (c[2] === "O" ? " Over " : " Under ") + nf(c.slice(3));
     if (/^[KCF][OU]\d/.test(c)) return ({ K: "Cartellini ", C: "Angoli ", F: "Falli " })[c[0]] + (c[1] === "O" ? "Over " : "Under ") + nf(c.slice(2));
     if (c.includes("+")) return c.split("+").map((x) => mLabel(m, x, true)).join(" + ");
+    if (c.startsWith("T1:") || c.startsWith("T2:")) return (c[1] === "1" ? "1° tempo: " : "2° tempo: ") + mLabel(m, c.slice(3), true);
+    if (c.startsWith("PF")) return "Parziale/finale " + c.slice(2);
+    if (c.startsWith("TPG")) return { 1: "Più gol nel 1° tempo", X: "Stessi gol nei due tempi", 2: "Più gol nel 2° tempo" }[c.slice(3)];
+    if (c === "HSET" || c === "ASET") return (c[0] === "H" ? m.h : m.a) + " segna in entrambi i tempi";
+    if (c === "HVET" || c === "AVET") return (c[0] === "H" ? m.h : m.a) + " vince entrambi i tempi";
+    if (c.startsWith("EH")) { const [hd, e] = c.slice(2).split(":"); const k = Number(hd.slice(1)), meno = hd[0] === "M";
+      const base = "Handicap " + (meno ? "−" : "+") + k + " " + m.h + ": " + e;
+      if (short) return base;
+      const sq = meno ? m.h : m.a, sc = k === 1 ? "1 gol" : k + " gol";
+      const sp = meno ? { 1: `${sq} vince con almeno ${k + 1} gol di scarto`, X: `${sq} vince con esattamente ${sc} di scarto`, 2: `${sq} non vince con ${sc} o più di scarto` }
+        : { 1: `${sq} non vince con ${sc} o più di scarto`, X: `${sq} vince con esattamente ${sc} di scarto`, 2: `${sq} vince con almeno ${k + 1} gol di scarto` };
+      return base + " (" + sp[e] + ")"; }
+    if (c.startsWith("MV")) { const [l, n] = c.slice(2).split(":"); return (l === "1" ? m.h : m.a) + " vince " + (n === "3P" ? "di 3 o più gol" : n === "1" ? "di 1 gol" : "di " + n + " gol"); }
+    if (c.startsWith("GE")) return c === "GE6P" ? "6 o più gol nella partita" : "Gol esatti nella partita: " + c.slice(2);
+    if (/^[HA]GE/.test(c)) return (c[0] === "H" ? m.h : m.a) + (c.slice(3) === "3P" ? " segna 3 o più gol" : " segna esattamente " + c.slice(3) + (c.slice(3) === "1" ? " gol" : " gol"));
     if (c === "1") return short ? "1" : "1 (" + m.h + ")";
     if (c === "2") return short ? "2" : "2 (" + m.a + ")";
     if (c === "X") return short ? "X" : "X (pareggio)";
@@ -155,22 +187,34 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     if (c === "AO1.5") return m.a + " almeno 2 gol";
     if (c === "AU0.5") return m.h + " non subisce";
     if (c === "HU0.5") return m.a + " non subisce";
+    if (/^[HA][OU]/.test(c)) return (c[0] === "H" ? m.h : m.a) + (c[1] === "O" ? " Over " : " Under ") + nf(c.slice(2)) + " gol";
     if (/^[OU]/.test(c)) return (c[0] === "O" ? "Over " : "Under ") + nf(c.slice(1));
     return c;
   }
-  const GROUPS = ["Esito finale", "Doppia chance", "Under/Over", "Goal/No Goal", "Multigol", "Gol squadra", "Combo", "Cartellini", "Falli", "Calci d'angolo", "Risultato esatto", "Pari/Dispari"];
+  const GROUPS = ["Esito finale", "Doppia chance", "Under/Over", "Goal/No Goal", "Multigol", "Gol squadra", "Combo", "Primo tempo", "Secondo tempo", "Parziale/finale", "Tempo con più gol", "Tempi",
+    "Handicap", "Margine di vittoria", "Gol esatti", "Risultato esatto", "Marcatori", "Cartellini", "Cartellini squadra", "Falli", "Falli squadra", "Calci d'angolo", "Calci d'angolo squadra", "Pari/Dispari"];
   function mGroup(c) {
+    if (c.startsWith("MARC:")) return "Marcatori";
+    if (/^[KCF][HA][OU]\d/.test(c)) return ({ K: "Cartellini", C: "Calci d'angolo", F: "Falli" })[c[0]] + " squadra";
     if (/^K[OU]\d/.test(c)) return "Cartellini";
     if (/^C[OU]\d/.test(c)) return "Calci d'angolo";
     if (/^F[OU]\d/.test(c)) return "Falli";
     if (c.includes("+")) return "Combo";
+    if (c.startsWith("T1:")) return "Primo tempo";
+    if (c.startsWith("T2:")) return "Secondo tempo";
+    if (c.startsWith("PF")) return "Parziale/finale";
+    if (c.startsWith("TPG")) return "Tempo con più gol";
+    if (["HSET", "ASET", "HVET", "AVET"].includes(c)) return "Tempi";
+    if (c.startsWith("EH")) return "Handicap";
+    if (c.startsWith("MV")) return "Margine di vittoria";
+    if (c.startsWith("GE")) return "Gol esatti";
     if (["1", "X", "2"].includes(c)) return "Esito finale";
     if (["1X", "X2", "12"].includes(c)) return "Doppia chance";
     if (c === "GG" || c === "NG") return "Goal/No Goal";
     if (c === "PARI" || c === "DISPARI") return "Pari/Dispari";
     if (c.startsWith("CS")) return "Risultato esatto";
     if (c.startsWith("MG")) return "Multigol";
-    if (/^[HA][OU]/.test(c)) return "Gol squadra";
+    if (/^[HA](GE|[OU])/.test(c)) return "Gol squadra";
     return "Under/Over";
   }
   function leggiXg(x) {
@@ -180,7 +224,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     return a + d;
   }
   function options(m) {
-    if (m.markets) return m.markets.map(([c, p, q, qm]) => ({ k: c, p, q, stima: !qm }));
+    if (m.markets) return m.markets.map(([c, p, q, qm]) => ({ k: c, p, q: q || Math.round(Math.max(1.01, 0.94 / p) * 100) / 100, stima: !qm }));
     const [p1, px, p2] = m.p, o = m.odds, po = m.po, mk = m.mk;
     // dati vecchi senza mercati: doppia chance con quota "equa" ricavata dalle probabilita, minimo 1,01
     const dc = (a, b) => Math.max(1.01, 1 / (mk[a] + mk[b]));
@@ -193,7 +237,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   }
   function hit(m, k) {
     if (m.st !== "FT" || !m.g) return null;
-    return evalCode(norm(k), m.g[0], m.g[1]);
+    return evalCode(norm(k), m.g[0], m.g[1], m.g1 ? m.g1[0] : null, m.g1 ? m.g1[1] : null);
   }
   function buildSlip(matches, prof) {
     const legs = [];
@@ -209,6 +253,56 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     }
     const n = [4, 5, 4][prof];
     return legs.sort((a, b) => (prof === 2 ? b.p * b.q - a.p * a.q : b.p - a.p)).slice(0, n);
+  }
+
+  /* schedina con quota obiettivo: numero di partite deciso dal profilo (quota tipica per partita), poi si sceglie in ogni
+     partita la giocata con il miglior punteggio IA vicina alla quota per partita e si ritocca finché il totale è vicino all'obiettivo */
+  const PROF_T = [{ lo: 1.12, hi: 1.55, mid: 1.3, pmin: 0.6 }, { lo: 1.3, hi: 2.3, mid: 1.7, pmin: 0.4 }, { lo: 1.7, hi: 4.5, mid: 2.4, pmin: 0.2 }];
+  const ESCLUSI_SLIP = ["Pari/Dispari", "Risultato esatto"];
+  function rumore(id, v) { return v ? ((hs(id + ":" + v) % 1000) / 1000 - 0.5) : 0; }
+  function candidati(m, prof, qt, v) {
+    const R = PROF_T[prof], ia = (m.ia && m.ia.s) || {};
+    return options(m).filter((o) => { const g = mGroup(o.k); if (ESCLUSI_SLIP.includes(g)) return false;
+        if (prof === 0 && /Marcatori|Cartellini|Falli|angolo|Parziale|Gol esatti|Margine|Tempo con/.test(g)) return false;
+        if (prof === 1 && /Marcatori|Parziale|Gol esatti/.test(g)) return false;
+        if (prof < 2 && /^EH[MP]2/.test(o.k)) return false;
+        return o.p >= R.pmin && o.q >= 1.08 && o.q <= R.hi * 1.8; })
+      .map((o) => ({ ...o, sc: (ia[o.k] != null ? ia[o.k] : 50) / 100 + 0.5 * o.p - 0.35 * Math.abs(Math.log(o.q / qt)) + 0.12 * rumore(m.id + o.k, v) }))
+      .sort((a, b) => b.sc - a.sc);
+  }
+  function buildTarget(matches, prof, T, v) {
+    const R = PROF_T[prof], LT = Math.log(T);
+    let n = Math.max(1, Math.min(14, Math.round(LT / Math.log(R.mid))));
+    const qt = Math.exp(LT / n);
+    const pool = matches.map((m) => ({ m, c: candidati(m, prof, qt, v) })).filter((x) => x.c.length)
+      .sort((a, b) => b.c[0].sc + 0.15 * rumore(b.m.id, v) - (a.c[0].sc + 0.15 * rumore(a.m.id, v)));
+    if (!pool.length) return [];
+    n = Math.min(n, pool.length);
+    let sel = pool.slice(0, n).map((x) => ({ x, i: 0 }));
+    const tot = () => sel.reduce((a, s) => a + Math.log(s.x.c[s.i].q), 0);
+    for (let it = 0; it < 80; it++) {
+      const d = tot() - LT;
+      if (Math.abs(d) < 0.06) break;
+      let best = null;
+      sel.forEach((s, si) => s.x.c.forEach((o, oi) => { if (oi === s.i) return;
+        const nd = d - Math.log(s.x.c[s.i].q) + Math.log(o.q); const gain = Math.abs(d) - Math.abs(nd); const loss = s.x.c[s.i].sc - o.sc;
+        if (gain > 0.02 && (!best || gain - 0.6 * loss > best.v)) best = { si, oi, v: gain - 0.6 * loss }; }));
+      if (best) { sel[best.si].i = best.oi; continue; }
+      if (d < -Math.log(R.lo) && sel.length < pool.length) { sel.push({ x: pool[sel.length], i: 0 }); continue; }
+      if (d > Math.log(1.25) && sel.length > 1) { sel.sort((a, b) => b.x.c[b.i].sc - a.x.c[a.i].sc); sel.pop(); continue; }
+      break;
+    }
+    return sel.map((s) => ({ m: s.x.m, ...s.x.c[s.i] }));
+  }
+  const PERIODI = [["oggi", "Oggi"], ["domani", "Domani"], ["3g", "Prossimi 3 giorni"], ["weekend", "Weekend"], ["7g", "Prossimi 7 giorni"], ["tutte", "Tutte"]];
+  function inPeriodo(date, per, today) {
+    const t0 = new Date(today + "T12:00:00"), d = new Date(date + "T12:00:00"), g = Math.round((d - t0) / 86400000);
+    if (per === "oggi") return g === 0;
+    if (per === "domani") return g === 1;
+    if (per === "3g") return g >= 0 && g <= 2;
+    if (per === "7g") return g >= 0 && g <= 6;
+    if (per === "weekend") { const wd = t0.getDay(); const sab = wd === 0 ? -1 : 6 - wd; return g >= Math.max(0, sab) && g <= sab + 1; }
+    return true;
   }
 
   /* ---------- componenti base ---------- */
@@ -376,6 +470,45 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           <div className=${"text-[11px] mt-1 " + C.mu}>Gol attesi corretti: ${m.h} ${Math.round(tot[0] * 100)}%, ${m.a} ${Math.round(tot[1] * 100)}% (peso del giocatore nei gol della squadra, metà coperta dal sostituto, tetto 15%).</div></div>`}
         <div className=${"text-[11px] " + C.mu}>Le quote reagiscono alle formazioni in pochi minuti: guarda se la quota è già cambiata prima di giocare.</div></div>`;
     }
+    /* campo orizzontale "notturno" (105 x 68), condiviso da azione in diretta e mappa dei tiri */
+    const CampoNotte = () => html`<g>
+      <rect x="-2" y="-2" width="109" height="72" fill="#1F1B38" />
+      ${[0, 1, 2, 3, 4, 5, 6].map((i) => html`<rect key=${i} x=${i * 15} y="0" width="7.5" height="68" fill="#2A2450" opacity="0.55" />`)}
+      <g fill="none" stroke="#B7A6FF" strokeOpacity="0.45" strokeWidth="0.4">
+        <rect x="0" y="0" width="105" height="68" /><line x1="52.5" y1="0" x2="52.5" y2="68" /><circle cx="52.5" cy="34" r="9.15" />
+        <rect x="0" y="13.84" width="16.5" height="40.32" /><rect x="88.5" y="13.84" width="16.5" height="40.32" />
+        <rect x="0" y="24.84" width="5.5" height="18.32" /><rect x="99.5" y="24.84" width="5.5" height="18.32" />
+        <rect x="-1.5" y="30.34" width="1.5" height="7.32" /><rect x="105" y="30.34" width="1.5" height="7.32" /></g></g>`;
+    const TIRI = { "shot-on-target": "porta", "shot-off-target": "fuori", "shot-blocked": "respinto", "shot-hit-woodwork": "palo", "penalty---saved": "porta", "penalty---missed": "fuori" };
+    // sul campo scuro un colore di maglia scuro si schiarisce (mescolato al bianco) per restare visibile
+    const suNotte = (c) => { if (!/^#[0-9a-f]{6}$/i.test(c) || lum(c) > 0.32) return c; const v = [1, 3, 5].map((i) => Math.round(parseInt(c.slice(i, i + 2), 16) * 0.45 + 255 * 0.55)); return "#" + v.map((x) => x.toString(16).padStart(2, "0")).join(""); };
+    function TiriCard({ sm, m }) {
+      const [sel, setSel] = useState(null);
+      const [lato, setLato] = useState(2);
+      const col = auraCol(m).map(suNotte);
+      const tiri = sm.cronaca.filter((c) => c.x != null && c.side != null && (TIRI[c.type] || (/^goal|penalty---scored/.test(c.type) && !/own/.test(c.type))))
+        .map((c) => ({ ...c, k: TIRI[c.type] || "gol", pt: trasf(c.side, c.x, c.y) })).filter((c) => c.pt);
+      if (tiri.length < 3) return null;
+      const vis = tiri.filter((t) => lato === 2 || t.side === lato);
+      const cnt = (j) => { const t = tiri.filter((x) => x.side === j); return [t.length, t.filter((x) => x.k === "porta" || x.k === "gol").length, t.filter((x) => x.k === "gol").length]; };
+      const s = sel != null ? tiri.find((t) => t.i === sel) : null;
+      return html`<div className=${C.card + " p-4"}>
+        <div className="flex items-baseline mb-2"><span className=${C.lab + " flex-1"}>Mappa dei tiri</span><span className=${"text-[12px] " + C.mu}>${m.h} attacca a destra</span></div>
+        <div className="mb-2"><${Seg} small=${true} items=${[m.h, m.a, "Entrambe"]} val=${lato} set=${setLato} /></div>
+        <svg viewBox="-2 -2 109 72" className="w-full rounded-[14px]" role="img" aria-label="Mappa dei tiri della partita">
+          <${CampoNotte} />
+          ${vis.map((t) => { const c = col[t.side], [x, y] = t.pt, on = sel === t.i;
+            return html`<g key=${t.i} onClick=${() => setSel(on ? null : t.i)} style=${{ cursor: "pointer" }}>
+              ${t.k === "gol" ? html`<circle cx=${x} cy=${y} r=${on ? 3.4 : 2.8} fill=${c} stroke="#fff" strokeWidth="0.7" /><circle cx=${x} cy=${y} r="1" fill="#fff" />`
+                : t.k === "porta" || t.k === "palo" ? html`<circle cx=${x} cy=${y} r=${on ? 2.4 : 1.8} fill=${c} stroke="#fff" strokeWidth="0.4" />`
+                : t.k === "respinto" ? html`<rect x=${x - 1.2} y=${y - 1.2} width="2.4" height="2.4" fill="none" stroke=${c} strokeWidth="0.7" transform=${`rotate(45 ${x} ${y})`} />`
+                : html`<circle cx=${x} cy=${y} r=${on ? 2.2 : 1.6} fill="none" stroke=${c} strokeWidth="0.7" />`}</g>`; })}</svg>
+        <div className="grid grid-cols-2 gap-3 mt-3">${[0, 1].map((j) => { const [t, p, g] = cnt(j); return html`<div key=${j} className=${j ? "text-right" : ""}>
+          <div className=${"text-[12px] " + C.mu}>${j ? m.a : m.h}</div>
+          <div className=${"text-[13px] " + C.tx}><b className="num text-[19px]">${t}</b> tiri, <b className="num text-[19px]">${p}</b> in porta, <b className="num text-[19px]">${g}</b> gol</div></div>`; })}</div>
+        <div className=${"flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[12px] " + C.mu}><span>● gol (punto bianco)</span><span>● in porta o palo</span><span>○ fuori</span><span>◇ respinto</span></div>
+        ${s ? html`<div className=${"mt-2 text-[14px] rounded-xl p-2.5 " + C.ch + " " + C.tx}><b className="num text-[16px] mr-1">${s.min}</b>${s.text}</div>` : html`<div className=${"mt-2 text-[12px] " + C.mu}>Tocca un tiro per leggere com'è andata.</div>`}</div>`;
+    }
     function LiveAction({ sm, m }) {
       const [open, setOpen] = useState(false);
       const plays = sm.cronaca.filter((c) => c.x != null && c.side != null).slice(0, 6);
@@ -387,13 +520,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           <span className=${"text-xs tabular-nums " + C.mu}>${sm.clock}</span><${open ? Ic.ChevronUp : Ic.ChevronDown} size=${16} className=${C.mu} /></button>
         ${open && html`<div className="px-4 pb-4 space-y-2">
           <div className=${"flex justify-between text-[11px] font-semibold " + C.mu}><span>${m.h} attacca verso destra</span><span>${m.a} verso sinistra</span></div>
-          <svg viewBox="-2 -2 109 72" className="w-full rounded-xl" style=${{ background: "#3f8f5a" }}>
-            ${[0, 1, 2, 3, 4, 5, 6].map((i) => html`<rect key=${i} x=${i * 15} y="0" width="7.5" height="68" fill="#ffffff" opacity="0.04" />`)}
-            <g fill="none" stroke="#ffffff" strokeOpacity="0.7" strokeWidth="0.4">
-              <rect x="0" y="0" width="105" height="68" /><line x1="52.5" y1="0" x2="52.5" y2="68" /><circle cx="52.5" cy="34" r="9.15" />
-              <rect x="0" y="13.84" width="16.5" height="40.32" /><rect x="88.5" y="13.84" width="16.5" height="40.32" />
-              <rect x="0" y="24.84" width="5.5" height="18.32" /><rect x="99.5" y="24.84" width="5.5" height="18.32" />
-              <rect x="-1.5" y="30.34" width="1.5" height="7.32" /><rect x="105" y="30.34" width="1.5" height="7.32" /></g>
+          <svg viewBox="-2 -2 109 72" className="w-full rounded-[14px]">
+            <${CampoNotte} />
             ${plays.slice().reverse().map((p, i, arr) => {
               const a = trasf(p.side, p.x, p.y), b = trasf(p.side, p.x2, p.y2);
               const lastOne = i === arr.length - 1, col = sm.colors[p.side] || "#fff";
@@ -701,6 +829,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const [err, setErr] = useState("");
       useEffect(() => { loadPlayer(p.id).then(setInfo).catch(() => setErr("Profilo non raggiungibile ora.")); }, [p.id]);
       useEffect(() => { if (t === 2 && car === null) loadCareer(p.id).then(setCar).catch(() => setCar([])); }, [t]);
+      const [vs, setVs] = useState(null);
+      useEffect(() => { caricaVoti().then((V) => setVs(V[p.id] || false)).catch(() => setVs(false)); }, [p.id]);
       const gk = ruolo(p.pos) === "Portiere";
       const s = p.st || {};
       const box = (l, v) => html`<div key=${l} className=${"rounded-xl p-2 text-center " + C.ch}><div className=${"text-base font-semibold tabular-nums " + C.tx}>${v == null || Number.isNaN(v) ? "-" : v}</div><div className=${"text-[10px] " + C.mu}>${l}</div></div>`;
@@ -710,6 +840,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <div className="flex items-center gap-3"><span className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold text-white shrink-0" style=${{ background: col || "#8E8E93" }}>${p.num || "-"}</span>
           <div className="min-w-0"><div className=${"text-sm font-semibold " + C.tx}>${ruolo(p.pos)}${pr && pr.squadra ? " - " + pr.squadra : m.h ? " - " + (side === 0 ? m.h : m.a) : ""}</div>
             <div className=${"text-xs " + C.mu}>${pr ? [pr.naz, pr.eta ? pr.eta + " anni" : "", pr.altezza].filter(Boolean).join(" - ") : err || "Caricamento del profilo..."}</div></div></div>
+        ${vs && html`<div className=${"flex items-center gap-3 rounded-[14px] p-3 " + C.ch}><${VotoChip} v=${vs[0]} big=${true} />
+          <div className="min-w-0"><div className=${"text-[14px] font-semibold " + C.tx}>Voto medio AuraPitch nella stagione</div><div className=${"text-[12px] " + C.mu}>${vs[1]} partite, ${vs[2]} minuti${vs[3] ? ", " + vs[3] + " gol" : ""}${vs[4] ? ", " + vs[4] + " assist" : ""}${p.voto != null ? ". In questa partita: " + p.voto.toFixed(1).replace(".", ",") : ""}</div></div></div>`}
         ${noMatch ? html`<${Seg} small=${true} items=${["Stagione", "Carriera"]} val=${t - 1} set=${(i) => setT(i + 1)} />` : html`<${Seg} small=${true} items=${["Questa partita", "Stagione", "Carriera"]} val=${t} set=${setT} />`}
         ${t === 0 && html`<${React.Fragment}><div className=${"text-xs " + C.mu}>${stato}</div>
           <div className="grid grid-cols-4 gap-2">${ST_IT.filter(([k]) => (gk ? true : !["saves", "goalsConceded", "shotsFaced"].includes(k)) && (s[k] != null)).map(([k, l]) => box(l, s[k]))}</div><//>`}
@@ -727,9 +859,13 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           <p className=${"text-[11px] " + C.mu}>Campionati e coppe stagione per stagione, dalle più recenti. Le amichevoli sono escluse.</p><//>`}<//>`;
     }
 
+    let _voti = null;
+    function caricaVoti() { if (!_voti) _voti = fetch("data/voti.json").then((r) => (r.ok ? r.json() : {})).catch(() => ({})); return _voti; }
+
     /* ---- consiglio IA in diretta ---- */
     function pois(l) { const o = [Math.exp(-l)]; for (let k = 1; k <= 8; k++) o.push((o[k - 1] * l) / k); return o; }
     function liveProb(code, xg, g, min, reds) {
+      if (evalCode(code, 1, 0) === null) return null; // mercati sui tempi, cartellini, marcatori: niente stima in diretta
       const f = Math.max(0.005, (90 - Math.min(min, 90)) / 90);
       const rh = Math.pow(0.67, reds[0]) * Math.pow(1.25, reds[1]), ra = Math.pow(0.67, reds[1]) * Math.pow(1.25, reds[0]);
       const ph = pois(Math.max(0.01, xg[0] * f * rh)), pa = pois(Math.max(0.01, xg[1] * f * ra));
@@ -744,9 +880,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const g = (sm && sm.st !== "NS" && sm.g[0] != null ? sm.g : m.g) || [0, 0];
       if (m.st === "FT") {
         return html`<div className=${C.card + " p-4 space-y-2"}><div className=${C.lab}>Com'è andata</div>
-          ${ks.map((k) => { const ok = evalCode(tip[k].c, g[0], g[1]); return html`<div key=${k} className="flex items-center gap-2 text-sm">
+          ${ks.map((k) => { const ok = evalCode(tip[k].c, g[0], g[1], m.g1 ? m.g1[0] : null, m.g1 ? m.g1[1] : null); return html`<div key=${k} className="flex items-center gap-2 text-sm">
             <span className=${"flex-1 " + C.tx}><span className=${C.mu}>${tip[k].titolo}:</span> ${mLabel(m, tip[k].c)}</span>
-            <span className=${"text-xs font-semibold px-2 py-0.5 rounded-full border " + (ok ? TONE.good : TONE.bad)}>${ok ? "Presa" : "Non presa"}</span></div>`; })}
+            <span className=${"text-xs font-semibold px-2 py-0.5 rounded-full border " + (ok === null ? TONE.ok : ok ? TONE.good : TONE.bad)}>${ok === null ? "Da verificare" : ok ? "Presa" : "Non presa"}</span></div>`; })}
           <div className=${"text-[11px] " + C.mu}>Risultato finale ${g[0]}-${g[1]}. Lo storico completo dei consigli è in Schedina IA.</div></div>`;
       }
       const clock = (sm && sm.clock) || m.clock || "";
@@ -756,7 +892,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       return html`<div className=${C.card + " p-4 space-y-2 ring-1 ring-rose-200 dark:ring-rose-500/40"}>
         <div className="flex items-center gap-2"><span className="relative flex w-2 h-2"><span className="absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75 animate-ping"></span><span className="relative inline-flex rounded-full w-2 h-2 bg-rose-500"></span></span>
           <span className=${C.lab + " flex-1"}>Consigli in diretta</span><span className=${"text-xs tabular-nums " + C.mu}>${clock} - ${g[0]}-${g[1]}</span></div>
-        ${ks.map((k) => { const t = tip[k], p = liveProb(t.c, xg, g, min, reds), d = p - t.p;
+        ${ks.filter((k) => liveProb(tip[k].c, xg, g, min, reds) !== null).map((k) => { const t = tip[k], p = liveProb(t.c, xg, g, min, reds), d = p - t.p;
           const lab = p >= 0.999 ? ["Già vinta", TONE.good] : p <= 0.001 ? ["Persa", TONE.bad] : null;
           return html`<div key=${k} className="flex items-center gap-2 text-sm">
             <span className=${"flex-1 min-w-0 " + C.tx}><span className=${C.mu}>${{ consiglio: "Consiglio", prudente: "Prudente", coraggiosa: "Coraggiosa" }[k]}:</span> ${mLabel(m, t.c)}</span>
@@ -800,7 +936,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     function FattoriCard({ m }) {
       const [open, setOpen] = useState(false);
       const fs = m.fattori || [];
-      const att = fs.filter((f) => f.delta), info = fs.filter((f) => !f.delta);
+      const att = fs.filter((f) => f.delta || f.delta_avv), info = fs.filter((f) => !f.delta && !f.delta_avv);
       const xm = m.xg_mercato || m.xg;
       const TIPO = { infortunio: "indisponibile", squalifica: "squalificato", dubbio: "in dubbio", rientro: "rientra", smentita: "smentita", notizia: "notizia" };
       const nf = (x) => (x == null ? "-" : Number(x).toFixed(2).replace(".", ","));
@@ -810,8 +946,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <div className=${"text-sm " + C.tx}>Gol attesi: ${m.h} <b>${nf(m.xg[0])}</b>, ${m.a} <b>${nf(m.xg[1])}</b>${att.length ? html` <span className=${C.mu}>(dalle quote ${nf(xm[0])} e ${nf(xm[1])})</span>` : html` <span className=${C.mu}>(uguali alla lettura delle quote)</span>`}</div>
         ${open && html`<div className="space-y-2 pt-1">
           ${att.map((f, i) => html`<div key=${i} className=${"text-sm rounded-xl p-2.5 " + C.ch + " " + C.tx}>
-            <div><b>${f.chi}</b> (${f.lato ? m.a : m.h}) ${TIPO[f.tipo] || f.tipo}: gol attesi ${String(Math.round(f.delta * 1000) / 10).replace(".", ",")}%</div>
-            <div className=${"text-[11px] " + C.mu}>Peso nei gol della squadra ${Math.round(f.quota * 100)}% x scoperto dal sostituto 50% x affidabilità ${Math.round(f.affidabilita * 100)}%${f.prezzo < 1 ? " x 25% perché già nota al mercato" : ""}${f.tetto ? ", ridotto dal tetto del 15%" : ""}.</div>
+            <div><b>${f.chi}</b> (${f.lato ? m.a : m.h}) ${TIPO[f.tipo] || f.tipo}: ${f.delta ? "gol attesi " + String(Math.round(f.delta * 1000) / 10).replace(".", ",") + "%" : ""}${f.delta && f.delta_avv ? ", " : ""}${f.delta_avv ? "gol attesi di " + (f.lato ? m.h : m.a) + " +" + String(Math.round(f.delta_avv * 1000) / 10).replace(".", ",") + "% (peso in difesa)" : ""}</div>
+            <div className=${"text-[11px] " + C.mu}>${f.delta ? `Peso nei gol della squadra ${Math.round(f.quota * 100)}%` : "Peso difensivo dal voto medio AuraPitch e dai minuti giocati"} x scoperto dal sostituto 50% x affidabilità ${Math.round(f.affidabilita * 100)}%${f.prezzo < 1 ? " x 25% perché già nota al mercato" : ""}${f.tetto ? ", ridotto dal tetto del 15%" : ""}.</div>
             ${f.link ? html`<a href=${f.link} target="_blank" rel="noopener" className="text-[11px] text-[#5B2EE6] dark:text-[#A58BFF]">${f.fonte || "Fonte"}: ${f.titolo}</a>` : html`<div className=${"text-[11px] " + C.mu}>${f.titolo}</div>`}</div>`)}
           ${(m.segnali || []).length > 0 && html`<div className=${"text-[11px] font-semibold " + C.mu}>Segnali registrati (peso zero, in attesa di misura)</div>${m.segnali.map((x, i) => html`<div key=${"s" + i} className=${"text-[12px] " + C.tx}>
             ${x.tipo === "allenatore" ? html`Cambio in panchina (${x.lato ? m.a : m.h}): ${x.link ? html`<a href=${x.link} target="_blank" rel="noopener" className="text-[#5B2EE6] dark:text-[#A58BFF]">${x.titolo}</a>` : x.titolo}` : html`Riposo: ${x.lato ? m.a : m.h} ha ${x.titolo}.`}</div>`)}
@@ -900,7 +1036,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const { mySlip, addLeg, aff } = React.useContext(Ctx);
       const [why, setWhy] = useState("consiglio");
       const affid = (c, p) => { const rows = aff && aff.mercati && aff.mercati[c]; const r = rows && rows.find((x) => p >= x[0] && p < x[1]);
-        return r ? `Affidabilità verificata: su ${r[2].toLocaleString("it-IT")} partite di prova (${aff.stagioni}), quando questa giocata era stimata tra il ${Math.round(r[0] * 100)}% e il ${Math.round(r[1] * 100)}% è passata il ${Math.round(r[4] * 100)}% delle volte (stima media ${Math.round(r[3] * 100)}%).` : null; };
+        return r ? `Affidabilità verificata: su ${r[2].toLocaleString("it-IT")} partite di prova (${aff.recenti && aff.recenti.includes(c) ? "2020/21-2025/26" : aff.stagioni}), quando questa giocata era stimata tra il ${Math.round(r[0] * 100)}% e il ${Math.round(r[1] * 100)}% è passata il ${Math.round(r[4] * 100)}% delle volte (stima media ${Math.round(r[3] * 100)}%).` : null; };
       const [grp, setGrp] = useState(null);
       const inSlip = mySlip.find((x) => x.id === m.id);
       const tip = m.tip || {};
@@ -922,18 +1058,38 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
             ${(() => { const al = assenze(m, sm, D); return al.length > 0 && al.map((x) => html`<div key=${x.n} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-2 shrink-0 " + DOT.warn}></span><span className=${C.tx}><b>Formazione:</b> ${x.testo}</span></div>`); })()}</div>`}</div>`; };
       const opts = options(m);
       const groups = GROUPS.map((g) => [g, opts.filter((o) => mGroup(o.k) === g)]).filter(([, l]) => l.length);
+      const ia = m.ia || { s: {}, g: {} };
+      const scelte = GROUPS.filter((g) => ia.g[g]).map((g) => [g, ia.g[g]]);
+      const [ap, setAp] = useState(null);
+      const Punti = ({ v }) => v == null ? null : html`<span className=${"num text-[14px] font-bold w-8 text-center rounded-md py-[1px] " + (v >= 75 ? "bg-[#5B2EE6] text-white dark:bg-[#A58BFF] dark:text-[#0E0C18]" : v >= 60 ? C.ch + " " + C.tx : C.mu)} title="Punteggio IA">${v}</span>`;
       return html`<${React.Fragment}>
         <${LiveTips} m=${m} sm=${sm} />
         ${tip.consiglio ? html`<${Card} k="consiglio" /><div className="grid gap-2"><${Card} k="prudente" /><${Card} k="coraggiosa" /></div>`
           : html`<div className=${C.card + " p-4 text-sm " + C.tx}>Nessun consiglio: per questa partita mancano quote sufficienti per stimare i mercati.</div>`}
-        <div className=${C.lab + " pt-1"}>Tutti i mercati - tocca un gruppo</div>
+        ${scelte.length > 0 && html`<div className=${C.card + " p-4"}>
+          <div className="flex items-baseline mb-1"><span className=${C.lab + " flex-1"}>La scelta dell'IA per ogni scommessa</span><span className=${"text-[12px] " + C.mu}>${scelte.length} tipi</span></div>
+          <p className=${"text-[12px] mb-2 " + C.mu}>Per ogni tipo di scommessa, la giocata dove probabilità e dati della partita vanno più d'accordo. Il numero è il punteggio IA (0-100).</p>
+          ${scelte.map(([g, x], i) => { const o = ap === g; return html`<div key=${g} className=${i ? "border-t " + C.bd : ""}>
+            <div className="flex items-center gap-2.5 py-2.5 cursor-pointer" onClick=${() => setAp(o ? null : g)}>
+              <${Punti} v=${x.s} />
+              <span className="flex-1 min-w-0"><span className=${"block text-[12px] " + C.mu}>${g}</span><span className=${"block text-[15px] font-semibold leading-tight " + C.tx}>${mLabel(m, x.c)}</span></span>
+              <span className="text-right"><span className=${"block num text-[17px] font-bold " + C.tx}>${odd(x.q)}</span><span className=${"block text-[11px] " + C.mu}>${pct(x.p)}%</span></span>
+              <${AddBtn} c=${x.c} /></div>
+            ${o && html`<div className="pb-3 pl-[42px] space-y-1.5 text-[14px] leading-snug">
+              ${x.si.map((t) => html`<div key=${t} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 " + DOT.good}></span><span className=${C.tx}>${t}</span></div>`)}
+              ${(x.info || []).map((t) => html`<div key=${t} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 " + DOT.ok}></span><span className=${C.tx}>${t}</span></div>`)}
+              ${x.no.map((t) => html`<div key=${t} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 " + DOT.warn}></span><span className=${C.tx}><b>Da tenere d'occhio:</b> ${t}</span></div>`)}
+              ${affid(x.c, x.p) && html`<div className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 " + DOT.info}></span><span className=${C.tx}>${affid(x.c, x.p)}</span></div>`}
+              ${!x.si.length && !x.no.length && html`<div className=${C.mu}>Per questo tipo di scommessa non ci sono statistiche dedicate: conta solo la probabilità.</div>`}</div>`}</div>`; })}</div>`}
+        <div className="flex items-baseline pt-1"><span className=${C.lab + " flex-1"}>Tutti i mercati</span><span className=${"text-[12px] " + C.mu}>${opts.length} giocate</span></div>
         <div className=${C.card + " px-4 py-1"}>${groups.map(([g, l], i) => { const o = grp === g; return html`<div key=${g} className=${i ? "border-t " + C.bd : ""}>
-          <button onClick=${() => setGrp(o ? null : g)} className=${"w-full flex items-center py-3 text-sm font-semibold " + C.tx}><span className="flex-1 text-left">${g}</span><span className=${"text-xs font-normal mr-2 " + C.mu}>${l.length}</span><${o ? Ic.ChevronUp : Ic.ChevronDown} size=${16} className=${C.mu} /></button>
+          <button onClick=${() => setGrp(o ? null : g)} className=${"w-full flex items-center py-3 text-[15px] font-semibold " + C.tx}><span className="flex-1 text-left">${g}</span><span className=${"num text-[15px] font-semibold mr-2 " + C.mu}>${l.length}</span><${o ? Ic.ChevronUp : Ic.ChevronDown} size=${16} className=${C.mu} /></button>
           ${o && html`<div className="pb-2">${l.map((x) => html`<div key=${x.k} className="flex items-center gap-2 py-1.5">
-            <span className=${"flex-1 text-sm leading-tight " + C.tx}>${mLabel(m, x.k)}</span>
+            <${Punti} v=${ia.s[x.k]} />
+            <span className=${"flex-1 text-sm leading-tight " + C.tx}>${mLabel(m, x.k)}${ia.g[g] && ia.g[g].c === x.k ? html` <span className=${"text-[11px] font-semibold " + C.acc}>Scelta IA</span>` : ""}</span>
             <span className=${"text-xs tabular-nums w-10 text-right " + C.mu}>${pct(x.p)}%</span>
             <span className=${"text-sm font-semibold tabular-nums w-12 text-right " + C.tx}>${odd(x.q)}</span><${AddBtn} c=${x.k} /></div>`)}</div>`}</div>`; })}</div>
-        <p className=${"text-[11px] " + C.mu}>Probabilità calcolate dalle quote medie dei bookmaker (modello dei gol attesi). Quota "media" = raccolta dai bookmaker; quota "stimata" = calcolata dalla probabilità con un margine tipico del 6%, quella reale può variare. Il consiglio sceglie il mercato dove probabilità e statistiche delle squadre vanno d'accordo: non è una garanzia.</p>
+        <p className=${"text-[11px] " + C.mu}>Punteggio IA: 55% accordo con le statistiche delle squadre (forma, gol per tempo, differenza reti, cartellini attesi, gol dei giocatori), 45% probabilità. Probabilità calcolate dalle quote medie dei bookmaker (modello dei gol attesi, tempi tarati su 38.700 partite). Quota "media" = raccolta dai bookmaker; quota "stimata" = calcolata dalla probabilità con un margine tipico del 6%, quella reale può variare. Il consiglio sceglie il mercato dove probabilità e statistiche delle squadre vanno d'accordo: non è una garanzia.</p>
       <//>`;
     }
 
@@ -1015,6 +1171,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           ${sm && sm.st !== "NS" && html`<${Andamento} sm=${sm} m=${m} />`}
           ${sm && sm.st !== "NS" && html`<${KeyEvents} sm=${sm} m=${m} />`}
           ${sm && sm.st !== "NS" && html`<${Migliori} sm=${sm} m=${m} onPlayer=${(p, j) => setPl({ p, side: j })} />`}
+          ${sm && sm.st !== "NS" && html`<${TiriCard} sm=${sm} m=${m} />`}
           ${sm && sm.st !== "NS" && html`<${StatsCard} sm=${sm} m=${m} />`}
           ${m.st === "NS" && html`<${Sondaggio} m=${m} />`}
           ${m.st === "NS" && html`<${Curiosita} m=${m} />`}
@@ -1116,6 +1273,72 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     }
 
     /* ---- il mio club ---- */
+    /* ---- gara dei pronostici: 3 punti per ogni esito indovinato, +2 se le quote lo davano sotto il 30%; classifiche nei gruppi di amici ---- */
+    function codiceChi() { let chi = store.get("chi", null); if (!chi) { chi = Array.from({ length: 16 }, () => "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]).join(""); store.set("chi", chi); } return chi; }
+    function Gara() {
+      const { D, pushUrl, favM, fav, goMatch } = React.useContext(Ctx);
+      const [prof, setProf] = useState(undefined);
+      const [nome, setNome] = useState("");
+      const [per, setPer] = useState(0);
+      const [gr, setGr] = useState(store.get("garaGruppo", ""));
+      const [cl, setCl] = useState(null);
+      const [codice, setCodice] = useState("");
+      const [msg, setMsg] = useState("");
+      const [voti, setVoti] = useState({});
+      const chi = codiceChi();
+      const api = (p, body) => fetch(pushUrl + p, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : undefined).then((r) => r.json());
+      const carica = () => api("/profilo?chi=" + chi).then((x) => { if (x.ok) { setProf(x.u); setVoti(x.u.voti || {}); if (!gr && x.u.gruppi[0]) setGr(x.u.gruppi[0].code); } else setProf(null); }).catch(() => setProf(null));
+      useEffect(() => { if (pushUrl) carica(); }, [pushUrl]);
+      useEffect(() => { if (!pushUrl || !prof) return; api("/classifica?chi=" + chi + "&gruppo=" + (gr || "") + "&periodo=" + (per ? "tutto" : "settimana")).then((x) => x.ok && setCl(x)).catch(() => {}); }, [pushUrl, prof, gr, per]);
+      if (!pushUrl) return null;
+      const prossime = D.matches.filter((m) => m.st === "NS" && new Date(m.ko).getTime() > Date.now()).sort((a, b) => (favM.includes(b.id) || b.h === fav || b.a === fav) - (favM.includes(a.id) || a.h === fav || a.a === fav) || a.ko.localeCompare(b.ko)).slice(0, 10);
+      const vota = (m, s) => { setVoti({ ...voti, [m.id]: s }); store.set("voto:" + m.id, s); api("/voto", { id: m.id, s, chi }).then((x) => { if (!x.ok) setMsg(x.err === "votazione chiusa" ? "La partita è già iniziata." : "Voto non salvato, riprova."); }).catch(() => setMsg("Voto non salvato: controlla la connessione.")); };
+      if (prof === undefined) return html`<div className=${C.card + " p-4 text-sm " + C.mu}>Caricamento della gara dei pronostici...</div>`;
+      if (prof === null || !prof.nome) return html`<div className=${C.card + " p-4 space-y-2"}>
+        <div className=${C.lab}>Gara dei pronostici</div>
+        <p className=${"text-[14px] " + C.tx}>Indovina chi vince le partite: 3 punti per ogni esito giusto, 2 in più se le quote lo davano sotto il 30%. Sfida gli amici in un gruppo e confrontati con l'IA.</p>
+        <input value=${nome} onChange=${(e) => setNome(e.target.value)} placeholder="Il tuo nome in classifica" maxLength=${20} className=${"w-full rounded-xl px-3 py-2.5 outline-none " + C.ch + " " + C.tx} />
+        <button disabled=${nome.trim().length < 2} onClick=${() => api("/profilo", { chi, nome: nome.trim() }).then(carica)} className=${"w-full py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 " + C.on}>Partecipa</button></div>`;
+      const io = cl && cl.io;
+      return html`<div className=${C.card + " p-4 space-y-3"}>
+        <div className="flex items-baseline"><span className=${C.lab + " flex-1"}>Gara dei pronostici</span><span className=${"text-[12px] " + C.mu}>${prof.nome}</span></div>
+        <${Seg} small=${true} items=${["Questa settimana", "Da sempre"]} val=${per} set=${setPer} />
+        ${io && html`<div className="grid grid-cols-3 gap-2">${[["Punti", io.pt], ["Indovinati", io.giuste + "/" + io.giocate], ["L'IA", io.ia + "/" + io.iaG]].map(([l, v]) => html`<div key=${l} className=${"rounded-[14px] p-2.5 " + C.ch}>
+          <div className=${"text-[11px] " + C.mu}>${l}</div><div className=${"num text-[22px] font-bold " + C.tx}>${v}</div></div>`)}</div>
+          <div className=${"text-[13px] " + C.tx}>${io.giocate ? (io.giuste > io.ia ? "Stai battendo l'IA sulle stesse partite." : io.giuste === io.ia ? "Pari con l'IA sulle stesse partite." : "L'IA è avanti sulle stesse partite: tocca a te.") : "Le partite che pronostichi contano appena finiscono."}</div>`}
+        <div className=${"text-[14px] font-semibold " + C.tx}>Pronostica le prossime</div>
+        <div className="space-y-1.5">${prossime.map((m) => { const v = voti[m.id] ?? store.get("voto:" + m.id, null); return html`<div key=${m.id} className="flex items-center gap-2">
+          <button onClick=${() => goMatch(m.id)} className="flex-1 min-w-0 text-left"><span className=${"block text-[14px] truncate " + C.tx}>${m.h} - ${m.a}</span><span className=${"block text-[11px] " + C.mu}>${m.date.slice(8)}/${m.date.slice(5, 7)} ${m.time}</span></button>
+          ${["1", "X", "2"].map((e, i) => html`<button key=${e} onClick=${() => vota(m, i)} aria-pressed=${v === i} className=${"num w-10 h-9 rounded-[10px] text-[18px] font-bold " + (v === i ? C.on : C.ch + " " + C.tx)}>${e}</button>`)}</div>`; })}</div>
+        ${msg && html`<div className=${"text-[12px] " + C.mu}>${msg}</div>`}
+        <div className=${"text-[14px] font-semibold pt-1 " + C.tx}>Gruppi di amici</div>
+        ${prof.gruppi.length > 0 && html`<div className="flex gap-1.5 flex-wrap">${prof.gruppi.map((g) => html`<button key=${g.code} onClick=${() => { setGr(g.code); store.set("garaGruppo", g.code); }} className=${"px-3 py-1.5 rounded-full text-[13px] font-semibold " + (gr === g.code ? C.seg : C.ch + " " + C.tx)}>${g.nome} (${g.n})</button>`)}</div>`}
+        ${cl && cl.righe.length > 0 && html`<div>${cl.righe.map((r, i) => html`<div key=${i} className=${"flex items-center gap-2 py-1.5 border-t first:border-t-0 " + C.bd}>
+          <span className=${"num w-6 text-[17px] font-bold " + C.mu}>${i + 1}</span><span className=${"flex-1 text-[14px] " + C.tx + (r.io ? " font-semibold" : "")}>${r.nome}${r.io ? " (tu)" : ""}</span>
+          <span className=${"text-[12px] " + C.mu}>${r.giuste}/${r.giocate}</span><span className=${"num w-10 text-right text-[19px] font-bold " + C.tx}>${r.pt}</span></div>`)}</div>`}
+        ${gr && html`<button onClick=${() => { const t = "Sfidami ai pronostici su AuraPitch! Apri l'app, vai in Il Mio Club e inserisci il codice gruppo " + gr + "."; if (navigator.share) navigator.share({ text: t }).catch(() => {}); else navigator.clipboard && navigator.clipboard.writeText(t).then(() => setMsg("Invito copiato.")); }}
+          className=${"w-full py-2 rounded-xl text-[13px] font-semibold " + C.ch + " " + C.tx}>Invita amici nel gruppo (codice ${gr})</button>`}
+        <div className="flex gap-2"><input value=${codice} onChange=${(e) => setCodice(e.target.value.toUpperCase())} placeholder="Nome nuovo gruppo o codice" maxLength=${24} className=${"flex-1 min-w-0 rounded-xl px-3 py-2 text-[14px] outline-none " + C.ch + " " + C.tx} />
+          <button onClick=${() => api("/gruppo", { chi, azione: "entra", code: codice }).then((x) => { if (x.ok) { setGr(x.code); store.set("garaGruppo", x.code); setCodice(""); carica(); } else setMsg("Codice non trovato."); })} className=${"px-3 rounded-xl text-[13px] font-semibold " + C.ch + " " + C.tx}>Entra</button>
+          <button onClick=${() => api("/gruppo", { chi, azione: "crea", nome: codice || "Amici" }).then((x) => { if (x.ok) { setGr(x.code); store.set("garaGruppo", x.code); setCodice(""); carica(); setMsg("Gruppo creato: codice " + x.code + "."); } })} className=${"px-3 rounded-xl text-[13px] font-semibold " + C.on}>Crea</button></div></div>`;
+    }
+    /* ---- codice personale: preferite, diario e schedina anche su un altro dispositivo ---- */
+    function Codice() {
+      const { pushUrl, ripristina } = React.useContext(Ctx);
+      const [c, setC] = useState("");
+      const [msg, setMsg] = useState("");
+      if (!pushUrl) return null;
+      const chi = codiceChi();
+      return html`<div className=${C.card + " p-4 space-y-2"}>
+        <div className=${C.lab}>Usa AuraPitch su un altro dispositivo</div>
+        <p className=${"text-[13px] " + C.mu}>Il tuo codice personale porta con sé preferite, squadra del cuore, diario, schedina e gara dei pronostici. Tienilo per te: chi lo conosce vede i tuoi dati.</p>
+        <div className="flex items-center gap-2"><span className=${"num flex-1 text-[22px] font-bold tracking-[0.06em] " + C.tx}>${chi}</span>
+          <button onClick=${() => navigator.clipboard && navigator.clipboard.writeText(chi).then(() => setMsg("Codice copiato."))} className=${"px-3 py-1.5 rounded-full text-[13px] font-semibold " + C.ch + " " + C.tx}>Copia</button></div>
+        <div className="flex gap-2"><input value=${c} onChange=${(e) => setC(e.target.value.trim().toLowerCase())} placeholder="Codice dell'altro dispositivo" className=${"flex-1 min-w-0 rounded-xl px-3 py-2 text-[14px] outline-none " + C.ch + " " + C.tx} />
+          <button disabled=${c.length < 8} onClick=${() => fetch(pushUrl + "/sync?chi=" + c).then((r) => r.json()).then((x) => { if (x.ok && x.dati) { store.set("chi", c); ripristina(x.dati); setMsg("Dati recuperati."); } else setMsg("Nessun dato per questo codice."); }).catch(() => setMsg("Non riesco a collegarmi."))}
+            className=${"px-3 rounded-xl text-[13px] font-semibold disabled:opacity-50 " + C.on}>Usa</button></div>
+        ${msg && html`<div className=${"text-[12px] " + C.mu}>${msg}</div>`}</div>`;
+    }
     function ClubView() {
       const { D, lg, fav, setFav, setTeam } = React.useContext(Ctx);
       const lgK = Object.keys(D.standings).find((k) => D.standings[k].generale.some((r) => r.team === fav));
@@ -1125,6 +1348,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const m = D.matches.find((x) => x.h === fav || x.a === fav);
       const l5 = m ? m.last5[m.h === fav ? 0 : 1] : [];
       return html`<div className="px-4 space-y-3">
+        <${Gara} />
         <div className=${C.card + " p-4"}><div className="flex items-center gap-3"><${Crest} t=${fav} size=${52} />
           <div className="flex-1 min-w-0"><div className=${"text-xs " + C.mu}>Squadra del cuore</div><div className=${"text-xl font-semibold truncate " + C.tx}>${fav}</div>
             ${L && html`<div className=${"text-xs flex items-center gap-1.5 " + C.mu}><${Flag} k=${L.flag} w=${14} />${L.name} - ${pos}° con ${row.pt} punti</div>`}</div></div>
@@ -1132,6 +1356,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           ${lgK && ESPN_LG[lgK] && html`<button onClick=${() => setTeam({ lgE: ESPN_LG[lgK], name: fav })} className=${"mt-4 w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}>Calendario, risultati e rosa<${Ic.ChevronRight} size=${15} /></button>`}</div>
         ${m ? html`<div className=${C.lab}>Partita della giornata</div><div className=${C.card + " overflow-hidden"}><${Row} m=${m} i=${0} /></div>`
           : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${fav} non gioca in questa giornata.</div>`}
+        <${Codice} />
         <div className=${C.card + " p-4 space-y-2"}><label htmlFor="fav" className=${C.lab}>Cambia squadra</label>
           <select id="fav" value=${fav} onChange=${(e) => { setFav(e.target.value); store.set("fav", e.target.value); }} className=${"w-full rounded-xl px-3 py-2 text-sm " + C.ch + " " + C.tx}>
             ${D.leagues.map((l) => html`<optgroup key=${l.k} label=${l.name}>${(D.standings[l.k] ? D.standings[l.k].generale.map((r) => r.team) : [...new Set(D.matches.filter((x) => x.lg === l.k).flatMap((x) => [x.h, x.a]))]).slice().sort().map((t) => html`<option key=${t} value=${t}>${t}</option>`)}</optgroup>`)}</select></div></div>`;
@@ -1143,8 +1368,12 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const [prof, setProf] = useState(0);
       const [off, setOff] = useState(store.get("slipOff", []));
       const [shield, setShield] = useState(false);
-      const pool = D.matches.filter((m) => !off.includes(m.lg) && (D.demo || m.st === "NS"));
-      let legs = buildSlip(pool, prof);
+      const [per, setPer] = useState(store.get("slipPer", "3g"));
+      const [qo, setQo] = useState(store.get("slipQ", 0));
+      const [vr, setVr] = useState(0);
+      const today = D.today || new Date().toISOString().slice(0, 10);
+      const pool = D.matches.filter((m) => !off.includes(m.lg) && (D.demo || m.st === "NS") && (D.demo || inPeriodo(m.date, per, today)));
+      let legs = qo ? buildTarget(pool, prof, qo, vr) : buildSlip(pool, prof);
       const weak = legs.length ? legs.reduce((a, b) => (a.p < b.p ? a : b)) : null;
       if (shield && weak) {
         const alt = options(weak.m).sort((a, b) => b.p - a.p)[0];
@@ -1164,19 +1393,30 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <${StoricoCard} />
         <div className=${C.lab}>Schedina IA</div>
         <div className="flex gap-2 overflow-x-auto noscroll -mx-4 px-4">${D.leagues.map((l) => html`<${Chip} key=${l.k} on=${!off.includes(l.k)} onClick=${() => { const nx = off.includes(l.k) ? off.filter((q) => q !== l.k) : [...off, l.k]; setOff(nx); store.set("slipOff", nx); }}><${Flag} k=${l.flag} w=${16} />${l.name}<//>`)}</div>
-        <div className="grid grid-cols-3 gap-2">${["Zero Tachicardia", "Classica del Sabato", "Colpaccio da Bar"].map((p, i) => { const lk = i === 2 && !pro; return html`<button key=${p} onClick=${() => (lk ? setUnlock(true) : (setProf(i), setShield(false)))}
+        <div className=${"text-[14px] font-semibold " + C.tx}>Partite di</div>
+        <div className="flex gap-1.5 overflow-x-auto noscroll -mx-4 px-4">${PERIODI.map(([k, l]) => html`<button key=${k} onClick=${() => { setPer(k); store.set("slipPer", k); setVr(0); }}
+          className=${"shrink-0 px-3.5 py-[7px] rounded-full text-[14px] font-semibold " + (per === k ? C.seg : "bg-white dark:bg-[#191626] " + C.tx)}>${l}</button>`)}</div>
+        <div className=${"text-[14px] font-semibold " + C.tx}>Quota totale che vuoi giocare</div>
+        <div className="flex gap-1.5 overflow-x-auto noscroll -mx-4 px-4">${[0, 2, 3, 5, 10, 20, 50, 100, 200].map((q) => html`<button key=${q} onClick=${() => { setQo(q); store.set("slipQ", q); setVr(0); setShield(false); }}
+          className=${"shrink-0 min-w-[52px] px-3 py-[6px] rounded-full font-semibold " + (qo === q ? C.on : "bg-white dark:bg-[#191626] " + C.tx)}>${q ? html`<span className="num text-[18px] font-bold">×${q}</span>` : html`<span className="text-[14px]">Libera</span>`}</button>`)}</div>
+        <div className=${"text-[14px] font-semibold " + C.tx}>Stile</div>
+        <div className="grid grid-cols-3 gap-2">${["Zero Tachicardia", "Classica del Sabato", "Colpaccio da Bar"].map((p, i) => { const lk = i === 2 && !pro; return html`<button key=${p} onClick=${() => (lk ? setUnlock(true) : (setProf(i), setShield(false), setVr(0)))}
           className=${C.card + " p-3 text-xs font-semibold text-center " + C.tx + (prof === i ? " ring-2 ring-[#5B2EE6] dark:ring-[#A58BFF]" : "")}>${p}${lk && html`<div className="text-[10px] mt-1 text-amber-600 dark:text-amber-300 flex items-center justify-center gap-1"><${Ic.Lock} size=${10} />PRO</div>`}</button>`; })}</div>
-        <div className=${C.card + " px-4 py-2"}>${legs.length ? legs.map((l) => html`<${LegRow} key=${l.m.id} l=${l} />`) : html`<div className=${"py-3 text-sm " + C.mu}>Nessuna partita adatta a questo profilo nei campionati scelti.</div>`}</div>
+        <p className=${"text-[12px] " + C.mu}>${["Molte partite con giocate molto probabili (quota 1,10-1,50 ciascuna).", "Giocate equilibrate (quota 1,30-2,30 ciascuna).", "Poche partite con giocate più rischiose, anche tempi, marcatori e handicap."][prof]} ${qo ? `L'IA sceglie in ogni partita, tra tutte le scommesse possibili, quella con il punteggio migliore vicina alla quota che serve.` : ""}</p>
+        <div className=${C.card + " px-4 py-2"}>${legs.length ? legs.map((l) => html`<${LegRow} key=${l.m.id} l=${l} />`) : html`<div className=${"py-3 text-sm " + C.mu}>${pool.length ? "Nessuna partita adatta a questo stile: prova un altro periodo o un altro stile." : "Nessuna partita in questo periodo nei campionati scelti."}</div>`}</div>
         ${legs.length > 0 && html`<div className=${C.card + " p-4 space-y-2"}>
-          <div className="flex justify-between text-sm"><span className=${C.mu}>${D.demo ? "Quota totale (Bet365)" : "Quota totale (quote medie)"}</span><b className=${"tabular-nums " + C.tx}>${odd(tot)}</b></div>
+          <div className="flex justify-between items-baseline text-sm"><span className=${C.mu}>${D.demo ? "Quota totale (Bet365)" : "Quota totale"}${qo ? ", obiettivo ×" + qo : ""}</span><b className=${"num text-[24px] " + C.tx}>${odd(tot)}</b></div>
+          <div className="flex justify-between text-sm"><span className=${C.mu}>Partite</span><b className=${"tabular-nums " + C.tx}>${legs.length}</b></div>
           <div className="flex justify-between text-sm"><span className=${C.mu}>Probabilità che passi, secondo l'IA</span><b className=${"tabular-nums " + C.tx}>${(prob * 100).toFixed(1).replace(".", ",")}%</b></div>
           ${done.length > 0 && html`<div className=${"text-xs font-semibold " + (won.length === done.length ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>Verifica sulla giornata: ${won.length} su ${done.length} esiti corretti${won.length === done.length ? ", schedina vinta" : ""}.</div>`}
           ${weak && html`<div className=${"rounded-xl border p-3 text-sm " + TONE.bad}><div className="font-semibold flex items-center gap-1.5"><${Ic.AlertTriangle} size=${14} />Anello debole</div>
             <div>${shield ? "Protetto dallo Scudo IA: la gamba più fragile è passata all'esito più probabile della stessa partita." : `${weak.m.h} - ${weak.m.a}, ${mLabel(weak.m, weak.k, true)} (IA ${pct(weak.p)}%) è la gamba più fragile.`}</div>
             <button onClick=${() => setShield(!shield)} className=${"mt-2 inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full " + (shield ? TONE.good + " border" : C.on)}><${Ic.ShieldCheck} size=${13} />${shield ? "Scudo IA attivo" : "Scudo IA: proteggi"}</button></div>`}
+          <${Gioca} legs=${legs} />
+          ${qo > 0 && html`<button onClick=${() => { setVr(vr + 1); setShield(false); }} className=${"w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Repeat} size=${15} />Un'altra combinazione</button>`}
           <div className="grid grid-cols-2 gap-2 pt-1">
-            <button onClick=${() => doCopy(text(legs, false))} className=${"py-2.5 rounded-xl border text-sm font-semibold flex items-center justify-center gap-1.5 " + TONE.good}><${Ic.Copy} size=${15} />Copia</button>
-            <button onClick=${() => doCopy(text(legs, true))} className=${"py-2.5 rounded-xl border text-sm font-semibold flex items-center justify-center gap-1.5 " + TONE.good}><${Ic.Smartphone} size=${15} />Per WhatsApp</button></div></div>`}
+            <button onClick=${() => doCopy(text(legs, false))} className=${"py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Copy} size=${15} />Copia testo</button>
+            <button onClick=${() => doCopy(text(legs, true))} className=${"py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Smartphone} size=${15} />Testo WhatsApp</button></div></div>`}
         <div className=${C.lab + " pt-2"}>La mia schedina</div>
         <div className=${C.card + " px-4 py-2"}>${mine.length ? mine.map((l) => html`<${LegRow} key=${l.id} l=${l} onDel=${() => setMySlip(mySlip.filter((x) => x.id !== l.id))} />`)
           : html`<div className=${"py-3 text-sm " + C.mu}>Vuota. Apri una partita e tocca un esito in "Aggiungi alla tua schedina".</div>`}</div>
@@ -1186,10 +1426,129 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           <div className="grid grid-cols-3 gap-2 pt-1">
             <button onClick=${() => doCopy(text(mine, false))} className=${"py-2 rounded-xl border text-xs font-semibold " + TONE.good}>Copia</button>
             <button onClick=${() => doCopy(text(mine, true))} className=${"py-2 rounded-xl border text-xs font-semibold " + TONE.good}>WhatsApp</button>
-            <button onClick=${() => setMySlip([])} className=${"py-2 rounded-xl text-xs font-semibold " + C.ch + " " + C.tx}>Svuota</button></div></div>`}
+            <button onClick=${() => setMySlip([])} className=${"py-2 rounded-xl text-xs font-semibold " + C.ch + " " + C.tx}>Svuota</button></div>
+          <${Gioca} legs=${mine.filter((l) => l.q)} /></div>`}
+        <${Diario} />
         <p className=${"text-[11px] " + C.mu}>Le probabilità sono stime: nessuna schedina è sicura. Gioca solo cifre che puoi permetterti di perdere.</p></div>`;
     }
 
+
+  /* ---- schedina come immagine (1080 x altezza variabile), nello stile AuraPitch ---- */
+  async function immagineSchedina(legs, titolo, lg) {
+    try { await document.fonts.ready; } catch (e) { /* caratteri di sistema */ }
+    const W = 1080, H = 360 + legs.length * 150 + 260, c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const x = c.getContext("2d");
+    x.fillStyle = "#0E0C18"; x.fillRect(0, 0, W, H);
+    const g = x.createRadialGradient(W * 0.85, 0, 10, W * 0.85, 0, 700); g.addColorStop(0, "rgba(123,92,255,0.45)"); g.addColorStop(1, "rgba(123,92,255,0)");
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    const BS = '"Big Shoulders", "Figtree", sans-serif', FT = '"Figtree", system-ui, sans-serif';
+    x.strokeStyle = "#A58BFF"; x.lineWidth = 8;
+    for (const [r, o] of [[52, 0.3], [36, 0.55], [22, 1]]) { x.globalAlpha = o; x.beginPath(); x.arc(110, 120, r, 0, Math.PI * 2); x.stroke(); }
+    x.globalAlpha = 1; x.fillStyle = "#F4F2FF"; x.beginPath(); x.arc(110, 120, 9, 0, Math.PI * 2); x.fill();
+    x.font = `800 76px ${BS}`; x.fillText("AuraPitch", 190, 146);
+    x.font = `500 38px ${FT}`; x.fillStyle = "#9A95B3"; x.fillText(titolo, 70, 260);
+    let y = 330;
+    for (const l of legs) {
+      x.fillStyle = "#191626"; x.beginPath(); x.roundRect(50, y, W - 100, 130, 28); x.fill();
+      const [ch, ca] = auraCol(l.m);
+      x.fillStyle = ch; x.fillRect(50, y + 30, 8, 70); x.fillStyle = ca; x.fillRect(50, y + 65, 8, 35);
+      x.fillStyle = "#9A95B3"; x.font = `500 30px ${FT}`; x.fillText(`${l.m.h} - ${l.m.a}  ·  ${(lg(l.m.lg) || {}).name || ""}`.slice(0, 52), 90, y + 52);
+      x.fillStyle = "#F4F2FF"; x.font = `700 40px ${FT}`; x.fillText(mLabel(l.m, l.k, true).slice(0, 34), 90, y + 102);
+      x.font = `800 60px ${BS}`; x.textAlign = "right"; x.fillText(odd(l.q), W - 90, y + 88); x.textAlign = "left";
+      y += 150;
+    }
+    const tot = legs.reduce((a, l) => a * l.q, 1), pr = legs.reduce((a, l) => a * l.p, 1);
+    x.fillStyle = "#9A95B3"; x.font = `500 34px ${FT}`; x.fillText("Quota totale", 70, y + 60); x.fillText(`Probabilità IA ${(pr * 100).toFixed(1).replace(".", ",")}%`, 70, y + 110);
+    x.fillStyle = "#F4F2FF"; x.font = `800 120px ${BS}`; x.textAlign = "right"; x.fillText(odd(tot), W - 70, y + 110); x.textAlign = "left";
+    x.fillStyle = "#6E6A85"; x.font = `400 26px ${FT}`; x.fillText("Stime, non certezze. Gioca responsabilmente.", 70, H - 50);
+    const blob = await new Promise((r) => c.toBlob(r, "image/png"));
+    const file = new File([blob], "schedina-aurapitch.png", { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: "Schedina AuraPitch" }); return "condivisa"; }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = file.name; a.click(); return "scaricata";
+  }
+
+  /* ---- diario delle giocate: resta sul telefono; l'esito di ogni partita si salva appena è noto ---- */
+  function esitoGamba(g, byId) {
+    if (g.ok != null) return g.ok;
+    const m = byId[g.id];
+    return m ? hit(m, g.k) : null;
+  }
+  function statoGiocata(x, byId) {
+    const e = x.legs.map((g) => esitoGamba(g, byId));
+    return e.includes(false) ? "persa" : e.every((v) => v === true) ? "vinta" : "aperta";
+  }
+  function Diario() {
+    const { byId, diario, setDiario } = React.useContext(Ctx);
+    const [aperta, setAperta] = useState(null);
+    // salva gli esiti noti (le partite escono dal file dopo qualche giorno)
+    useEffect(() => {
+      let ch = false;
+      const nx = diario.map((x) => ({ ...x, legs: x.legs.map((g) => { if (g.ok != null) return g; const v = esitoGamba(g, byId); if (v != null) { ch = true; return { ...g, ok: v }; } return g; }) }));
+      if (ch) setDiario(nx);
+    }, [byId]);
+    if (!diario.length) return html`<div className=${C.card + " p-4"}><div className=${C.lab}>Il mio diario</div>
+      <p className=${"text-[14px] mt-1 " + C.mu}>Quando giochi una schedina, tocca "L'ho giocata": qui trovi esiti, spesa, vincite e resa nel tempo.</p></div>`;
+    const ch = diario.filter((x) => statoGiocata(x, byId) !== "aperta");
+    const speso = ch.reduce((a, x) => a + x.imp, 0), vinto = ch.filter((x) => statoGiocata(x, byId) === "vinta").reduce((a, x) => a + x.imp * x.q, 0);
+    const eur = (v) => v.toLocaleString("it-IT", { style: "currency", currency: "EUR" });
+    return html`<div className=${C.card + " p-4"}>
+      <div className="flex items-baseline mb-2"><span className=${C.lab + " flex-1"}>Il mio diario</span><span className=${"text-[12px] " + C.mu}>${diario.length} giocate</span></div>
+      <div className="grid grid-cols-3 gap-2 mb-2">${[["Giocato", eur(speso)], ["Vinto", eur(vinto)], ["Resa", ch.length ? (vinto - speso >= 0 ? "+" : "") + eur(vinto - speso) : "-"]].map(([l, v]) => html`<div key=${l} className=${"rounded-[14px] p-2.5 " + C.ch}>
+        <div className=${"text-[11px] " + C.mu}>${l}</div><div className=${"num text-[20px] font-bold " + (l === "Resa" && ch.length ? (vinto >= speso ? "text-[#0F9D84]" : "text-[#FF3D5A]") : C.tx)}>${v}</div></div>`)}</div>
+      ${diario.slice().reverse().map((x) => { const st = statoGiocata(x, byId), o = aperta === x.id; return html`<div key=${x.id} className=${"border-t " + C.bd}>
+        <button onClick=${() => setAperta(o ? null : x.id)} className="w-full flex items-center gap-2 py-2.5 text-left">
+          <span className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + (st === "vinta" ? TONE.good : st === "persa" ? TONE.bad : TONE.ok)}>${st === "vinta" ? "Vinta" : st === "persa" ? "Persa" : "In corso"}</span>
+          <span className="flex-1 min-w-0"><span className=${"block text-[14px] truncate " + C.tx}>${x.legs.length} ${x.legs.length === 1 ? "partita" : "partite"}, ${new Date(x.t).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}</span></span>
+          <span className=${"text-[12px] " + C.mu}>${eur(x.imp)} @</span><span className=${"num text-[18px] font-bold " + C.tx}>${odd(x.q)}</span></button>
+        ${o && html`<div className="pb-3 space-y-1">${x.legs.map((g, i) => { const e = esitoGamba(g, byId); return html`<div key=${i} className="flex items-center gap-2 text-[13px]">
+          <span className=${"flex-1 truncate " + C.tx}>${g.h} - ${g.a}: <b>${g.l}</b></span><span className=${"num text-[15px] " + C.mu}>${odd(g.q)}</span>
+          ${e === null ? html`<${Ic.Clock} size=${15} className=${C.mu} />` : e ? html`<${Ic.CheckCircle2} size=${15} className="text-[#0F9D84]" />` : html`<${Ic.XCircle} size=${15} className="text-[#FF3D5A]" />`}</div>`; })}
+          <button onClick=${() => setDiario(diario.filter((z) => z.id !== x.id))} className=${"text-[12px] font-semibold " + C.mu}>Elimina dal diario</button></div>`}</div>`; })}
+      <p className=${"text-[11px] mt-2 " + C.mu}>Il diario resta su questo telefono. Le giocate su cartellini, falli, angoli e marcatori non si verificano dal risultato: segnale tu dall'app del bookmaker.</p></div>`;
+  }
+  function Gioca({ legs, onDone }) {
+    const { setDiario, diario, lg } = React.useContext(Ctx);
+    const [imp, setImp] = useState(store.get("impUltimo", 5));
+    const [msg, setMsg] = useState("");
+    const q = legs.reduce((a, l) => a * l.q, 1);
+    const salva = () => { const x = { id: Date.now().toString(36), t: Date.now(), imp: Number(imp) || 0, q, legs: legs.map((l) => ({ id: l.m.id, k: l.k, q: l.q, p: l.p, h: l.m.h, a: l.m.a, l: mLabel(l.m, l.k, true) })) };
+      setDiario([...diario, x]); store.set("impUltimo", Number(imp) || 0); setMsg("Salvata nel diario."); if (onDone) setTimeout(onDone, 800); };
+    return html`<div className="space-y-2">
+      <div className="flex items-center gap-2"><span className=${"text-[13px] " + C.mu}>Importo</span>${[1, 2, 5, 10, 20].map((v) => html`<button key=${v} onClick=${() => setImp(v)} className=${"num text-[16px] font-bold px-2.5 py-1 rounded-full " + (Number(imp) === v ? C.on : C.ch + " " + C.tx)}>${v}€</button>`)}</div>
+      <div className="grid grid-cols-2 gap-2">
+        <button onClick=${salva} className=${"py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.on}><${Ic.Book} size=${15} />L'ho giocata</button>
+        <button onClick=${async () => { try { const r = await immagineSchedina(legs, "Schedina del " + new Date().toLocaleDateString("it-IT", { day: "numeric", month: "long" }), lg); setMsg("Immagine " + r + "."); } catch (e) { setMsg("Condivisione annullata."); } }}
+          className=${"py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Share} size=${15} />Condividi immagine</button></div>
+      ${msg && html`<div className=${"text-[12px] " + C.mu}>${msg}</div>`}</div>`;
+  }
+
+  /* ---- ricerca: squadre, partite e giocatori (marcatori delle partite in programma) ---- */
+  function Cerca({ onClose }) {
+    const { D, lg, goMatch, setTeam } = React.useContext(Ctx);
+    const [q, setQ] = useState("");
+    const pn = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const t = pn(q.trim());
+    const squadre = {};
+    for (const m of D.matches) { squadre[m.h] = squadre[m.h] || { lg: m.lg, lgE: m.lgE || ESPN_LG[m.lg] }; squadre[m.a] = squadre[m.a] || { lg: m.lg, lgE: m.lgE || ESPN_LG[m.lg] }; }
+    for (const [k, S] of Object.entries(D.standings || {})) for (const r of S.generale || []) squadre[r.team] = squadre[r.team] || { lg: k, lgE: ESPN_LG[k] };
+    const sq = t.length >= 2 ? Object.entries(squadre).filter(([n]) => pn(n).includes(t)).slice(0, 8) : [];
+    const pa = t.length >= 2 ? D.matches.filter((m) => pn(m.h).includes(t) || pn(m.a).includes(t)).slice(0, 8) : [];
+    const gi = [];
+    if (t.length >= 3) for (const m of D.matches.slice().sort((a, b) => a.ko.localeCompare(b.ko))) for (const c of Object.keys(m.marcatori || {})) if (pn(c.slice(5)).includes(t) && gi.length < 8 && !gi.some((g) => g.n === c.slice(5))) gi.push({ n: c.slice(5), m, x: m.marcatori[c] });
+    const vai = (fn) => { onClose(); fn(); };
+    const Riga = ({ onClick, children }) => html`<button onClick=${onClick} className=${"w-full flex items-center gap-3 py-2.5 text-left border-t first:border-t-0 " + C.bd}>${children}</button>`;
+    return html`<${Sheet} title="Cerca" onClose=${onClose}>
+      <input autoFocus value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Squadra, partita o giocatore" className=${"w-full rounded-xl px-3.5 py-3 text-[16px] outline-none " + C.ch + " " + C.tx} />
+      ${t.length < 2 && html`<p className=${"text-[13px] " + C.mu}>Scrivi almeno 2 lettere. Trovi le squadre dei campionati seguiti, le loro partite in programma e i giocatori che possono segnare.</p>`}
+      ${sq.length > 0 && html`<div><div className=${"text-[12px] font-semibold mb-1 " + C.mu}>Squadre</div>${sq.map(([n, x]) => html`<${Riga} key=${n} onClick=${() => vai(() => setTeam({ lgE: x.lgE, name: n }))}>
+        <${Crest} t=${n} size=${22} /><span className=${"flex-1 text-[15px] " + C.tx}>${n}</span><span className=${"text-[12px] " + C.mu}>${(lg(x.lg) || {}).name || ""}</span><//>`)}</div>`}
+      ${pa.length > 0 && html`<div><div className=${"text-[12px] font-semibold mb-1 " + C.mu}>Partite</div>${pa.map((m) => html`<${Riga} key=${m.id} onClick=${() => vai(() => goMatch(m.id))}>
+        <span className=${"num text-[16px] font-bold w-12 " + C.tx}>${m.st === "NS" ? m.time : m.g ? m.g.join("-") : ""}</span><span className=${"flex-1 text-[15px] " + C.tx}>${m.h} - ${m.a}</span><span className=${"text-[12px] " + C.mu}>${m.date.slice(8)}/${m.date.slice(5, 7)}</span><//>`)}</div>`}
+      ${gi.length > 0 && html`<div><div className=${"text-[12px] font-semibold mb-1 " + C.mu}>Giocatori</div>${gi.map((g) => html`<${Riga} key=${g.n + g.m.id} onClick=${() => vai(() => goMatch(g.m.id))}>
+        <span className="flex-1 min-w-0"><span className=${"block text-[15px] " + C.tx}>${g.n}</span><span className=${"block text-[12px] " + C.mu}>${g.x.lato ? g.m.a : g.m.h}, ${g.x.g} gol in ${g.x.pres} presenze. Prossima: ${g.m.h} - ${g.m.a}</span></span><//>`)}</div>`}
+      ${t.length >= 2 && !sq.length && !pa.length && !gi.length && html`<p className=${"text-[13px] " + C.mu}>Nessun risultato per "${q}".</p>`}<//>`;
+  }
 
   /* ---------- app ---------- */
   function App() {
@@ -1233,6 +1592,23 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const [pushOn, setPushOn] = useState(store.get("push", false));
     const [pushMsg, setPushMsg] = useState("");
     const [askPush, setAskPush] = useState(false);
+    const [cerca, setCerca] = useState(false);
+    const [diario, setDiario0] = useState(store.get("diario", []));
+    const setDiario = (d) => { setDiario0(d); store.set("diario", d); };
+    const ripristina = (x) => {
+      if (Array.isArray(x.favM)) { setFavM(x.favM); store.set("favM", x.favM); }
+      if (x.fav) { setFav(x.fav); store.set("fav", x.fav); }
+      if (Array.isArray(x.diario)) setDiario(x.diario);
+      if (Array.isArray(x.slip)) setMySlip(x.slip);
+      if (typeof x.name === "string") { setName(x.name); store.set("name", x.name); }
+    };
+    // copia dei dati personali sul servizio AuraPitch (per il codice personale), 3 secondi dopo l'ultima modifica
+    useEffect(() => {
+      if (!pushUrl || !store.get("chi", null)) return;
+      const id = setTimeout(() => { fetch(pushUrl + "/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chi: store.get("chi", null), dati: { favM, fav, diario, slip: mySlip, name } }) }).catch(() => {}); }, 3000);
+      return () => clearTimeout(id);
+    }, [pushUrl, favM, fav, diario, mySlip, name]);
+    const [pref, setPref] = useState(store.get("pushPref", { formazioni: true, inizio: true, gol: true, rossi: true, intervallo: true, finale: true }));
     const lastFollow = useRef("");
 
     useEffect(() => {
@@ -1265,7 +1641,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     // notifiche push: partite seguite = preferite + squadra del cuore, collegate alla diretta e non ancora finite
     const followList = () => (D ? D.matches.filter((m) => m.eid && m.lgE && m.st !== "FT" && (favM.includes(m.id) || m.h === fav || m.a === fav)).map((m) => ({ lgE: m.lgE, eid: m.eid, h: m.h, a: m.a })) : []);
     const sendFollow = async (sub, test) => {
-      const r = await fetch(pushUrl + "/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sub: sub.toJSON(), follow: followList() }) });
+      const r = await fetch(pushUrl + "/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sub: sub.toJSON(), follow: followList(), pref }) });
       if (!r.ok) throw new Error("iscrizione");
       if (test) await fetch(pushUrl + "/test", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: sub.endpoint }) });
     };
@@ -1282,7 +1658,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         const raw = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((key.length + 3) % 4)), (c) => c.charCodeAt(0));
         const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: raw }));
         await sendFollow(sub, true);
-        lastFollow.current = JSON.stringify(followList());
+        lastFollow.current = JSON.stringify([followList(), pref]);
         setPushOn(true); store.set("push", true);
         setPushMsg("Notifiche attive: dovresti aver ricevuto una notifica di prova.");
       } catch (e) { setPushMsg("Non sono riuscito ad attivarle: controlla la connessione e riprova."); }
@@ -1297,7 +1673,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     };
     useEffect(() => {
       if (!pushOn || !pushUrl || !D) return;
-      const key = JSON.stringify(followList());
+      const key = JSON.stringify([followList(), pref]);
       if (key === lastFollow.current) return;
       const id = setTimeout(async () => {
         try {
@@ -1307,7 +1683,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         } catch (e) { /* si riprova al prossimo aggiornamento */ }
       }, 1500);
       return () => clearTimeout(id);
-    }, [D, favM, fav, pushOn, pushUrl]);
+    }, [D, favM, fav, pushOn, pushUrl, pref]);
     // avvisi: gol e fine partita delle partite preferite e della squadra del cuore (con l'app aperta)
     useEffect(() => {
       if (!D) return;
@@ -1369,6 +1745,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           <span className=${"num text-[25px] font-extrabold tracking-[0.01em] leading-none " + C.tx}>AuraPitch</span>
           <span className=${"text-[10px] font-semibold px-1.5 py-0.5 rounded-md " + C.ch + " " + C.mu}>beta</span></button>
         <button onClick=${() => setUnlock(true)} className=${"text-[11px] font-semibold px-2.5 py-1 rounded-full border tabular-nums " + (pro ? TONE.warn : C.ch + " " + C.tx + " border-transparent")}>${sub ? "PRO" : left > 0 ? "PRO " + mmss(left) : "FREE"}</button>
+        <button aria-label="Cerca" onClick=${() => setCerca(true)} className=${"w-8 h-8 rounded-full flex items-center justify-center " + C.ch + " " + C.tx}><${Ic.Search} size=${15} /></button>
         <button aria-label="Guida rapida" onClick=${() => setGuide(guide ? 0 : 1)} className=${"w-8 h-8 rounded-full flex items-center justify-center " + C.ch + " " + C.tx}><${Ic.HelpCircle} size=${15} /></button>
         <button aria-label="Profilo e impostazioni" onClick=${() => setProfile(true)} className=${"w-8 h-8 rounded-full text-[11px] font-semibold " + C.on}>${ini}</button>
       </div></header>`;
@@ -1412,7 +1789,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const views = { partite: home, campionati: html`<${LeaguesView} />`, schedina: html`<${SlipView} />`, club: html`<${ClubView} />` };
     const DOCK = [["partite", "Partite", Ic.Calendar], ["campionati", "Campionati", Ic.Trophy], ["schedina", "Schedina IA", Ic.Sparkles], ["club", "Il Mio Club", Ic.Shield]];
 
-    const ctx = { pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen, mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
+    const ctx = { ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen, mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
     return html`<${Ctx.Provider} value=${ctx}><div className="min-h-screen pb-28">
       ${header}
       <main className="max-w-[480px] mx-auto">${guideBox}${team ? html`<${TeamView} key=${team.name} />` : open_m ? html`<${MatchView} key=${open_m.id} m=${open_m} />` : views[tab]}</main>
@@ -1436,6 +1813,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
             ${pro && html`<button onClick=${() => { setSub(null); setUntil(0); store.set("sub", null); store.set("until", 0); setUnlock(false); }} className=${"w-full text-xs font-medium py-1 " + C.mu}>Torna a FREE</button>`}
             <p className=${"text-[11px] text-center " + C.mu}>Beta: nessun pagamento reale.</p><//>`}<//>`}
 
+      ${cerca && html`<${Cerca} onClose=${() => setCerca(false)} />`}
       ${askPush && html`<${Sheet} title="Notifiche della partita" onClose=${() => setAskPush(false)}>
         <p className=${"text-[15px] " + C.tx}>Vuoi ricevere un avviso anche con il telefono bloccato per <b>inizio partita, gol, espulsioni, fine primo tempo e finale</b> delle tue preferite?</p>
         ${/iPhone|iPad/.test(navigator.userAgent) && !navigator.standalone && html`<div className=${"text-[13px] rounded-xl p-3 " + TONE.warn + " border"}>Su iPhone le notifiche funzionano solo aprendo AuraPitch dall'icona sulla schermata Home (Safari, Condividi, Aggiungi alla schermata Home).</div>`}
@@ -1455,9 +1833,13 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
           <span className=${"w-11 h-6 rounded-full p-0.5 transition-colors " + (avvisi ? "bg-emerald-500" : "bg-black/20 dark:bg-white/20")}><span className=${"block w-5 h-5 rounded-full bg-white shadow transition-transform " + (avvisi ? "translate-x-5" : "")}></span></span></button>
         <div className=${C.lab}>Notifiche con l'app chiusa</div>
         <div className=${"rounded-xl px-3 py-2.5 space-y-2 " + C.ch}>
-          <div className=${"text-xs " + C.mu}>Calcio d'inizio, gol (con il marcatore) e finale delle partite con la stella e della squadra del cuore, anche con il telefono bloccato.</div>
+          <div className=${"text-xs " + C.mu}>Per le partite con la stella e la squadra del cuore, anche con il telefono bloccato. Scegli qui sotto quali avvisi ricevere.</div>
           <button onClick=${pushOn ? disattivaPush : attivaPush} className=${"w-full py-2.5 rounded-xl text-sm font-semibold " + (pushOn ? "bg-white dark:bg-[#2A2640] " + C.tx : C.on)}>${pushOn ? "Disattiva le notifiche" : "Attiva le notifiche"}</button>
-          ${pushMsg && html`<div className=${"text-xs " + C.tx}>${pushMsg}</div>`}</div>
+          ${pushMsg && html`<div className=${"text-xs " + C.tx}>${pushMsg}</div>`}
+          ${pushOn && html`<div className="pt-1 space-y-1">${[["formazioni", "Formazioni ufficiali (con la probabilità IA aggiornata)"], ["inizio", "Calcio d'inizio"], ["gol", "Gol"], ["rossi", "Espulsioni"], ["intervallo", "Fine primo tempo"], ["finale", "Risultato finale"]].map(([k, l]) => html`
+            <button key=${k} onClick=${() => { const nx = { ...pref, [k]: pref[k] === false }; setPref(nx); store.set("pushPref", nx); }} className="w-full flex items-center gap-3 py-1.5 text-left">
+              <span className=${"flex-1 text-[14px] " + C.tx}>${l}</span>
+              <span className=${"w-10 h-6 rounded-full p-0.5 transition-colors " + (pref[k] !== false ? "bg-[#5B2EE6] dark:bg-[#A58BFF]" : "bg-black/20 dark:bg-white/20")}><span className=${"block w-5 h-5 rounded-full bg-white shadow transition-transform " + (pref[k] !== false ? "translate-x-4" : "")}></span></span></button>`)}</div>`}</div>
         <div className=${C.lab}>Squadra del cuore</div>
         <div className=${"text-sm " + C.tx}>${fav} <button onClick=${() => { setProfile(false); setOpen(null); setTab("club"); }} className="text-[#5B2EE6] dark:text-[#A58BFF] font-medium ml-1">Cambia</button></div>
         <div className=${C.lab}>Accesso</div>

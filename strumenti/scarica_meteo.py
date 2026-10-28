@@ -31,43 +31,64 @@ def get(url, tent=4):
     return None
 
 
-def main():
+def main(limite_s=40 * 60):
+    """Riprende da dove era rimasto: citta gia geocodificate in meteo_squadre.json, serie gia scaricate in storico/meteo/<lat,lon>.json.
+    Si ferma dopo 'limite_s' secondi (il workflow salva e si puo rilanciare)."""
+    t0 = time.time()
     righe = list(csv.DictReader(gzip.open("storico/fd_partite.csv.gz", "rt")))
     squadre = {}
     for r in righe:
-        squadre.setdefault(r["HomeTeam"], PAESE.get(r["Div"], ""))
-    citta, out = {}, []
+        if r["Season"] >= "1617":  # test su 10 stagioni: meno dati da scaricare
+            squadre.setdefault(r["HomeTeam"], PAESE.get(r["Div"], ""))
+    try:
+        citta = json.load(open("storico/meteo_squadre.json"))
+    except (OSError, ValueError):
+        citta = {}
     for sq, paese in sorted(squadre.items()):
+        if sq in citta:
+            continue
         nome = ALIAS.get(sq, sq)
-        g = get("https://geocoding-api.open-meteo.com/v1/search?" + urllib.parse.urlencode({"name": nome, "count": 5, "language": "it", "format": "json"}))
+        g = get("https://geocoding-api.open-meteo.com/v1/search?" + urllib.parse.urlencode({"name": nome, "count": 5, "language": "it", "format": "json"}), tent=2)
         res = [x for x in (g or {}).get("results", []) if x.get("country_code") == paese] if g else []
-        if not res:
+        if res:
+            x = max(res, key=lambda z: z.get("population") or 0)
+            citta[sq] = {"citta": x["name"], "lat": x["latitude"], "lon": x["longitude"]}
+        else:
+            citta[sq] = None
             print("non trovata:", sq, "->", nome)
-            continue
-        x = max(res, key=lambda z: z.get("population") or 0)
-        citta[sq] = {"citta": x["name"], "lat": x["latitude"], "lon": x["longitude"]}
-        time.sleep(0.3)
-    print(f"squadre {len(squadre)}, con citta {len(citta)}")
-    gia = {}
-    for sq, c in citta.items():
-        k = f"{round(c['lat'], 2)},{round(c['lon'], 2)}"
-        if k not in gia:
-            d = get("https://archive-api.open-meteo.com/v1/archive?" + urllib.parse.urlencode({"latitude": c["lat"], "longitude": c["lon"], "start_date": "2012-08-01", "end_date": "2026-06-30",
-                                                                                                 "daily": "precipitation_sum,wind_speed_10m_max,temperature_2m_max", "timezone": "Europe/Rome"}))
-            gia[k] = d
-            time.sleep(1.0)
-        d = gia[k]
-        if not d or "daily" not in d:
-            continue
-        D = d["daily"]
-        for t, p, w, te in zip(D["time"], D["precipitation_sum"], D["wind_speed_10m_max"], D["temperature_2m_max"]):
-            out.append([sq, t, p, w, te])
+        time.sleep(0.2)
     json.dump(citta, open("storico/meteo_squadre.json", "w"), ensure_ascii=False, indent=0)
+    os.makedirs("storico/meteo", exist_ok=True)
+    fatte = 0
+    for sq, c in citta.items():
+        if not c or time.time() - t0 > limite_s:
+            continue
+        k = f"{round(c['lat'], 2)},{round(c['lon'], 2)}"
+        path = f"storico/meteo/{k}.json"
+        if os.path.exists(path):
+            continue
+        d = get("https://archive-api.open-meteo.com/v1/archive?" + urllib.parse.urlencode({"latitude": c["lat"], "longitude": c["lon"], "start_date": "2016-08-01", "end_date": "2026-06-30",
+                                                                                             "daily": "precipitation_sum,wind_speed_10m_max,temperature_2m_max", "timezone": "Europe/Rome"}), tent=2)
+        if d and "daily" in d:
+            D = d["daily"]
+            json.dump({"t": D["time"], "p": D["precipitation_sum"], "w": D["wind_speed_10m_max"], "te": D["temperature_2m_max"]}, open(path, "w"), separators=(",", ":"))
+            fatte += 1
+        time.sleep(2)
+    # file unico per il test
+    out = []
+    for sq, c in citta.items():
+        if not c:
+            continue
+        path = f"storico/meteo/{round(c['lat'], 2)},{round(c['lon'], 2)}.json"
+        if os.path.exists(path):
+            D = json.load(open(path))
+            out += [[sq, t, p, w, te] for t, p, w, te in zip(D["t"], D["p"], D["w"], D["te"])]
     with gzip.open("storico/meteo_giorni.csv.gz", "wt") as f:
         w = csv.writer(f)
         w.writerow(["squadra", "data", "pioggia", "vento", "temp"])
         w.writerows(out)
-    print("righe meteo", len(out))
+    mancano = sum(1 for sq, c in citta.items() if c and not os.path.exists(f"storico/meteo/{round(c['lat'], 2)},{round(c['lon'], 2)}.json"))
+    print(f"squadre {len(squadre)}, con citta {sum(1 for c in citta.values() if c)}, serie scaricate ora {fatte}, mancano {mancano}, righe {len(out)}")
 
 
 if __name__ == "__main__":

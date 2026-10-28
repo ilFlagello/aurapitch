@@ -1,49 +1,76 @@
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Bilbao&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=M%C3%BCnchen&count=5&language=it&forma <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Bolton&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
-non trovata: Bristol City -> Bristol City
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Burton&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
-non trovata: Carrarese -> Carrarese
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Cesena&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
-non trovata: Cremonese -> Cremonese
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Crotone&count=5&language=it&format=jso <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Empoli&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
-non trovata: FeralpiSalo -> FeralpiSalo
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Frosinone&count=5&language=it&format=j <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Berlin&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
-non trovata: Holstein Kiel -> Holstein Kiel
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Torino&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Leicester&count=5&language=it&format=j <urlopen error _ssl.c:993: The handshake operation timed out>
-non trovata: Levante -> Levante
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=M%C3%B6nchengladbach&count=5&language= <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Milano&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
-non trovata: Monaco -> Monaco
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Nice&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Paderborn&count=5&language=it&format=j <urlopen error _ssl.c:993: The handshake operation timed out>
-non trovata: Paris FC -> Paris FC
-non trovata: Paris SG -> Paris SG
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Plymouth&count=5&language=it&format=js <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Reggiana&count=5&language=it&format=js <urlopen error _ssl.c:993: The handshake operation timed out>
-non trovata: Reggiana -> Reggiana
-non trovata: Reggina -> Reggina
-non trovata: Salernitana -> Salernitana
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Gelsenkirchen&count=5&language=it&form <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=St+Etienne&count=5&language=it&format= <urlopen error _ssl.c:993: The handshake operation timed out>
-non trovata: St Etienne -> St Etienne
-non trovata: Ternana -> Ternana
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Torino&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
-non trovata: Udinese -> Udinese
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Madrid&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Wolfsburg&count=5&language=it&format=j <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=36.83814&longitude=-2.45974&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=51.50853&longitude=-0.12574&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=45.69601&longitude=9.66721&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=40.4165&longitude=-3.70256&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=40.91494&longitude=14.79103&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=48.13743&longitude=11.57549&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=52.03333&longitude=8.53333&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=53.81667&longitude=-3.05&start_date <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=44.49381&longitude=11.33875&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=44.84124&longitude=-0.58046&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
-  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=50.72048&longitude=-1.8795&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
-squadre 214, con citta 199, serie scaricate ora 30, mancano 155, righe 159324
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=50.82838&longitude=-0.13947&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=36.52672&longitude=-6.2891&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=38.88247&longitude=16.60086&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=45.43854&longitude=10.9938&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=45.80819&longitude=9.0832&start_dat <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=39.08077&longitude=17.12764&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=47.31344&longitude=5.01391&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=53.41058&longitude=-2.97794&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=41.45845&longitude=15.55188&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=41.63976&longitude=13.34109&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=41.98311&longitude=2.82493&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=48.67798&longitude=10.15162&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=45.46427&longitude=9.18951&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=40.70211&longitude=14.48685&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=28.10178&longitude=-15.41573&start_ <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=49.49346&longitude=0.10785&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=50.43302&longitude=2.82791&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=51.0303&longitude=6.98432&start_dat HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=51.0303&longitude=6.98432&start_dat HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=50.63391&longitude=3.05512&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=50.63391&longitude=3.05512&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=43.54427&longitude=10.32615&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=43.54427&longitude=10.32615&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=47.74817&longitude=-3.37177&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=47.74817&longitude=-3.37177&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=51.87967&longitude=-0.41748&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=51.87967&longitude=-0.41748&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=45.74906&longitude=4.84789&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=45.74906&longitude=4.84789&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=51.18539&longitude=6.44172&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=51.18539&longitude=6.44172&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=49.98185&longitude=8.28008&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=49.98185&longitude=8.28008&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=36.72016&longitude=-4.42034&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=36.72016&longitude=-4.42034&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=39.56939&longitude=2.65024&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=39.56939&longitude=2.65024&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=53.48095&longitude=-2.23743&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=53.48095&longitude=-2.23743&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=53.48095&longitude=-2.23743&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=53.48095&longitude=-2.23743&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=45.16031&longitude=10.79784&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=45.16031&longitude=10.79784&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=43.29695&longitude=5.38107&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=43.29695&longitude=5.38107&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=49.11911&longitude=6.17269&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=49.11911&longitude=6.17269&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=54.57623&longitude=-1.23483&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=54.57623&longitude=-1.23483&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=44.64783&longitude=10.92539&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=44.64783&longitude=10.92539&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=43.61093&longitude=3.87635&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=43.61093&longitude=3.87635&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=45.58005&longitude=9.27246&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=45.58005&longitude=9.27246&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=48.68439&longitude=6.18496&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=48.68439&longitude=6.18496&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=47.21725&longitude=-1.55336&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=47.21725&longitude=-1.55336&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=40.85216&longitude=14.26811&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=40.85216&longitude=14.26811&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=54.97328&longitude=-1.61396&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=54.97328&longitude=-1.61396&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=43.70313&longitude=7.26608&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=43.70313&longitude=7.26608&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=43.83665&longitude=4.35788&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=43.83665&longitude=4.35788&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=52.62783&longitude=1.29834&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=52.62783&longitude=1.29834&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=52.9536&longitude=-1.15047&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=52.9536&longitude=-1.15047&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=45.44694&longitude=8.62118&start_da HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=45.44694&longitude=8.62118&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=49.45421&longitude=11.07752&start_d HTTP Error 429: Too Many Requests
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=49.45421&longitude=11.07752&start_d HTTP Error 429: Too Many Requests
+squadre 214, con citta 199, serie scaricate ora 65, mancano 82, righe 423657

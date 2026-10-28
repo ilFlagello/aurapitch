@@ -1703,16 +1703,9 @@
 ]
 },
 "Vicenza": {
-"wikidata": "Q8643",
-"nome": "Vicenza Calcio",
-"allenatori": [
-{
-"chi": "Nedo Sonetti",
-"qid": "Q1080952",
-"da": "2010-03-28",
-"a": "2010-04-15"
-}
-]
+"wikidata": "Q56542463",
+"nome": "LR Vicenza",
+"allenatori": []
 },
 "Ascoli": {
 "wikidata": "Q6630",
@@ -1812,66 +1805,6 @@
 "chi": "Mikel Arteta",
 "qid": "Q185572",
 "da": "2019-12-20",
-"a": null
-}
-]
-},
-"Sunderland": {
-"wikidata": "Q18739",
-"nome": "Sunderland A.F.C.",
-"allenatori": [
-{
-"chi": "Steve Bruce",
-"qid": "Q331904",
-"da": "2009-07-01",
-"a": "2011-11-30"
-},
-{
-"chi": "Chris Coleman",
-"qid": "Q381769",
-"da": "2017-11-19",
-"a": "2018-04-29"
-},
-{
-"chi": "Jack Ross",
-"qid": "Q3805645",
-"da": "2018-05-25",
-"a": "2019-10-08"
-},
-{
-"chi": "Phil Parkinson",
-"qid": "Q797757",
-"da": "2019-10-17",
-"a": "2020-11-29"
-},
-{
-"chi": "Alex Neil",
-"qid": "Q1828808",
-"da": "2022-02-11",
-"a": "2022-08-28"
-},
-{
-"chi": "Tony Mowbray",
-"qid": "Q717959",
-"da": "2022-08-30",
-"a": "2023-12-05"
-},
-{
-"chi": "Michael Beale",
-"qid": "Q112339753",
-"da": "2023-12-18",
-"a": "2024-02-19"
-},
-{
-"chi": "Mike Dodds",
-"qid": "Q111180951",
-"da": "2024-02-19",
-"a": "2024-06-30"
-},
-{
-"chi": "Régis Le Bris",
-"qid": "Q3455749",
-"da": "2024-07-01",
 "a": null
 }
 ]
@@ -2613,11 +2546,6 @@
 "a": "2025-03-02"
 }
 ]
-},
-"Chelsea": {
-"wikidata": "Q2669653",
-"nome": "Chelsea F.C. Development Squad and Academy",
-"allenatori": []
 },
 "Everton": {
 "wikidata": "Q5794",
@@ -5510,6 +5438,60 @@
 }
 ]
 },
+"M'gladbach": {
+"wikidata": "Q101959",
+"nome": "Borussia Mönchengladbach",
+"allenatori": [
+{
+"chi": "Dieter Hecking",
+"qid": "Q73135",
+"da": "2016-12-21",
+"a": "2019-05-18"
+},
+{
+"chi": "Marco Rose",
+"qid": "Q542990",
+"da": "2019-07-01",
+"a": "2021-06-30"
+},
+{
+"chi": "Adi Hütter",
+"qid": "Q362506",
+"da": "2021-07-01",
+"a": "2022-06-30"
+},
+{
+"chi": "Daniel Farke",
+"qid": "Q30015253",
+"da": "2022-07-01",
+"a": "2023-06-02"
+},
+{
+"chi": "Gerardo Seoane",
+"qid": "Q339173",
+"da": "2023-06-06",
+"a": "2025-09-15"
+},
+{
+"chi": "Eugen Polanski",
+"qid": "Q5117",
+"da": "2025-09-15",
+"a": "2026-09-13"
+},
+{
+"chi": "Jan-Moritz Lichte",
+"qid": "Q72200628",
+"da": "2026-09-13",
+"a": "2026-09-23"
+},
+{
+"chi": "Alexander Blessin",
+"qid": "Q1560347",
+"da": "2026-09-23",
+"a": null
+}
+]
+},
 "Hoffenheim": {
 "wikidata": "Q22707",
 "nome": "TSG 1899 Hoffenheim",
@@ -7270,6 +7252,72 @@
 }
 ]
 },
+"Monaco": {
+"wikidata": "Q180305",
+"nome": "AS Monaco FC",
+"allenatori": [
+{
+"chi": "Claudio Ranieri",
+"qid": "Q235068",
+"da": "2012-05-30",
+"a": "2014-05-20"
+},
+{
+"chi": "Leonardo Jardim",
+"qid": "Q2162382",
+"da": "2014-07-01",
+"a": "2018-10-11"
+},
+{
+"chi": "Thierry Henry",
+"qid": "Q45901",
+"da": "2018-10-13",
+"a": "2019-01-24"
+},
+{
+"chi": "Leonardo Jardim",
+"qid": "Q2162382",
+"da": "2019-01-27",
+"a": "2019-12-27"
+},
+{
+"chi": "Robert Moreno",
+"qid": "Q63969036",
+"da": "2019-12-28",
+"a": "2020-07-18"
+},
+{
+"chi": "Niko Kovač",
+"qid": "Q154305",
+"da": "2020-07-19",
+"a": "2022-01-01"
+},
+{
+"chi": "Philippe Clement",
+"qid": "Q1338480",
+"da": "2022-01-03",
+"a": "2023-06-04"
+},
+{
+"chi": "Adi Hütter",
+"qid": "Q362506",
+"da": "2023-07-04",
+"a": "2025-10-09"
+},
+{
+"chi": "Sébastien Pocognoli",
+"qid": "Q468114",
+"da": "2025-10-11",
+"a": "2026-06-01"
+},
+{
+"chi": "Filipe Luís",
+"qid": "Q350547",
+"da": "2026-07-06",
+"a": null
+}
+]
+},
 "Nantes": {
 "wikidata": "Q192071",
 "nome": "FC Nantes",
@@ -8692,9 +8740,70 @@
 ]
 },
 "RB Leipzig": {
-"wikidata": "Q30033219",
-"nome": "RB Leipzig (women)",
-"allenatori": []
+"wikidata": "Q702455",
+"nome": "RB Leipzig",
+"allenatori": [
+{
+"chi": "Ralph Hasenhüttl",
+"qid": "Q874628",
+"da": "2016-07-01",
+"a": "2018-05-16"
+},
+{
+"chi": "Ralf Rangnick",
+"qid": "Q57902",
+"da": "2018-07-09",
+"a": "2019-06-30"
+},
+{
+"chi": "Julian Nagelsmann",
+"qid": "Q21226404",
+"da": "2019-07-01",
+"a": "2021-06-30"
+},
+{
+"chi": "Jesse Marsch",
+"qid": "Q1336179",
+"da": "2021-07-01",
+"a": "2021-12-05"
+},
+{
+"chi": "Achim Beierlorzer",
+"qid": "Q19257969",
+"da": "2021-12-05",
+"a": "2021-12-09"
+},
+{
+"chi": "Domenico Tedesco",
+"qid": "Q28916689",
+"da": "2021-12-09",
+"a": "2022-09-07"
+},
+{
+"chi": "Marco Rose",
+"qid": "Q542990",
+"da": "2022-09-08",
+"a": "2025-03-30"
+},
+{
+"chi": "Zsolt Lőw",
+"qid": "Q227356",
+"da": "2025-03-30",
+"a": "2025-06-01"
+},
+{
+"chi": "Ole Werner",
+"qid": "Q27050003",
+"da": "2025-06-24",
+"a": "2026-06-17"
+},
+{
+"chi": "Martín Demichelis",
+"qid": "Q150947",
+"da": "2026-06-22",
+"a": null
+}
+]
 },
 "Dijon": {
 "wikidata": "Q503317",
@@ -9879,9 +9988,52 @@
 ]
 },
 "Oxford": {
-"wikidata": "Q5213276",
-"nome": "Oxford City F.C.",
-"allenatori": []
+"wikidata": "Q48946",
+"nome": "Oxford United F.C.",
+"allenatori": [
+{
+"chi": "Karl Robinson",
+"qid": "Q6372198",
+"da": "2018-03-22",
+"a": "2023-02-26"
+},
+{
+"chi": "Liam Manning",
+"qid": "Q97138662",
+"da": "2023-03-13",
+"a": "2023-11-06"
+},
+{
+"chi": "Des Buckingham",
+"qid": "Q29168534",
+"da": "2023-11-16",
+"a": "2024-12-15"
+},
+{
+"chi": "Craig Short",
+"qid": "Q869477",
+"da": "2024-12-16",
+"a": "2024-12-21"
+},
+{
+"chi": "Gary Rowett",
+"qid": "Q5525857",
+"da": "2024-12-22",
+"a": "2025-12-23"
+},
+{
+"chi": "Matt Bloomfield",
+"qid": "Q6788368",
+"da": "2026-01-09",
+"a": "2026-06-20"
+},
+{
+"chi": "Aaron Ramsey",
+"qid": "Q213427",
+"da": "2026-06-23",
+"a": null
+}
+]
 },
 "Holstein Kiel": {
 "wikidata": "Q157828",
@@ -10096,12 +10248,12 @@
 },
 "non_trovate": [
 "Varese",
+"Sunderland",
+"Chelsea",
 "Peterboro",
 "Augsburg",
-"M'gladbach",
 "Trapani",
 "Carpi",
-"Monaco",
 "Virtus Entella",
 "Cosenza",
 "Pordenone",

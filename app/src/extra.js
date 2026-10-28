@@ -89,14 +89,36 @@ import { statoGiocata } from "./schedina.js";
   const GRUPPI_LEGHE = [["Italia ed Europa", ["I1", "I2", "CL", "EL", "ECL", "CI", "SCI", "E0", "SP1", "D1", "F1"]], ["Nazionali", ["NL", "AMI", "EQ", "WCQ"]],
     ["Coppe nazionali", ["FAC", "ELC", "CDR", "DFB", "CDF"]], ["Altri campionati europei", ["E1", "SP2", "D2", "F2", "N1", "P1", "B1", "T1", "SC0", "A1", "G1", "DK1", "NO1", "SE1"]],
     ["Resto del mondo", ["MLS", "BR1", "AR1", "MX1", "SA1", "J1", "COL1", "CHI1", "UY1", "PY1", "EC1", "PE1", "AU1", "LIB", "SUD", "ACL"]]];
+  /* squadre divise per campionato: prima quelli che segui, poi gli altri; ogni squadra una volta sola, nel suo campionato
+     (non nella coppa); le nazionali nel loro gruppo */
+  function gruppiSquadre(D, lg) {
+    const COPPE_APP = ["CL", "EL", "ECL", "CI", "SCI", "FAC", "ELC", "CDR", "DFB", "CDF", "LIB", "SUD", "ACL"];
+    const ordine = GRUPPI_LEGHE.flatMap(([, ks]) => ks).filter((k) => D.leagues.some((l) => l.k === k) || D.standings[k]);
+    const leghe = [...ordine.filter((k) => lg.includes(k)), ...ordine.filter((k) => !lg.includes(k))];
+    const giaVisto = new Set(), gruppi = [];
+    for (const k of [...leghe.filter((k) => !COPPE_APP.includes(k)), ...leghe.filter((k) => COPPE_APP.includes(k))]) {
+      const nomi = [...new Set([...((D.standings[k] || {}).generale || []).map((r) => r.team), ...D.matches.filter((m) => m.lg === k).flatMap((m) => [m.h, m.a])])]
+        .filter((t) => !giaVisto.has(t)).sort((a, b) => a.localeCompare(b, "it"));
+      nomi.forEach((t) => giaVisto.add(t));
+      const L = TUTTE_LEGHE.find((x) => x[0] === k);
+      if (nomi.length && L) gruppi.push({ k, nome: L[1], flag: L[2], mio: lg.includes(k), nomi });
+    }
+    gruppi.sort((a, b) => (b.mio - a.mio) || leghe.indexOf(a.k) - leghe.indexOf(b.k));
+    return gruppi;
+  }
   function PrimoAvvio({ onFine }) {
     const { D, setFavTeams, setFavLeagues, setFav } = React.useContext(Ctx);
     const [passo, setPasso] = useState(0);
     const [lg, setLg] = useState(["I1"]);
     const [sq, setSq] = useState([]);
     const [q, setQ] = useState("");
-    const squadre = [...new Set([...lg.flatMap((k) => ((D.standings[k] || {}).generale || []).map((r) => r.team)), ...D.matches.filter((m) => lg.includes(m.lg)).flatMap((m) => [m.h, m.a])])]
-      .filter((t) => !q || t.toLowerCase().includes(q.toLowerCase())).sort((a, b) => a.localeCompare(b, "it"));
+    // squadre divise per campionato: prima quelli che segui, poi gli altri chiusi; ogni squadra una volta sola,
+    // nel suo campionato (non nella coppa); le nazionali a parte
+    const gruppi = gruppiSquadre(D, lg);
+    const pq = (x) => String(x).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const trovate = q.trim().length >= 2 ? gruppi.flatMap((g) => g.nomi.filter((t) => pq(t).includes(pq(q.trim()))).map((t) => [t, g])).slice(0, 40) : null;
+    const Bottone = ({ t }) => html`<button onClick=${() => tog(sq, setSq, t)} aria-pressed=${sq.includes(t)}
+      className=${"flex items-center gap-2 rounded-full pl-2 pr-3.5 py-1.5 text-[14px] font-semibold " + (sq.includes(t) ? C.seg : "bg-white dark:bg-[#191626] " + C.tx)}><${Crest} t=${t} size=${18} />${t}${sq[0] === t ? html`<${Ic.Star} size=${13} className="text-amber-400 fill-amber-400" />` : ""}</button>`;
     const tog = (arr, set, x) => set(arr.includes(x) ? arr.filter((y) => y !== x) : [...arr, x]);
     const fine = () => { setFavLeagues(lg); setFavTeams(sq); if (sq[0]) { setFav(sq[0]); store.set("fav", sq[0]); } onFine(); };
     return html`<div className="fixed inset-0 z-[60] overflow-y-auto" style=${{ background: "var(--bg)", paddingTop: "env(safe-area-inset-top, 0px)" }}>
@@ -112,9 +134,15 @@ import { statoGiocata } from "./schedina.js";
           <div><div className=${"text-[26px] font-bold leading-tight tracking-[-0.02em] " + C.tx}>Le tue squadre</div>
             <p className=${"text-[15px] mt-1.5 " + C.mu}>Le loro partite saranno sempre in alto e riceverai gli avvisi se attivi le notifiche. La prima che scegli è la squadra del cuore.</p></div>
           <input value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Cerca una squadra" className=${"w-full rounded-xl px-3.5 py-3 text-[16px] outline-none bg-white dark:bg-[#191626] " + C.tx} />
-          <div className="flex flex-wrap gap-2">${squadre.map((t) => html`<button key=${t} onClick=${() => tog(sq, setSq, t)} aria-pressed=${sq.includes(t)}
-            className=${"flex items-center gap-2 rounded-full pl-2 pr-3.5 py-1.5 text-[14px] font-semibold " + (sq.includes(t) ? C.seg : "bg-white dark:bg-[#191626] " + C.tx)}><${Crest} t=${t} size=${18} />${t}${sq[0] === t ? html`<${Ic.Star} size=${13} className="text-amber-400 fill-amber-400" />` : ""}</button>`)}</div>
-          ${!squadre.length && html`<p className=${"text-[14px] " + C.mu}>Nessuna squadra trovata.</p>`}`}
+          ${sq.length > 0 && html`<div><div className=${"text-[13px] font-semibold mb-2 " + C.mu}>${sq.length === 1 ? "La tua squadra" : `Le tue squadre (${sq.length})`}: quella con la stella è la squadra del cuore</div>
+            <div className="flex flex-wrap gap-2">${sq.map((t) => html`<${Bottone} key=${t} t=${t} />`)}</div></div>`}
+          ${trovate ? html`<div className="space-y-2">${trovate.map(([t, g]) => html`<div key=${g.k + t} className="flex items-center gap-2"><${Bottone} t=${t} /><span className=${"text-[12px] flex items-center gap-1 " + C.mu}><${Flag} k=${g.flag} w=${14} />${g.nome}</span></div>`)}
+              ${!trovate.length && html`<p className=${"text-[14px] " + C.mu}>Nessuna squadra trovata.</p>`}</div>`
+            : gruppi.map((g, gi) => html`<details key=${g.k} open=${g.mio && gi < 3} className="group">
+              <summary className=${"list-none cursor-pointer flex items-center gap-2.5 py-2 " + C.tx}><${Flag} k=${g.flag} w=${20} /><span className="flex-1 text-[15px] font-semibold">${g.nome}</span>
+                <span className=${"text-[12px] " + C.mu}>${((n) => (n ? n + (n === 1 ? " scelta · " : " scelte · ") : ""))(g.nomi.filter((t) => sq.includes(t)).length)}${g.nomi.length}</span>
+                <${Ic.ChevronDown} size=${16} className=${C.mu + " group-open:rotate-180 transition-transform"} /></summary>
+              <div className="flex flex-wrap gap-2 pt-1 pb-3">${g.nomi.map((t) => html`<${Bottone} key=${t} t=${t} />`)}</div></details>`)}`}
       </div>
       <div className="fixed inset-x-0 bottom-0 px-5 pt-3" style=${{ background: "var(--bg)", paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))" }}>
         <div className="max-w-[440px] mx-auto flex gap-2">
@@ -168,4 +196,4 @@ import { statoGiocata } from "./schedina.js";
       ${t.length >= 2 && !sq.length && !pa.length && !gi.length && html`<p className=${"text-[13px] " + C.mu}>Nessun risultato per "${q}".</p>`}<//>`;
   }
 
-export { GRUPPI_LEGHE, PESO_LEGA, partitaSettimana, Anteprima, GLOSSARIO, Glossario, GiocoResponsabile, TUTTE_LEGHE, PrimoAvvio, BarraSchedina, Cerca };
+export { gruppiSquadre, GRUPPI_LEGHE, PESO_LEGA, partitaSettimana, Anteprima, GLOSSARIO, Glossario, GiocoResponsabile, TUTTE_LEGHE, PrimoAvvio, BarraSchedina, Cerca };

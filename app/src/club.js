@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { ESPN_LG } from "./live.js";
 import { C, Crest, Ctx, Flag, Form, Ic, Schede, Seg, html, store } from "./base.js";
-import { GiocoResponsabile } from "./extra.js";
+import { GiocoResponsabile, gruppiSquadre } from "./extra.js";
 import { scaricaCalendario } from "./condividi.js";
 import { Row } from "./partita.js";
 import { statoGiocata } from "./schedina.js";
@@ -135,7 +135,7 @@ import { statoGiocata } from "./schedina.js";
         <p className=${"text-[12px] mt-3 " + C.mu}>Prossima: ${(L.find((x) => !x[2]) || ["", "le hai tutte!"])[1]}.</p></div>`;
     }
     function ClubView() {
-      const { D, lg, fav, setFav, setTeam } = React.useContext(Ctx);
+      const { D, lg, fav, setFav, setTeam, favLeagues } = React.useContext(Ctx);
       const lgK = Object.keys(D.standings).find((k) => D.standings[k].generale.some((r) => r.team === fav));
       const L = lgK && lg(lgK);
       const pos = lgK ? D.standings[lgK].generale.findIndex((r) => r.team === fav) + 1 : 0;
@@ -156,7 +156,7 @@ import { statoGiocata } from "./schedina.js";
           : fav ? html`<div className=${C.card + " p-4 text-sm " + C.mu}>${fav} non gioca in questa giornata.</div>` : null}
         <div className=${C.card + " p-4 space-y-2"}><label htmlFor="fav" className=${C.lab}>${fav ? "Cambia squadra" : "Squadra del cuore"}</label>
           <select id="fav" value=${fav} onChange=${(e) => { setFav(e.target.value); store.set("fav", e.target.value); }} className=${"w-full rounded-xl px-3 py-2 text-sm " + C.ch + " " + C.tx}>
-            ${!fav && html`<option value="">Scegli...</option>`}${D.leagues.map((l) => html`<optgroup key=${l.k} label=${l.name}>${(D.standings[l.k] ? D.standings[l.k].generale.map((r) => r.team) : [...new Set(D.matches.filter((x) => x.lg === l.k).flatMap((x) => [x.h, x.a]))]).slice().sort().map((t) => html`<option key=${t} value=${t}>${t}</option>`)}</optgroup>`)}</select></div><//>`,
+            ${!fav && html`<option value="">Scegli...</option>`}${gruppiSquadre(D, favLeagues || []).map((g) => html`<optgroup key=${g.k} label=${g.nome}>${g.nomi.map((t) => html`<option key=${t} value=${t}>${t}</option>`)}</optgroup>`)}</select></div><//>`,
         html`<${Gara} />`,
         html`<${React.Fragment}><${Riepilogo} /><${Medaglie} /><//>`,
         html`<${React.Fragment}><${Codice} /><${GiocoResponsabile} /><//>`]}<//></div>`;

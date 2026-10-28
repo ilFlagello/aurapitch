@@ -1,0 +1,911 @@
+{
+ "quando": "2026-10-28T13:21:24.780839+00:00",
+ "espn": {
+  "ita.1": {
+   "partite": 17,
+   "con_quote": 17,
+   "esempio": {
+    "partita": "Bologna at AC Milan",
+    "fornitore": "DraftKings",
+    "overUnder": 2.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 255,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "ita.2": {
+   "partite": 13,
+   "con_quote": 13,
+   "esempio": {
+    "partita": "Palermo at Pisa",
+    "fornitore": "DraftKings",
+    "overUnder": 2.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 225,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "eng.1": {
+   "partite": 10,
+   "con_quote": 10,
+   "esempio": {
+    "partita": "Manchester United at Chelsea",
+    "fornitore": "DraftKings",
+    "overUnder": 2.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 300,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "eng.2": {
+   "partite": 24,
+   "con_quote": 24,
+   "esempio": {
+    "partita": "Wrexham at Sheffield United",
+    "fornitore": "DraftKings",
+    "overUnder": 2.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 235,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "esp.1": {
+   "partite": 10,
+   "con_quote": 10,
+   "esempio": {
+    "partita": "Espanyol at Villarreal",
+    "fornitore": "DraftKings",
+    "overUnder": 3.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 400,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "esp.2": {
+   "partite": 11,
+   "con_quote": 11,
+   "esempio": {
+    "partita": "Girona at Real Sociedad II",
+    "fornitore": "DraftKings",
+    "overUnder": 2.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 275,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "ger.1": {
+   "partite": 9,
+   "con_quote": 9,
+   "esempio": {
+    "partita": "Mainz at SV Elversberg",
+    "fornitore": "DraftKings",
+    "overUnder": 3.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 270,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "ger.2": {
+   "partite": 9,
+   "con_quote": 9,
+   "esempio": {
+    "partita": "TSV Eintracht Braunschweig at Arminia Bielefeld",
+    "fornitore": "DraftKings",
+    "overUnder": 2.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 285,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "fra.1": {
+   "partite": 9,
+   "con_quote": 9,
+   "esempio": {
+    "partita": "Paris Saint-Germain at Le Havre AC",
+    "fornitore": "DraftKings",
+    "overUnder": 3.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 600,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "fra.2": {
+   "partite": 9,
+   "con_quote": 9,
+   "esempio": {
+    "partita": "Dijon FCO at Grenoble",
+    "fornitore": "DraftKings",
+    "overUnder": 2.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 230,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "ned.1": {
+   "partite": 9,
+   "con_quote": 9,
+   "esempio": {
+    "partita": "Fortuna Sittard at Feyenoord Rotterdam",
+    "fornitore": "DraftKings",
+    "overUnder": 3.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 700,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "por.1": {
+   "partite": 9,
+   "con_quote": 9,
+   "esempio": {
+    "partita": "Sporting CP at Casa Pia",
+    "fornitore": "DraftKings",
+    "overUnder": 2.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 475,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "bel.1": {
+   "partite": 10,
+   "con_quote": 10,
+   "esempio": {
+    "partita": "Club Brugge at Zulte-Waregem",
+    "fornitore": "DraftKings",
+    "overUnder": 3.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 360,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "tur.1": {
+   "partite": 9,
+   "con_quote": 9,
+   "esempio": {
+    "partita": "Galatasaray at Konyaspor",
+    "fornitore": "DraftKings",
+    "overUnder": 2.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 310,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "sco.1": {
+   "partite": 10,
+   "con_quote": 10,
+   "esempio": {
+    "partita": "Falkirk at Aberdeen",
+    "fornitore": "DraftKings",
+    "overUnder": 2.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 255,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "aut.1": {
+   "partite": 6,
+   "con_quote": 6,
+   "esempio": {
+    "partita": "TSV Hartberg at Grazer AK",
+    "fornitore": "DraftKings",
+    "overUnder": 2.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 235,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "sui.1": {
+   "partite": 0,
+   "con_quote": 0,
+   "esempio": null,
+   "errore": null
+  },
+  "gre.1": {
+   "partite": 7,
+   "con_quote": 7,
+   "esempio": {
+    "partita": "Olympiacos at Kifisia",
+    "fornitore": "DraftKings",
+    "overUnder": 2.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 320,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "den.1": {
+   "partite": 6,
+   "con_quote": 6,
+   "esempio": {
+    "partita": "Randers FC at Lyngby Boldklub",
+    "fornitore": "DraftKings",
+    "overUnder": 2.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 275,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "usa.1": {
+   "partite": 29,
+   "con_quote": 29,
+   "esempio": {
+    "partita": "CF Montréal at Charlotte FC",
+    "fornitore": "DraftKings",
+    "overUnder": 3.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 340,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "bra.1": {
+   "partite": 17,
+   "con_quote": 17,
+   "esempio": {
+    "partita": "Internacional at Fluminense",
+    "fornitore": "DraftKings",
+    "overUnder": 2.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 260,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "arg.1": {
+   "partite": 15,
+   "con_quote": 15,
+   "esempio": {
+    "partita": "Gimnasia La Plata at Estudiantes de Río Cuarto",
+    "fornitore": "DraftKings",
+    "overUnder": 2.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 245,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "mex.1": {
+   "partite": 10,
+   "con_quote": 10,
+   "esempio": {
+    "partita": "Tijuana at América",
+    "fornitore": "DraftKings",
+    "overUnder": 3.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 400,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "sau.1": {
+   "partite": 0,
+   "con_quote": 0,
+   "esempio": null,
+   "errore": "HTTP Error 400: Bad Request"
+  },
+  "jpn.1": {
+   "partite": 10,
+   "con_quote": 10,
+   "esempio": {
+    "partita": "FC Tokyo at Fagiano Okayama",
+    "fornitore": "DraftKings",
+    "overUnder": 2.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 245,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "uefa.champions": {
+   "partite": 18,
+   "con_quote": 18,
+   "esempio": {
+    "partita": "VfB Stuttgart at Galatasaray",
+    "fornitore": "DraftKings",
+    "overUnder": 3.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 310,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "uefa.europa": {
+   "partite": 0,
+   "con_quote": 0,
+   "esempio": null,
+   "errore": null
+  },
+  "uefa.europa.conf": {
+   "partite": 0,
+   "con_quote": 0,
+   "esempio": null,
+   "errore": null
+  },
+  "ita.coppa_italia": {
+   "partite": 0,
+   "con_quote": 0,
+   "esempio": null,
+   "errore": null
+  },
+  "eng.fa": {
+   "partite": 0,
+   "con_quote": 0,
+   "esempio": null,
+   "errore": null
+  },
+  "eng.league_cup": {
+   "partite": 6,
+   "con_quote": 6,
+   "esempio": {
+    "partita": "Brighton & Hove Albion at Manchester City",
+    "fornitore": "DraftKings",
+    "overUnder": 3.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 300,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "esp.copa_del_rey": {
+   "partite": 38,
+   "con_quote": 38,
+   "esempio": null,
+   "errore": "evento: 'NoneType' object has no attribute 'get'"
+  },
+  "ger.dfb_pokal": {
+   "partite": 8,
+   "con_quote": 8,
+   "esempio": {
+    "partita": "Schalke 04 at Dynamo Dresden",
+    "fornitore": "DraftKings",
+    "overUnder": 2.5,
+    "casa": null,
+    "ospite": null,
+    "pari": 275,
+    "chiavi": [
+     "details",
+     "drawOdds",
+     "link",
+     "moneyline",
+     "overUnder",
+     "pointSpread",
+     "provider",
+     "total"
+    ]
+   },
+   "errore": null
+  },
+  "fra.coupe_de_france": {
+   "partite": 0,
+   "con_quote": 0,
+   "esempio": null,
+   "errore": null
+  },
+  "ita.super_cup": {
+   "partite": 0,
+   "con_quote": 0,
+   "esempio": null,
+   "errore": null
+  },
+  "esp.super_cup": {
+   "partite": 0,
+   "con_quote": 0,
+   "esempio": null,
+   "errore": null
+  },
+  "uefa.nations": {
+   "partite": 0,
+   "con_quote": 0,
+   "esempio": null,
+   "errore": null
+  },
+  "fifa.worldq.uefa": {
+   "partite": 0,
+   "con_quote": 0,
+   "esempio": null,
+   "errore": null
+  },
+  "conmebol.libertadores": {
+   "partite": 0,
+   "con_quote": 0,
+   "esempio": null,
+   "errore": null
+  }
+ },
+ "football_data": {
+  "fixtures.csv": {
+   "righe": 46,
+   "colonne": [
+    "Div",
+    "Date",
+    "Time",
+    "HomeTeam",
+    "AwayTeam",
+    "Referee",
+    "B365H",
+    "B365D",
+    "B365A",
+    "BFDH",
+    "BFDD",
+    "BFDA",
+    "BVH",
+    "BVD",
+    "BVA",
+    "BWH",
+    "BWD",
+    "BWA",
+    "PPH",
+    "PPD",
+    "PPA",
+    "SKBH",
+    "SKBD",
+    "SKBA",
+    "MaxH",
+    "MaxD",
+    "MaxA",
+    "AvgH",
+    "AvgD",
+    "AvgA",
+    "BFEH",
+    "BFED",
+    "BFEA",
+    "B365>2.5",
+    "B365<2.5",
+    "Max>2.5",
+    "Max<2.5",
+    "Avg>2.5",
+    "Avg<2.5",
+    "BFE>2.5",
+    "BFE<2.5",
+    "AHh",
+    "B365AHH",
+    "B365AHA",
+    "MaxAHH",
+    "MaxAHA",
+    "AvgAHH",
+    "AvgAHA",
+    "BFEAHH",
+    "BFEAHA",
+    "B365CH",
+    "B365CD",
+    "B365CA",
+    "BFDCH",
+    "BFDCD",
+    "BFDCA",
+    "BVCH",
+    "BVCD",
+    "BVCA",
+    "BWCH"
+   ],
+   "campionati": {
+    "E2": 5,
+    "E3": 1,
+    "EC": 12,
+    "I1": 10,
+    "I2": 10,
+    "SC0": 6,
+    "SC1": 1,
+    "SC2": 1
+   },
+   "esempio": {
+    "Div": "E2",
+    "Date": "27/10/2026",
+    "Time": "19:45",
+    "HomeTeam": "Leicester",
+    "AwayTeam": "Wigan",
+    "Referee": "L Doughty",
+    "B365H": "1.35",
+    "B365D": "4.75",
+    "B365A": "7.5",
+    "BFDH": "1.36",
+    "BFDD": "4.6",
+    "BFDA": "7",
+    "BVH": "1.36",
+    "BVD": "5",
+    "BVA": "7.5",
+    "BWH": "1.4",
+    "BWD": "4.8",
+    "BWA": "6.75",
+    "PPH": "1.36",
+    "PPD": "4.75",
+    "PPA": "7.5",
+    "SKBH": "1.36",
+    "SKBD": "5",
+    "SKBA": "7",
+    "MaxH": "1.4",
+    "MaxD": "5.2",
+    "MaxA": "8.75",
+    "AvgH": "1.38",
+    "AvgD": "4.89",
+    "AvgA": "7.11",
+    "BFEH": "1.43",
+    "BFED": "5.1",
+    "BFEA": "8.6",
+    "B365>2.5": "1.53",
+    "B365<2.5": "2.4",
+    "Max>2.5": "1.53",
+    "Max<2.5": "2.8",
+    "Avg>2.5": "1.48",
+    "Avg<2.5": "2.52",
+    "BFE>2.5": "1.55",
+    "BFE<2.5": "2.72",
+    "AHh": "-1.25",
+    "B365AHH": "1.83",
+    "B365AHA": "2.03",
+    "MaxAHH": "1.83",
+    "MaxAHA": "2.03",
+    "AvgAHH": "1.78",
+    "AvgAHA": "1.95",
+    "BFEAHH": "1.88",
+    "BFEAHA": "2.04",
+    "B365CH": "",
+    "B365CD": "",
+    "B365CA": "",
+    "BFDCH": "",
+    "BFDCD": "",
+    "BFDCA": "",
+    "BVCH": "",
+    "BVCD": "",
+    "BVCA": "",
+    "BWCH": "",
+    "BWCD": "",
+    "BWCA": "",
+    "PPCH": "",
+    "PPCD": "",
+    "PPCA": "",
+    "SKBCH": "",
+    "SKBCD": "",
+    "SKBCA": "",
+    "MaxCH": "",
+    "MaxCD": "",
+    "MaxCA": "",
+    "AvgCH": "",
+    "AvgCD": "",
+    "AvgCA": "",
+    "BFECH": "",
+    "BFECD": "",
+    "BFECA": "",
+    "B365C>2.5": "",
+    "B365C<2.5": "",
+    "MaxC>2.5": "",
+    "MaxC<2.5": "",
+    "AvgC>2.5": "",
+    "AvgC<2.5": "",
+    "BFEC>2.5": "",
+    "BFEC<2.5": "",
+    "AHCh": "",
+    "B365CAHH": "",
+    "B365CAHA": "",
+    "MaxCAHH": "",
+    "MaxCAHA": "",
+    "AvgCAHH": "",
+    "AvgCAHA": "",
+    "BFECAHH": "",
+    "BFECAHA": ""
+   }
+  },
+  "new_league_fixtures.csv": {
+   "righe": 37,
+   "colonne": [
+    "Country",
+    "League",
+    "Date",
+    "Time",
+    "Home",
+    "Away",
+    "PSH",
+    "PSD",
+    "PSA",
+    "MaxH",
+    "MaxD",
+    "MaxA",
+    "AvgH",
+    "AvgD",
+    "AvgA",
+    "BFEH",
+    "BFED",
+    "BFEA",
+    "B365H",
+    "B365D",
+    "B365A"
+   ],
+   "campionati": {
+    "Argentina/Liga Profesional": 1,
+    "Brazil/Serie A": 10,
+    "Finland/Veikkausliiga": 3,
+    "Mexico/Liga MX": 1,
+    "Sweden/Allsvenskan": 8,
+    "USA/MLS": 14
+   },
+   "esempio": {
+    "Country": "Argentina",
+    "League": "Liga Profesional",
+    "Date": "27/10/2026",
+    "Time": "22:00",
+    "Home": "Argentinos Jrs",
+    "Away": "Ind. Rivadavia",
+    "PSH": "",
+    "PSD": "",
+    "PSA": "",
+    "MaxH": "2.08",
+    "MaxD": "3.2",
+    "MaxA": "4.2",
+    "AvgH": "2.03",
+    "AvgD": "3.08",
+    "AvgA": "3.75",
+    "BFEH": "2.16",
+    "BFED": "3.2",
+    "BFEA": "4.2",
+    "B365H": "2.01",
+    "B365D": "3.1",
+    "B365A": "4.2"
+   }
+  }
+ }
+}

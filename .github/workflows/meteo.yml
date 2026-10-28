@@ -1,16 +1,26 @@
-# Archivio meteo per il test dell'algoritmo (a mano: Actions -> Archivio meteo -> Run workflow)
+# Archivio meteo e test "il meteo conta?" (a mano: Actions -> Archivio meteo -> Run workflow).
+# Il servizio meteo gratuito limita i download: ogni giro scarica per 40 minuti, salva e si rilancia da solo finche l'archivio e completo;
+# alla fine esegue il test e salva storico/test_meteo.json.
 name: Archivio meteo
 on: { workflow_dispatch: {} }
-permissions: { contents: write }
+permissions: { contents: write, actions: write }
 jobs:
   scarica:
     runs-on: ubuntu-latest
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
+        with: { ref: main }
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: python strumenti/scarica_meteo.py 2>&1 | tee storico/meteo_esito.txt
+      - name: Test (solo ad archivio completo)
+        run: |
+          if grep -q "mancano 0," storico/meteo_esito.txt; then pip install -q numpy && python strumenti/test_meteo.py . storico/test_meteo.json; fi
       - run: |
           git config user.name "aurapitch-raccolta"; git config user.email "aurapitch-raccolta@users.noreply.github.com"
-          git add storico && git commit -m "Archivio meteo per i test" && for i in 1 2 3; do git pull --rebase -q origin main && git push && break; sleep 5; done
+          git add storico && git commit -m "Archivio meteo per i test" && for i in 1 2 3; do git pull --rebase -q origin main && git push && break; sleep 5; done || true
+      - name: Rilancia se mancano citta
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          if ! grep -q "mancano 0," storico/meteo_esito.txt; then gh workflow run meteo.yml --ref main; fi

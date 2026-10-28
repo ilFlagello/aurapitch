@@ -24,7 +24,7 @@ const URL0 = `http://127.0.0.1:${srv.address().port}/`;
 const errori = [];
 const b = await pw.chromium.launch();
 async function giro(tema) {
-  const p = await b.newPage({ viewport: { width: 390, height: 844 }, colorScheme: tema, acceptDownloads: true });
+  const p = await b.newPage({ viewport: { width: 390, height: 844 }, colorScheme: tema, acceptDownloads: true, hasTouch: true });
   p.on("pageerror", (e) => errori.push(`[${tema}] errore: ${e.message}`));
   p.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource|net::/.test(m.text())) errori.push(`[${tema}] console: ${m.text()}`); });
   await p.route(/^(?!http:\/\/127\.0\.0\.1)/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
@@ -57,6 +57,22 @@ async function giro(tema) {
     await dock("Schedina IA"); await tab("Crea con l'IA"); await p.waitForTimeout(800);
     await p.locator("button", { hasText: /^×10$/ }).click(); await p.waitForTimeout(300); await foto("schedina-x10");
     const altra = p.getByRole("button", { name: "Un'altra combinazione" }); if (await altra.count()) await altra.click();
+    // scorrere i moltiplicatori col dito non deve cambiare scheda; un gesto su una zona libera sì
+    const gesto = (sel) => p.evaluate((sel) => { const el = document.querySelector(sel); if (!el) return "manca";
+      const r = el.getBoundingClientRect(), y = r.top + r.height / 2;
+      const tt = (x) => [new Touch({ identifier: 1, target: el, clientX: x, clientY: y })];
+      el.dispatchEvent(new TouchEvent("touchstart", { touches: tt(320), changedTouches: tt(320), bubbles: true }));
+      el.dispatchEvent(new TouchEvent("touchend", { touches: [], changedTouches: tt(60), bubbles: true })); return "ok"; }, sel);
+    await gesto("button.min-w-\\[52px\\]"); await p.waitForTimeout(300);
+    if ((await p.getByRole("tab", { name: "Crea con l'IA" }).getAttribute("aria-selected")) !== "true") errori.push(`[${tema}] scorrere i moltiplicatori ha cambiato scheda`);
+    await gesto("p.text-\\[12px\\]"); await p.waitForTimeout(300);
+    if ((await p.getByRole("tab", { name: "La mia schedina" }).getAttribute("aria-selected")) !== "true") errori.push(`[${tema}] il gesto su una zona libera non cambia scheda`);
+    await tab("Crea con l'IA");
+    // schedina con esito scelto
+    await p.getByRole("button", { name: "Tutti pareggi (X)" }).click(); await p.waitForTimeout(300);
+    const legX = await p.locator("text=/IA \\d+%/").count();
+    if (!legX) errori.push(`[${tema}] schedina "tutti pareggi" vuota`);
+    await p.getByRole("button", { name: "Scelta IA" }).click(); await p.waitForTimeout(200);
     const [dl] = await Promise.all([p.waitForEvent("download", { timeout: 8000 }), p.getByRole("button", { name: /Condividi immagine/ }).first().click()]);
     if (!dl.suggestedFilename().endsWith(".png")) errori.push(`[${tema}] immagine della schedina: file inatteso`);
     for (const n of ["La mia schedina", "Diario", "Storico IA"]) { await tab(n); await foto("schedina-" + n.replace(/ /g, "")); }

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { immagineSchedina, mercatoBookmaker } from "./condividi.js";
 import { Citazione, citazioneSchedina, citazioneDiario } from "./citazioni.js";
-import { C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
+import { C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, buildForzata, ESITI_SCHEDINA, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
 import { GiocoResponsabile } from "./extra.js";
 import { StoricoCard } from "./partita.js";
 
@@ -18,11 +18,12 @@ import { StoricoCard } from "./partita.js";
       const [per, setPer] = useState(store.get("slipPer", "3g"));
       const [qo, setQo] = useState(store.get("slipQ", 0));
       const [vr, setVr] = useState(0);
+      const [esito, setEsito] = useState(store.get("slipEsito", ""));
       const today = D.today || new Date().toISOString().slice(0, 10);
       const pool = D.matches.filter((m) => !off.includes(m.lg) && (D.demo || m.st === "NS") && (D.demo || inPeriodo(m.date, per, today)));
-      let legs = qo ? buildTarget(pool, prof, qo, vr) : buildSlip(pool, prof);
+      let legs = esito ? buildForzata(pool, esito, prof, qo, vr) : qo ? buildTarget(pool, prof, qo, vr) : buildSlip(pool, prof);
       const weak = legs.length ? legs.reduce((a, b) => (a.p < b.p ? a : b)) : null;
-      const alt = weak ? candidati(weak.m, Math.max(0, prof - 1), weak.q, 0)
+      const alt = weak && !esito ? candidati(weak.m, Math.max(0, prof - 1), weak.q, 0)
         .filter((o) => o.k !== weak.k && o.p >= weak.p + 0.1 && o.q >= 1.15 && evalCode(o.k, 1, 0, 0, 0) !== null)
         .sort((a, b) => b.sc - a.sc)[0] : null;
       if (shield && weak && alt) legs = legs.map((l) => (l === weak ? { m: l.m, ...alt, shielded: true } : l));
@@ -50,6 +51,10 @@ import { StoricoCard } from "./partita.js";
         <div className=${"text-[14px] font-semibold " + C.tx}>Quota totale che vuoi giocare</div>
         <div className="flex gap-1.5 overflow-x-auto noscroll -mx-4 px-4">${[0, 2, 3, 5, 10, 20, 50, 100, 200].map((q) => html`<button key=${q} onClick=${() => { setQo(q); store.set("slipQ", q); setVr(0); setShield(false); }}
           className=${"shrink-0 min-w-[52px] px-3 py-[6px] rounded-full font-semibold " + (qo === q ? C.on : "bg-white dark:bg-[#191626] " + C.tx)}>${q ? html`<span className="num text-[18px] font-bold">×${q}</span>` : html`<span className="text-[14px]">Libera</span>`}</button>`)}</div>
+        <div className=${"text-[14px] font-semibold " + C.tx}>Esito</div>
+        <div className="flex gap-1.5 overflow-x-auto noscroll -mx-4 px-4">${ESITI_SCHEDINA.map(([k, l]) => html`<button key=${k || "ia"} onClick=${() => { setEsito(k); store.set("slipEsito", k); setVr(0); setShield(false); }}
+          className=${"shrink-0 px-3.5 py-[7px] rounded-full text-[14px] font-semibold " + (esito === k ? C.seg : "bg-white dark:bg-[#191626] " + C.tx)}>${l}</button>`)}</div>
+        ${esito && html`<p className=${"text-[12px] -mt-1 " + C.mu}>Tutte le partite con lo stesso esito: l'IA sceglie quelle dove è più probabile e più d'accordo con i dati delle squadre${qo ? ", fino alla quota che hai chiesto" : ""}.</p>`}
         <div className=${"text-[14px] font-semibold " + C.tx}>Stile</div>
         <div className="grid grid-cols-3 gap-2">${["Zero Tachicardia", "Classica del Sabato", "Colpaccio da Bar"].map((p, i) => { const lk = i === 2 && !pro; return html`<button key=${p} onClick=${() => (lk ? setUnlock(true) : (setProf(i), setShield(false), setVr(0)))}
           className=${C.card + " p-3 text-xs font-semibold text-center " + C.tx + (prof === i ? " ring-2 ring-[#5B2EE6] dark:ring-[#A58BFF]" : "")}>${p}${lk && html`<div className="text-[10px] mt-1 text-amber-600 dark:text-amber-300 flex items-center justify-center gap-1"><${Ic.Lock} size=${10} />PRO</div>`}</button>`; })}</div>
@@ -63,7 +68,7 @@ import { StoricoCard } from "./partita.js";
           <div className="flex justify-between text-sm"><span className=${C.mu}>Probabilità che passi, secondo l'IA</span><b className=${"tabular-nums " + C.tx}>${(prob * 100).toFixed(1).replace(".", ",")}%</b></div>
           ${done.length > 0 && html`<div className=${"text-xs font-semibold " + (won.length === done.length ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>Verifica sulla giornata: ${won.length} su ${done.length} esiti corretti${won.length === done.length ? ", schedina vinta" : ""}.</div>`}
           ${weak && html`<div className=${"rounded-xl border p-3 text-sm " + TONE.bad}><div className="font-semibold flex items-center gap-1.5"><${Ic.AlertTriangle} size=${14} />Anello debole</div>
-            <div>${shield && alt ? `Protetto dallo Scudo IA: nella stessa partita ora c'è ${mLabel(weak.m, alt.k, true)} (IA ${pct(alt.p)}%, quota ${odd(alt.q)}). Nuova quota totale ${odd(tot)}${qo ? ", obiettivo ×" + qo : ""}.` : `${weak.m.h} - ${weak.m.a}, ${mLabel(weak.m, weak.k, true)} (IA ${pct(weak.p)}%) è la gamba più fragile.${alt ? "" : " Nella stessa partita non c'è un'alternativa più sicura e sensata."}`}</div>
+            <div>${shield && alt ? `Protetto dallo Scudo IA: nella stessa partita ora c'è ${mLabel(weak.m, alt.k, true)} (IA ${pct(alt.p)}%, quota ${odd(alt.q)}). Nuova quota totale ${odd(tot)}${qo ? ", obiettivo ×" + qo : ""}.` : `${weak.m.h} - ${weak.m.a}, ${mLabel(weak.m, weak.k, true)} (IA ${pct(weak.p)}%) è la gamba più fragile.${alt || esito ? "" : " Nella stessa partita non c'è un'alternativa più sicura e sensata."}`}</div>
             ${alt && html`<button onClick=${() => setShield(!shield)} className=${"mt-2 inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full " + (shield ? TONE.good + " border" : C.on)}><${Ic.ShieldCheck} size=${13} />${shield ? "Scudo IA attivo" : "Scudo IA: proteggi"}</button>`}</div>`}
           ${citazioneSchedina(legs, tot) && html`<div className="pt-1"><${Citazione} q=${citazioneSchedina(legs, tot)} piccola=${true} /></div>`}
           <${Gioca} legs=${legs} />

@@ -54,6 +54,18 @@ if (pool.length >= 12) for (const prof of [0, 1, 2]) for (const T of [2, 5, 10, 
   ok(firme.size >= 2, `stile ${prof}, x${T}: "Un'altra combinazione" non cambia`);
 }
 
+// 6. schedina con esito scelto: stesso esito in ogni partita, nessuna partita doppia, quota vicina all'obiettivo
+if (pool.length >= 12) for (const es of ["1", "X", "GG", "O2.5", "FAV"]) {
+  const L0 = B.buildForzata(pool, es, 1, 0, 0);
+  ok(L0.length > 0 && (es === "FAV" || L0.every((l) => l.k === es)), `esito ${es}: giocate diverse da quella scelta`);
+  for (const T of [5, 20]) {
+    const L = B.buildForzata(pool, es, 1, T, 0), tot = L.reduce((a, l) => a * l.q, 1);
+    ok(new Set(L.map((l) => l.m.id)).size === L.length, `esito ${es} x${T}: partite doppie`);
+    ok(es === "FAV" ? L.every((l) => l.k === "1" || l.k === "2") : L.every((l) => l.k === es), `esito ${es} x${T}: esito sbagliato`);
+    ok(tot > T * 0.75 && tot < T * 1.3, `esito ${es} x${T}: quota ${tot.toFixed(2)}`);
+  }
+}
+
 // 5. citazioni: derby riconosciuti (anche al contrario), nessun falso derby, frequenza misurata, autore sempre presente
 const Z = await import(pathToFileURL(outC).href);
 const dd = (h, a) => (Z.derbyDi({ h, a }) || {}).nome;

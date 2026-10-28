@@ -277,8 +277,10 @@ import { SlipView } from "./schedina.js";
 
     /* ---- vista partite ---- */
     const dayMatches = D.matches.filter((m) => (day === "all" || m.date === day) && (!liveOnly || m.st === "LIVE"));
-    const tsH = (e) => { tiraRef.current = window.scrollY <= 0 ? e.touches[0].clientY : null; };
-    const tmH = (e) => { if (tiraRef.current == null) return; const d = e.touches[0].clientY - tiraRef.current; setTira(d > 0 ? Math.min(110, d * 0.6) : 0); };
+    const tsH = (e) => { tiraRef.current = window.scrollY <= 0 ? [e.touches[0].clientX, e.touches[0].clientY] : null; };
+    // aggiorna tirando giù: solo con un gesto verticale (scorrere le chip dei giorni non deve aggiornare)
+    const tmH = (e) => { if (tiraRef.current == null) return; const dx = e.touches[0].clientX - tiraRef.current[0], d = e.touches[0].clientY - tiraRef.current[1];
+      if (Math.abs(dx) > Math.abs(d)) { tiraRef.current = null; setTira(0); return; } setTira(d > 0 ? Math.min(110, d * 0.6) : 0); };
     const teH = () => { if (tira >= 64) { try { if (navigator.vibrate) navigator.vibrate(12); } catch (x) { /* non supportato */ } ricarica(); } setTira(0); tiraRef.current = null; };
     const home = html`<div className="px-4 space-y-3" onTouchStart=${tsH} onTouchMove=${tmH} onTouchEnd=${teH}>
       ${tira > 0 && html`<div className="flex justify-center transition-all" style=${{ height: tira }}><span className=${"self-end mb-1 text-[13px] font-semibold flex items-center gap-1.5 " + C.mu}><${Ic.Repeat} size=${14} className=${tira >= 64 ? C.acc : ""} />${tira >= 64 ? "Rilascia per aggiornare" : "Tira giù per aggiornare"}</span></div>`}

@@ -353,6 +353,46 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     }
     return sel.map((s) => ({ m: s.x.m, ...s.x.c[s.i] }));
   }
+  /* schedina con un esito scelto dall'utente (tutte in casa, tutti pareggi, tutti Goal, tutti Over 2,5...): l'IA sceglie
+     le partite dove quell'esito è più probabile e più d'accordo con i dati, e se c'è una quota obiettivo la avvicina */
+  const ESITI_SCHEDINA = [["", "Scelta IA"], ["1", "Tutte in casa (1)"], ["X", "Tutti pareggi (X)"], ["2", "Tutte fuori casa (2)"], ["FAV", "Vince la favorita"],
+    ["GG", "Goal"], ["NG", "No Goal"], ["O2.5", "Over 2,5"], ["U2.5", "Under 2,5"], ["O1.5", "Over 1,5"], ["U3.5", "Under 3,5"], ["1X", "Doppia 1X"], ["X2", "Doppia X2"]];
+  function buildForzata(matches, esito, prof, T, v) {
+    const pool = [];
+    for (const m of matches) {
+      const ops = options(m);
+      let o = null;
+      if (esito === "FAV") { const a = ops.find((x) => x.k === "1"), b = ops.find((x) => x.k === "2"); o = a && b ? (a.p >= b.p ? a : b) : a || b; }
+      else o = ops.find((x) => x.k === esito);
+      if (!o || !o.q || o.q < 1.02) continue;
+      pool.push({ m, o, sc: (o.s != null ? o.s : 50) / 100 + 0.6 * o.p + (o.stima ? 0 : 0.05) + 0.08 * rumore(m.id + esito, v) });
+    }
+    pool.sort((a, b) => b.sc - a.sc);
+    if (!pool.length) return [];
+    if (!T) return pool.slice(0, Math.min(pool.length, [3, 4, 6][prof] || 4)).map((x) => ({ m: x.m, ...x.o }));
+    // quota obiettivo: quante partite servono con la quota tipica di questo esito, poi si preferiscono le giocate
+    // vicine a quella quota (niente pareggio a quota 7 per arrivare prima all'obiettivo)
+    const LT = Math.log(T);
+    const tipica = pool.slice(0, 12).map((x) => Math.log(x.o.q)).sort((a, b) => a - b);
+    const lq = tipica[Math.floor(tipica.length / 2)] || 0.4;
+    const nt = Math.max(1, Math.min(14, Math.round(LT / Math.max(0.05, lq))));
+    const qt = LT / nt;
+    for (const x of pool) x.sc -= 0.35 * Math.abs(Math.log(x.o.q) - qt);
+    pool.sort((a, b) => b.sc - a.sc);
+    let sel = [], tot = 0;
+    for (const x of pool) { if (sel.length >= 14 || tot >= LT - 0.1) break; if (tot + Math.log(x.o.q) <= LT + 0.14) { sel.push(x); tot += Math.log(x.o.q); } }
+    for (let it = 0; it < 60; it++) {
+      const d = tot - LT;
+      if (Math.abs(d) < 0.05) break;
+      let best = null;
+      sel.forEach((s, si) => pool.forEach((x) => { if (sel.includes(x)) return;
+        const nd = d - Math.log(s.o.q) + Math.log(x.o.q), gain = Math.abs(d) - Math.abs(nd);
+        if (gain > 0.02 && (!best || gain - 0.5 * (s.sc - x.sc) > best.v)) best = { si, x, v: gain - 0.5 * (s.sc - x.sc) }; }));
+      if (!best) break;
+      tot += Math.log(best.x.o.q) - Math.log(sel[best.si].o.q); sel[best.si] = best.x;
+    }
+    return sel.map((x) => ({ m: x.m, ...x.o }));
+  }
   const PERIODI = [["oggi", "Oggi"], ["domani", "Domani"], ["3g", "Prossimi 3 giorni"], ["weekend", "Weekend"], ["7g", "Prossimi 7 giorni"], ["tutte", "Tutte"]];
   function inPeriodo(date, per, today) {
     const t0 = new Date(today + "T12:00:00"), d = new Date(date + "T12:00:00"), g = Math.round((d - t0) / 86400000);
@@ -440,12 +480,30 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const seg = useRef(null);
     const setI = (n) => { setDir(n > i ? 1 : -1); setI0(n); store.set("sch:" + id, n);
       const el = seg.current; if (el && el.getBoundingClientRect().top < 60) window.scrollTo({ top: Math.max(0, window.scrollY + el.getBoundingClientRect().top - 56), behavior: "instant" }); };
-    const ts = (e) => { const t = e.touches[0]; sw.current = e.target.closest("[data-noswipe]") ? null : [t.clientX, t.clientY]; };
-    const te = (e) => { if (!sw.current) return; const t = e.changedTouches[0], dx = t.clientX - sw.current[0], dy = t.clientY - sw.current[1]; sw.current = null;
-      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) { const n = Math.max(0, Math.min(items.length - 1, i + (dx < 0 ? 1 : -1))); if (n !== i) setI(n); } };
+    const ts = (e) => { sw.current = inizioSwipe(e); };
+    const te = (e) => { const d = fineSwipe(sw.current, e); sw.current = null;
+      if (d) { const n = Math.max(0, Math.min(items.length - 1, i + d)); if (n !== i) setI(n); } };
     return html`<${React.Fragment}><div ref=${seg} className="h-0"></div><${Tabs} items=${items} val=${i} set=${setI} sticky=${true} />
       <div key=${i} onTouchStart=${ts} onTouchEnd=${te} className=${"space-y-3 min-h-[60vh] " + (dir > 0 ? "entra-dx" : dir < 0 ? "entra-sx" : "")}>${children[i]}</div><//>`;
   }
+
+  /* cambio scheda col dito: non parte se il dito è su qualcosa che scorre in orizzontale (chip, moltiplicatori, tabelle,
+     mappe), su un campo o un cursore; serve un gesto deciso e quasi orizzontale */
+  function puoCambiareScheda(target, stop) {
+    for (let el = target; el && el !== stop && el !== document.body; el = el.parentElement) {
+      if (el.dataset && el.dataset.noswipe) return false;
+      if (/^(INPUT|TEXTAREA|SELECT|CANVAS)$/.test(el.tagName)) return false;
+      const cs = window.getComputedStyle(el);
+      if ((cs.overflowX === "auto" || cs.overflowX === "scroll") && el.scrollWidth > el.clientWidth + 2) return false;
+    }
+    return true;
+  }
+  const inizioSwipe = (e) => { const t = e.touches[0]; return puoCambiareScheda(e.target, e.currentTarget) ? [t.clientX, t.clientY, Date.now()] : null; };
+  const fineSwipe = (s, e) => {
+    if (!s) return 0;
+    const t = e.changedTouches[0], dx = t.clientX - s[0], dy = t.clientY - s[1], dt = Date.now() - s[2];
+    return Math.abs(dx) > Math.abs(dy) * 2 && (Math.abs(dx) > 90 || (Math.abs(dx) > 55 && dt < 250)) ? (dx < 0 ? 1 : -1) : 0;
+  };
 
   /* voce a scomparsa: chiusa mostra titolo e un riassunto di una riga, aperta mostra il contenuto completo.
      L'app ricorda per ogni voce se l'hai lasciata aperta o chiusa. */
@@ -465,4 +523,4 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
 
   const Ctx = React.createContext(null);
 
-export { html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, ESCLUSI_SLIP, rumore, candidati, buildTarget, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Voce, Ctx };
+export { html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };

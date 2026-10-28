@@ -1,86 +1,86 @@
 {
  "partite": 38731,
- "partite_con_allenatori": 16904,
- "allenamento": 5146,
- "verifica": 11758,
- "quote": 0.98644,
+ "partite_con_allenatori": 19081,
+ "allenamento": 5816,
+ "verifica": 13265,
+ "quote": 0.98956,
  "modello": {
   "l2": 0.1,
-  "errore": 0.98688,
-  "miglioramento_pct": -0.044,
+  "errore": 0.99021,
+  "miglioramento_pct": -0.065,
   "ic95_differenza": [
-   -0.00019,
-   0.00102
+   0.00011,
+   0.00125
   ],
   "pesi_casa": {
-   "nuovo allenatore casa": 0.03,
-   "nuovo allenatore ospite": -0.0017,
-   "durata in carica (diff.)": 0.0198,
-   "rendimento in carriera vs quote (diff.)": -0.022,
-   "esperienza (diff.)": -0.0192
+   "nuovo allenatore casa": 0.0315,
+   "nuovo allenatore ospite": -0.003,
+   "durata in carica (diff.)": 0.0135,
+   "rendimento in carriera vs quote (diff.)": -0.0251,
+   "esperienza (diff.)": -0.0091
   },
   "pesi_ospite": {
-   "nuovo allenatore casa": -0.0057,
-   "nuovo allenatore ospite": 0.011,
-   "durata in carica (diff.)": 0.0109,
-   "rendimento in carriera vs quote (diff.)": 0.05,
-   "esperienza (diff.)": 0.0003
+   "nuovo allenatore casa": -0.011,
+   "nuovo allenatore ospite": 0.0235,
+   "durata in carica (diff.)": 0.0218,
+   "rendimento in carriera vs quote (diff.)": 0.0433,
+   "esperienza (diff.)": -0.0149
   }
  },
  "singole": {
-  "nuovo allenatore casa": -0.0,
-  "nuovo allenatore ospite": -0.013,
-  "durata in carica (diff.)": -0.012,
+  "nuovo allenatore casa": -0.01,
+  "nuovo allenatore ospite": -0.028,
+  "durata in carica (diff.)": -0.013,
   "rendimento in carriera vs quote (diff.)": -0.025,
-  "esperienza (diff.)": -0.012
+  "esperienza (diff.)": -0.003
  },
  "rimbalzo": {
-  "cambi": 496,
-  "punti_vs_attese_5_prima": -0.529,
-  "5_dopo": 0.027,
-  "10_dopo": 0.014,
+  "cambi": 526,
+  "punti_vs_attese_5_prima": -0.532,
+  "5_dopo": 0.025,
+  "10_dopo": 0.021,
   "nota": "Valori per partita: punti fatti meno punti attesi dalle quote. Se 'dopo' è vicino a zero, il nuovo allenatore fa quanto previsto dal mercato."
  },
  "termometro": {
-  "campioni": 41641,
-  "uscite": 2514,
-  "frequenza_base": 0.0478,
+  "campioni": 44413,
+  "uscite": 2640,
+  "frequenza_base": 0.0458,
   "verifica": {
-   "n": 25204,
-   "errore_base": 0.25423,
-   "errore_modello": 0.23035,
-   "auc": 0.737,
-   "uscite_nel_10pct_piu_caldo": 0.312,
+   "n": 26823,
+   "errore_base": 0.2545,
+   "errore_modello": 0.23084,
+   "auc": 0.735,
+   "uscite_nel_10pct_piu_caldo": 0.311,
    "calibrazione": [
     {
      "fascia": "0%-2%",
-     "n": 3961,
-     "stimata": 0.0144,
-     "reale": 0.0131
+     "n": 4747,
+     "stimata": 0.0143,
+     "reale": 0.0152
     },
     {
      "fascia": "2%-5%",
-     "n": 11247,
-     "stimata": 0.0337,
-     "reale": 0.038
+     "n": 12069,
+     "stimata": 0.0335,
+     "reale": 0.0399
     },
     {
      "fascia": "5%-10%",
-     "n": 7449,
-     "stimata": 0.0697,
-     "reale": 0.0949
+     "n": 7598,
+     "stimata": 0.0691,
+     "reale": 0.1008
     },
     {
      "fascia": "10%-20%",
-     "n": 2404,
-     "stimata": 0.1298,
-     "reale": 0.2113
+     "n": 2279,
+     "stimata": 0.1291,
+     "reale": 0.2097
     },
     {
      "fascia": "20%-100%",
-     "n": 143,
-     "stimata": 0.2322,
-     "reale": 0.2448
+     "n": 130,
+     "stimata": 0.233,
+     "reale": 0.2769
     }
    ]
   },
@@ -94,29 +94,29 @@
     "rendimento in carriera"
    ],
    "pesi": [
-    -0.386,
-    -0.3364,
-    -0.0877,
-    0.0251,
-    -0.0898,
-    -0.2063
+    -0.3798,
+    -0.3353,
+    -0.0821,
+    0.0229,
+    -0.0733,
+    -0.2157
    ],
-   "intercetta": -3.2351,
+   "intercetta": -3.284,
    "media": [
-    0.0422,
-    0.0395,
-    5.9288,
-    0.9305,
-    0.8273,
-    0.5389
+    0.0435,
+    0.0407,
+    5.947,
+    0.9133,
+    0.8246,
+    0.5534
    ],
    "scarto": [
-    0.5186,
-    0.3574,
-    1.0973,
-    0.9103,
-    0.8311,
-    1.1007
+    0.5187,
+    0.3566,
+    1.0975,
+    0.8945,
+    0.8297,
+    1.0812
    ]
   },
   "modello_finale": {
@@ -129,29 +129,29 @@
     "rendimento in carriera"
    ],
    "pesi": [
-    -0.4853,
-    -0.281,
-    -0.0457,
-    0.1662,
-    -0.0748,
-    -0.2125
+    -0.4848,
+    -0.2799,
+    -0.0321,
+    0.1695,
+    -0.0731,
+    -0.2183
    ],
-   "intercetta": -3.0199,
+   "intercetta": -3.037,
    "media": [
-    0.0266,
-    0.025,
-    5.8965,
-    1.4241,
-    0.8307,
-    0.463
+    0.0292,
+    0.0272,
+    5.8983,
+    1.416,
+    0.8297,
+    0.4839
    ],
    "scarto": [
-    0.5223,
-    0.3615,
-    1.1177,
-    1.3676,
-    0.8412,
-    1.0033
+    0.5228,
+    0.3618,
+    1.1153,
+    1.3568,
+    0.8402,
+    0.9866
    ]
   }
  }

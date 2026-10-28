@@ -4291,84 +4291,6 @@
 }
 ]
 },
-"Barcelona": {
-"wikidata": "Q8780",
-"nome": "RCD Espanyol de Barcelona",
-"allenatori": [
-{
-"chi": "Mauricio Pochettino",
-"qid": "Q313000",
-"da": "2009-01-20",
-"a": "2012-11-26"
-},
-{
-"chi": "Joan Francesc Ferrer Sicilia",
-"qid": "Q5573535",
-"da": "2018-07-01",
-"a": "2019-06-30"
-},
-{
-"chi": "David Gallego",
-"qid": "Q17030351",
-"da": "2019-07-01",
-"a": "2019-10-07"
-},
-{
-"chi": "Pablo Machín",
-"qid": "Q11697229",
-"da": "2019-10-07",
-"a": "2019-12-23"
-},
-{
-"chi": "Abelardo Fernández",
-"qid": "Q318546",
-"da": "2019-12-27",
-"a": "2020-06-27"
-},
-{
-"chi": "Francisco Rufete",
-"qid": "Q534178",
-"da": "2020-06-27",
-"a": "2020-07-20"
-},
-{
-"chi": "Vicente Moreno",
-"qid": "Q3321444",
-"da": "2020-08-04",
-"a": "2022-05-13"
-},
-{
-"chi": "Luis Blanco Garrido",
-"qid": "Q111660241",
-"da": "2022-05-13",
-"a": "2022-06-30"
-},
-{
-"chi": "Diego Martínez Penas",
-"qid": "Q23939734",
-"da": "2022-07-01",
-"a": "2023-04-03"
-},
-{
-"chi": "Luis García Fernández",
-"qid": "Q440855",
-"da": "2023-04-03",
-"a": "2023-11-05"
-},
-{
-"chi": "Luis Miguel Ramis",
-"qid": "Q3323952",
-"da": "2023-11-06",
-"a": "2024-03-12"
-},
-{
-"chi": "Manolo González",
-"qid": "Q107613083",
-"da": "2024-03-12",
-"a": null
-}
-]
-},
 "Sociedad": {
 "wikidata": "Q10315",
 "nome": "Real Sociedad",
@@ -8485,18 +8407,6 @@
 }
 ]
 },
-"Ajaccio GFCO": {
-"wikidata": "Q270051",
-"nome": "A.C. Ajaccio",
-"allenatori": [
-{
-"chi": "Olivier Pantaloni",
-"qid": "Q2073968",
-"da": "2014-11-06",
-"a": null
-}
-]
-},
 "Benevento": {
 "wikidata": "Q652516",
 "nome": "Benevento Calcio",
@@ -10243,60 +10153,6 @@
 }
 ]
 },
-"Paris FC": {
-"wikidata": "Q483020",
-"nome": "Paris Saint-Germain FC",
-"allenatori": [
-{
-"chi": "Antoine Kombouaré",
-"qid": "Q586555",
-"da": "2009-07-01",
-"a": "2011-12-29"
-},
-{
-"chi": "Carlo Ancelotti",
-"qid": "Q174614",
-"da": "2011-12-30",
-"a": "2013-05-19"
-},
-{
-"chi": "Laurent Blanc",
-"qid": "Q1839",
-"da": "2013-06-25",
-"a": "2016-06-22"
-},
-{
-"chi": "Unai Emery",
-"qid": "Q295610",
-"da": "2016-07-01",
-"a": "2018-06-30"
-},
-{
-"chi": "Thomas Tuchel",
-"qid": "Q702233",
-"da": "2018-07-01",
-"a": "2020-12-29"
-},
-{
-"chi": "Mauricio Pochettino",
-"qid": "Q313000",
-"da": "2021-01-02",
-"a": "2022-07-05"
-},
-{
-"chi": "Christophe Galtier",
-"qid": "Q129023",
-"da": "2022-07-05",
-"a": "2023-06-30"
-},
-{
-"chi": "Luis Enrique",
-"qid": "Q222789",
-"da": "2023-07-05",
-"a": null
-}
-]
-},
 "Modena": {
 "wikidata": "Q8408",
 "nome": "Modena F.C.",
@@ -10576,6 +10432,438 @@
 "qid": "Q645692",
 "da": "1979-12-10",
 "a": "1980-06-30"
+}
+]
+},
+"Barcelona": {
+"wikidata": "Q7156",
+"nome": "FC Barcelona",
+"allenatori": [
+{
+"chi": "William Charles Lambe",
+"qid": "Q26262412",
+"da": "1912-01-01",
+"a": "1912-08-31"
+},
+{
+"chi": "Miles Barron",
+"qid": "Q690546",
+"da": "1912-09-01",
+"a": "1912-12-29"
+},
+{
+"chi": "Jack Alderson",
+"qid": "Q1990898",
+"da": "1912-12-30",
+"a": "1913-01-15"
+},
+{
+"chi": "Jack Greenwell",
+"qid": "Q279258",
+"da": "1913-01-15",
+"a": "1923-08-31"
+},
+{
+"chi": "Jesza Poszony",
+"qid": "Q785184",
+"da": "1923-08-01",
+"a": "1923-10-11"
+},
+{
+"chi": "Alf Spouncer",
+"qid": "Q4721764",
+"da": "1923-10-12",
+"a": "1924-06-30"
+},
+{
+"chi": "Conyers Kirby",
+"qid": "Q977859",
+"da": "1924-12-01",
+"a": "1925-09-09"
+},
+{
+"chi": "Richard Kohn",
+"qid": "Q78788",
+"da": "1926-02-01",
+"a": "1926-11-30"
+},
+{
+"chi": "Romà Forns",
+"qid": "Q530513",
+"da": "1926-12-01",
+"a": "1929-03-25"
+},
+{
+"chi": "Jim Bellamy",
+"qid": "Q1680031",
+"da": "1929-03-26",
+"a": "1931-06-30"
+},
+{
+"chi": "Ferenc Plattkó",
+"qid": "Q518756",
+"da": "1934-07-01",
+"a": "1935-06-30"
+},
+{
+"chi": "Patrick O'Connell",
+"qid": "Q1789802",
+"da": "1935-07-01",
+"a": "1940-03-17"
+},
+{
+"chi": "Josep Planas",
+"qid": "Q1706314",
+"da": "1940-03-20",
+"a": "1941-06-30"
+},
+{
+"chi": "Ramón Guzmán",
+"qid": "Q584525",
+"da": "1941-07-01",
+"a": "1942-01-25"
+},
+{
+"chi": "Juan José Nogués",
+"qid": "Q429464",
+"da": "1942-02-01",
+"a": "1944-06-30"
+},
+{
+"chi": "Josep Samitier",
+"qid": "Q342435",
+"da": "1944-07-01",
+"a": "1947-06-30"
+},
+{
+"chi": "Enrique Fernández Viola",
+"qid": "Q924075",
+"da": "1947-07-01",
+"a": "1950-01-22"
+},
+{
+"chi": "Ramón Llorens i Pujadas",
+"qid": "Q926520",
+"da": "1950-01-23",
+"a": "1950-06-30"
+},
+{
+"chi": "Ferdinand Daučík",
+"qid": "Q463807",
+"da": "1950-07-01",
+"a": "1954-06-30"
+},
+{
+"chi": "Domènec Balmanya",
+"qid": "Q512865",
+"da": "1956-07-01",
+"a": "1958-04-20"
+},
+{
+"chi": "Helenio Herrera",
+"qid": "Q310078",
+"da": "1958-04-25",
+"a": "1960-06-30"
+},
+{
+"chi": "Enric Rabassa",
+"qid": "Q1343686",
+"da": "1960-05-01",
+"a": "1960-06-30"
+},
+{
+"chi": "Ljubiša Broćić",
+"qid": "Q925027",
+"da": "1960-07-01",
+"a": "1961-01-12"
+},
+{
+"chi": "Enrique Orizaola",
+"qid": "Q1344100",
+"da": "1961-01-15",
+"a": "1961-06-30"
+},
+{
+"chi": "Luis Miró",
+"qid": "Q1637407",
+"da": "1961-07-01",
+"a": "1961-11-20"
+},
+{
+"chi": "László Kubala",
+"qid": "Q295732",
+"da": "1961-11-25",
+"a": "1963-01-07"
+},
+{
+"chi": "José Gonzalvo",
+"qid": "Q974303",
+"da": "1963-01-08",
+"a": "1963-06-30"
+},
+{
+"chi": "César Rodríguez Álvarez",
+"qid": "Q348763",
+"da": "1963-07-01",
+"a": "1964-10-15"
+},
+{
+"chi": "Vicenç Sasot",
+"qid": "Q461440",
+"da": "1964-10-16",
+"a": "1965-06-30"
+},
+{
+"chi": "Roque Olsen",
+"qid": "Q974823",
+"da": "1965-07-01",
+"a": "1967-06-30"
+},
+{
+"chi": "Salvador Artigas",
+"qid": "Q930110",
+"da": "1967-07-01",
+"a": "1969-10-15"
+},
+{
+"chi": "Josep Seguer",
+"qid": "Q1423311",
+"da": "1969-10-15",
+"a": "1969-12-29"
+},
+{
+"chi": "Vic Buckingham",
+"qid": "Q920038",
+"da": "1970-01-01",
+"a": "1971-06-30"
+},
+{
+"chi": "Rinus Michels",
+"qid": "Q2154479",
+"da": "1971-07-01",
+"a": "1975-06-30"
+},
+{
+"chi": "Hennes Weisweiler",
+"qid": "Q151105",
+"da": "1975-07-01",
+"a": "1976-03-30"
+},
+{
+"chi": "Laureano Ruiz",
+"qid": "Q32539",
+"da": "1976-04-01",
+"a": "1976-06-30"
+},
+{
+"chi": "Rinus Michels",
+"qid": "Q2154479",
+"da": "1976-07-01",
+"a": "1978-06-30"
+},
+{
+"chi": "Lucien Muller",
+"qid": "Q535013",
+"da": "1978-07-01",
+"a": "1979-04-18"
+},
+{
+"chi": "Joaquim Rifé",
+"qid": "Q929232",
+"da": "1979-04-18",
+"a": "1980-03-06"
+},
+{
+"chi": "Helenio Herrera",
+"qid": "Q310078",
+"da": "1980-03-06",
+"a": "1980-06-30"
+},
+{
+"chi": "Helenio Herrera",
+"qid": "Q310078",
+"da": "1980-11-06",
+"a": "1981-06-30"
+},
+{
+"chi": "Udo Lattek",
+"qid": "Q290870",
+"da": "1981-07-01",
+"a": "1983-03-03"
+},
+{
+"chi": "José Luis Romero",
+"qid": "Q1709366",
+"da": "1983-03-04",
+"a": "1983-03-07"
+},
+{
+"chi": "César Luis Menotti",
+"qid": "Q313277",
+"da": "1983-03-08",
+"a": "1984-05-31"
+},
+{
+"chi": "Terry Venables",
+"qid": "Q314039",
+"da": "1984-06-01",
+"a": "1987-09-20"
+},
+{
+"chi": "Luis Aragonés",
+"qid": "Q576614",
+"da": "1987-09-23",
+"a": "1988-05-04"
+},
+{
+"chi": "Johan Cruyff",
+"qid": "Q17163",
+"da": "1991-04-12",
+"a": "1996-05-18"
+},
+{
+"chi": "Bobby Robson",
+"qid": "Q189587",
+"da": "1996-07-14",
+"a": "1997-06-30"
+},
+{
+"chi": "Louis van Gaal",
+"qid": "Q207431",
+"da": "1997-07-01",
+"a": "2000-05-20"
+},
+{
+"chi": "Lorenzo Serra Ferrer",
+"qid": "Q714392",
+"da": "2000-07-01",
+"a": "2001-04-23"
+},
+{
+"chi": "Carles Rexach",
+"qid": "Q358414",
+"da": "2001-04-24",
+"a": "2002-06-30"
+},
+{
+"chi": "Louis van Gaal",
+"qid": "Q207431",
+"da": "2002-07-01",
+"a": "2003-01-28"
+},
+{
+"chi": "Antonio de la Cruz",
+"qid": "Q606105",
+"da": "2003-01-29",
+"a": "2003-02-02"
+},
+{
+"chi": "Radomir Antić",
+"qid": "Q349585",
+"da": "2003-02-03",
+"a": "2003-06-30"
+},
+{
+"chi": "Frank Rijkaard",
+"qid": "Q169098",
+"da": "2003-07-01",
+"a": "2008-06-30"
+},
+{
+"chi": "Pep Guardiola",
+"qid": "Q164038",
+"da": "2008-06-01",
+"a": "2012-05-30"
+},
+{
+"chi": "Tito Vilanova",
+"qid": "Q222924",
+"da": "2012-07-01",
+"a": "2013-01-23"
+},
+{
+"chi": "Gerardo Martino",
+"qid": "Q356773",
+"da": "2013-07-23",
+"a": "2014-06-30"
+},
+{
+"chi": "Luis Enrique",
+"qid": "Q222789",
+"da": "2014-07-01",
+"a": "2017-06-30"
+},
+{
+"chi": "Ernesto Valverde",
+"qid": "Q359118",
+"da": "2017-07-01",
+"a": "2020-01-13"
+},
+{
+"chi": "Quique Setién",
+"qid": "Q2444534",
+"da": "2020-01-13",
+"a": "2020-08-17"
+},
+{
+"chi": "Ronald Koeman",
+"qid": "Q192635",
+"da": "2020-08-19",
+"a": "2021-10-28"
+},
+{
+"chi": "Xavi Hernández",
+"qid": "Q17500",
+"da": "2021-11-06",
+"a": "2024-06-30"
+},
+{
+"chi": "Hansi Flick",
+"qid": "Q577384",
+"da": "2024-07-01",
+"a": null
+}
+]
+},
+"Paris FC": {
+"wikidata": "Q1051013",
+"nome": "Paris FC",
+"allenatori": [
+{
+"chi": "Mehmed Baždarević",
+"qid": "Q518054",
+"da": "2018-01-01",
+"a": "2019-01-01"
+},
+{
+"chi": "Stéphane Gilli",
+"qid": "Q121891089",
+"da": "2023-07-01",
+"a": "2026-02-22"
+},
+{
+"chi": "Antoine Kombouaré",
+"qid": "Q586555",
+"da": "2026-02-22",
+"a": "2026-07-01"
+},
+{
+"chi": "Liam Rosenior",
+"qid": "Q1336865",
+"da": "2026-07-07",
+"a": null
+}
+]
+},
+"Ajaccio GFCO": {
+"wikidata": "Q270051",
+"nome": "A.C. Ajaccio",
+"allenatori": [
+{
+"chi": "Olivier Pantaloni",
+"qid": "Q2073968",
+"da": "2014-11-06",
+"a": null
 }
 ]
 }

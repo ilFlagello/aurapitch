@@ -1,9 +1,9 @@
 /* AuraPitch - partita della settimana, glossario, gioco responsabile, primo avvio, schedina in diretta, ricerca. */
 import { conta } from "./statistiche.js";
+import { caricaVoti } from "./partita.js";
 import React, { useState, useEffect } from "react";
 import { ESPN_LG } from "./live.js";
-import { C, Crest, Ctx, Flag, Ic, Marchio, Sheet, evalCode, hit, html, norm, pct, store } from "./base.js";
-import { statoGiocata } from "./schedina.js";
+import { statoGiocata, C, Crest, Ctx, Flag, Ic, Marchio, Sheet, evalCode, hit, html, norm, pct, store } from "./base.js";
 
   /* ---- partita della settimana: la sfida più importante dei prossimi 7 giorni (competizione, classifica delle due squadre, equilibrio) ---- */
   const PESO_LEGA = { NL: 2.6, LIB: 1.2, SA1: 0.6, F2: 0.4, NO1: 0.3, SE1: 0.3, COL1: 0.3, CHI1: 0.3, AU1: 0.3, UY1: 0.2, PY1: 0.2, EC1: 0.2, PE1: 0.2, SUD: 0.6, ACL: 0.5, AMI: 0.8, EQ: 1.5, WCQ: 1.8, CL: 3, I1: 2.4, E0: 2.4, SP1: 2.1, D1: 2, F1: 1.7, EL: 1.6, CI: 1.4, SCI: 1.6, FAC: 1.2, CDR: 1.2, DFB: 1.1, ECL: 1.1, P1: 1, N1: 1, ELC: 0.8, CDF: 0.7, E1: 0.6, I2: 0.6, T1: 0.7, B1: 0.6, SC0: 0.6, BR1: 0.7, AR1: 0.6, MLS: 0.5, MX1: 0.5, D2: 0.5, SP2: 0.5, A1: 0.4, G1: 0.4, DK1: 0.4, J1: 0.4 };
@@ -170,8 +170,10 @@ import { statoGiocata } from "./schedina.js";
 
   /* ---- ricerca: squadre, partite e giocatori (marcatori delle partite in programma) ---- */
   function Cerca({ onClose }) {
-    const { D, lg, goMatch, setTeam, favLeagues } = React.useContext(Ctx);
+    const { D, lg, goMatch, setTeam, favLeagues, apriGiocatore, apriLega } = React.useContext(Ctx);
     const [q, setQ] = useState("");
+    const [V, setV] = useState(null); // archivio dei voti: tutti i giocatori dei campionati coperti, con identificativo ESPN
+    useEffect(() => { caricaVoti().then(setV).catch(() => {}); }, []);
     const [solo, setSolo] = useState(store.get("cercaMiei", false) && favLeagues && favLeagues.length > 0);
     const ok = (k) => !solo || favLeagues.includes(k);
     const pn = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -183,10 +185,12 @@ import { statoGiocata } from "./schedina.js";
     const pa = t.length >= 2 ? D.matches.filter((m) => ok(m.lg) && (pn(m.h).includes(t) || pn(m.a).includes(t))).slice(0, 8) : [];
     const gi = [];
     if (t.length >= 3) for (const m of D.matches.filter((m) => ok(m.lg)).sort((a, b) => a.ko.localeCompare(b.ko))) for (const c of Object.keys(m.marcatori || {})) if (pn(c.slice(5)).includes(t) && gi.length < 8 && !gi.some((g) => g.n === c.slice(5))) gi.push({ n: c.slice(5), m, x: m.marcatori[c] });
+    const leghe = t.length >= 2 ? D.leagues.filter((l) => pn(l.name).includes(t) || pn(l.country).includes(t)).slice(0, 5) : [];
+    const gv = t.length >= 3 && V ? Object.entries(V).filter(([, x]) => pn(x[5]).includes(t) && !gi.some((g) => pn(g.n) === pn(x[5]))).sort((a, b) => b[1][1] - a[1][1]).slice(0, 8) : [];
     const vai = (fn) => { onClose(); fn(); };
     const Riga = ({ onClick, children }) => html`<button onClick=${onClick} className=${"w-full flex items-center gap-3 py-2.5 text-left border-t first:border-t-0 " + C.bd}>${children}</button>`;
     return html`<${Sheet} title="Cerca" onClose=${onClose}>
-      <input autoFocus value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Squadra, partita o giocatore" className=${"w-full rounded-xl px-3.5 py-3 text-[16px] outline-none " + C.ch + " " + C.tx} />
+      <input autoFocus value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Squadra, partita, giocatore o campionato" className=${"w-full rounded-xl px-3.5 py-3 text-[16px] outline-none " + C.ch + " " + C.tx} />
       ${favLeagues && favLeagues.length > 0 && html`<label className=${"flex items-center gap-2 text-[14px] " + C.tx}><input type="checkbox" checked=${solo} onChange=${(e) => { setSolo(e.target.checked); store.set("cercaMiei", e.target.checked); }} className="w-4 h-4 accent-[#5B2EE6]" />Solo i campionati che seguo</label>`}
       ${t.length < 2 && html`<p className=${"text-[13px] " + C.mu}>Scrivi almeno 2 lettere. Trovi le squadre dei campionati seguiti, le loro partite in programma e i giocatori che possono segnare.</p>`}
       ${sq.length > 0 && html`<div><div className=${"text-[12px] font-semibold mb-1 " + C.mu}>Squadre</div>${sq.map(([n, x]) => html`<${Riga} key=${n} onClick=${() => vai(() => setTeam({ lgE: x.lgE, name: n }))}>
@@ -195,7 +199,11 @@ import { statoGiocata } from "./schedina.js";
         <span className=${"num text-[16px] font-bold w-12 " + C.tx}>${m.st === "NS" ? m.time : m.g ? m.g.join("-") : ""}</span><span className=${"flex-1 text-[15px] " + C.tx}>${m.h} - ${m.a}</span><span className=${"text-[12px] " + C.mu}>${m.date.slice(8)}/${m.date.slice(5, 7)}</span><//>`)}</div>`}
       ${gi.length > 0 && html`<div><div className=${"text-[12px] font-semibold mb-1 " + C.mu}>Giocatori</div>${gi.map((g) => html`<${Riga} key=${g.n + g.m.id} onClick=${() => vai(() => goMatch(g.m.id))}>
         <span className="flex-1 min-w-0"><span className=${"block text-[15px] " + C.tx}>${g.n}</span><span className=${"block text-[12px] " + C.mu}>${g.x.lato ? g.m.a : g.m.h}, ${g.x.g} gol in ${g.x.pres} presenze. Prossima: ${g.m.h} - ${g.m.a}</span></span><//>`)}</div>`}
-      ${t.length >= 2 && !sq.length && !pa.length && !gi.length && html`<p className=${"text-[13px] " + C.mu}>Nessun risultato per "${q}".</p>`}<//>`;
+      ${leghe.length > 0 && html`<div><div className=${"text-[12px] font-semibold mb-1 " + C.mu}>Campionati</div>${leghe.map((l) => html`<${Riga} key=${l.k} onClick=${() => vai(() => apriLega(l.k))}>
+        <${Flag} k=${l.flag} w=${22} /><span className=${"flex-1 text-[15px] " + C.tx}>${l.name}</span><span className=${"text-[12px] " + C.mu}>${l.country}</span><//>`)}</div>`}
+      ${gv.length > 0 && html`<div><div className=${"text-[12px] font-semibold mb-1 " + C.mu}>${gi.length ? "Altri giocatori" : "Giocatori"}</div>${gv.map(([id, x]) => html`<${Riga} key=${id} onClick=${() => vai(() => apriGiocatore({ id, name: x[5], pos: x[8], team: x[6] }))}>
+        <${Crest} t=${x[6]} size=${20} /><span className="flex-1 min-w-0"><span className=${"block text-[15px] " + C.tx}>${x[5]}</span><span className=${"block text-[12px] " + C.mu}>${x[6]}, ${x[1]} partite${x[3] ? ", " + x[3] + " gol" : ""}</span></span><//>`)}</div>`}
+      ${t.length >= 2 && !sq.length && !pa.length && !gi.length && !leghe.length && !gv.length && html`<p className=${"text-[13px] " + C.mu}>Nessun risultato per "${q}".</p>`}<//>`;
   }
 
 export { gruppiSquadre, GRUPPI_LEGHE, PESO_LEGA, partitaSettimana, Anteprima, GLOSSARIO, Glossario, GiocoResponsabile, TUTTE_LEGHE, PrimoAvvio, BarraSchedina, Cerca };

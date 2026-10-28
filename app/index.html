@@ -30,6 +30,10 @@ body { background: var(--bg); color: var(--fg); font-family: "Figtree", -apple-s
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
 .num { font-family: "Big Shoulders", "Figtree", system-ui, sans-serif; font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
 button { cursor: pointer; }
+@keyframes gira { to { transform: rotate(360deg); } }
+.gira { animation: gira .8s cubic-bezier(.5,.1,.5,.9) infinite; transform-origin: 50% 50%; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .2s; }
+@media (prefers-reduced-motion: reduce) { .gira { animation-duration: 2s; } ::view-transition-old(root), ::view-transition-new(root) { animation: none; } }
 button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid #7B5CFF; outline-offset: 2px; border-radius: 8px; }
 .noscroll::-webkit-scrollbar { display: none; }
 .noscroll { scrollbar-width: none; }
@@ -45,4 +49,4 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 <div id="root"><div id="boot">Caricamento di AuraPitch...</div></div>
-<script src="app.js" defer></script>
+<script type="module" src="app.js"></script>

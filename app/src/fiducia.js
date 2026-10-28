@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { C, Ic, Marchio, Sheet, TONE, html, store } from "./base.js";
 import { conta, giorniUso, statAttive } from "./statistiche.js";
-import { AGGIORNATA, VERSIONE, privacy, termini } from "./legale.js";
+import { AGGIORNATA, VERSIONE, privacy, sicurezza, termini } from "./legale.js";
 
 const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const unb64u = (s) => { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; return Uint8Array.from(atob(s), (c) => c.charCodeAt(0)); };
@@ -79,8 +79,8 @@ export function useAccount(pushUrl, { ripristina, setSyncOn, flash }) {
 
 /* ---------- foglio con privacy o termini ---------- */
 export function Legale({ tipo, onClose }) {
-  const sez = tipo === "termini" ? termini() : privacy();
-  return html`<${Sheet} title=${tipo === "termini" ? "Termini d'uso" : "Privacy"} onClose=${onClose}>
+  const sez = tipo === "termini" ? termini() : tipo === "sicurezza" ? sicurezza() : privacy();
+  return html`<${Sheet} title=${tipo === "termini" ? "Termini d'uso" : tipo === "sicurezza" ? "Come ti proteggiamo" : "Privacy"} onClose=${onClose}>
     <p className=${"text-[12px] " + C.mu}>Versione ${VERSIONE}, aggiornata il ${AGGIORNATA}</p>
     ${sez.map(([t, ps]) => html`<section key=${t} className="space-y-1.5"><h3 className=${"text-[15px] font-semibold " + C.tx}>${t}</h3>
       ${ps.map((x, i) => html`<p key=${i} className=${"text-[14px] leading-relaxed " + C.mu}>${x}</p>`)}</section>`)}<//>`;
@@ -104,6 +104,10 @@ export function Benvenuto({ onFine }) {
       <div className="space-y-2.5">${punti.map(([I, t, s]) => html`<div key=${t} className="flex gap-3 items-start">
         <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-[#5B2EE6]/10 text-[#5B2EE6] dark:bg-[#A58BFF]/15 dark:text-[#A58BFF]"><${I} size=${17} /></span>
         <span><span className=${"block text-[15px] font-semibold " + C.tx}>${t}</span><span className=${"block text-[13px] " + C.mu}>${s}</span></span></div>`)}</div>
+      <button onClick=${() => setLeggi("sicurezza")} className=${"w-full flex items-center gap-3 rounded-2xl p-3 text-left border border-emerald-500/30 bg-emerald-500/[0.07]"}>
+        <${Ic.ShieldCheck} size=${20} className="text-emerald-600 dark:text-emerald-300 shrink-0" />
+        <span className="flex-1"><span className=${"block text-[14px] font-semibold " + C.tx}>Protetto fin dal primo giorno</span><span className=${"block text-[12px] " + C.mu}>Collegamenti cifrati · niente password · dati eliminabili in un tocco</span></span>
+        <${Ic.ChevronRight} size=${16} className=${C.mu} /></button>
       <div className="space-y-2">
         <${Spunta} id="eta" v=${eta} set=${setEta}>Ho almeno <b>18 anni</b></${Spunta}>
         <${Spunta} id="acc" v=${ok} set=${setOk}>Ho letto e accetto i <button type="button" onClick=${(e) => { e.preventDefault(); setLeggi("termini"); }} className=${"underline font-semibold " + C.acc}>Termini d'uso</button> e la <button type="button" onClick=${(e) => { e.preventDefault(); setLeggi("privacy"); }} className=${"underline font-semibold " + C.acc}>Privacy</button></${Spunta}>
@@ -210,7 +214,7 @@ export function AccountCard({ A, pushUrl, compatta }) {
         <${Bott} onClick=${google} tono=${"bg-white text-[#1F1F1F] border border-black/15 dark:bg-[#F4F2FF] dark:text-[#17152B]"}>Continua con Google</${Bott}>
         ${pk && html`<${Bott} onClick=${entraPasskey} dis=${!!lavoro} tono=${C.on}>${lavoro === "in" ? "Attendi..." : "Entra con " + NOME_PASSKEY}</${Bott}>
           <${Bott} onClick=${creaPasskey} dis=${!!lavoro}>${lavoro === "pk" ? "Attendi..." : "Crea account con " + NOME_PASSKEY}</${Bott}>`}
-        <p className=${"text-[11px] " + C.mu}>Da Google riceviamo solo un identificativo anonimo, non la tua email. Con ${NOME_PASSKEY} il volto o l'impronta restano nel telefono. <button onClick=${() => setLegale("privacy")} className=${"underline " + C.acc}>Privacy</button></p><//>`
+        <p className=${"text-[11px] " + C.mu}>Da Google riceviamo solo un identificativo anonimo, non la tua email. Con ${NOME_PASSKEY} il volto o l'impronta restano nel telefono. <button onClick=${() => setLegale("sicurezza")} className=${"underline " + C.acc}>Come ti proteggiamo</button></p><//>`
       : html`<${React.Fragment}>
         <div className="flex flex-wrap gap-1.5">
           ${a.google && html`<span className=${"text-[12px] font-semibold px-2.5 py-1 rounded-full " + C.ch + " " + C.tx}>Google</span>`}

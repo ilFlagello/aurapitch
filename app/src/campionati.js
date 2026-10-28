@@ -1,12 +1,11 @@
 /* AuraPitch - campionati: classifica, marcatori, assist, voti, confronta. */
 import React, { useState, useEffect } from "react";
 import { ruolo, ESPN_LG } from "./live.js";
-import { C, Chip, Crest, Ctx, Flag, Seg, Tabs, html, nf, store } from "./base.js";
-import { Row, VotoChip, caricaVoti } from "./partita.js";
+import { NomeSquadra, NomeGiocatore, C, Chip, Crest, Ctx, Flag, Seg, Tabs, html, nf, store } from "./base.js";
+import { Row, VotoChip, caricaVoti, usaVoti } from "./partita.js";
 import { PanchineLega } from "./panchine.js";
 
     /* ---- voti AuraPitch della stagione per campionato (almeno 4 partite con voto) ---- */
-    function usaVoti() { const [V, setV] = useState(null); useEffect(() => { caricaVoti().then(setV); }, []); return V; }
     function VotiLega({ k }) {
       const V = usaVoti();
       const [ruolo, setRuolo] = useState(0);
@@ -18,7 +17,7 @@ import { PanchineLega } from "./panchine.js";
         <div className="flex gap-1.5 overflow-x-auto noscroll -mx-4 px-4">${R.map((r, i) => html`<button key=${r} onClick=${() => setRuolo(i)} className=${"shrink-0 px-3 py-1.5 rounded-full text-[13px] font-semibold " + (ruolo === i ? C.seg : "bg-white dark:bg-[#191626] " + C.tx)}>${r}</button>`)}</div>
         <div className=${C.card + " px-4 py-1"}>${L.length ? L.map(([id, x], i) => html`<div key=${id} className=${"flex items-center gap-2.5 py-2 " + (i ? "border-t " + C.bd : "")}>
           <span className=${"num w-6 text-[16px] font-bold " + C.mu}>${i + 1}</span><${Crest} t=${x[6]} size=${16} />
-          <span className="flex-1 min-w-0"><span className=${"block text-[14px] font-semibold truncate " + C.tx}>${x[5]}</span><span className=${"block text-[11px] truncate " + C.mu}>${x[6]}, ${x[1]} partite${x[3] ? ", " + x[3] + " gol" : ""}${x[4] ? ", " + x[4] + " assist" : ""}</span></span>
+          <span className="flex-1 min-w-0"><${NomeGiocatore} id=${id} name=${x[5]} pos=${x[8]} team=${x[6]} className=${"block text-[14px] font-semibold truncate " + C.tx} /><span className=${"block text-[11px] truncate " + C.mu}><${NomeSquadra} t=${x[6]} lg=${k} />, ${x[1]} partite${x[3] ? ", " + x[3] + " gol" : ""}${x[4] ? ", " + x[4] + " assist" : ""}</span></span>
           <${VotoChip} v=${x[0]} /></div>`) : html`<div className=${"py-3 text-sm " + C.mu}>Ancora pochi voti per questo campionato.</div>`}</div>
         <p className=${"text-[11px] " + C.mu}>Voti AuraPitch calcolati dalle statistiche di ogni partita della stagione (ESPN), media su almeno 4 partite.</p><//>`;
     }
@@ -56,6 +55,7 @@ import { PanchineLega } from "./panchine.js";
       const { D, lg, fav, setTeam } = React.useContext(Ctx);
       const V = usaVoti();
       const pn = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const idDi = (n) => { if (!V) return null; const t = pn(n); const e = Object.entries(V).find(([, v]) => pn(v[5]) === t); return e ? e[0] : null; };
       const votoDi = (n) => { if (!V) return null; const t = pn(n); const x = Object.values(V).find((v) => pn(v[5]) === t) || Object.values(V).find((v) => pn(v[5]).split(" ").slice(-1)[0] === t.split(" ").slice(-1)[0] && pn(v[5])[0] === t[0]); return x && x[1] >= 3 ? x[0] : null; };
       const [vista, setVista] = useState(0);
       const [k, setK] = useState(() => { const s0 = store.get("lgSel", null); return D.leagues.some((l) => l.k === s0) ? s0 : D.leagues[0].k; });
@@ -73,7 +73,7 @@ import { PanchineLega } from "./panchine.js";
         ${vista === 4 && html`<${Confronta} k=${k} />`}
         ${(vista === 1 || vista === 2) && (() => { const sc = ((D.scorers || {})[k] || []).slice().sort((a, b) => (vista === 1 ? b.g - a.g || b.a - a.a : b.a - a.a || b.g - a.g)).filter((r) => (vista === 1 ? r.g : r.a) > 0);
           return sc.length ? html`<div className=${C.card + " px-4 py-1"}>${sc.slice(0, 20).map((r, i) => html`<div key=${r.n + r.t} className=${"flex items-center gap-2 py-2 text-sm " + (i ? "border-t " + C.bd : "") + " " + C.tx}>
-            <span className=${"w-5 text-xs tabular-nums " + C.mu}>${i + 1}</span><${Crest} t=${r.t} size=${16} /><span className="flex-1 min-w-0"><span className="flex items-center gap-1.5 min-w-0"><span className="block truncate font-semibold">${r.n}</span>${votoDi(r.n) != null && html`<${VotoChip} v=${votoDi(r.n)} />`}</span><span className=${"block text-[11px] truncate " + C.mu}>${r.t} - ${r.pg} presenze${vista === 1 && r.r ? " - " + r.r + " su rigore" : ""}</span></span>
+            <span className=${"w-5 text-xs tabular-nums " + C.mu}>${i + 1}</span><${NomeSquadra} t=${r.t} lg=${k}><${Crest} t=${r.t} size=${16} /><//><span className="flex-1 min-w-0"><span className="flex items-center gap-1.5 min-w-0"><${NomeGiocatore} id=${idDi(r.n)} name=${r.n} team=${r.t} className="block truncate font-semibold" />${votoDi(r.n) != null && html`<${VotoChip} v=${votoDi(r.n)} />`}</span><span className=${"block text-[11px] truncate " + C.mu}>${r.t} - ${r.pg} presenze${vista === 1 && r.r ? " - " + r.r + " su rigore" : ""}</span></span>
             <span className="text-right tabular-nums"><b className="text-base">${vista === 1 ? r.g : r.a}</b><span className=${"block text-[10px] " + C.mu}>${vista === 1 ? (r.a ? r.a + " assist" : "") : r.g + " gol"}</span></span></div>`)}</div>`
             : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${D.scorers ? "Classifica marcatori non disponibile per questo campionato nella fonte dati gratuita." : "La classifica marcatori arriva con il prossimo aggiornamento dei dati (ogni mattina)."}</div>`; })()}
         ${vista === 0 && html`<${React.Fragment}>

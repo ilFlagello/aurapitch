@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { immagineSchedina, mercatoBookmaker } from "./condividi.js";
 import { Citazione, citazioneSchedina, citazioneDiario } from "./citazioni.js";
-import { C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, buildForzata, ESITI_SCHEDINA, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
+import { esitoGamba, statoGiocata, C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, buildForzata, ESITI_SCHEDINA, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
 import { GiocoResponsabile } from "./extra.js";
 import { StoricoCard } from "./partita.js";
 import { IACard } from "./ia.js";
@@ -98,15 +98,7 @@ import { IACard } from "./ia.js";
 
 
   /* ---- diario delle giocate: resta sul telefono; l'esito di ogni partita si salva appena è noto ---- */
-  function esitoGamba(g, byId) {
-    if (g.ok != null) return g.ok;
-    const m = byId[g.id];
-    return m ? hit(m, g.k) : null;
-  }
-  function statoGiocata(x, byId) {
-    const e = x.legs.map((g) => esitoGamba(g, byId));
-    return e.includes(false) ? "persa" : e.every((v) => v === true) ? "vinta" : "aperta";
-  }
+  // esitoGamba e statoGiocata stanno in base.js (servono anche fuori dalla Schedina)
   function Diario() {
     const { byId, diario, setDiario } = React.useContext(Ctx);
     const [aperta, setAperta] = useState(null);

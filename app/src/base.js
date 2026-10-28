@@ -13,6 +13,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     get(k, d) { try { const v = localStorage.getItem("ap:" + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
     set(k, v) { try { localStorage.setItem("ap:" + k, JSON.stringify(v)); } catch (e) { /* archivio del browser non disponibile */ } },
   };
+  // piccola vibrazione di conferma (solo telefoni che la supportano, quasi sempre Android; mai se l'utente riduce le animazioni)
+  const vibra = (ms = 8) => { try { if (navigator.vibrate && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) navigator.vibrate(ms); } catch (e) { /* non supportata */ } };
   const pct = (x) => Math.round((x || 0) * 100);
   const pctL = (x) => (x > 0.99 && x < 0.999 ? ">99" : x < 0.01 && x > 0.001 ? "<1" : pct(x)); // in diretta: niente 100% o 0% per esiti non ancora decisi
   const odd = (x) => (x == null ? "-" : Number(x).toFixed(2).replace(".", ","));
@@ -534,6 +536,46 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       ${children}</div>`;
   }
 
-  const Ctx = React.createContext(null);
+  /* nomi cliccabili: squadra, giocatore e campionato aprono la loro scheda da qualunque pagina (anche dentro testi e liste) */
+  const NOME_CL = "text-left underline-offset-2 decoration-[#5B2EE6]/40 dark:decoration-[#A58BFF]/50 hover:underline active:opacity-60 ";
+  function NomeSquadra({ t, lg, lgE, className = "", children }) {
+    const c = React.useContext(Ctx);
+    return html`<span role="link" tabIndex="0" onClick=${(e) => { e.stopPropagation(); c.apriSquadra(t, lg, lgE); }} onKeyDown=${(e) => e.key === "Enter" && c.apriSquadra(t, lg, lgE)} className=${NOME_CL + "cursor-pointer " + className}>${children || t}</span>`;
+  }
+  function NomeGiocatore({ id, name, pos, team, className = "", children }) {
+    const c = React.useContext(Ctx);
+    if (!id) return html`<span className=${className}>${children || name}</span>`;
+    return html`<span role="link" tabIndex="0" onClick=${(e) => { e.stopPropagation(); c.apriGiocatore({ id, name, pos, team }); }} onKeyDown=${(e) => e.key === "Enter" && c.apriGiocatore({ id, name, pos, team })} className=${NOME_CL + "cursor-pointer " + className}>${children || name}</span>`;
+  }
+  function NomeLega({ k, className = "", children }) {
+    const c = React.useContext(Ctx);
+    return html`<span role="link" tabIndex="0" onClick=${(e) => { e.stopPropagation(); c.apriLega(k); }} onKeyDown=${(e) => e.key === "Enter" && c.apriLega(k)} className=${NOME_CL + "cursor-pointer " + className}>${children}</span>`;
+  }
 
-export { html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };
+  /* indicatore "tira giù per aggiornare": un anello aura che si riempie seguendo il dito, poi gira mentre aggiorna */
+  function Ricarica({ tira, attivo }) {
+    if (!tira && !attivo) return null;
+    const p = attivo ? 1 : Math.min(1, tira / 64), L = 2 * Math.PI * 14;
+    return html`<div className="flex flex-col items-center justify-end overflow-hidden" style=${{ height: attivo ? 64 : tira, transition: tira ? "none" : "height .25s ease" }} role="status" aria-live="polite">
+      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white dark:bg-[#191626]" style=${{ transform: `scale(${0.55 + 0.45 * p}) rotate(${attivo ? 0 : p * 270}deg)`, opacity: Math.max(0.25, p), boxShadow: `0 6px ${10 + 14 * p}px -6px rgba(123,92,255,${0.25 + 0.4 * p})` }}>
+        <svg width="34" height="34" viewBox="0 0 36 36" className=${attivo ? "gira" : ""} aria-hidden="true">
+          <defs><linearGradient id="aura-ric" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#5B2EE6" /><stop offset="0.6" stopColor="#A58BFF" /><stop offset="1" stopColor="#FF3D5A" /></linearGradient></defs>
+          <circle cx="18" cy="18" r="14" fill="none" strokeWidth="2.6" className="stroke-[#17152B]/[0.08] dark:stroke-white/[0.1]" />
+          <circle cx="18" cy="18" r="14" fill="none" stroke="url(#aura-ric)" strokeWidth="2.6" strokeLinecap="round" strokeDasharray=${L} strokeDashoffset=${attivo ? L * 0.72 : L * (1 - p)} transform="rotate(-90 18 18)" />
+          <circle cx="18" cy="18" r=${2 + 3.2 * p} fill="url(#aura-ric)" opacity=${0.35 + 0.65 * p} /></svg></div>
+      <span className=${"text-[11px] font-semibold mt-1 mb-1.5 " + (p >= 1 ? C.acc : C.mu)}>${attivo ? "Aggiorno..." : p >= 1 ? "Rilascia per aggiornare" : "Tira giù per aggiornare"}</span></div>`;
+  }
+
+  const Ctx = React.createContext(null);
+  /* esito di una giocata del diario (anche dopo che la partita è uscita dal file: l'esito resta salvato nella gamba) */
+  function esitoGamba(g, byId) {
+    if (g.ok != null) return g.ok;
+    const m = byId[g.id];
+    return m ? hit(m, g.k) : null;
+  }
+  function statoGiocata(x, byId) {
+    const e = x.legs.map((g) => esitoGamba(g, byId));
+    return e.includes(false) ? "persa" : e.every((v) => v === true) ? "vinta" : "aperta";
+  }
+
+export { NomeSquadra, NomeGiocatore, NomeLega, Ricarica, vibra, esitoGamba, statoGiocata, html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };

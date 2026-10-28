@@ -877,6 +877,62 @@ def aggiorna_prepartita(d):
     return n
 
 
+ORDINE_RUOLI = {"G": 0, "D": 1, "M": 2, "F": 3}
+
+
+def formazione_probabile(es, assenti, prossima):
+    """Formazione probabile secondo l'IA: chi parte titolare piu spesso in stagione, tolti indisponibili (notizie affidabili)
+    e squalificati per la prossima partita. Un portiere e i dieci giocatori di movimento con piu partenze da titolare;
+    per ognuno la sicurezza = quota di partite giocate da titolare. Restituisce None se i dati non bastano."""
+    rosa = es.get("rosa") or []
+    giocate = len(es.get("risultati") or []) or max([x.get("pres", 0) for x in rosa] or [0])
+    if giocate < 3 or len(rosa) < 14:
+        return None
+    fuori = set(assenti) | ({x["giocatore"]["n"] for x in ES.squalificati(es)} if prossima else set())
+    ok = [x for x in rosa if x.get("n") not in fuori and x.get("last") not in fuori]
+    por = sorted([x for x in ok if x.get("pos") == "G"], key=lambda x: (x.get("tit", 0), x.get("pres", 0)), reverse=True)[:1]
+    mov = sorted([x for x in ok if x.get("pos") in ("D", "M", "F")], key=lambda x: (x.get("tit", 0), x.get("pres", 0)), reverse=True)[:10]
+    xi = por + mov
+    if len(xi) < 11 or sum(x.get("tit", 0) for x in xi) < giocate * 6:  # stagione troppo all'inizio o rosa poco nota
+        return None
+    xi.sort(key=lambda x: (ORDINE_RUOLI.get(x.get("pos"), 9), -x.get("tit", 0)))
+    return [{"n": x.get("last") or x["n"], "id": x.get("id"), "r": x.get("pos"), "c": round(min(0.97, x.get("tit", 0) / giocate), 2)} for x in xi]
+
+
+def aggiungi_movimenti(d):
+    """Radar dei movimenti: per ogni partita non iniziata confronta le quote 1X2 di adesso con quelle viste la prima volta
+    (dal diario nella cassaforte). Se una probabilita si e spostata di almeno 3 punti, la partita entra nel Radar, con il
+    possibile motivo (notizia o assenza registrata dall'IA sulla squadra che si e indebolita)."""
+    giorni = {}
+    n = 0
+    for m in d.get("matches", []):
+        m.pop("mov", None)
+        if m.get("st") != "NS" or not m.get("odds"):
+            continue
+        if m["date"] not in giorni:
+            giorni[m["date"]] = jload(os.path.join(DIARIO, m["date"] + ".json"), {}) or {}
+        r = giorni[m["date"]].get(m["id"])
+        if not r or not r.get("mk0") or not r.get("q0"):
+            continue
+        dp = [round(a - b, 3) for a, b in zip(m["mk"], r["mk0"])]
+        if max(abs(x) for x in dp) < 0.03:
+            continue
+        q0 = [r["q0"].get(c) for c in ("1", "X", "2")]
+        q1 = [m["odds"].get(c) for c in ("1", "X", "2")]
+        if None in q0 or None in q1:
+            continue
+        lato = 0 if dp[0] < dp[2] else 1  # squadra che si e indebolita (la sua probabilita e scesa di piu)
+        motivo = next((f for f in (m.get("fattori") or []) if f.get("lato") == lato and (f.get("delta") or 0) < 0), None) \
+            or next((f for f in (m.get("fattori") or []) if f.get("lato") == 1 - lato and (f.get("delta_avv") or 0) > 0), None)
+        perche = None
+        if motivo:
+            sq = m["h"] if motivo["lato"] == 0 else m["a"]
+            perche = f"{motivo['chi']} ({sq}): " + dict(squalifica="squalificato", infortunio="indisponibile", dubbio="in dubbio").get(motivo.get("tipo"), motivo.get("tipo") or "notizia")
+        m["mov"] = {"da": q0, "a": q1, "dp": dp, "dal": r.get("t0"), "perche": perche}
+        n += 1
+    print(f"Radar dei movimenti: {n} partite con quote in movimento")
+
+
 def applica_fattori(d):
     """Ricalcola gol attesi, mercati e consigli delle partite non iniziate con i fattori (per ora: notizie su indisponibili).
     Base = lettura delle quote; ogni fattore pesa secondo fattori.py e la somma per squadra ha un tetto. Restituisce quante partite cambiano."""
@@ -980,6 +1036,9 @@ def applica_fattori(d):
             v["perche"] += [t for t, neg in righe if not neg]
             v.setdefault("contro", []).extend(t for t, neg in righe if neg)
         assenti = {f["chi"] for f in tutti if (f.get("delta") or f.get("delta_avv")) and f.get("affidabilita", 0) >= 0.6}
+        m["formazione"] = [formazione_probabile(espn.get(sq) or {}, assenti, prossima.get(sq) == m["ko"]) for sq in (m["h"], m["a"])]
+        if not any(m["formazione"]):
+            m.pop("formazione", None)
         marc_l, marc_info = [], {}
         for lato, sq in enumerate((m["h"], m["a"])):
             es = espn.get(sq) or {}
@@ -1135,6 +1194,7 @@ def main():
             print("Nessuna partita con quote nei prossimi giorni: il file dell'app non viene toccato.")
             return
         print(f"Partite: {len(d['matches'])}; campionati: {[l['name'] for l in d['leagues']]}; FREE: {[m['h'] + '-' + m['a'] for m in d['matches'] if m['free']]}")
+    aggiungi_movimenti(d)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(d, f, ensure_ascii=False, separators=(",", ":"))
@@ -1147,7 +1207,7 @@ def main():
 STATO_OUT = os.path.join("app", "data", "stato.json")
 # l'app scarica prima una lista leggera; i dettagli di una partita arrivano quando la apri, i mercati quando apri la Schedina
 DETTAGLI = ("markets", "ia", "cart", "curiosita", "xgf", "segnali", "attese", "prec", "forma", "ctx", "h2h", "last5", "odds", "max", "elo", "foto",
-            "arbitro", "xg_mercato", "fattori")
+            "arbitro", "xg_mercato", "fattori", "formazione")
 FATTORI_LISTA = ("chi", "lato", "tipo", "fonte", "delta")  # nella lista resta un riassunto delle assenze (pagina squadra)
 NON_SERVONO = ("_ctx", "_firma", "_p0")
 

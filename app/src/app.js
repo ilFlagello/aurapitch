@@ -1,13 +1,16 @@
 /* AuraPitch - app: stato generale, dati a strati, notifiche, navigazione. */
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
-import { useLiveScores, usaPonte } from "./live.js";
-import { AuraLine, C, Crest, Ctx, Flag, Giorni, Ic, Marchio, Seg, Sheet, TONE, auraCol, hs, html, mmss, store } from "./base.js";
-import { LeaguesView } from "./campionati.js";
-import { ClubView } from "./club.js";
+import { flushSync } from "react-dom";
+import { ESPN_LG, useLiveScores, usaPonte } from "./live.js";
+import { Ricarica, vibra, AuraLine, C, Crest, Ctx, Flag, Giorni, Ic, Marchio, Seg, Sheet, TONE, auraCol, hs, html, mmss, store } from "./base.js";
 import { BarraSchedina, Cerca, Glossario, PrimoAvvio, partitaSettimana } from "./extra.js";
-import { MatchView, Row, TeamView } from "./partita.js";
-import { SlipView } from "./schedina.js";
+import { MatchView, Movimento, PlayerSheet, Row, TeamView } from "./partita.js";
+// schermate secondarie caricate solo quando servono (avvio piu leggero); poi scaricate in silenzio per l'uso offline
+const pigra = (f, nome) => React.lazy(() => f().then((m) => ({ default: m[nome] })));
+const carica = { campionati: () => import("./campionati.js"), club: () => import("./club.js"), schedina: () => import("./schedina.js") };
+const LeaguesView = pigra(carica.campionati, "LeaguesView"), ClubView = pigra(carica.club, "ClubView"), SlipView = pigra(carica.schedina, "SlipView");
+const Attesa = () => html`<div className="px-4 space-y-3" aria-busy="true">${[0, 1, 2].map((i) => html`<div key=${i} className="bg-white dark:bg-[#191626] rounded-[20px] h-28 animate-pulse"></div>`)}</div>`;
 import { AccountCard, Benvenuto, InvitoRecensione, Legale, PannelloBeta, Recensione, useAccount } from "./fiducia.js";
 import { avviaStatistiche, conta, statAttive } from "./statistiche.js";
 import { VERSIONE as VERS_LEGALE } from "./legale.js";
@@ -91,7 +94,7 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
     const setFavLeagues = (x) => { setFavLeagues0(x); store.set("favLeagues", x); };
     const [tira, setTira] = useState(0);
     const tiraRef = useRef(null);
-    const ricarica = () => fetch((Draw && Draw.leggera ? "data/lista.json" : "data/giornata.json") + "?t=" + Date.now(), { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((d) => { if (d) { setExtra({}); setMerc(null); setD(d); setToast("Partite aggiornate"); } }).catch(() => setToast("Nessuna connessione: riprova tra poco"));
+    const ricarica = () => fetch(Draw && Draw.leggera ? "data/lista.json" : "data/giornata.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((d) => { if (d) { setExtra({}); setMerc(null); setD(d); setToast("Aggiornato alle " + new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })); } }).catch(() => setToast("Nessuna connessione: riprova tra poco"));
     const [diario, setDiario0] = useState(store.get("diario", []));
     const setDiario = (d) => { setDiario0(d); store.set("diario", d); };
     const ripristina = (x) => {
@@ -117,9 +120,20 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
       fetch("data/push.json").then((r) => (r.ok ? r.json() : null)).then((x) => x && setPushUrl(x.url)).catch(() => {});
       fetch("data/affidabilita.json").then((r) => (r.ok ? r.json() : null)).then(setAff).catch(() => {});
       fetch("data/storico.json").then((r) => (r.ok ? r.json() : null)).then(setStor).catch(() => {});
-      fetch("data/lista.json").then((r) => (r.ok ? r.json() : fetch("data/giornata.json").then((r2) => { if (!r2.ok) throw new Error(r2.status); return r2.json(); }))).then((d) => { setD(d); if (d.today && (d.days || []).some((x) => x.k === d.today)) setDay(d.today); })
-        .catch(() => setErr("Non riesco a leggere i dati delle partite. Controlla la connessione e ricarica la pagina."));
-      try { if ("serviceWorker" in navigator && window.top === window.self) navigator.serviceWorker.register("sw.js").catch(() => {}); } catch (e) { /* non installabile qui */ }
+      // apertura istantanea: si mostrano subito le partite salvate dall'ultima volta, poi arrivano in silenzio quelle nuove
+      let mostrate = null;
+      const mostra = (d, nuove) => { if (!d || (mostrate && mostrate === d.generato)) return; const prima = mostrate; mostrate = d.generato; setD(d); if (!prima && d.today && (d.days || []).some((x) => x.k === d.today)) setDay(d.today); if (prima && nuove) setToast("Partite aggiornate"); };
+      try { if (window.caches) caches.match(new Request("data/lista.json")).then((r) => (r ? r.json() : null)).then((d) => mostra(d, false)).catch(() => {}); } catch (e) { /* niente copia salvata */ }
+      fetch("data/lista.json").then((r) => (r.ok ? r.json() : fetch("data/giornata.json").then((r2) => { if (!r2.ok) throw new Error(r2.status); return r2.json(); }))).then((d) => mostra(d, true))
+        .catch(() => { if (!mostrate) setErr("Non riesco a leggere i dati delle partite. Controlla la connessione e ricarica la pagina."); });
+      try {
+        if ("serviceWorker" in navigator && window.top === window.self) {
+          const cera = !!navigator.serviceWorker.controller;
+          navigator.serviceWorker.register("sw.js").then((r) => { setInterval(() => r.update().catch(() => {}), 30 * 60 * 1000); }).catch(() => {});
+          // nuova versione pubblicata e gia scaricata: si propone di aggiornare (mai di colpo, per non perdere quello che si sta guardando)
+          navigator.serviceWorker.addEventListener("controllerchange", () => { if (cera) setNuova(true); });
+        }
+      } catch (e) { /* non installabile qui */ }
     }, []);
     useEffect(() => {
       const apply = () => {
@@ -132,7 +146,8 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
       if (mq && mq.addEventListener) { mq.addEventListener("change", apply); return () => mq.removeEventListener("change", apply); }
     }, [theme]);
     // l'orologio al secondo serve solo per il conto alla rovescia del pass PRO: niente ridisegni inutili quando non è attivo
-    useEffect(() => { if (until <= Date.now()) return; const id = setInterval(() => { setNow(Date.now()); if (Date.now() > until) clearInterval(id); }, 1000); return () => clearInterval(id); }, [until]);
+    // conto alla rovescia del PRO: al secondo solo nell'ultima ora (prima basta un aggiornamento al minuto: niente ridisegni inutili)
+    useEffect(() => { if (until <= Date.now()) return; let id; const giro = () => { setNow(Date.now()); if (Date.now() > until) return; id = setTimeout(giro, until - Date.now() > 3600e3 ? 60000 : 1000); }; giro(); return () => clearTimeout(id); }, [until]);
     useEffect(() => {
       if (ad === null) return;
       if (ad === 0) { const u = Date.now() + 15 * 60 * 1000 - 1000; setUntil(u); store.set("until", u); setAd(null); setUnlock(false); flash("PRO attivo per 15 minuti"); return; }
@@ -140,6 +155,7 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
     }, [ad]);
     useEffect(() => store.set("slip", mySlip), [mySlip]);
     useEffect(() => { if (toast) { const id = setTimeout(() => setToast(""), 1800); return () => clearTimeout(id); } }, [toast]);
+    const [nuova, setNuova] = useState(false);
     const flash = (t) => setToast(t);
     // fiducia: consenso (18+, termini, privacy), account, recensioni, statistiche anonime, pannello beta
     const [consenso, setConsenso] = useState(((store.get("consenso", null) || {}).v || 0) >= VERS_LEGALE);
@@ -149,6 +165,8 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
     const [statOn, setStatOn] = useState(statAttive());
     const A = useAccount(pushUrl, { ripristina, setSyncOn, flash });
     useEffect(() => { if (pushUrl) { usaPonte(pushUrl); avviaStatistiche(pushUrl); } }, [pushUrl]);
+    // a riposo: scarica le altre schermate (cosi il primo tocco e immediato e funzionano anche offline)
+    useEffect(() => { if (!D) return; const id = (window.requestIdleCallback || ((f) => setTimeout(f, 1500)))(() => Object.values(carica).forEach((f) => f().catch(() => {}))); return () => (window.cancelIdleCallback || clearTimeout)(id); }, [!!D]);
     useEffect(() => { if (tab !== "partite") conta(tab); }, [tab]);
     useEffect(() => { if (open) conta("partita"); }, [open]);
     // notifiche push: partite seguite = preferite + squadra del cuore, collegate alla diretta e non ancora finite
@@ -231,6 +249,13 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
 
 
     // apertura da una notifica: ./#m=<id partita> (anche ad app già aperta, tramite messaggio del service worker)
+    // (stati della navigazione e dei nomi cliccabili: dichiarati qui, prima di ogni "return" anticipato, come vogliono le regole di React)
+    const pila = useRef([]);
+    const ora = useRef({ open: null, team: null });
+    const tornaRef = useRef(null);
+    useEffect(() => { const fn = () => tornaRef.current && tornaRef.current(); window.addEventListener("popstate", fn); return () => window.removeEventListener("popstate", fn); }, []);
+    const [giocatore, setGiocatore] = useState(null);
+    const [ricaricando, setRicaricando] = useState(false);
     const [daAprire, setDaAprire] = useState(() => { const x = /#m=([^&]+)/.exec(location.hash || ""); return x ? decodeURIComponent(x[1]) : null; });
     useEffect(() => {
       const sw = navigator.serviceWorker, fn = (e) => { const x = e.data && e.data.apri && /#m=([^&]+)/.exec(e.data.apri); if (x) setDaAprire(decodeURIComponent(x[1])); };
@@ -251,7 +276,20 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
     const lg = (k) => D.leagues.find((l) => l.k === k);
     // senza scelte salvate: aperti i campionati che segui (o i primi 5 se non ne segui), gli altri chiusi con il solo conteggio
     const lgOpen = openL || (favLeagues && favLeagues.length ? D.leagues.filter((l) => favLeagues.includes(l.k)).map((l) => l.k) : D.leagues.slice(0, 5).map((l) => l.k));
-    const goMatch = (id) => { setOpen(id); setMt(0); setTeam(null); window.scrollTo(0, 0); };
+    /* navigazione come un'app vera: il tasto "indietro" del telefono (e lo scorrimento laterale di iPhone) chiude la partita o la
+       squadra e torna esattamente al punto della lista in cui eri; le aperture hanno una transizione morbida */
+    ora.current = { open, team };
+    const transizione = (fn) => { try { if (document.startViewTransition && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) { document.startViewTransition(() => flushSync(fn)); return; } } catch (e) { /* niente transizione */ } fn(); };
+    const apri = (fn) => { pila.current.push({ ...ora.current, y: window.scrollY }); try { history.pushState({ ap: pila.current.length }, ""); } catch (e) { /* niente cronologia */ } transizione(fn); window.scrollTo(0, 0); vibra(); };
+    const torna = () => {
+      const p = pila.current.pop();
+      if (!p) return;
+      transizione(() => { setOpen(p.open); setTeam(p.team); });
+      requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, p.y)));
+    };
+    tornaRef.current = torna;
+    const indietro = () => { if (pila.current.length && history.state && history.state.ap) history.back(); else { pila.current = []; transizione(() => { setOpen(null); setTeam(null); }); } };
+    const goMatch = (id) => apri(() => { setOpen(id); setMt(0); setTeam(null); });
     const toggleFavM = (id) => {
       const adding = !favM.includes(id);
       const nx = adding ? [...favM, id] : favM.filter((x) => x !== id);
@@ -259,7 +297,13 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
       if (adding && !pushOn && !store.get("pushNo", false)) { setPushMsg(""); setAskPush(true); }
       else flash(adding ? (pushOn ? "Aggiunta alle preferite: riceverai le notifiche" : "Aggiunta alle preferite") : "Tolta dalle preferite");
     };
-    const openTeam = (t) => { setTeam(t); window.scrollTo(0, 0); };
+    const openTeam = (t) => (t ? apri(() => setTeam(t)) : indietro());
+    // nomi cliccabili ovunque: squadra, giocatore, campionato aprono la loro scheda da qualsiasi pagina
+    const lgDi = (t) => { const m = D && D.matches.find((x) => (x.h === t || x.a === t) && !["CL", "EL", "ECL", "CI", "FAC", "CDR", "DFB", "CDF", "SCI"].includes(x.lg));
+      if (m) return m.lg; const k = D && Object.keys(D.standings || {}).find((q) => (D.standings[q].generale || []).some((r) => r.team === t)); return k || (D && (D.matches.find((x) => x.h === t || x.a === t) || {}).lg); };
+    const apriSquadra = (t, lgK, lgE0) => { const k = lgK || lgDi(t); const lgE = ESPN_LG[k] || lgE0; if (lgE) openTeam({ lgE, name: t }); };
+    const apriGiocatore = (g) => { if (g && g.id) { vibra(); setGiocatore(g); } };
+    const apriLega = (k) => { if (!D || !D.leagues.some((l) => l.k === k)) return; vibra(); store.set("lgSel", k); pila.current = []; transizione(() => { setOpen(null); setTeam(null); setTab("campionati"); }); window.scrollTo(0, 0); };
     const addLeg = (m, k) => {
       if (mySlip.some((x) => x.id === m.id)) { setMySlip(mySlip.map((x) => (x.id === m.id ? { id: m.id, k } : x))); flash("Esito aggiornato in schedina"); }
       else { setMySlip([...mySlip, { id: m.id, k }]); flash("Aggiunta alla schedina"); }
@@ -271,11 +315,11 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
     /* ---- header ---- */
     const header = html`<header className="sticky z-30" style=${{ top: "env(safe-area-inset-top, 0px)", background: "var(--bg)" }}>
       <div className="max-w-[480px] mx-auto px-4 h-14 flex items-center gap-2">
-        <button onClick=${() => { setOpen(null); setTeam(null); setTab("partite"); }} className="flex items-center gap-2 mr-auto" aria-label="AuraPitch, vai alle partite">
+        <button onClick=${() => { pila.current = []; transizione(() => { setOpen(null); setTeam(null); setTab("partite"); }); }} className="flex items-center gap-2 mr-auto" aria-label="AuraPitch, vai alle partite">
           <${Marchio} size=${30} />
           <span className=${"num text-[25px] font-extrabold tracking-[0.01em] leading-none " + C.tx}>AuraPitch</span>
           <span className=${"text-[10px] font-semibold px-1.5 py-0.5 rounded-md " + C.ch + " " + C.mu}>beta</span></button>
-        <button onClick=${() => setUnlock(true)} className=${"text-[11px] font-semibold px-2.5 py-1 rounded-full border tabular-nums " + (pro ? TONE.warn : C.ch + " " + C.tx + " border-transparent")}>${sub ? "PRO" : left > 0 ? "PRO " + mmss(left) : "FREE"}</button>
+        <button onClick=${() => setUnlock(true)} className=${"text-[11px] font-semibold px-2.5 py-1 rounded-full border tabular-nums " + (pro ? TONE.warn : C.ch + " " + C.tx + " border-transparent")}>${sub ? "PRO" : left > 86400 ? "PRO · " + Math.ceil(left / 86400) + " gg" : left > 3600 ? "PRO · " + Math.ceil(left / 3600) + " h" : left > 0 ? "PRO " + mmss(left) : "FREE"}</button>
         <button aria-label="Cerca" onClick=${() => setCerca(true)} className=${"w-8 h-8 rounded-full flex items-center justify-center " + C.ch + " " + C.tx}><${Ic.Search} size=${15} /></button>
         <button aria-label="Guida rapida" onClick=${() => setGuide(guide ? 0 : 1)} className=${"w-8 h-8 rounded-full flex items-center justify-center " + C.ch + " " + C.tx}><${Ic.HelpCircle} size=${15} /></button>
         <button aria-label="Profilo e impostazioni" onClick=${() => setProfile(true)} className=${"w-8 h-8 rounded-full text-[11px] font-semibold " + C.on}>${ini}</button>
@@ -290,18 +334,47 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
 
     /* ---- vista partite ---- */
     const dayMatches = D.matches.filter((m) => (day === "all" || m.date === day) && (!liveOnly || m.st === "LIVE"));
-    const tsH = (e) => { tiraRef.current = window.scrollY <= 0 ? [e.touches[0].clientX, e.touches[0].clientY] : null; };
-    // aggiorna tirando giù: solo con un gesto verticale (scorrere le chip dei giorni non deve aggiornare)
+    // aggiorna tirando giù, su ogni pagina: solo con un gesto verticale partito dall'inizio della pagina
+    // (scorrere le chip dei giorni o un elenco orizzontale non deve aggiornare); indicatore "aura" che si riempie e poi gira
+    const tsH = (e) => { tiraRef.current = window.scrollY <= 0 && !ricaricando && !e.target.closest("[data-noswipe], input, textarea, .overflow-x-auto") ? [e.touches[0].clientX, e.touches[0].clientY] : null; };
     const tmH = (e) => { if (tiraRef.current == null) return; const dx = e.touches[0].clientX - tiraRef.current[0], d = e.touches[0].clientY - tiraRef.current[1];
-      if (Math.abs(dx) > Math.abs(d)) { tiraRef.current = null; setTira(0); return; } setTira(d > 0 ? Math.min(110, d * 0.6) : 0); };
-    const teH = () => { if (tira >= 64) { try { if (navigator.vibrate) navigator.vibrate(12); } catch (x) { /* non supportato */ } ricarica(); } setTira(0); tiraRef.current = null; };
-    const home = html`<div className="px-4 space-y-3" onTouchStart=${tsH} onTouchMove=${tmH} onTouchEnd=${teH}>
-      ${tira > 0 && html`<div className="flex justify-center transition-all" style=${{ height: tira }}><span className=${"self-end mb-1 text-[13px] font-semibold flex items-center gap-1.5 " + C.mu}><${Ic.Repeat} size=${14} className=${tira >= 64 ? C.acc : ""} />${tira >= 64 ? "Rilascia per aggiornare" : "Tira giù per aggiornare"}</span></div>`}
+      if (Math.abs(dx) > Math.abs(d) || window.scrollY > 0) { tiraRef.current = null; setTira(0); return; }
+      const v = d > 0 ? Math.min(110, d * 0.55) : 0; if (v >= 64 && tira < 64) vibra(10); setTira(v); };
+    const teH = () => {
+      if (tira >= 64) { setRicaricando(true); const t0 = Date.now(); ricarica().finally(() => setTimeout(() => setRicaricando(false), Math.max(0, 650 - (Date.now() - t0)))); }
+      setTira(0); tiraRef.current = null;
+    };
+    /* vetrina dei primi giorni: in 30 secondi si vede cosa sa fare l'app, ogni riquadro porta direttamente alla funzione */
+    const Vetrina = () => {
+      const top = D.matches.filter((m) => m.st === "NS" && m.free)[0] || D.matches.find((m) => m.st === "NS");
+      const vai = (fn) => () => { vibra(); fn(); };
+      const T = [
+        [Ic.Sparkles, "Lettura IA in 10 secondi", top ? `${top.h} - ${top.a}` : "Apri una partita", vai(() => top && goMatch(top.id))],
+        [Ic.Zap, "Schedina IA in un tocco", "Scegli rischio e quota, fa tutto lei", vai(() => { store.set("sch:schedina", 0); transizione(() => setTab("schedina")); window.scrollTo(0, 0); })],
+        [Ic.BarChart3, "Un'IA che si mette alla prova", "Errori e successi, alla luce del sole", vai(() => { store.set("sch:schedina", 3); transizione(() => setTab("schedina")); window.scrollTo(0, 0); })],
+        [Ic.Users, "Sfida gli amici", "Pronostici, classifica e gruppi", vai(() => { store.set("sch:club", 1); transizione(() => setTab("club")); window.scrollTo(0, 0); })],
+      ];
+      return html`<div className=${C.card + " p-4 space-y-3"}>
+        <div className="flex items-center"><span className=${C.lab + " flex-1"}>Cosa puoi fare con AuraPitch</span>
+          <button aria-label="Nascondi" onClick=${() => { store.set("vetrinaNo", true); setToast("Ritrovi tutto nel menu in basso"); }} className=${C.mu}><${Ic.X} size=${16} /></button></div>
+        <div className="grid grid-cols-2 gap-2">${T.map(([I, t, s0, fn]) => html`<button key=${t} onClick=${fn} className=${"text-left rounded-2xl p-3 active:scale-[0.98] transition-transform " + C.ch}>
+          <span className="w-8 h-8 rounded-xl flex items-center justify-center mb-2 bg-[#5B2EE6]/12 text-[#5B2EE6] dark:bg-[#A58BFF]/15 dark:text-[#A58BFF]"><${I} size=${16} /></span>
+          <span className=${"block text-[14px] font-semibold leading-tight " + C.tx}>${t}</span><span className=${"block text-[12px] mt-0.5 leading-snug " + C.mu}>${s0}</span></button>`)}</div></div>`;
+    };
+    const home = html`<div className="px-4 space-y-3">
       ${banner && html`<div className=${C.card + " p-3 flex gap-3 items-start"}><${Ic.Info} size=${16} className="text-sky-500 shrink-0 mt-0.5" />
         <div className=${"text-[13px] flex-1 " + C.tx}>${D.demo ? html`Beta con <b>dati reali</b> della giornata ${D.label}. Le partite sono già giocate: puoi confrontare le letture dell'IA con i risultati.`
           : html`Beta con <b>dati reali</b>, ${D.label}: quote medie di decine di bookmaker (DraftKings per i campionati e le coppe in più), classifiche e risultati in diretta (ogni 30 secondi). Apri una partita e scorri col dito tra le sezioni.`}</div>
         <button aria-label="Chiudi avviso" onClick=${() => { setBanner(false); store.set("banner2", false); }} className=${C.mu}><${Ic.X} size=${16} /></button></div>`}
       <${InvitoRecensione} onApri=${() => setRecensione("invito")} />
+      ${!store.get("vetrinaNo", false) && consenso && onb && html`<${Vetrina} />`}
+      ${(() => { const R = D.matches.filter((m) => m.mov && m.st === "NS").sort((a, b) => Math.max(...b.mov.dp.map(Math.abs)) - Math.max(...a.mov.dp.map(Math.abs))).slice(0, 4);
+        return R.length > 0 && !liveOnly && html`<div className=${C.card + " p-4"}>
+          <div className="flex items-center gap-2 mb-1"><${Ic.TrendingUp} size=${16} className=${C.acc} /><span className=${C.lab + " flex-1"}>Radar delle quote</span><span className=${"text-[11px] " + C.mu}>${D.matches.filter((m) => m.mov && m.st === "NS").length} in movimento</span></div>
+          <p className=${"text-[12px] mb-1 " + C.mu}>Le quote che si sono mosse di più da quando le abbiamo lette, con il possibile motivo.</p>
+          ${R.map((m, i) => html`<button key=${m.id} onPointerDown=${() => caricaDettagli(m.id)} onClick=${() => goMatch(m.id)} className=${"w-full text-left py-2 " + (i ? "border-t " + C.bd : "")}>
+            <div className="flex items-center gap-2"><span className=${"flex-1 min-w-0 truncate text-[14px] font-semibold " + C.tx}>${m.h} - ${m.a}</span><span className=${"text-[12px] " + C.mu}>${m.time}</span></div>
+            <${Movimento} m=${m} compatto=${true} />${m.mov.perche && html`<div className=${"text-[11px] truncate " + C.mu}>${m.mov.perche}</div>`}</button>`)}</div>`; })()}
       <${Giorni} days=${D.days} day=${day} setDay=${setDay} demo=${D.demo} />
       <div className="flex items-center gap-2 pt-1"><span className=${"text-[22px] font-bold tracking-[-0.02em] flex-1 " + C.tx}>${day === "all" ? "Tutte le partite" : (D.days.find((d) => d.k === day) || {}).label === "Oggi" ? "Oggi" : new Date(day + "T12:00:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }).replace(/^./, (c) => c.toUpperCase())}</span>
         <button onClick=${() => setLiveOnly(liveOnly ? 0 : 1)} aria-pressed=${!!liveOnly} className=${"inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold " + (liveOnly ? "bg-[#FF3D5A] text-white" : "bg-white dark:bg-[#191626] " + C.tx)}>
@@ -333,16 +406,17 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
       <p className=${"text-[11px] text-center " + C.mu}>${D.demo ? "Dati: Football-Data.co.uk, ClubElo." : "Dati: quote da The Odds API; classifiche da football-data.org; diretta, cronaca e formazioni da ESPN."} Stemmi generici, non ufficiali.</p></div>`;
 
     const open_m = open && byId[open];
-    const views = { partite: home, campionati: html`<${LeaguesView} />`, schedina: html`<${SlipView} />`, club: html`<${ClubView} />` };
+    const sosp = (x) => html`<${React.Suspense} fallback=${html`<${Attesa} />`}>${x}<//>`;
+    const views = { partite: home, campionati: sosp(html`<${LeaguesView} />`), schedina: sosp(html`<${SlipView} />`), club: sosp(html`<${ClubView} />`) };
     const DOCK = [["partite", "Partite", Ic.Calendar], ["campionati", "Campionati", Ic.Trophy], ["schedina", "Schedina IA", Ic.Sparkles], ["club", "Il Mio Club", Ic.Shield]];
 
-    const ctx = { A, setRecensione, setLegale, caricaDettagli, caricaMercati, syncOn, setSyncOn, setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen, mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
+    const ctx = { apriSquadra, apriGiocatore, apriLega, A, setRecensione, setLegale, caricaDettagli, caricaMercati, syncOn, setSyncOn, setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen: (v) => (v == null ? indietro() : goMatch(v)), mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
     return html`<${Ctx.Provider} value=${ctx}><div className="min-h-screen pb-28">
       ${header}
-      <main className="max-w-[480px] mx-auto">${!online && html`<div role="status" className=${"mx-4 mb-3 px-3.5 py-2.5 rounded-2xl border text-[13px] flex items-center gap-2 " + TONE.warn}><${Ic.Clock} size=${15} />Sei offline: vedi i dati delle ${(D.generato || "").slice(-5)}. Quando torna la rete, tira giù la pagina per aggiornarli.</div>`}${guideBox}${team ? html`<${TeamView} key=${team.name} />` : open_m ? (D.leggera && !open_m.dett ? html`<div className="px-4 pt-4 space-y-3" aria-busy="true"><div className=${C.card + " p-5 text-center"}><div className=${"text-[17px] font-semibold " + C.tx}>${open_m.h} - ${open_m.a}</div><div className=${"text-[13px] mt-1 " + C.mu}>${online ? "Carico l'analisi della partita..." : "Sei offline: l'analisi di questa partita non è ancora stata scaricata."}</div>
+      <main className="max-w-[480px] mx-auto" onTouchStart=${tsH} onTouchMove=${tmH} onTouchEnd=${teH}><${Ricarica} tira=${tira} attivo=${ricaricando} />${!online && html`<div role="status" className=${"mx-4 mb-3 px-3.5 py-2.5 rounded-2xl border text-[13px] flex items-center gap-2 " + TONE.warn}><${Ic.Clock} size=${15} />Sei offline: vedi i dati delle ${(D.generato || "").slice(-5)}. Quando torna la rete, tira giù la pagina per aggiornarli.</div>`}${guideBox}${team ? html`<${TeamView} key=${team.name} />` : open_m ? (D.leggera && !open_m.dett ? html`<div className="px-4 pt-4 space-y-3" aria-busy="true"><div className=${C.card + " p-5 text-center"}><div className=${"text-[17px] font-semibold " + C.tx}>${open_m.h} - ${open_m.a}</div><div className=${"text-[13px] mt-1 " + C.mu}>${online ? "Carico l'analisi della partita..." : "Sei offline: l'analisi di questa partita non è ancora stata scaricata."}</div>
           <div className="h-2 mt-4 rounded-full bg-[#17152B]/[0.06] dark:bg-white/[0.06] animate-pulse"></div></div>${[0, 1].map((i) => html`<div key=${i} className=${C.card + " h-36 animate-pulse"}></div>`)}</div>` : html`<${MatchView} key=${open_m.id} m=${open_m} />`) : views[tab]}</main>
       <nav className="fixed inset-x-0 z-40" style=${{ bottom: "calc(10px + env(safe-area-inset-bottom, 0px))", paddingLeft: "calc(12px + env(safe-area-inset-left, 0px))", paddingRight: "calc(12px + env(safe-area-inset-right, 0px))" }}>
-        <div className="dock max-w-[456px] mx-auto rounded-[26px] p-1.5 grid grid-cols-4 gap-1">${DOCK.map(([k, l, I]) => { const on = tab === k && !open && !team; return html`<button key=${k} onClick=${() => { setTab(k); setOpen(null); setTeam(null); window.scrollTo(0, 0); }}
+        <div className="dock max-w-[456px] mx-auto rounded-[26px] p-1.5 grid grid-cols-4 gap-1">${DOCK.map(([k, l, I]) => { const on = tab === k && !open && !team; return html`<button key=${k} onClick=${() => { pila.current = []; vibra(); transizione(() => { setTab(k); setOpen(null); setTeam(null); }); window.scrollTo(0, 0); }}
           aria-current=${on ? "page" : undefined}
           className=${"flex flex-col items-center gap-0.5 py-1.5 rounded-[20px] text-[11px] font-semibold transition-colors " + (on ? "bg-[#5B2EE6]/[0.1] text-[#5B2EE6] dark:bg-[#A58BFF]/[0.16] dark:text-[#A58BFF]" : C.mu)}><${I} size=${22} strokeWidth=${on ? 2.4 : 2} />${l}</button>`; })}</div></nav>
 
@@ -365,9 +439,12 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
       ${gloss && html`<${Glossario} onClose=${() => setGloss(false)} />`}
       ${!consenso && html`<${Benvenuto} onFine=${() => setConsenso(true)} />`}
       ${legale && html`<${Legale} tipo=${legale} onClose=${() => setLegale(null)} />`}
+      ${giocatore && html`<${PlayerSheet} p=${{ id: giocatore.id, name: giocatore.name, pos: giocatore.pos }} side=${0} m=${{ h: giocatore.team || "", a: "" }} noMatch=${true} onClose=${() => setGiocatore(null)} />`}
       ${recensione && pushUrl && html`<${Recensione} pushUrl=${pushUrl} dove=${recensione} onClose=${() => setRecensione(null)} />`}
       ${pannello && A.acc && A.acc.admin && html`<${PannelloBeta} A=${A} onClose=${() => setPannello(false)} />`}
-      ${!onb && html`<${PrimoAvvio} onFine=${() => { setOnb(true); store.set("onb", true); store.set("guideSeen", true); setGuide(0); }} />`}
+      ${!onb && html`<${PrimoAvvio} onFine=${() => { setOnb(true); store.set("onb", true); store.set("guideSeen", true); setGuide(0);
+        // primo utilizzo: 7 giorni di PRO completo, per vedere subito tutto quello che l'app sa fare (una volta sola per telefono)
+        if (!store.get("prova7", 0) && !sub && until < Date.now()) { const u = Date.now() + 7 * 86400e3; store.set("prova7", Date.now()); store.set("until", u); setUntil(u); flash("Benvenuto: 7 giorni di PRO completo, gratis"); } }} />`}
       ${!open && !team && html`<${BarraSchedina} vaiSchedina=${() => { setTab("schedina"); window.scrollTo(0, 0); }} />`}
       ${askPush && html`<${Sheet} title="Notifiche della partita" onClose=${() => setAskPush(false)}>
         <p className=${"text-[15px] " + C.tx}>Vuoi ricevere un avviso anche con il telefono bloccato per <b>inizio partita, gol, espulsioni, fine primo tempo e finale</b> delle tue preferite?</p>
@@ -408,7 +485,7 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
         <button onClick=${() => { const v = !statOn; setStatOn(v); store.set("statNo", !v); }} className=${"w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left " + C.ch}>
           <span className="flex-1"><span className=${"block text-sm font-semibold " + C.tx}>Statistiche d'uso anonime</span><span className=${"block text-xs " + C.mu}>Solo conteggi del giorno, senza nulla che ti identifichi.</span></span>
           <span className=${"w-11 h-6 rounded-full p-0.5 transition-colors " + (statOn ? "bg-emerald-500" : "bg-black/20 dark:bg-white/20")}><span className=${"block w-5 h-5 rounded-full bg-white shadow transition-transform " + (statOn ? "translate-x-5" : "")}></span></span></button>
-        <div className="grid grid-cols-2 gap-2">${[["privacy", "Privacy"], ["termini", "Termini d'uso"]].map(([k, l]) => html`<button key=${k} onClick=${() => setLegale(k)} className=${"py-2.5 rounded-xl text-sm font-semibold " + C.ch + " " + C.tx}>${l}</button>`)}</div>
+        <div className="grid grid-cols-3 gap-2">${[["sicurezza", "Sicurezza"], ["privacy", "Privacy"], ["termini", "Termini"]].map(([k, l]) => html`<button key=${k} onClick=${() => setLegale(k)} className=${"py-2.5 rounded-xl text-sm font-semibold " + C.ch + " " + C.tx}>${l}</button>`)}</div>
         <button onClick=${() => { setProfile(false); setRecensione("profilo"); }} className=${"w-full py-2.5 rounded-xl text-sm font-semibold " + C.on}>Dicci cosa ne pensi</button>
         <p className=${"text-[11px] text-center " + C.mu}>Solo per maggiorenni. Il gioco può causare dipendenza: Telefono Verde Nazionale 800 55 88 22.</p><//>`}
 
@@ -416,6 +493,8 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
         <p className=${"text-sm " + C.mu}>Il telefono non ha permesso la copia automatica: tieni premuto sul testo e scegli Copia.</p>
         <textarea readOnly value=${copyText} rows=${8} className=${"w-full rounded-xl p-3 text-sm " + C.ch + " " + C.tx} onFocus=${(e) => e.target.select()}></textarea><//>`}
 
+      ${nuova && html`<button onClick=${() => location.reload()} className="fixed left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full text-[14px] font-semibold shadow-lg flex items-center gap-2 bg-[#5B2EE6] text-white dark:bg-[#A58BFF] dark:text-[#0E0C18]"
+        style=${{ top: "calc(10px + env(safe-area-inset-top, 0px))" }}><${Ic.Sparkles} size=${15} />Nuova versione pronta: tocca per aggiornare</button>`}
       ${toast && html`<div role="status" className="fixed left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-sm font-medium shadow-lg bg-[#17152B] text-white dark:bg-white dark:text-black"
         style=${{ bottom: "calc(96px + env(safe-area-inset-bottom, 0px))" }}>${toast}</div>`}
     </div><//>`;

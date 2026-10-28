@@ -1,11 +1,10 @@
 /* AuraPitch - Il Mio Club: squadra del cuore, gara dei pronostici, codice personale, riepilogo, medaglie. */
 import React, { useState, useEffect } from "react";
 import { ESPN_LG } from "./live.js";
-import { C, Crest, Ctx, Flag, Form, Ic, Schede, Seg, html, store } from "./base.js";
+import { statoGiocata, C, Crest, Ctx, Flag, Form, Ic, Schede, Seg, html, store } from "./base.js";
 import { GiocoResponsabile, gruppiSquadre } from "./extra.js";
 import { scaricaCalendario } from "./condividi.js";
 import { Row } from "./partita.js";
-import { statoGiocata } from "./schedina.js";
 import { AccountCard, codiceChi } from "./fiducia.js";
 import { conta } from "./statistiche.js";
 

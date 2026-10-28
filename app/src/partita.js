@@ -4,13 +4,13 @@ import { scaricaCalendario, immaginePartita } from "./condividi.js";
 import { Citazione, citazionePartita, citazioneArbitro } from "./citazioni.js";
 import { SchedaAllenatore, usaPanchine } from "./panchine.js";
 import { useSummary, loadPlayer, loadCareer, ruolo, findTeam, loadTeam, minuto, ESPN_LG, andamento, getJSON } from "./live.js";
-import { inizioSwipe, fineSwipe, Voce, AuraLine, C, Crest, Ctx, DOT, FavPill, Flag, Form, GROUPS, Ic, Seg, Sheet, TONE, Tabs, auraCol, evalCode, html, leggiXg, lum, mGroup, mLabel, nf, norm, odd, options, pct, pctL, spiega, store } from "./base.js";
-import { usaVoti } from "./campionati.js";
+import { NomeSquadra, NomeGiocatore, NomeLega, inizioSwipe, fineSwipe, Voce, AuraLine, C, Crest, Ctx, DOT, FavPill, Flag, Form, GROUPS, Ic, Seg, Sheet, TONE, Tabs, auraCol, evalCode, html, leggiXg, lum, mGroup, mLabel, nf, norm, odd, options, pct, pctL, spiega, store } from "./base.js";
 import { Anteprima, partitaSettimana } from "./extra.js";
 
     /* ---- riga partita: orario a sinistra, squadre una sopra l'altra, punteggi in colonna, aura delle probabilita sotto ---- */
+    function usaVoti() { const [V, setV] = useState(null); useEffect(() => { caricaVoti().then(setV); }, []); return V; }
     function Row({ m, i }) {
-    const { goMatch, unlocked } = React.useContext(Ctx);
+    const { goMatch, unlocked, caricaDettagli } = React.useContext(Ctx);
     const fin = m.st === "FT" && m.g;
     const vince = (j) => m.g && m.g[j] > m.g[1 - j];
     const live = m.st === "LIVE";
@@ -21,7 +21,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
     const team = (j) => html`<span className="flex items-center gap-2 min-w-0"><${Crest} t=${j ? m.a : m.h} size=${18} />
       <span className=${"text-[15px] truncate " + (fin && !vince(j) ? C.mu : C.tx) + (vince(j) ? " font-semibold" : "")}>${j ? m.a : m.h}</span></span>`;
     const gol = (j) => html`<span className=${"num text-[20px] font-bold leading-[22px] text-right " + (live ? "text-[#FF3D5A]" : fin && !vince(j) ? C.mu : C.tx)}>${m.g ? m.g[j] : ""}</span>`;
-    return html`<button onClick=${() => goMatch(m.id)} className=${"w-full text-left px-4 pt-3 pb-2.5 " + (i ? "border-t " + C.bd : "")}>
+    return html`<button onPointerDown=${() => caricaDettagli && caricaDettagli(m.id)} onClick=${() => goMatch(m.id)} className=${"w-full text-left px-4 pt-3 pb-2.5 " + (i ? "border-t " + C.bd : "")}>
       <span className="grid items-center gap-x-3 gap-y-1.5" style=${{ gridTemplateColumns: "50px minmax(0,1fr) 22px 62px" }}>
         <span className="row-span-2 flex items-center">${left}</span>
         ${team(0)}${gol(0)}
@@ -346,8 +346,38 @@ import { Anteprima, partitaSettimana } from "./extra.js";
       if (p.out) b.push(html`<span key="o" className="text-[8px] font-bold px-1 rounded bg-black/60 text-white">${p.minOut || "out"}</span>`);
       return b.length ? html`<span className="absolute -top-1.5 -right-3 flex gap-0.5 items-center">${b}</span>` : null;
     }
+    /* formazione probabile secondo l'IA (prima di quelle ufficiali): titolari piu frequenti in stagione, senza indisponibili e squalificati */
+    function FormazioneProbabile({ m }) {
+      const F = m.formazione;
+      if (!F || !(F[0] || F[1])) return null;
+      const RU = { G: "Portiere", D: "Difesa", M: "Centrocampo", F: "Attacco" };
+      const lato = (L, t) => html`<div className="flex-1 min-w-0">
+        <div className=${"flex items-center gap-1.5 text-[13px] font-semibold mb-1.5 " + C.tx}><${Crest} t=${t} size=${14} /><${NomeSquadra} t=${t} lg=${m.lg} className="truncate" /></div>
+        ${!L ? html`<div className=${"text-[12px] " + C.mu}>Dati non sufficienti</div>` : Object.keys(RU).map((r) => { const g = L.filter((x) => x.r === r); return g.length > 0 && html`<div key=${r} className="mb-1.5">
+          <div className=${"text-[10px] font-semibold uppercase tracking-[0.06em] " + C.mu}>${RU[r]}</div>
+          ${g.map((x) => html`<div key=${x.n} className="flex items-center gap-1.5 py-[3px]"><${NomeGiocatore} id=${x.id} name=${x.n} pos=${x.r} team=${t} className=${"flex-1 min-w-0 truncate text-[13px] " + C.tx} />
+            <span className="w-8 h-1 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden shrink-0"><span className="block h-full rounded-full" style=${{ width: Math.round(x.c * 100) + "%", background: x.c >= 0.75 ? "#0F9D84" : x.c >= 0.5 ? "#E8A317" : "#9A95B3" }}></span></span></div>`)}</div>`; })}</div>`;
+      return html`<div className=${C.card + " p-4 space-y-2"}>
+        <div className="flex items-center gap-2"><span className=${C.lab + " flex-1"}>Formazione probabile</span><span className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + TONE.info}>stima IA</span></div>
+        <div className="flex gap-4">${lato(F[0], m.h)}${lato(F[1], m.a)}</div>
+        <p className=${"text-[11px] " + C.mu}>Chi è partito titolare più spesso in stagione, senza indisponibili e squalificati. La barra è la sicurezza della scelta. Le formazioni ufficiali escono circa un'ora prima e qui prendono il posto della stima.</p></div>`;
+    }
+    /* radar dei movimenti: le quote si sono spostate da quando l'app le ha viste la prima volta */
+    function Movimento({ m, compatto }) {
+      const v = m.mov;
+      if (!v) return null;
+      const i = v.dp.map(Math.abs).indexOf(Math.max(...v.dp.map(Math.abs))), giu = v.a[i] < v.da[i];
+      const nome = [m.h, "il pareggio", m.a][i];
+      const testo = html`<span className=${C.tx}><b>${nome}</b> ${giu ? "più probabile" : "meno probabile"}: quota da <span className="num text-[15px]">${odd(v.da[i])}</span> a <b className="num text-[15px]">${odd(v.a[i])}</b></span>`;
+      if (compatto) return html`<span className="flex items-center gap-1.5 text-[12px]"><span className=${giu ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300"}>${giu ? "▼" : "▲"}</span>${testo}</span>`;
+      return html`<div className=${C.card + " p-4 flex gap-3"}>
+        <span className=${"w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border " + (giu ? TONE.good : TONE.bad)}><${Ic.TrendingUp} size=${17} /></span>
+        <div className="text-[14px] space-y-0.5"><div className=${"font-semibold " + C.tx}>Quote in movimento</div><div>${testo}</div>
+          <div className=${"text-[12px] " + C.mu}>${v.perche ? "Possibile motivo: " + v.perche + "." : "Nessuna notizia registrata: il mercato potrebbe sapere qualcosa in più."} Variazione dalla prima lettura${v.dal ? " (" + new Date(v.dal).toLocaleString("it-IT", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + ")" : ""}.</div></div></div>`;
+    }
     function Lineups({ sm, m, onPlayer }) {
       const F = sm.formazioni;
+      if (!F[0] && !F[1] && m.formazione) return html`<${FormazioneProbabile} m=${m} />`;
       if (!F[0] && !F[1]) return html`<div className=${C.card + " p-4 flex gap-3"}><span className=${"w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border " + TONE.ok}><${Ic.Shirt} size=${17} /></span>
         <div><div className=${"text-sm font-semibold " + C.tx}>Formazioni non ancora ufficiali</div><p className=${"text-sm " + C.mu}>Escono circa un'ora prima del calcio d'inizio: compariranno qui da sole, sul campo.</p></div></div>`;
       const Tok = ({ p, col }) => html`<button onClick=${() => onPlayer(p)} className="flex flex-col items-center w-[19%] min-w-0">
@@ -664,6 +694,8 @@ import { Anteprima, partitaSettimana } from "./extra.js";
         <button onClick=${() => setTeam(null)} className="flex items-center gap-1 text-sm font-medium text-[#5B2EE6] dark:text-[#A58BFF]"><${Ic.ChevronLeft} size=${18} />Indietro</button>
         <div className=${C.card + " p-4 flex items-center gap-3"}><${Crest} t=${team.name} size=${52} />
           <div className="flex-1 min-w-0"><div className=${"text-xl font-semibold truncate " + C.tx}>${team.name}</div>
+            ${(() => { const k = Object.keys(ESPN_LG).find((q) => ESPN_LG[q] === team.lgE && D.leagues.some((l) => l.k === q)); const L0 = k && D.leagues.find((l) => l.k === k);
+              return L0 && html`<div className=${"text-[13px] mt-0.5 flex items-center gap-1.5 " + C.mu}><${Flag} k=${L0.flag} w=${14} /><${NomeLega} k=${k}>${L0.name}<//></div>`; })()}
             ${form.length > 0 && html`<div className="mt-1.5"><${Form} list=${form} /></div>`}</div></div>
         <${SchedaAllenatore} squadra=${team.name} />
         <${Seg} items=${["Partite", "Rosa", "Indisponibili"]} val=${t} set=${setT} />
@@ -671,13 +703,13 @@ import { Anteprima, partitaSettimana } from "./extra.js";
           : t === 0 ? html`<${React.Fragment}>
             <div className=${C.lab}>Prossime partite</div>
             <div className=${C.card + " px-4 py-1"}>${d.prossime.length ? d.prossime.map((r, i) => html`<div key=${r.id} className=${"flex items-center gap-2 py-2 text-sm " + (i ? "border-t " + C.bd : "") + " " + C.tx}>
-              <span className=${"w-24 text-xs tabular-nums " + C.mu}>${dt(r.date)}</span><span className="flex-1 truncate">${r.casa ? "vs" : "@"} ${r.avv}</span><span className=${"text-[11px] " + C.mu}>${r.comp}</span></div>`)
+              <span className=${"w-24 text-xs tabular-nums " + C.mu}>${dt(r.date)}</span><span className="flex-1 truncate">${r.casa ? "vs" : "@"} <${NomeSquadra} t=${r.avv} lgE=${team.lgE} /></span><span className=${"text-[11px] " + C.mu}>${r.comp}</span></div>`)
               : html`<div className=${"py-2 text-sm " + C.mu}>Nessuna partita in calendario.</div>`}</div>
             <div className=${C.lab}>Risultati</div>
             <div className=${C.card + " px-4 py-1"}>${d.risultati.map((r, i) => html`<div key=${r.id} className=${"flex items-center gap-2 py-2 text-sm " + (i ? "border-t " + C.bd : "") + " " + C.tx}>
               <span className=${"w-6 h-6 rounded-md border text-[11px] font-semibold flex items-center justify-center " + TONE[r.esito === "V" ? "good" : r.esito === "N" ? "warn" : "bad"]}>${r.esito}</span>
               <span className=${"w-12 text-xs tabular-nums " + C.mu}>${new Date(r.date).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" })}</span>
-              <span className="flex-1 truncate">${r.casa ? "vs" : "@"} ${r.avv}</span><b className="tabular-nums">${r.g[0]}-${r.g[1]}</b></div>`)}</div><//>`
+              <span className="flex-1 truncate">${r.casa ? "vs" : "@"} <${NomeSquadra} t=${r.avv} lgE=${team.lgE} /></span><b className="tabular-nums">${r.g[0]}-${r.g[1]}</b></div>`)}</div><//>`
           : t === 2 ? html`<div className=${C.card + " p-4 space-y-3"}>
               ${[...d.rosa.filter((p) => p.inf).map((p) => ({ chi: p.name, tipo: /out|injur/i.test(p.inf) ? "Infortunato" : p.inf, fonte: "ESPN" })), ...notizie.filter((f) => !d.rosa.some((p) => p.inf && p.name === f.chi)).map((f) => ({ chi: f.chi, tipo: { infortunio: "Indisponibile", squalifica: "Squalificato", dubbio: "In dubbio", rientro: "Rientra", smentita: "Smentita" }[f.tipo] || f.tipo, fonte: f.fonte || "Notizie", titolo: f.titolo, link: f.link }))]
                 .map((x, i) => html`<div key=${i}><div className="flex items-center gap-2"><span className=${"flex-1 text-[15px] font-semibold " + C.tx}>${x.chi}</span><span className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + (x.tipo === "Rientra" || x.tipo === "Smentita" ? TONE.good : x.tipo === "In dubbio" ? TONE.warn : TONE.bad)}>${x.tipo}</span></div>
@@ -828,7 +860,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
         <div className=${C.card + " relative overflow-hidden"}>
           <div aria-hidden="true" className="absolute inset-0 opacity-[0.22] dark:opacity-[0.3]" style=${{ background: `radial-gradient(90% 75% at 8% 0%, ${ch}, transparent 70%), radial-gradient(90% 75% at 92% 0%, ${ca}, transparent 70%)` }}></div>
           <div className="relative p-4 pb-4">
-          <div className="flex items-center justify-center gap-2"><${Flag} k=${L.flag} w=${16} /><span className=${"text-[12px] font-medium " + C.mu}>${L.name}, ${new Date(m.date + "T12:00:00").toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" })}</span></div>
+          <div className="flex items-center justify-center gap-2"><${Flag} k=${L.flag} w=${16} /><span className=${"text-[12px] font-medium " + C.mu}><${NomeLega} k=${m.lg}>${L.name}<//>, ${new Date(m.date + "T12:00:00").toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" })}</span></div>
           <div className="grid items-start mt-4" style=${{ gridTemplateColumns: "minmax(0,1fr) auto minmax(0,1fr)" }}>
             ${[m.h, m.a].map((t, j) => html`<button key=${t} onClick=${() => setTeam({ lgE: m.lgE || ESPN_LG[m.lg], id: j ? m.aid : m.hid, name: t })} className=${"flex flex-col items-center gap-1.5 min-w-0 " + (j ? "order-3" : "order-1")}>
               <span className="w-[62px] h-[62px] rounded-full flex items-center justify-center bg-white/70 dark:bg-white/[0.06]" style=${{ boxShadow: `0 0 0 3px ${j ? ca : ch}33, 0 10px 28px -8px ${j ? ca : ch}` }}><${Crest} t=${t} size=${40} /></span>
@@ -847,6 +879,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
         <div key=${mt} onTouchStart=${onTS} onTouchEnd=${onTE} className=${"space-y-3 min-h-[50vh] " + (dir > 0 ? "entra-dx" : dir < 0 ? "entra-sx" : "")}>
 
         ${mt === 0 && html`<${InBreve} m=${m} sm=${sm} pLive=${pLive} vai=${vai} onPlayer=${(p, j) => setPl({ p, side: j })} />`}
+        ${mt === 0 && m.st === "NS" && html`<${Movimento} m=${m} />`}
 
         ${mt === 1 && html`<${React.Fragment}>
           ${(!sm || sm.st === "NS") && html`<div className=${C.card + " p-4 text-[14px] " + C.mu}>${m.st === "FT" ? "Il resoconto della partita non è disponibile." : `La partita inizia ${m.date === new Date().toISOString().slice(0, 10) ? "oggi" : "il " + m.date.slice(8) + "/" + m.date.slice(5, 7)} alle ${m.time}: qui troverai azione in diretta, andamento, eventi, migliori in campo, mappa dei tiri e statistiche.`}</div>`}
@@ -901,7 +934,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
           <//>
           ${(m.curiosita || []).length > 0 && html`<${Voce} id="curiosita" titolo="Curiosità" icona=${Ic.Sparkles} sotto=${m.curiosita[0]}><${Curiosita} m=${m} /><//>`}
 
-          ${S && html`<div className=${"flex items-center gap-2 text-sm font-semibold " + C.tx}><${Flag} k=${L.flag} />Classifica ${L.name}</div>`}
+          ${S && html`<div className=${"flex items-center gap-2 text-sm font-semibold " + C.tx}><${Flag} k=${L.flag} />Classifica <${NomeLega} k=${m.lg}>${L.name}<//></div>`}
           ${S && !S.solo_generale && html`<${Seg} items=${["Generale", "Solo Casa", "Solo Trasferta"]} val=${filt} set=${setFilt} />`}
           <div className=${C.card + " p-2 overflow-x-auto"}><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}>
             <th className="text-left font-medium p-1.5 w-6">#</th><th className="text-left font-medium">Squadra</th><th className="text-right font-medium">G</th><th className="text-right font-medium">V</th><th className="text-right font-medium">N</th><th className="text-right font-medium">P</th><th className="text-right font-medium">DR</th><th className="text-right font-medium pr-1.5">Pt</th></tr></thead>
@@ -921,7 +954,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
 
         ${mt === 5 && (sm ? html`<${Cronaca} sm=${sm} m=${m} />` : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${m.eid ? "Caricamento della cronaca..." : "La cronaca scritta compare quando la partita è collegata alla diretta: di solito dal giorno della partita, con le formazioni ufficiali."}</div>`)}
 
-        ${mt === 2 && (sm ? html`<${Lineups} sm=${sm} m=${m} onPlayer=${(p) => setPl({ p, side: sm.formazioni[0] && sm.formazioni[0].all.includes(p) ? 0 : 1 })} />` : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${m.eid ? "Caricamento delle formazioni..." : "Le formazioni compaiono il giorno della partita, circa un'ora prima del calcio d'inizio."}</div>`)}
+        ${mt === 2 && (sm ? html`<${Lineups} sm=${sm} m=${m} onPlayer=${(p) => setPl({ p, side: sm.formazioni[0] && sm.formazioni[0].all.includes(p) ? 0 : 1 })} />` : m.formazione ? html`<${FormazioneProbabile} m=${m} />` : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${m.eid ? "Caricamento delle formazioni..." : "Le formazioni compaiono il giorno della partita, circa un'ora prima del calcio d'inizio."}</div>`)}
         ${mt === 2 && sm && html`<${AssenzeCard} m=${m} sm=${sm} />`}
         </div>
         ${pl && html`<${PlayerSheet} p=${pl.p} side=${pl.side} col=${sm && sm.colors[pl.side]} m=${m} onClose=${() => setPl(null)} />`}
@@ -996,4 +1029,4 @@ import { Anteprima, partitaSettimana } from "./extra.js";
       <//>`;
     }
 
-export { Row, Gate, KEY_T, trasf, PESI, prob1x2, toks, stesso, assenze, AssenzeCard, CampoNotte, TIRI, suNotte, TiriCard, LiveAction, EvIcon, riassunto, righeResoconto, Resoconto, KeyEvents, StatsCard, Cronaca, InfoCard, ArbitroCard, Badges, Lineups, tonoVoto, VotoChip, Migliori, Andamento, Curiosita, Sondaggio, ST_IT, PlayerSheet, _voti, caricaVoti, pois, PESO_SPINTA, spinta, quotaRestante, liveProb, LiveTips, meteoCache, MeteoCard, FattoriCard, StoricoCard, TeamView, TipView, MatchView, Vai, InBreve };
+export { Movimento, FormazioneProbabile, usaVoti, Row, Gate, KEY_T, trasf, PESI, prob1x2, toks, stesso, assenze, AssenzeCard, CampoNotte, TIRI, suNotte, TiriCard, LiveAction, EvIcon, riassunto, righeResoconto, Resoconto, KeyEvents, StatsCard, Cronaca, InfoCard, ArbitroCard, Badges, Lineups, tonoVoto, VotoChip, Migliori, Andamento, Curiosita, Sondaggio, ST_IT, PlayerSheet, _voti, caricaVoti, pois, PESO_SPINTA, spinta, quotaRestante, liveProb, LiveTips, meteoCache, MeteoCard, FattoriCard, StoricoCard, TeamView, TipView, MatchView, Vai, InBreve };

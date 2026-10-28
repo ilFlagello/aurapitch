@@ -92,7 +92,7 @@ async function giro(tema) {
   });
   await passo("profilo: account, privacy, recensione", async () => {
     await p.getByRole("button", { name: "Profilo e impostazioni" }).click(); await p.waitForTimeout(300);
-    for (const t of ["Statistiche d'uso anonime", "Termini d'uso", "Dicci cosa ne pensi", "800 55 88 22"]) if (!(await p.getByText(t).count())) errori.push(`[${tema}] profilo: manca "${t}"`);
+    for (const t of ["Statistiche d'uso anonime", "Sicurezza", "Dicci cosa ne pensi", "800 55 88 22"]) if (!(await p.getByText(t).count())) errori.push(`[${tema}] profilo: manca "${t}"`);
     await foto("profilo");
     await p.getByRole("button", { name: "Dicci cosa ne pensi" }).click(); await p.waitForTimeout(300);
     if (!(await p.getByRole("radiogroup", { name: "Voto da 1 a 5" }).count())) errori.push(`[${tema}] recensione: mancano le stelle`);
@@ -110,7 +110,30 @@ async function giro(tema) {
     await p.screenshot({ path: path.join(OUT, `${tema}-ia.png`), fullPage: true });
   });
   await passo("club", async () => { await dock("Il Mio Club"); for (const n of ["La mia squadra", "Gara", "Traguardi", "Account"]) { await tab(n); await foto("club-" + n.replace(/ /g, "")); } });
-  await passo("ricerca", async () => { await p.getByRole("button", { name: /Cerca/ }).first().click(); await p.keyboard.type("Inter"); await p.waitForTimeout(400); await foto("ricerca"); });
+  await passo("indietro del telefono", async () => {
+    await p.getByRole("button", { name: "Partite", exact: true }).last().click({ timeout: 5000 }); await p.waitForTimeout(400);
+    await p.evaluate(() => window.scrollTo(0, 300)); await p.waitForTimeout(150);
+    const righe = p.locator("main button").filter({ hasText: /\d\d:\d\d/ }); let presa = false;
+    for (let i = 0; i < Math.min(30, await righe.count()) && !presa; i++) { const b = await righe.nth(i).boundingBox(); if (b && b.y > 120 && b.y < 600) { await p.mouse.click(b.x + 40, b.y + 15); presa = true; } }
+    await p.waitForTimeout(700);
+    await p.goBack(); await p.waitForTimeout(700);
+    if (!(await p.getByRole("button", { name: /In diretta/ }).count())) errori.push(`[${tema}] il tasto indietro non torna alla lista`);
+    const y = await p.evaluate(() => window.scrollY);
+    if (y < 100) errori.push(`[${tema}] tornando indietro si perde il punto della lista (scroll ${y})`);
+  });
+  await passo("ricarica tirando giù", async () => {
+    await p.evaluate(() => window.scrollTo(0, 0)); await p.waitForTimeout(150);
+    const m = p.locator("main");
+    const tocca = (y) => m.dispatchEvent("touchmove", { touches: [{ identifier: 1, clientX: 200, clientY: y }] });
+    await m.dispatchEvent("touchstart", { touches: [{ identifier: 1, clientX: 200, clientY: 150 }] });
+    for (const y of [180, 230, 290, 330]) { await tocca(y); await p.waitForTimeout(30); }
+    if (!(await p.getByText("Rilascia per aggiornare").count())) errori.push(`[${tema}] ricarica: manca l'indicatore`);
+    await foto("ricarica");
+    await m.dispatchEvent("touchend", { touches: [] }); await p.waitForTimeout(900);
+  });
+  await passo("ricerca", async () => { await p.getByRole("button", { name: /Cerca/ }).first().click(); await p.keyboard.type("Inter"); await p.waitForTimeout(400); await foto("ricerca");
+    await p.keyboard.press("Control+A"); await p.keyboard.type("Serie"); await p.waitForTimeout(300);
+    if (!(await p.getByText("Campionati", { exact: true }).count())) errori.push(`[${tema}] ricerca: i campionati non compaiono`); });
   await passo("offline", async () => { await p.keyboard.press("Escape"); await p.context().setOffline(true); await p.waitForTimeout(300);
     if (!(await p.getByText("Sei offline").count())) errori.push(`[${tema}] offline: manca l'avviso`); await p.context().setOffline(false); });
   const testo = await p.evaluate(() => document.body.innerText);

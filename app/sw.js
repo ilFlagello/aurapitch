@@ -1,31 +1,42 @@
-// AuraPitch - service worker: rende l'app installabile e utilizzabile anche con rete debole.
-// Strategia: pagina e codice dell'app prima dalla rete (al massimo 3 secondi, poi copia salvata), così dopo un aggiornamento
-// si apre subito la versione nuova; caratteri e icone dalla copia salvata; dati sempre prima dalla rete (al massimo 8 secondi).
-const CACHE = "aurapitch-v22";
-const SHELL = ["./", "index.html", "app.js", "app.css", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "fonts/figtree.woff2", "fonts/bigshoulders.woff2",
+// AuraPitch - service worker: app installabile, apertura istantanea e uso offline.
+// Strategia: l'app (pagina, codice, stili, icone) si apre SUBITO dalla copia salvata; ogni versione pubblicata ha la sua
+// copia completa, scaricata in anticipo all'installazione del nuovo service worker (l'app poi propone "Aggiorna").
+// I dati invece arrivano prima dalla rete (al massimo 6 secondi, poi copia salvata): l'app intanto mostra gli ultimi salvati.
+const VERSIONE = "sviluppo"; // sostituita da build.mjs con l'impronta della versione pubblicata
+const CACHE = "aurapitch-" + VERSIONE;
+const PARTI = []; // pezzi del codice caricati su richiesta: elenco scritto da build.mjs
+const SHELL = ["./", "index.html", "app.js", "app.css", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "fonts/figtree.woff2", "fonts/bigshoulders.woff2", ...PARTI,
   ...["gol", "annullato", "rossi", "inizio", "intervallo", "finale", "formazioni", "promemoria", "test"].flatMap((t) => [`avvisi/${t}.png`, `avvisi/${t}-badge.png`])];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (e) => {
-  e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k.startsWith("aurapitch-") && k !== CACHE && !k.endsWith("-dati")).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
 });
 
+// dati in una copia a parte, che sopravvive agli aggiornamenti dell'app (cosi l'apertura resta istantanea anche dopo)
+const DATI = "aurapitch-dati";
 function retePrima(req, ms) {
-  const net = fetch(req).then((r) => { if (r.ok) { const c = r.clone(); caches.open(CACHE).then((x) => x.put(req, c)); } return r; });
+  const net = fetch(req).then((r) => { if (r.ok) { const c = r.clone(); caches.open(DATI).then((x) => x.put(req, c)); } return r; });
   const attesa = new Promise((ok) => setTimeout(ok, ms)).then(() => caches.match(req)).then((hit) => hit || net);
   return Promise.race([net.catch(() => caches.match(req)), attesa]);
+}
+function copiaPrima(e) {
+  return caches.match(e.request, { ignoreSearch: e.request.mode === "navigate" }).then((hit) => hit || fetch(e.request).then((r) => {
+    if (r.ok && new URL(e.request.url).origin === location.origin) { const c = r.clone(); caches.open(CACHE).then((x) => x.put(e.request, c)); }
+    return r;
+  }));
 }
 
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET") return;
-  if (url.pathname.includes("/data/")) { e.respondWith(retePrima(e.request, 8000)); return; }
+  if (url.origin === location.origin && url.pathname.includes("/data/")) { e.respondWith(retePrima(e.request, 6000)); return; }
   if (url.origin !== location.origin) return;
-  if (e.request.mode === "navigate" || /\/(index\.html|app\.js|app\.css)?$/.test(url.pathname) || /\.(js|css|html)$/.test(url.pathname)) { e.respondWith(retePrima(e.request, 3000)); return; }
-  e.respondWith(caches.match(e.request).then((hit) => hit || fetch(e.request).then((r) => { const c = r.clone(); caches.open(CACHE).then((x) => x.put(e.request, c)); return r; })));
+  if (/\/(accesso|privacy|termini|sicurezza)\.html$|accesso-pagina\.js$|\.well-known/.test(url.pathname)) return; // pagine di servizio: sempre dalla rete
+  e.respondWith(copiaPrima(e));
 });
 
 // Ogni tipo di avviso ha icona, badge e ritmo di vibrazione propri (la vibrazione funziona su Android;

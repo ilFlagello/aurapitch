@@ -76,3 +76,33 @@ export function termini() {
     ["Legge e contatti", [`Si applica la legge italiana. Contatti: ${contatto()}. Versione ${VERSIONE}, ${AGGIORNATA}.`]],
   ];
 }
+
+// "Come ti proteggiamo": la sicurezza spiegata senza gergo (stessa pagina nell'app e su sicurezza.html)
+export function sicurezza() {
+  return [
+    ["In una frase", ["Ti chiediamo il minimo, lo proteggiamo come se fosse nostro e puoi cancellarlo quando vuoi."]],
+    ["Niente password da rubare", [
+      "Si entra con Google o con Face ID / impronta (passkey): non esiste una password AuraPitch che qualcuno possa indovinare, rubare o riusare.",
+      "Le passkey funzionano solo sul sito vero di AuraPitch: un sito falso che la imita non può usarle (protezione contro il phishing).",
+      "Il volto e l'impronta non lasciano mai il tuo telefono: a noi arriva solo una firma digitale.",
+    ]],
+    ["Dati minimi, cifrati", [
+      "Da Google riceviamo solo un identificativo anonimo, e lo conserviamo trasformato con una chiave segreta: anche chi leggesse il nostro archivio non saprebbe a chi appartiene.",
+      "La tua sessione è un codice casuale che resta sul telefono; da noi ne resta solo un'impronta, inutilizzabile per entrare.",
+      "Tutti i collegamenti sono cifrati (HTTPS). Niente pubblicità, niente tracciamenti di terzi, nessun dato venduto.",
+      "Risultati in diretta e meteo passano da noi: le fonti esterne non vedono il tuo indirizzo IP.",
+    ]],
+    ["Il tuo controllo", [
+      "In Il Mio Club, Account: scarica tutti i tuoi dati in un file, esci da tutti i dispositivi, elimina l'account con un tocco (cancellazione immediata e definitiva).",
+      "Le statistiche d'uso sono anonime e si spengono dal Profilo. Le recensioni non sono collegate al tuo account.",
+    ]],
+    ["Difese sempre accese", [
+      "Codici di accesso monouso che scadono in 10 minuti, limiti alle richieste ripetute, blocco delle pagine estranee che provano a usare il servizio.",
+      "Controllo automatico ogni ora: se qualcuno prova ripetutamente codici falsi o fa raffiche di richieste, scatta un allarme.",
+      "Ad ogni modifica il codice passa test automatici di sicurezza (oltre 100 controlli su accessi e firme) e un'analisi delle vulnerabilità; le librerie si aggiornano quando escono correzioni.",
+      "Il database ha una copia di sicurezza continua degli ultimi 30 giorni: in caso di incidente si torna indietro all'istante prima del problema.",
+      "Il cuore dell'algoritmo (storico delle previsioni e modello imparato) sta in un archivio privato, separato dal codice pubblico.",
+    ]],
+    ["Hai trovato un problema di sicurezza?", ["Scrivici in privato tramite la pagina di segnalazione di GitHub (github.com/ilFlagello/aurapitch/security/advisories/new) o con il modulo \"Scrivici\" nel Profilo. Rispondiamo il prima possibile e ti ringraziamo pubblicamente, se vuoi."]],
+  ];
+}

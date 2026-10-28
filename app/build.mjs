@@ -16,8 +16,8 @@ fs.mkdirSync(OUT, { recursive: true });
 
 await esbuild.build({
   entryPoints: [path.join(ROOT, "src/app.js")],
-  bundle: true, minify: true, format: "iife", target: ["es2020"],
-  outfile: path.join(OUT, "app.js"), nodePaths: [MODS], define: { "process.env.NODE_ENV": '"production"' },
+  bundle: true, minify: true, format: "esm", splitting: true, target: ["es2020"], chunkNames: "parti/[name]-[hash]",
+  outdir: OUT, nodePaths: [MODS], define: { "process.env.NODE_ENV": '"production"' },
   alias: { htm: path.join(ROOT, "vendor/htm/index.mjs") }, legalComments: "none", logLevel: "warning", charset: "ascii",
 });
 
@@ -40,7 +40,17 @@ const css = compiler.build(candidates);
 const min = await esbuild.transform(css, { loader: "css", minify: true });
 fs.writeFileSync(path.join(OUT, "app.css"), min.code);
 
-for (const f of ["index.html", "manifest.webmanifest", "sw.js", "icon.svg", "icon-180.png", "icon-192.png", "icon-512.png", "accesso.html", "accesso-pagina.js"]) fs.copyFileSync(path.join(ROOT, f), path.join(OUT, f));
+// service worker: versione = impronta di tutto il codice pubblicato, elenco dei pezzi caricati su richiesta
+{
+  const crypto = await import("node:crypto");
+  const parti = fs.existsSync(path.join(OUT, "parti")) ? fs.readdirSync(path.join(OUT, "parti")).map((f) => "parti/" + f) : [];
+  const h = crypto.createHash("sha256");
+  for (const f of ["app.js", "app.css", ...parti]) h.update(fs.readFileSync(path.join(OUT, f)));
+  for (const f of ["index.html", "sw.js"]) h.update(fs.readFileSync(path.join(ROOT, f)));
+  const sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8").replace('const VERSIONE = "sviluppo";', `const VERSIONE = "${h.digest("hex").slice(0, 12)}";`).replace("const PARTI = [];", "const PARTI = " + JSON.stringify(parti) + ";");
+  fs.writeFileSync(path.join(OUT, "sw.js"), sw);
+}
+for (const f of ["index.html", "manifest.webmanifest", "icon.svg", "icon-180.png", "icon-192.png", "icon-512.png", "accesso.html", "accesso-pagina.js"]) fs.copyFileSync(path.join(ROOT, f), path.join(OUT, f));
 // pagine pubbliche di privacy e termini (stesso testo dell'app, da src/legale.js): servono anche a Google per la schermata di accesso
 {
   const tmp = path.join((await import("node:os")).tmpdir(), "aurapitch-legale-" + process.pid + ".mjs");
@@ -57,6 +67,10 @@ main{max-width:720px;margin:0 auto;padding:32px 20px 64px}h1{font-size:30px;lett
 ${sez.map(([t, ps]) => `<h2>${esc(t)}</h2>` + ps.map((x) => `<p>${esc(x)}</p>`).join("")).join("\n")}</main></html>`;
   fs.writeFileSync(path.join(OUT, "privacy.html"), pagina("Privacy", L.privacy()));
   fs.writeFileSync(path.join(OUT, "termini.html"), pagina("Termini d'uso", L.termini()));
+  fs.writeFileSync(path.join(OUT, "sicurezza.html"), pagina("Come ti proteggiamo", L.sicurezza()));
+  fs.mkdirSync(path.join(OUT, ".well-known"), { recursive: true });
+  const scade = new Date(Date.now() + 300 * 86400000).toISOString().slice(0, 10);
+  fs.writeFileSync(path.join(OUT, ".well-known", "security.txt"), `Contact: https://github.com/ilFlagello/aurapitch/security/advisories/new\nExpires: ${scade}T00:00:00.000Z\nPreferred-Languages: it, en\nPolicy: https://ilflagello.github.io/aurapitch/sicurezza.html\nCanonical: https://ilflagello.github.io/aurapitch/.well-known/security.txt\n`);
 }
 fs.mkdirSync(path.join(OUT, "avvisi"), { recursive: true });
 for (const f of fs.readdirSync(path.join(ROOT, "avvisi"))) fs.copyFileSync(path.join(ROOT, "avvisi", f), path.join(OUT, "avvisi", f));

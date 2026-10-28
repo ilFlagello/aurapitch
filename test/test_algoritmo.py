@@ -154,5 +154,47 @@ class Apprendimento(unittest.TestCase):
         self.assertAlmostEqual(b, 0.8, delta=0.06)
 
 
+class NuoveFunzioni(unittest.TestCase):
+    """Formazione probabile IA e Radar dei movimenti delle quote."""
+    def test_formazione_probabile(self):
+        import genera_app as GA
+        rosa = [{"id": str(i), "n": f"Gioc {i}", "last": f"G{i}", "pos": "G" if i < 2 else "D" if i < 8 else "M" if i < 13 else "F",
+                 "tit": max(0, 10 - (i % 7)), "pres": 10, "gialli": 0} for i in range(22)]
+        es = {"rosa": rosa, "risultati": [{}] * 10, "ultima": {}}
+        xi = GA.formazione_probabile(es, set(), False)
+        self.assertEqual(len(xi), 11)
+        self.assertEqual(xi[0]["r"], "G")
+        self.assertEqual(sum(1 for x in xi if x["r"] == "G"), 1)
+        self.assertTrue(all(0 <= x["c"] <= 0.97 for x in xi))
+        primo = max((x for x in rosa if x["pos"] != "G"), key=lambda x: x["tit"])
+        self.assertIn(primo["last"], [x["n"] for x in xi])
+        xi2 = GA.formazione_probabile(es, {primo["n"]}, False)  # indisponibile: fuori dalla formazione
+        self.assertNotIn(primo["last"], [x["n"] for x in xi2])
+        self.assertIsNone(GA.formazione_probabile({"rosa": rosa, "risultati": [{}]}, set(), False))  # stagione appena iniziata
+
+    def test_radar(self):
+        import tempfile
+        import genera_app as GA
+        with tempfile.TemporaryDirectory() as tmp:
+            vecchio = GA.DIARIO
+            GA.DIARIO = tmp
+            try:
+                with open(os.path.join(tmp, "2026-11-01.json"), "w") as f:
+                    json.dump({"X1": {"mk0": [0.45, 0.28, 0.27], "q0": {"1": 2.1, "X": 3.4, "2": 3.5}, "t0": "2026-10-30T06:00+00:00"},
+                               "X2": {"mk0": [0.45, 0.28, 0.27], "q0": {"1": 2.1, "X": 3.4, "2": 3.5}}}, f)
+                d = {"matches": [
+                    {"id": "X1", "date": "2026-11-01", "st": "NS", "h": "Casa", "a": "Ospite", "mk": [0.38, 0.29, 0.33], "odds": {"1": 2.5, "X": 3.3, "2": 2.9},
+                     "fattori": [{"chi": "Bomber", "lato": 0, "tipo": "infortunio", "delta": -0.08}]},
+                    {"id": "X2", "date": "2026-11-01", "st": "NS", "h": "A", "a": "B", "mk": [0.46, 0.28, 0.26], "odds": {"1": 2.05, "X": 3.4, "2": 3.6}}]}
+                GA.aggiungi_movimenti(d)
+            finally:
+                GA.DIARIO = vecchio
+        m1, m2 = d["matches"]
+        self.assertIn("mov", m1)
+        self.assertEqual(m1["mov"]["da"], [2.1, 3.4, 3.5])
+        self.assertIn("Bomber", m1["mov"]["perche"])
+        self.assertNotIn("mov", m2)  # spostamento sotto i 3 punti: niente Radar
+
+
 if __name__ == "__main__":
     unittest.main()

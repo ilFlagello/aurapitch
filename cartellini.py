@@ -149,7 +149,7 @@ def con_arbitro(m, arb):
     tieni = lambda x: not (isinstance(x, list) and str(x[0])[:1] in nuove and (str(x[0])[1:2] in ("O", "U") or (str(x[0])[1:2] in ("H", "A") and str(x[0])[2:3] in ("O", "U"))))
     agg = [r for k in nuove for r in nuove[k]]
     m["markets"] = [x for x in m.get("markets", []) if tieni(x)] + agg
-    m["_extra"] = [x for x in m.get("_extra", []) if tieni(x)] + agg
+    m.pop("_extra", None)
     return True
 
 

@@ -487,10 +487,10 @@ def valutazioni(mercati, h, a, sh, sa, ctx, cart=None, extra=None, marc=None, ma
     """Punteggio IA (0-100) di ogni mercato e la scelta migliore per ogni gruppo, con le motivazioni.
     Punteggio = 55% accordo delle statistiche (50% se non ci sono statistiche) + 45% probabilita."""
     tutti = [dict(x) for x in mercati]
-    for c, p, q, _ in (extra or []):
+    for c, p, q in ((r[0], r[1], r[2]) for r in (extra or [])):
         mot, g = _cart_motivi(c, h, a, cart)
         tutti.append({"c": c, "p": p, "q": q or round(max(1.01, (1 - MARGINE) / p), 2), "g": g, "qm": False, "_mot": mot})
-    for c, p, q, _ in (marc or []):
+    for c, p, q in ((r[0], r[1], r[2]) for r in (marc or [])):
         i = (marc_info or {}).get(c) or {}
         tutti.append({"c": c, "p": p, "q": q, "g": "Marcatori", "qm": False,
                       "_mot": [(f"{c[5:]} ha segnato {i.get('g', 0)} gol in {i.get('pres', 0)} presenze ({i.get('tit', 0)} da titolare).", i.get("g", 0) / max(1, i.get("pres", 1)) >= 0.3)]})

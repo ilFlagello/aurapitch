@@ -614,7 +614,7 @@ def genera():
             "attese": [testo_classifica(tabs, hid), testo_classifica(tabs, aid)] if tabs else [{"tone": "ok", "text": "Classifica non disponibile nei dati gratuiti."}] * 2,
             "prec": prec, "ctx": ctx, "flags": [], "last5": l5, "h2h": h2h, "stats": [],
             "markets": righe_mercati(mercati) + extra, "tip": tip,
-            "xg_mercato": [lh, la], "fattori": [], "foto": r["_foto"], "_extra": extra, "cart": cart, "arbitro": arbitro,
+            "xg_mercato": [lh, la], "fattori": [], "foto": r["_foto"], "cart": cart, "arbitro": arbitro,
             "xgf": [lettura_xg(k, h, t0), lettura_xg(k, a, t0)] if k in xg_lega else None,
             "curiosita": curiosita_partita(per_team, hid, aid, h, a, t0) if (hid or aid) else [],
             "col": colori_partita(colori_es.get(k), h, a),
@@ -661,6 +661,26 @@ def genera():
 NOTIZIE = os.path.join(DATA, "notizie", "notizie.json")
 ESPN = os.path.join(DATA, "espn", "squadre.json")
 ARBITRI = os.path.join(DATA, "arbitri.json")
+
+
+def extra_di(m):
+    """Mercati di cartellini, angoli e falli gia nella partita (non dipendono dai gol attesi)."""
+    return [x for x in m.get("markets", []) if re.match(r"^[KCF][HA]?[OU]\d", str(x[0]))]
+
+
+def compatta_ia(ia, righe):
+    """Per un file piu leggero: il punteggio IA va come 5a colonna di ogni mercato, le frasi delle motivazioni una volta sola."""
+    for r in righe:
+        del r[4:]
+        r.append(ia["s"].get(r[0]))
+    frasi, idx = [], {}
+    def i(t):
+        if t not in idx:
+            idx[t] = len(frasi)
+            frasi.append(t)
+        return idx[t]
+    g = {k: {"c": v["c"], "p": round(v["p"], 3), "q": v["q"], "s": v["s"], "si": [i(t) for t in v["si"]], "no": [i(t) for t in v["no"]], "info": [i(t) for t in v["info"]]} for k, v in ia["g"].items()}
+    return {"g": g, "f": frasi}
 
 
 def righe_mercati(mercati):
@@ -840,10 +860,12 @@ def applica_fattori(d):
                 cm = "MARC:" + x["n"]
                 marc_l.append([cm, x["p"], round(max(1.01, 0.88 / x["p"]), 2), 0])
                 marc_info[cm] = {"lato": lato, "g": x["g"], "pres": x["pres"], "tit": x["tit"]}
-        m["markets"] = righe_mercati(mercati) + (m.get("_extra") or []) + marc_l
+        extra = extra_di(m)
+        m["markets"] = righe_mercati(mercati) + extra + marc_l
         m["marcatori"] = marc_info
         m["tip"] = tip
-        m["ia"] = M.valutazioni(mercati, m["h"], m["a"], c.get("sh"), c.get("sa"), {"pos_h": c.get("pos_h"), "pos_a": c.get("pos_a")}, m.get("cart"), m.get("_extra"), marc_l, marc_info)
+        ia = M.valutazioni(mercati, m["h"], m["a"], c.get("sh"), c.get("sa"), {"pos_h": c.get("pos_h"), "pos_a": c.get("pos_a")}, m.get("cart"), extra, marc_l, marc_info)
+        m["ia"] = compatta_ia(ia, m["markets"])
     return cambi
 
 

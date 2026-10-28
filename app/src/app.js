@@ -224,7 +224,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     return a + d;
   }
   function options(m) {
-    if (m.markets) return m.markets.map(([c, p, q, qm]) => ({ k: c, p, q: q || Math.round(Math.max(1.01, 0.94 / p) * 100) / 100, stima: !qm }));
+    if (m.markets) return m.markets.map(([c, p, q, qm, sc]) => ({ k: c, p, q: q || Math.round(Math.max(1.01, 0.94 / p) * 100) / 100, stima: !qm, s: sc == null ? null : sc }));
     const [p1, px, p2] = m.p, o = m.odds, po = m.po, mk = m.mk;
     // dati vecchi senza mercati: doppia chance con quota "equa" ricavata dalle probabilita, minimo 1,01
     const dc = (a, b) => Math.max(1.01, 1 / (mk[a] + mk[b]));
@@ -261,13 +261,13 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   const ESCLUSI_SLIP = ["Pari/Dispari", "Risultato esatto"];
   function rumore(id, v) { return v ? ((hs(id + ":" + v) % 1000) / 1000 - 0.5) : 0; }
   function candidati(m, prof, qt, v) {
-    const R = PROF_T[prof], ia = (m.ia && m.ia.s) || {};
+    const R = PROF_T[prof];
     return options(m).filter((o) => { const g = mGroup(o.k); if (ESCLUSI_SLIP.includes(g)) return false;
         if (prof === 0 && /Marcatori|Cartellini|Falli|angolo|Parziale|Gol esatti|Margine|Tempo con/.test(g)) return false;
         if (prof === 1 && /Marcatori|Parziale|Gol esatti/.test(g)) return false;
         if (prof < 2 && /^EH[MP]2/.test(o.k)) return false;
         return o.p >= R.pmin && o.q >= 1.08 && o.q <= R.hi * 1.8; })
-      .map((o) => ({ ...o, sc: (ia[o.k] != null ? ia[o.k] : 50) / 100 + 0.5 * o.p - 0.35 * Math.abs(Math.log(o.q / qt)) + 0.12 * rumore(m.id + o.k, v) }))
+      .map((o) => ({ ...o, sc: (o.s != null ? o.s : 50) / 100 + 0.5 * o.p - 0.35 * Math.abs(Math.log(o.q / qt)) + 0.12 * rumore(m.id + o.k, v) }))
       .sort((a, b) => b.sc - a.sc);
   }
   function buildTarget(matches, prof, T, v) {
@@ -889,9 +889,12 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       const min = minuto(clock);
       const reds = [0, 1].map((j) => (sm ? sm.eventi.filter((e) => e.k === "rosso" && e.side === j).length : 0));
       const xg = m.xg && m.xg[0] != null ? m.xg : [1.35, 1.1];
+      // spinta degli ultimi 20 minuti (tiri e angoli): per ora solo informazione, il peso arriverà dopo il test sull'archivio della diretta
+      const sp = [0, 1].map((j) => (sm ? sm.cronaca.filter((c) => c.side === j && min - minuto(c.min) < 20 && min - minuto(c.min) >= 0 && /^shot|corner/.test(c.type)).length : 0));
       return html`<div className=${C.card + " p-4 space-y-2 ring-1 ring-rose-200 dark:ring-rose-500/40"}>
         <div className="flex items-center gap-2"><span className="relative flex w-2 h-2"><span className="absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75 animate-ping"></span><span className="relative inline-flex rounded-full w-2 h-2 bg-rose-500"></span></span>
           <span className=${C.lab + " flex-1"}>Consigli in diretta</span><span className=${"text-xs tabular-nums " + C.mu}>${clock} - ${g[0]}-${g[1]}</span></div>
+        ${sp[0] + sp[1] >= 3 && html`<div className=${"text-[12px] " + C.mu}>Ultimi 20 minuti: ${m.h} ${sp[0]} tra tiri e angoli, ${m.a} ${sp[1]}. ${sp[0] > 2 * sp[1] + 2 ? m.h + " sta spingendo." : sp[1] > 2 * sp[0] + 2 ? m.a + " sta spingendo." : ""} (Informazione: la spinta non cambia ancora le probabilità, la stiamo misurando.)</div>`}
         ${ks.filter((k) => liveProb(tip[k].c, xg, g, min, reds) !== null).map((k) => { const t = tip[k], p = liveProb(t.c, xg, g, min, reds), d = p - t.p;
           const lab = p >= 0.999 ? ["Già vinta", TONE.good] : p <= 0.001 ? ["Persa", TONE.bad] : null;
           return html`<div key=${k} className="flex items-center gap-2 text-sm">
@@ -1058,8 +1061,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
             ${(() => { const al = assenze(m, sm, D); return al.length > 0 && al.map((x) => html`<div key=${x.n} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-2 shrink-0 " + DOT.warn}></span><span className=${C.tx}><b>Formazione:</b> ${x.testo}</span></div>`); })()}</div>`}</div>`; };
       const opts = options(m);
       const groups = GROUPS.map((g) => [g, opts.filter((o) => mGroup(o.k) === g)]).filter(([, l]) => l.length);
-      const ia = m.ia || { s: {}, g: {} };
-      const scelte = GROUPS.filter((g) => ia.g[g]).map((g) => [g, ia.g[g]]);
+      const ia = m.ia || { g: {}, f: [] };
+      const F = (l) => (l || []).map((i) => (typeof i === "number" ? (ia.f || [])[i] : i)).filter(Boolean);
+      const scelte = GROUPS.filter((g) => ia.g[g]).map((g) => [g, { ...ia.g[g], si: F(ia.g[g].si), no: F(ia.g[g].no), info: F(ia.g[g].info) }]);
       const [ap, setAp] = useState(null);
       const Punti = ({ v }) => v == null ? null : html`<span className=${"num text-[14px] font-bold w-8 text-center rounded-md py-[1px] " + (v >= 75 ? "bg-[#5B2EE6] text-white dark:bg-[#A58BFF] dark:text-[#0E0C18]" : v >= 60 ? C.ch + " " + C.tx : C.mu)} title="Punteggio IA">${v}</span>`;
       return html`<${React.Fragment}>
@@ -1085,7 +1089,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <div className=${C.card + " px-4 py-1"}>${groups.map(([g, l], i) => { const o = grp === g; return html`<div key=${g} className=${i ? "border-t " + C.bd : ""}>
           <button onClick=${() => setGrp(o ? null : g)} className=${"w-full flex items-center py-3 text-[15px] font-semibold " + C.tx}><span className="flex-1 text-left">${g}</span><span className=${"num text-[15px] font-semibold mr-2 " + C.mu}>${l.length}</span><${o ? Ic.ChevronUp : Ic.ChevronDown} size=${16} className=${C.mu} /></button>
           ${o && html`<div className="pb-2">${l.map((x) => html`<div key=${x.k} className="flex items-center gap-2 py-1.5">
-            <${Punti} v=${ia.s[x.k]} />
+            <${Punti} v=${x.s} />
             <span className=${"flex-1 text-sm leading-tight " + C.tx}>${mLabel(m, x.k)}${ia.g[g] && ia.g[g].c === x.k ? html` <span className=${"text-[11px] font-semibold " + C.acc}>Scelta IA</span>` : ""}</span>
             <span className=${"text-xs tabular-nums w-10 text-right " + C.mu}>${pct(x.p)}%</span>
             <span className=${"text-sm font-semibold tabular-nums w-12 text-right " + C.tx}>${odd(x.q)}</span><${AddBtn} c=${x.k} /></div>`)}</div>`}</div>`; })}</div>

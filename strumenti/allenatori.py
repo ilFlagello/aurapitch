@@ -15,7 +15,7 @@ SPARQL = """SELECT ?club ?clubLabel (GROUP_CONCAT(DISTINCT ?alt; separator="|") 
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en,it". }
 } GROUP BY ?club ?clubLabel ?coach ?coachLabel ?start ?end"""
 # nomi di Football-Data che non si capiscono dalle parole
-ALIAS = {"mgladbach": "borussia monchengladbach", "nottm forest": "nottingham forest", "man united": "manchester united", "man city": "manchester city", "nott'm forest": "nottingham forest", "ath madrid": "atletico madrid",
+ALIAS = {"barcelona": "fc barcelona", "mgladbach": "borussia monchengladbach", "nottm forest": "nottingham forest", "man united": "manchester united", "man city": "manchester city", "nott'm forest": "nottingham forest", "ath madrid": "atletico madrid",
          "ath bilbao": "athletic bilbao", "sp gijon": "sporting gijon", "betis": "real betis", "celta": "celta vigo", "sociedad": "real sociedad",
          "espanol": "espanyol", "la coruna": "deportivo la coruna", "vallecano": "rayo vallecano", "m'gladbach": "borussia monchengladbach",
          "ein frankfurt": "eintracht frankfurt", "fc koln": "fc koln", "paris sg": "paris saint-germain", "st etienne": "saint-etienne",
@@ -72,7 +72,7 @@ def main():
             x["all"].append({"chi": b["coachLabel"]["value"], "qid": b["coach"]["value"].rsplit("/", 1)[1], "da": data(b.get("start")), "a": data(b.get("end"))})
         print("Wikidata", paese, ":", len(j["results"]["bindings"]), "righe")
         time.sleep(5)
-    out, mancano = {}, []
+    out, mancano, scelte = {}, [], {}
     for t, paese in squadre.items():
         cerca = tok(ALIAS.get(piano(t), ALIAS.get(t.lower(), t)))
         best, bs = None, 0
@@ -92,10 +92,19 @@ def main():
                 if s > bs:
                     best, bs = c, s
         if best and bs >= 0.5:
-            x = club[best]
-            out[t] = {"wikidata": best, "nome": x["nome"], "allenatori": sorted([a for a in x["all"] if a["da"]], key=lambda a: a["da"])}
+            scelte[t] = (best, bs)
         else:
             mancano.append(t)
+    # un club di Wikidata va a una sola squadra: vince l'abbinamento migliore (es. "Barcelona" non può prendere l'Espanyol de Barcelona)
+    per_club = {}
+    for t, (c, sc) in scelte.items():
+        per_club.setdefault(c, []).append((sc, t))
+    for c, lista in per_club.items():
+        lista.sort(reverse=True)
+        x = club[c]
+        t0 = lista[0][1]
+        out[t0] = {"wikidata": c, "nome": x["nome"], "allenatori": sorted([a for a in x["all"] if a["da"]], key=lambda a: a["da"])}
+        mancano += [t for _, t in lista[1:]]
     # seconda prova per le squadre non trovate: ricerca per nome su Wikidata (es. Chelsea, Sunderland)
     ancora = []
     for t in mancano:
@@ -104,6 +113,8 @@ def main():
         for q in (nome + " F.C.", nome + " FC", nome):
             j = get("https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&language=en&type=item&limit=7&search=" + urllib.parse.quote(q))
             for x in (j or {}).get("search", []):
+                if x.get("id") in {v["wikidata"] for v in out.values()}:
+                    continue
                 if "football club" in (x.get("description") or "").lower() and not NO_PRIMA.search(x.get("label", "")) and not NO_PRIMA.search(x.get("description", "")):
                     trovato = x; break
             if trovato:

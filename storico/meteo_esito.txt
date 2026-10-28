@@ -1,0 +1,49 @@
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Bilbao&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=M%C3%BCnchen&count=5&language=it&forma <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Bolton&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
+non trovata: Bristol City -> Bristol City
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Burton&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
+non trovata: Carrarese -> Carrarese
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Cesena&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
+non trovata: Cremonese -> Cremonese
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Crotone&count=5&language=it&format=jso <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Empoli&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
+non trovata: FeralpiSalo -> FeralpiSalo
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Frosinone&count=5&language=it&format=j <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Berlin&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
+non trovata: Holstein Kiel -> Holstein Kiel
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Torino&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Leicester&count=5&language=it&format=j <urlopen error _ssl.c:993: The handshake operation timed out>
+non trovata: Levante -> Levante
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=M%C3%B6nchengladbach&count=5&language= <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Milano&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
+non trovata: Monaco -> Monaco
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Nice&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Paderborn&count=5&language=it&format=j <urlopen error _ssl.c:993: The handshake operation timed out>
+non trovata: Paris FC -> Paris FC
+non trovata: Paris SG -> Paris SG
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Plymouth&count=5&language=it&format=js <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Reggiana&count=5&language=it&format=js <urlopen error _ssl.c:993: The handshake operation timed out>
+non trovata: Reggiana -> Reggiana
+non trovata: Reggina -> Reggina
+non trovata: Salernitana -> Salernitana
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Gelsenkirchen&count=5&language=it&form <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=St+Etienne&count=5&language=it&format= <urlopen error _ssl.c:993: The handshake operation timed out>
+non trovata: St Etienne -> St Etienne
+non trovata: Ternana -> Ternana
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Torino&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
+non trovata: Udinese -> Udinese
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Madrid&count=5&language=it&format=json <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://geocoding-api.open-meteo.com/v1/search?name=Wolfsburg&count=5&language=it&format=j <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=36.83814&longitude=-2.45974&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=51.50853&longitude=-0.12574&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=45.69601&longitude=9.66721&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=40.4165&longitude=-3.70256&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=40.91494&longitude=14.79103&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=48.13743&longitude=11.57549&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=52.03333&longitude=8.53333&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=53.81667&longitude=-3.05&start_date <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=44.49381&longitude=11.33875&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=44.84124&longitude=-0.58046&start_d <urlopen error _ssl.c:993: The handshake operation timed out>
+  riprovo: https://archive-api.open-meteo.com/v1/archive?latitude=50.72048&longitude=-1.8795&start_da <urlopen error _ssl.c:993: The handshake operation timed out>
+squadre 214, con citta 199, serie scaricate ora 30, mancano 155, righe 159324

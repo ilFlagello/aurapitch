@@ -1,0 +1,1012 @@
+{
+"Ajaccio": {
+"citta": "Ajaccio",
+"lat": 41.91886,
+"lon": 8.73812
+},
+"Alaves": {
+"citta": "Vitoria",
+"lat": 42.84998,
+"lon": -2.67268
+},
+"Alessandria": {
+"citta": "Alessandria",
+"lat": 44.90924,
+"lon": 8.61007
+},
+"Almeria": {
+"citta": "Almería",
+"lat": 36.83814,
+"lon": -2.45974
+},
+"Amiens": {
+"citta": "Amiens",
+"lat": 49.9,
+"lon": 2.3
+},
+"Angers": {
+"citta": "Angers",
+"lat": 47.47156,
+"lon": -0.55202
+},
+"Arsenal": {
+"citta": "Londra",
+"lat": 51.50853,
+"lon": -0.12574
+},
+"Ascoli": {
+"citta": "Ascoli Piceno",
+"lat": 42.85351,
+"lon": 13.57395
+},
+"Aston Villa": {
+"citta": "Birmingham",
+"lat": 52.48142,
+"lon": -1.89983
+},
+"Atalanta": {
+"citta": "Bergamo",
+"lat": 45.69601,
+"lon": 9.66721
+},
+"Ath Bilbao": {
+"citta": "Bilbao",
+"lat": 43.26271,
+"lon": -2.92528
+},
+"Ath Madrid": {
+"citta": "Madrid",
+"lat": 40.4165,
+"lon": -3.70256
+},
+"Augsburg": {
+"citta": "Augusta",
+"lat": 48.37154,
+"lon": 10.89851
+},
+"Auxerre": {
+"citta": "Auxerre",
+"lat": 47.7996,
+"lon": 3.57033
+},
+"Avellino": {
+"citta": "Avellino",
+"lat": 40.91494,
+"lon": 14.79103
+},
+"Barcelona": {
+"citta": "Barcellona",
+"lat": 41.38879,
+"lon": 2.15899
+},
+"Bari": {
+"citta": "Bari",
+"lat": 41.12066,
+"lon": 16.86982
+},
+"Barnsley": {
+"citta": "Barnsley",
+"lat": 53.55,
+"lon": -1.48333
+},
+"Bastia": {
+"citta": "Bastia",
+"lat": 42.70219,
+"lon": 9.45123
+},
+"Bayern Munich": {
+"citta": "Monaco di Baviera",
+"lat": 48.13743,
+"lon": 11.57549
+},
+"Benevento": {
+"citta": "Benevento",
+"lat": 41.1307,
+"lon": 14.77816
+},
+"Betis": {
+"citta": "Siviglia",
+"lat": 37.38283,
+"lon": -5.97317
+},
+"Bielefeld": {
+"citta": "Bielefeld",
+"lat": 52.03333,
+"lon": 8.53333
+},
+"Birmingham": {
+"citta": "Birmingham",
+"lat": 52.48142,
+"lon": -1.89983
+},
+"Blackburn": {
+"citta": "Blackburn",
+"lat": 53.75,
+"lon": -2.48333
+},
+"Blackpool": {
+"citta": "Blackpool",
+"lat": 53.81667,
+"lon": -3.05
+},
+"Bochum": {
+"citta": "Bochum",
+"lat": 51.48165,
+"lon": 7.21648
+},
+"Bologna": {
+"citta": "Bologna",
+"lat": 44.49381,
+"lon": 11.33875
+},
+"Bolton": {
+"citta": "Bolton",
+"lat": 53.58333,
+"lon": -2.43333
+},
+"Bordeaux": {
+"citta": "Bordeaux",
+"lat": 44.84124,
+"lon": -0.58046
+},
+"Bournemouth": {
+"citta": "Bournemouth",
+"lat": 50.72048,
+"lon": -1.8795
+},
+"Brentford": {
+"citta": "Londra",
+"lat": 51.50853,
+"lon": -0.12574
+},
+"Brescia": {
+"citta": "Brescia",
+"lat": 45.53558,
+"lon": 10.21472
+},
+"Brest": {
+"citta": "Brest",
+"lat": 48.39029,
+"lon": -4.48628
+},
+"Brighton": {
+"citta": "Brighton",
+"lat": 50.82838,
+"lon": -0.13947
+},
+"Bristol City": null,
+"Burnley": {
+"citta": "Burnley",
+"lat": 53.8,
+"lon": -2.23333
+},
+"Burton": {
+"citta": "Burton",
+"lat": 51.71556,
+"lon": -4.92222
+},
+"Cadiz": {
+"citta": "Cádice",
+"lat": 36.52672,
+"lon": -6.2891
+},
+"Caen": {
+"citta": "Caen",
+"lat": 49.18585,
+"lon": -0.35912
+},
+"Cagliari": {
+"citta": "Cagliari",
+"lat": 39.23054,
+"lon": 9.11917
+},
+"Cardiff": {
+"citta": "Cardiff",
+"lat": 51.48,
+"lon": -3.18
+},
+"Carpi": {
+"citta": "Carpi",
+"lat": 44.78237,
+"lon": 10.8777
+},
+"Carrarese": null,
+"Catanzaro": {
+"citta": "Catanzaro",
+"lat": 38.88247,
+"lon": 16.60086
+},
+"Celta": {
+"citta": "Vigo",
+"lat": 42.23282,
+"lon": -8.72264
+},
+"Cesena": {
+"citta": "Cesena",
+"lat": 44.1391,
+"lon": 12.24315
+},
+"Charlton": {
+"citta": "Londra",
+"lat": 51.50853,
+"lon": -0.12574
+},
+"Chelsea": {
+"citta": "Londra",
+"lat": 51.50853,
+"lon": -0.12574
+},
+"Chievo": {
+"citta": "Verona",
+"lat": 45.43854,
+"lon": 10.9938
+},
+"Cittadella": {
+"citta": "Cittadella",
+"lat": 45.64523,
+"lon": 11.78453
+},
+"Clermont": {
+"citta": "Clermont-Ferrand",
+"lat": 45.77969,
+"lon": 3.08682
+},
+"Como": {
+"citta": "Como",
+"lat": 45.80819,
+"lon": 9.0832
+},
+"Cosenza": {
+"citta": "Cosenza",
+"lat": 39.2989,
+"lon": 16.25307
+},
+"Coventry": {
+"citta": "Coventry",
+"lat": 52.40656,
+"lon": -1.51217
+},
+"Cremonese": null,
+"Crotone": {
+"citta": "Crotone",
+"lat": 39.08077,
+"lon": 17.12764
+},
+"Crystal Palace": {
+"citta": "Londra",
+"lat": 51.50853,
+"lon": -0.12574
+},
+"Darmstadt": {
+"citta": "Darmstadt",
+"lat": 49.87167,
+"lon": 8.65027
+},
+"Derby": {
+"citta": "Derby",
+"lat": 52.92277,
+"lon": -1.47663
+},
+"Dijon": {
+"citta": "Digione",
+"lat": 47.31344,
+"lon": 5.01391
+},
+"Dortmund": {
+"citta": "Dortmund",
+"lat": 51.51494,
+"lon": 7.466
+},
+"Eibar": {
+"citta": "Eibar",
+"lat": 43.18493,
+"lon": -2.47158
+},
+"Ein Frankfurt": {
+"citta": "Francoforte sul Meno",
+"lat": 50.11552,
+"lon": 8.68417
+},
+"Elche": {
+"citta": "Elx",
+"lat": 38.26218,
+"lon": -0.70107
+},
+"Empoli": {
+"citta": "Empoli",
+"lat": 43.71795,
+"lon": 10.94758
+},
+"Espanol": {
+"citta": "Barcellona",
+"lat": 41.38879,
+"lon": 2.15899
+},
+"Everton": {
+"citta": "Liverpool",
+"lat": 53.41058,
+"lon": -2.97794
+},
+"FC Koln": {
+"citta": "Colonia",
+"lat": 50.93333,
+"lon": 6.95
+},
+"FeralpiSalo": null,
+"Fiorentina": {
+"citta": "Firenze",
+"lat": 43.77925,
+"lon": 11.24626
+},
+"Foggia": {
+"citta": "Foggia",
+"lat": 41.45845,
+"lon": 15.55188
+},
+"Fortuna Dusseldorf": {
+"citta": "Düsseldorf",
+"lat": 51.22319,
+"lon": 6.77927
+},
+"Freiburg": {
+"citta": "Friburgo in Brisgovia",
+"lat": 47.9959,
+"lon": 7.85222
+},
+"Frosinone": {
+"citta": "Frosinone",
+"lat": 41.63976,
+"lon": 13.34109
+},
+"Fulham": {
+"citta": "Londra",
+"lat": 51.50853,
+"lon": -0.12574
+},
+"Genoa": {
+"citta": "Genova",
+"lat": 44.40478,
+"lon": 8.94439
+},
+"Getafe": {
+"citta": "Getafe",
+"lat": 40.30571,
+"lon": -3.73295
+},
+"Girona": {
+"citta": "Girona",
+"lat": 41.98311,
+"lon": 2.82493
+},
+"Granada": {
+"citta": "Granada",
+"lat": 37.18817,
+"lon": -3.60667
+},
+"Greuther Furth": {
+"citta": "Fürth",
+"lat": 49.47593,
+"lon": 10.98856
+},
+"Guingamp": {
+"citta": "Guingamp",
+"lat": 48.56259,
+"lon": -3.15289
+},
+"Hamburg": {
+"citta": "Amburgo",
+"lat": 53.55073,
+"lon": 9.99302
+},
+"Hannover": {
+"citta": "Hannover",
+"lat": 52.37052,
+"lon": 9.73322
+},
+"Heidenheim": {
+"citta": "Heidenheim an der Brenz",
+"lat": 48.67798,
+"lon": 10.15162
+},
+"Hertha": {
+"citta": "Berlino",
+"lat": 52.52437,
+"lon": 13.41053
+},
+"Hoffenheim": {
+"citta": "Sinsheim",
+"lat": 49.2529,
+"lon": 8.87867
+},
+"Holstein Kiel": null,
+"Huddersfield": {
+"citta": "Huddersfield",
+"lat": 53.64904,
+"lon": -1.78416
+},
+"Huesca": {
+"citta": "Huesca",
+"lat": 42.13615,
+"lon": -0.4087
+},
+"Hull": {
+"citta": "Kingston upon Hull",
+"lat": 53.7446,
+"lon": -0.33525
+},
+"Ingolstadt": {
+"citta": "Ingolstadt",
+"lat": 48.76508,
+"lon": 11.42372
+},
+"Inter": {
+"citta": "Milano",
+"lat": 45.46427,
+"lon": 9.18951
+},
+"Ipswich": {
+"citta": "Ipswich",
+"lat": 52.05917,
+"lon": 1.15545
+},
+"Juve Stabia": {
+"citta": "Castellammare di Stabia",
+"lat": 40.70211,
+"lon": 14.48685
+},
+"Juventus": {
+"citta": "Torino",
+"lat": 45.07049,
+"lon": 7.68682
+},
+"La Coruna": {
+"citta": "A Coruña",
+"lat": 43.37135,
+"lon": -8.396
+},
+"Las Palmas": {
+"citta": "Las Palmas de Gran Canaria",
+"lat": 28.10178,
+"lon": -15.41573
+},
+"Latina": {
+"citta": "Latina",
+"lat": 41.46614,
+"lon": 12.9043
+},
+"Lazio": {
+"citta": "Roma",
+"lat": 41.89193,
+"lon": 12.51133
+},
+"Le Havre": {
+"citta": "Le Havre",
+"lat": 49.49346,
+"lon": 0.10785
+},
+"Lecce": {
+"citta": "Lecce",
+"lat": 40.35481,
+"lon": 18.17244
+},
+"Lecco": {
+"citta": "Lecco",
+"lat": 45.85589,
+"lon": 9.39704
+},
+"Leeds": {
+"citta": "Leeds",
+"lat": 53.79648,
+"lon": -1.54785
+},
+"Leganes": {
+"citta": "Leganés",
+"lat": 40.32718,
+"lon": -3.7635
+},
+"Leicester": {
+"citta": "Leicester",
+"lat": 52.6386,
+"lon": -1.13169
+},
+"Lens": {
+"citta": "Lens",
+"lat": 50.43302,
+"lon": 2.82791
+},
+"Levante": null,
+"Leverkusen": {
+"citta": "Leverkusen",
+"lat": 51.0303,
+"lon": 6.98432
+},
+"Lille": {
+"citta": "Lilla",
+"lat": 50.63391,
+"lon": 3.05512
+},
+"Liverpool": {
+"citta": "Liverpool",
+"lat": 53.41058,
+"lon": -2.97794
+},
+"Livorno": {
+"citta": "Livorno",
+"lat": 43.54427,
+"lon": 10.32615
+},
+"Lorient": {
+"citta": "Lorient",
+"lat": 47.74817,
+"lon": -3.37177
+},
+"Luton": {
+"citta": "Luton",
+"lat": 51.87967,
+"lon": -0.41748
+},
+"Lyon": {
+"citta": "Lione",
+"lat": 45.74906,
+"lon": 4.84789
+},
+"M'gladbach": {
+"citta": "Mönchengladbach",
+"lat": 51.18539,
+"lon": 6.44172
+},
+"Mainz": {
+"citta": "Magonza",
+"lat": 49.98185,
+"lon": 8.28008
+},
+"Malaga": {
+"citta": "Málaga",
+"lat": 36.72016,
+"lon": -4.42034
+},
+"Mallorca": {
+"citta": "Palma di Maiorca",
+"lat": 39.56939,
+"lon": 2.65024
+},
+"Man City": {
+"citta": "Manchester",
+"lat": 53.48095,
+"lon": -2.23743
+},
+"Man United": {
+"citta": "Manchester",
+"lat": 53.48095,
+"lon": -2.23743
+},
+"Mantova": {
+"citta": "Mantova",
+"lat": 45.16031,
+"lon": 10.79784
+},
+"Marseille": {
+"citta": "Marsiglia",
+"lat": 43.29695,
+"lon": 5.38107
+},
+"Metz": {
+"citta": "Metz",
+"lat": 49.11911,
+"lon": 6.17269
+},
+"Middlesbrough": {
+"citta": "Middlesbrough",
+"lat": 54.57623,
+"lon": -1.23483
+},
+"Milan": {
+"citta": "Milano",
+"lat": 45.46427,
+"lon": 9.18951
+},
+"Millwall": {
+"citta": "Londra",
+"lat": 51.50853,
+"lon": -0.12574
+},
+"Modena": {
+"citta": "Modena",
+"lat": 44.64783,
+"lon": 10.92539
+},
+"Monaco": null,
+"Montpellier": {
+"citta": "Montpellier",
+"lat": 43.61093,
+"lon": 3.87635
+},
+"Monza": {
+"citta": "Monza",
+"lat": 45.58005,
+"lon": 9.27246
+},
+"Nancy": {
+"citta": "Nancy",
+"lat": 48.68439,
+"lon": 6.18496
+},
+"Nantes": {
+"citta": "Nantes",
+"lat": 47.21725,
+"lon": -1.55336
+},
+"Napoli": {
+"citta": "Napoli",
+"lat": 40.85216,
+"lon": 14.26811
+},
+"Newcastle": {
+"citta": "Newcastle upon Tyne",
+"lat": 54.97328,
+"lon": -1.61396
+},
+"Nice": {
+"citta": "Nizza",
+"lat": 43.70313,
+"lon": 7.26608
+},
+"Nimes": {
+"citta": "Nîmes",
+"lat": 43.83665,
+"lon": 4.35788
+},
+"Norwich": {
+"citta": "Norwich",
+"lat": 52.62783,
+"lon": 1.29834
+},
+"Nott'm Forest": {
+"citta": "Nottingham",
+"lat": 52.9536,
+"lon": -1.15047
+},
+"Novara": {
+"citta": "Novara",
+"lat": 45.44694,
+"lon": 8.62118
+},
+"Nurnberg": {
+"citta": "Norimberga",
+"lat": 49.45421,
+"lon": 11.07752
+},
+"Osasuna": {
+"citta": "Pamplona",
+"lat": 42.81687,
+"lon": -1.64323
+},
+"Oviedo": {
+"citta": "Oviedo",
+"lat": 43.36029,
+"lon": -5.84476
+},
+"Oxford": {
+"citta": "Oxford",
+"lat": 51.75222,
+"lon": -1.25596
+},
+"Paderborn": {
+"citta": "Paderborn",
+"lat": 51.71905,
+"lon": 8.75439
+},
+"Padova": {
+"citta": "Padova",
+"lat": 45.40797,
+"lon": 11.88586
+},
+"Palermo": {
+"citta": "Palermo",
+"lat": 38.1166,
+"lon": 13.3636
+},
+"Paris FC": null,
+"Paris SG": null,
+"Parma": {
+"citta": "Parma",
+"lat": 44.79935,
+"lon": 10.32618
+},
+"Perugia": {
+"citta": "Perugia",
+"lat": 43.1122,
+"lon": 12.38878
+},
+"Pescara": {
+"citta": "Pescara",
+"lat": 42.4584,
+"lon": 14.20283
+},
+"Peterboro": {
+"citta": "Peterborough",
+"lat": 52.57364,
+"lon": -0.24777
+},
+"Pisa": {
+"citta": "Pisa",
+"lat": 43.70853,
+"lon": 10.4036
+},
+"Plymouth": {
+"citta": "Plymouth",
+"lat": 50.37153,
+"lon": -4.14305
+},
+"Pordenone": {
+"citta": "Pordenone",
+"lat": 45.95689,
+"lon": 12.66051
+},
+"Portsmouth": {
+"citta": "Portsmouth",
+"lat": 50.79899,
+"lon": -1.09125
+},
+"Preston": {
+"citta": "Preston",
+"lat": 53.76282,
+"lon": -2.70452
+},
+"Pro Vercelli": {
+"citta": "Vercelli",
+"lat": 45.32163,
+"lon": 8.41989
+},
+"QPR": {
+"citta": "Londra",
+"lat": 51.50853,
+"lon": -0.12574
+},
+"RB Leipzig": {
+"citta": "Lipsia",
+"lat": 51.33962,
+"lon": 12.37129
+},
+"Reading": {
+"citta": "Reading",
+"lat": 51.45625,
+"lon": -0.97113
+},
+"Real Madrid": {
+"citta": "Madrid",
+"lat": 40.4165,
+"lon": -3.70256
+},
+"Reggiana": null,
+"Reggina": null,
+"Reims": {
+"citta": "Reims",
+"lat": 49.26526,
+"lon": 4.02853
+},
+"Rennes": {
+"citta": "Rennes",
+"lat": 48.11109,
+"lon": -1.67431
+},
+"Roma": {
+"citta": "Roma",
+"lat": 41.89193,
+"lon": 12.51133
+},
+"Rotherham": {
+"citta": "Rotherham",
+"lat": 53.43012,
+"lon": -1.35678
+},
+"Salernitana": null,
+"Sampdoria": {
+"citta": "Genova",
+"lat": 44.40478,
+"lon": 8.94439
+},
+"Sassuolo": {
+"citta": "Sassuolo",
+"lat": 44.5432,
+"lon": 10.7848
+},
+"Schalke 04": {
+"citta": "Gelsenkirchen",
+"lat": 51.50508,
+"lon": 7.09654
+},
+"Sevilla": {
+"citta": "Siviglia",
+"lat": 37.38283,
+"lon": -5.97317
+},
+"Sheffield United": {
+"citta": "Sheffield",
+"lat": 53.38297,
+"lon": -1.4659
+},
+"Sheffield Weds": {
+"citta": "Sheffield",
+"lat": 53.38297,
+"lon": -1.4659
+},
+"Sociedad": {
+"citta": "San Sebastián",
+"lat": 43.31283,
+"lon": -1.97499
+},
+"Southampton": {
+"citta": "Southampton",
+"lat": 50.90395,
+"lon": -1.40428
+},
+"Sp Gijon": {
+"citta": "Gijón",
+"lat": 43.53573,
+"lon": -5.66152
+},
+"Spal": {
+"citta": "Ferrara",
+"lat": 44.83804,
+"lon": 11.62057
+},
+"Spezia": {
+"citta": "La Spezia",
+"lat": 44.103,
+"lon": 9.82375
+},
+"St Etienne": null,
+"St Pauli": {
+"citta": "Amburgo",
+"lat": 53.55073,
+"lon": 9.99302
+},
+"Stoke": {
+"citta": "Stoke-on-Trent",
+"lat": 53.00415,
+"lon": -2.18538
+},
+"Strasbourg": {
+"citta": "Strasburgo",
+"lat": 48.58392,
+"lon": 7.74553
+},
+"Stuttgart": {
+"citta": "Stoccarda",
+"lat": 48.78232,
+"lon": 9.17702
+},
+"Sudtirol": {
+"citta": "Bolzano",
+"lat": 46.49067,
+"lon": 11.33982
+},
+"Sunderland": {
+"citta": "Sunderland",
+"lat": 54.90465,
+"lon": -1.38222
+},
+"Swansea": {
+"citta": "Swansea",
+"lat": 51.62079,
+"lon": -3.94323
+},
+"Ternana": null,
+"Torino": {
+"citta": "Torino",
+"lat": 45.07049,
+"lon": 7.68682
+},
+"Tottenham": {
+"citta": "Londra",
+"lat": 51.50853,
+"lon": -0.12574
+},
+"Toulouse": {
+"citta": "Tolosa",
+"lat": 43.60426,
+"lon": 1.44367
+},
+"Trapani": {
+"citta": "Trapani",
+"lat": 38.0176,
+"lon": 12.53617
+},
+"Troyes": {
+"citta": "Troyes",
+"lat": 48.30073,
+"lon": 4.08524
+},
+"Udinese": null,
+"Union Berlin": {
+"citta": "Berlino",
+"lat": 52.52437,
+"lon": 13.41053
+},
+"Valencia": {
+"citta": "Valencia",
+"lat": 39.47391,
+"lon": -0.37966
+},
+"Valladolid": {
+"citta": "Valladolid",
+"lat": 41.65541,
+"lon": -4.72353
+},
+"Vallecano": {
+"citta": "Madrid",
+"lat": 40.4165,
+"lon": -3.70256
+},
+"Venezia": {
+"citta": "Venezia",
+"lat": 45.43713,
+"lon": 12.33265
+},
+"Verona": {
+"citta": "Verona",
+"lat": 45.43854,
+"lon": 10.9938
+},
+"Vicenza": {
+"citta": "Vicenza",
+"lat": 45.54672,
+"lon": 11.5475
+},
+"Villarreal": {
+"citta": "Villarreal",
+"lat": 38.72572,
+"lon": -7.21533
+},
+"Virtus Entella": {
+"citta": "Chiavari",
+"lat": 44.31771,
+"lon": 9.32241
+},
+"Watford": {
+"citta": "Watford",
+"lat": 51.65531,
+"lon": -0.39602
+},
+"Werder Bremen": {
+"citta": "Brema",
+"lat": 53.07582,
+"lon": 8.80717
+},
+"West Brom": {
+"citta": "West Bromwich",
+"lat": 52.51868,
+"lon": -1.9945
+},
+"West Ham": {
+"citta": "Londra",
+"lat": 51.50853,
+"lon": -0.12574
+},
+"Wigan": {
+"citta": "Wigan",
+"lat": 53.54296,
+"lon": -2.63706
+},
+"Wolfsburg": {
+"citta": "Wolfsburg",
+"lat": 52.4236,
+"lon": 10.77597
+},
+"Wolves": {
+"citta": "Wolverhampton",
+"lat": 52.58547,
+"lon": -2.12296
+},
+"Wrexham": {
+"citta": "Wrexham",
+"lat": 53.04664,
+"lon": -2.99132
+},
+"Wycombe": {
+"citta": "High Wycombe",
+"lat": 51.62907,
+"lon": -0.74934
+}
+}

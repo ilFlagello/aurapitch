@@ -1,5 +1,5 @@
 {
- "quando": "2026-10-28T13:21:24.780839+00:00",
+ "quando": "2026-10-28T13:24:07.561266+00:00",
  "espn": {
   "ita.1": {
    "partite": 17,
@@ -20,168 +20,262 @@
      "pointSpread",
      "provider",
      "total"
-    ]
-   },
-   "errore": null
-  },
-  "ita.2": {
-   "partite": 13,
-   "con_quote": 13,
-   "esempio": {
-    "partita": "Palermo at Pisa",
-    "fornitore": "DraftKings",
-    "overUnder": 2.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 225,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "eng.1": {
-   "partite": 10,
-   "con_quote": 10,
-   "esempio": {
-    "partita": "Manchester United at Chelsea",
-    "fornitore": "DraftKings",
-    "overUnder": 2.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 300,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "eng.2": {
-   "partite": 24,
-   "con_quote": 24,
-   "esempio": {
-    "partita": "Wrexham at Sheffield United",
-    "fornitore": "DraftKings",
-    "overUnder": 2.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 235,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "esp.1": {
-   "partite": 10,
-   "con_quote": 10,
-   "esempio": {
-    "partita": "Espanyol at Villarreal",
-    "fornitore": "DraftKings",
-    "overUnder": 3.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 400,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "esp.2": {
-   "partite": 11,
-   "con_quote": 11,
-   "esempio": {
-    "partita": "Girona at Real Sociedad II",
-    "fornitore": "DraftKings",
-    "overUnder": 2.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 275,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "ger.1": {
-   "partite": 9,
-   "con_quote": 9,
-   "esempio": {
-    "partita": "Mainz at SV Elversberg",
-    "fornitore": "DraftKings",
-    "overUnder": 3.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 270,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "ger.2": {
-   "partite": 9,
-   "con_quote": 9,
-   "esempio": {
-    "partita": "TSV Eintracht Braunschweig at Arminia Bielefeld",
-    "fornitore": "DraftKings",
-    "overUnder": 2.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 285,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
+    ],
+    "completo": {
+     "overUnder": 2.5,
+     "link": {
+      "language": "en-US",
+      "rel": [
+       "game",
+       "desktop",
+       "bets"
+      ],
+      "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861334",
+      "text": "Game",
+      "shortText": "Game",
+      "isExternal": true,
+      "isPremium": false,
+      "isHidden": false
+     },
+     "provider": {
+      "id": "100",
+      "name": "DraftKings",
+      "priority": 1,
+      "displayName": "DraftKings",
+      "logos": [
+       {
+        "href": "https://a.espncdn.com/i/betting/Draftkings_Light.svg",
+        "rel": [
+         "light"
+        ]
+       },
+       {
+        "href": "https://a.espncdn.com/i/betting/Draftkings_Dark.svg",
+        "rel": [
+         "dark"
+        ]
+       }
+      ]
+     },
+     "drawOdds": {
+      "moneyLine": 255,
+      "link": {
+       "language": "en-US",
+       "rel": [
+        "draw",
+        "desktop",
+        "bets",
+        "draftkings"
+       ],
+       "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861334%3Foutcomes%3D0ML86823812_2",
+       "text": "Draw Bet",
+       "shortText": "Draw Bet",
+       "isExternal": true,
+       "isPremium": false,
+       "isHidden": false
+      }
+     },
+     "total": {
+      "displayName": "Total",
+      "shortDisplayName": "Total",
+      "over": {
+       "open": {
+        "line": "o2.5",
+        "odds": "-130"
+       },
+       "close": {
+        "line": "o2.5",
+        "odds": "+105",
+        "link": {
+         "rel": [
+          "over",
+          "bets"
+         ],
+         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861334%3Foutcomes%3D0OU86824535O250_1",
+         "tracking": {
+          "campaign": "betting-integrations",
+          "tags": {
+           "league": "ita.1",
+           "sport": "soccer",
+           "gameId": 401874993,
+           "betSide": "over",
+           "betType": "straight",
+           "betDetails": "Over:2.5"
+          }
+         }
+        }
+       }
+      },
+      "under": {
+       "open": {
+        "line": "u2.5",
+        "odds": "-110"
+       },
+       "close": {
+        "line": "u2.5",
+        "odds": "-130",
+        "link": {
+         "rel": [
+          "under",
+          "bets"
+         ],
+         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861334%3Foutcomes%3D0OU86824535U250_3",
+         "tracking": {
+          "campaign": "betting-integrations",
+          "tags": {
+           "league": "ita.1",
+           "sport": "soccer",
+           "gameId": 401874993,
+           "betSide": "under",
+           "betType": "straight",
+           "betDetails": "Under:2.5"
+          }
+         }
+        }
+       }
+      }
+     },
+     "pointSpread": {
+      "displayName": "Spread",
+      "shortDisplayName": "Spread",
+      "home": {
+       "open": {
+        "line": "-0.5",
+        "odds": "-185"
+       },
+       "close": {
+        "line": "-0.5",
+        "odds": "-155",
+        "link": {
+         "rel": [
+          "homeSpread",
+          "bets"
+         ],
+         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861334%3Foutcomes%3D0HC86824540N50_1",
+         "tracking": {
+          "campaign": "betting-integrations",
+          "tags": {
+           "league": "ita.1",
+           "sport": "soccer",
+           "gameId": 401874993,
+           "betSide": "home",
+           "betType": "straight",
+           "betDetails": "Spread:MIL-0.5"
+          }
+         }
+        }
+       }
+      },
+      "away": {
+       "open": {
+        "line": "+0.5",
+        "odds": "+120"
+       },
+       "close": {
+        "line": "+0.5",
+        "odds": "+110",
+        "link": {
+         "rel": [
+          "awaySpread",
+          "bets"
+         ],
+         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861334%3Foutcomes%3D0HC86824540P50_3",
+         "tracking": {
+          "campaign": "betting-integrations",
+          "tags": {
+           "league": "ita.1",
+           "sport": "soccer",
+           "gameId": 401874993,
+           "betSide": "away",
+           "betType": "straight",
+           "betDetails": "Spread:BOL+0.5"
+          }
+         }
+        }
+       }
+      }
+     },
+     "moneyline": {
+      "displayName": "Moneyline",
+      "shortDisplayName": "ML",
+      "home": {
+       "open": {
+        "odds": "-175"
+       },
+       "close": {
+        "odds": "-145",
+        "link": {
+         "rel": [
+          "home",
+          "bets"
+         ],
+         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861334%3Foutcomes%3D0ML86823812_1",
+         "tracking": {
+          "campaign": "betting-integrations",
+          "tags": {
+           "league": "ita.1",
+           "sport": "soccer",
+           "gameId": 401874993,
+           "betSide": "home",
+           "betType": "straight"
+          }
+         }
+        }
+       }
+      },
+      "away": {
+       "open": {
+        "odds": "+390"
+       },
+       "close": {
+        "odds": "+390",
+        "link": {
+         "rel": [
+          "away",
+          "bets"
+         ],
+         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861334%3Foutcomes%3D0ML86823812_3",
+         "tracking": {
+          "campaign": "betting-integrations",
+          "tags": {
+           "league": "ita.1",
+           "sport": "soccer",
+           "gameId": 401874993,
+           "betSide": "away",
+           "betType": "straight"
+          }
+         }
+        }
+       }
+      },
+      "draw": {
+       "open": {
+        "odds": "+285"
+       },
+       "close": {
+        "odds": "+255",
+        "link": {
+         "rel": [
+          "draw",
+          "bets"
+         ],
+         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861334%3Foutcomes%3D0ML86823812_2",
+         "tracking": {
+          "campaign": "betting-integrations",
+          "tags": {
+           "league": "ita.1",
+           "sport": "soccer",
+           "gameId": 401874993,
+           "betSide": "draw",
+           "betType": "straight"
+          }
+         }
+        }
+       }
+      }
+     },
+     "details": "MIL -145"
+    }
    },
    "errore": null
   },
@@ -204,411 +298,262 @@
      "pointSpread",
      "provider",
      "total"
-    ]
-   },
-   "errore": null
-  },
-  "fra.2": {
-   "partite": 9,
-   "con_quote": 9,
-   "esempio": {
-    "partita": "Dijon FCO at Grenoble",
-    "fornitore": "DraftKings",
-    "overUnder": 2.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 230,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "ned.1": {
-   "partite": 9,
-   "con_quote": 9,
-   "esempio": {
-    "partita": "Fortuna Sittard at Feyenoord Rotterdam",
-    "fornitore": "DraftKings",
-    "overUnder": 3.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 700,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "por.1": {
-   "partite": 9,
-   "con_quote": 9,
-   "esempio": {
-    "partita": "Sporting CP at Casa Pia",
-    "fornitore": "DraftKings",
-    "overUnder": 2.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 475,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "bel.1": {
-   "partite": 10,
-   "con_quote": 10,
-   "esempio": {
-    "partita": "Club Brugge at Zulte-Waregem",
-    "fornitore": "DraftKings",
-    "overUnder": 3.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 360,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "tur.1": {
-   "partite": 9,
-   "con_quote": 9,
-   "esempio": {
-    "partita": "Galatasaray at Konyaspor",
-    "fornitore": "DraftKings",
-    "overUnder": 2.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 310,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "sco.1": {
-   "partite": 10,
-   "con_quote": 10,
-   "esempio": {
-    "partita": "Falkirk at Aberdeen",
-    "fornitore": "DraftKings",
-    "overUnder": 2.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 255,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "aut.1": {
-   "partite": 6,
-   "con_quote": 6,
-   "esempio": {
-    "partita": "TSV Hartberg at Grazer AK",
-    "fornitore": "DraftKings",
-    "overUnder": 2.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 235,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "sui.1": {
-   "partite": 0,
-   "con_quote": 0,
-   "esempio": null,
-   "errore": null
-  },
-  "gre.1": {
-   "partite": 7,
-   "con_quote": 7,
-   "esempio": {
-    "partita": "Olympiacos at Kifisia",
-    "fornitore": "DraftKings",
-    "overUnder": 2.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 320,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "den.1": {
-   "partite": 6,
-   "con_quote": 6,
-   "esempio": {
-    "partita": "Randers FC at Lyngby Boldklub",
-    "fornitore": "DraftKings",
-    "overUnder": 2.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 275,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "usa.1": {
-   "partite": 29,
-   "con_quote": 29,
-   "esempio": {
-    "partita": "CF Montréal at Charlotte FC",
-    "fornitore": "DraftKings",
-    "overUnder": 3.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 340,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "bra.1": {
-   "partite": 17,
-   "con_quote": 17,
-   "esempio": {
-    "partita": "Internacional at Fluminense",
-    "fornitore": "DraftKings",
-    "overUnder": 2.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 260,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "arg.1": {
-   "partite": 15,
-   "con_quote": 15,
-   "esempio": {
-    "partita": "Gimnasia La Plata at Estudiantes de Río Cuarto",
-    "fornitore": "DraftKings",
-    "overUnder": 2.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 245,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "mex.1": {
-   "partite": 10,
-   "con_quote": 10,
-   "esempio": {
-    "partita": "Tijuana at América",
-    "fornitore": "DraftKings",
-    "overUnder": 3.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 400,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "sau.1": {
-   "partite": 0,
-   "con_quote": 0,
-   "esempio": null,
-   "errore": "HTTP Error 400: Bad Request"
-  },
-  "jpn.1": {
-   "partite": 10,
-   "con_quote": 10,
-   "esempio": {
-    "partita": "FC Tokyo at Fagiano Okayama",
-    "fornitore": "DraftKings",
-    "overUnder": 2.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 245,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "uefa.champions": {
-   "partite": 18,
-   "con_quote": 18,
-   "esempio": {
-    "partita": "VfB Stuttgart at Galatasaray",
-    "fornitore": "DraftKings",
-    "overUnder": 3.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 310,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "uefa.europa": {
-   "partite": 0,
-   "con_quote": 0,
-   "esempio": null,
-   "errore": null
-  },
-  "uefa.europa.conf": {
-   "partite": 0,
-   "con_quote": 0,
-   "esempio": null,
-   "errore": null
-  },
-  "ita.coppa_italia": {
-   "partite": 0,
-   "con_quote": 0,
-   "esempio": null,
-   "errore": null
-  },
-  "eng.fa": {
-   "partite": 0,
-   "con_quote": 0,
-   "esempio": null,
-   "errore": null
-  },
-  "eng.league_cup": {
-   "partite": 6,
-   "con_quote": 6,
-   "esempio": {
-    "partita": "Brighton & Hove Albion at Manchester City",
-    "fornitore": "DraftKings",
-    "overUnder": 3.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 300,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
+    ],
+    "completo": {
+     "overUnder": 3.5,
+     "link": {
+      "language": "en-US",
+      "rel": [
+       "game",
+       "desktop",
+       "bets"
+      ],
+      "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861321",
+      "text": "Game",
+      "shortText": "Game",
+      "isExternal": true,
+      "isPremium": false,
+      "isHidden": false
+     },
+     "provider": {
+      "id": "100",
+      "name": "DraftKings",
+      "priority": 1,
+      "displayName": "DraftKings",
+      "logos": [
+       {
+        "href": "https://a.espncdn.com/i/betting/Draftkings_Light.svg",
+        "rel": [
+         "light"
+        ]
+       },
+       {
+        "href": "https://a.espncdn.com/i/betting/Draftkings_Dark.svg",
+        "rel": [
+         "dark"
+        ]
+       }
+      ]
+     },
+     "drawOdds": {
+      "moneyLine": 600,
+      "link": {
+       "language": "en-US",
+       "rel": [
+        "draw",
+        "desktop",
+        "bets",
+        "draftkings"
+       ],
+       "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861321%3Foutcomes%3D0ML86823798_2",
+       "text": "Draw Bet",
+       "shortText": "Draw Bet",
+       "isExternal": true,
+       "isPremium": false,
+       "isHidden": false
+      }
+     },
+     "total": {
+      "displayName": "Total",
+      "shortDisplayName": "Total",
+      "over": {
+       "open": {
+        "line": "o3.5",
+        "odds": "-125"
+       },
+       "close": {
+        "line": "o3.5",
+        "odds": "-120",
+        "link": {
+         "rel": [
+          "over",
+          "bets"
+         ],
+         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861321%3Foutcomes%3D0OU86824041O350_1",
+         "tracking": {
+          "campaign": "betting-integrations",
+          "tags": {
+           "league": "fra.1",
+           "sport": "soccer",
+           "gameId": 401876421,
+           "betSide": "over",
+           "betType": "straight",
+           "betDetails": "Over:3.5"
+          }
+         }
+        }
+       }
+      },
+      "under": {
+       "open": {
+        "line": "u3.5",
+        "odds": "-115"
+       },
+       "close": {
+        "line": "u3.5",
+        "odds": "-105",
+        "link": {
+         "rel": [
+          "under",
+          "bets"
+         ],
+         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861321%3Foutcomes%3D0OU86824041U350_3",
+         "tracking": {
+          "campaign": "betting-integrations",
+          "tags": {
+           "league": "fra.1",
+           "sport": "soccer",
+           "gameId": 401876421,
+           "betSide": "under",
+           "betType": "straight",
+           "betDetails": "Under:3.5"
+          }
+         }
+        }
+       }
+      }
+     },
+     "pointSpread": {
+      "displayName": "Spread",
+      "shortDisplayName": "Spread",
+      "home": {
+       "open": {
+        "line": "+1.5",
+        "odds": "+105"
+       },
+       "close": {
+        "line": "+1.5",
+        "odds": "+120",
+        "link": {
+         "rel": [
+          "homeSpread",
+          "bets"
+         ],
+         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861321%3Foutcomes%3D0HC86824046P150_1",
+         "tracking": {
+          "campaign": "betting-integrations",
+          "tags": {
+           "league": "fra.1",
+           "sport": "soccer",
+           "gameId": 401876421,
+           "betSide": "home",
+           "betType": "straight",
+           "betDetails": "Spread:HAC+1.5"
+          }
+         }
+        }
+       }
+      },
+      "away": {
+       "open": {
+        "line": "-1.5",
+        "odds": "-165"
+       },
+       "close": {
+        "line": "-1.5",
+        "odds": "-165",
+        "link": {
+         "rel": [
+          "awaySpread",
+          "bets"
+         ],
+         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861321%3Foutcomes%3D0HC86824046N150_3",
+         "tracking": {
+          "campaign": "betting-integrations",
+          "tags": {
+           "league": "fra.1",
+           "sport": "soccer",
+           "gameId": 401876421,
+           "betSide": "away",
+           "betType": "straight",
+           "betDetails": "Spread:PSG-1.5"
+          }
+         }
+        }
+       }
+      }
+     },
+     "moneyline": {
+      "displayName": "Moneyline",
+      "shortDisplayName": "ML",
+      "home": {
+       "open": {
+        "odds": "+800"
+       },
+       "close": {
+        "odds": "+950",
+        "link": {
+         "rel": [
+          "home",
+          "bets"
+         ],
+         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861321%3Foutcomes%3D0ML86823798_1",
+         "tracking": {
+          "campaign": "betting-integrations",
+          "tags": {
+           "league": "fra.1",
+           "sport": "soccer",
+           "gameId": 401876421,
+           "betSide": "home",
+           "betType": "straight"
+          }
+         }
+        }
+       }
+      },
+      "away": {
+       "open": {
+        "odds": "-425"
+       },
+       "close": {
+        "odds": "-425",
+        "link": {
+         "rel": [
+          "away",
+          "bets"
+         ],
+         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861321%3Foutcomes%3D0ML86823798_3",
+         "tracking": {
+          "campaign": "betting-integrations",
+          "tags": {
+           "league": "fra.1",
+           "sport": "soccer",
+           "gameId": 401876421,
+           "betSide": "away",
+           "betType": "straight"
+          }
+         }
+        }
+       }
+      },
+      "draw": {
+       "open": {
+        "odds": "+550"
+       },
+       "close": {
+        "odds": "+600",
+        "link": {
+         "rel": [
+          "draw",
+          "bets"
+         ],
+         "href": "https://sportsbook.draftkings.com/gateway?s=__s__&wpcid=__wpcid__&wpsrc=413&wpcn=ESPN&wpscn=Widget&wpcrn=BetSlipDeepLink&wpscid=__wpscid__&wpcrid=xx&preurl=https%3A%2F%2Fsportsbook.draftkings.com%2Fevent%2F34861321%3Foutcomes%3D0ML86823798_2",
+         "tracking": {
+          "campaign": "betting-integrations",
+          "tags": {
+           "league": "fra.1",
+           "sport": "soccer",
+           "gameId": 401876421,
+           "betSide": "draw",
+           "betType": "straight"
+          }
+         }
+        }
+       }
+      }
+     },
+     "details": "PSG -425"
+    }
    },
    "errore": null
   },
@@ -617,65 +562,6 @@
    "con_quote": 38,
    "esempio": null,
    "errore": "evento: 'NoneType' object has no attribute 'get'"
-  },
-  "ger.dfb_pokal": {
-   "partite": 8,
-   "con_quote": 8,
-   "esempio": {
-    "partita": "Schalke 04 at Dynamo Dresden",
-    "fornitore": "DraftKings",
-    "overUnder": 2.5,
-    "casa": null,
-    "ospite": null,
-    "pari": 275,
-    "chiavi": [
-     "details",
-     "drawOdds",
-     "link",
-     "moneyline",
-     "overUnder",
-     "pointSpread",
-     "provider",
-     "total"
-    ]
-   },
-   "errore": null
-  },
-  "fra.coupe_de_france": {
-   "partite": 0,
-   "con_quote": 0,
-   "esempio": null,
-   "errore": null
-  },
-  "ita.super_cup": {
-   "partite": 0,
-   "con_quote": 0,
-   "esempio": null,
-   "errore": null
-  },
-  "esp.super_cup": {
-   "partite": 0,
-   "con_quote": 0,
-   "esempio": null,
-   "errore": null
-  },
-  "uefa.nations": {
-   "partite": 0,
-   "con_quote": 0,
-   "esempio": null,
-   "errore": null
-  },
-  "fifa.worldq.uefa": {
-   "partite": 0,
-   "con_quote": 0,
-   "esempio": null,
-   "errore": null
-  },
-  "conmebol.libertadores": {
-   "partite": 0,
-   "con_quote": 0,
-   "esempio": null,
-   "errore": null
   }
  },
  "football_data": {

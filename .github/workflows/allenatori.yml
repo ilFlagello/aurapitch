@@ -22,6 +22,10 @@ jobs:
       - name: Studio e termometro della panchina
         run: |
           if [ -f strumenti/test_allenatori.py ]; then pip install -q numpy && python3 strumenti/test_allenatori.py; fi
+      - name: Termometro nell'app (stagione in corso da Football-Data)
+        run: |
+          python3 -c "import raccoglitore; raccoglitore.scarica_stagione_fd()" || true
+          python3 genera_app.py --panchine
       - name: Salva
         run: |
           git config user.name "aurapitch-raccolta"; git config user.email "aurapitch-raccolta@users.noreply.github.com"

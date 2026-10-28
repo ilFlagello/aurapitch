@@ -683,27 +683,7 @@ def genera():
             delta = (d - oggi).days
             out["days"].append({"k": d.isoformat(), "label": etich.get(delta, f"{GG[d.weekday()]} {d.day}")})
     out["today"] = oggi.isoformat()
-    # allenatori e termometro della panchina (file a parte: si scarica solo quando serve)
-    try:
-        import panchine as PN
-        pc = PN.calcola(FD)
-        nomi = {}
-        for m in out["matches"]:
-            if m["lg"] in PN.LEGHE:
-                nomi[(m["lg"], m["h"])] = nomi[(m["lg"], m["a"])] = None
-        for k in PN.LEGHE:
-            for r in (out["standings"].get(k) or {}).get("generale", []):
-                nomi[(k, r["team"])] = None
-        sch = {}
-        for (k, t) in nomi:
-            c = nome_csv(k, t) or (t if t in pc else None)
-            if c and c in pc:
-                sch[t] = pc[c]
-        with open(os.path.join("app", "data", "panchine.json"), "w", encoding="utf-8") as f:
-            json.dump({"generato": out["generato"], "squadre": sch}, f, ensure_ascii=False, separators=(",", ":"))
-        print(f"Panchine: {len(sch)} squadre con allenatore e termometro")
-    except Exception as e:  # noqa: BLE001
-        print("Panchine: errore", e)
+    scrivi_panchine(out)
     out["label"] = f"aggiornati il {out['generato'][:5]} alle {out['generato'][-5:]}"
     squadre = {m["h"] for m in out["matches"]} | {m["a"] for m in out["matches"]}
     for v in out["standings"].values():
@@ -782,6 +762,30 @@ def aggiorna_arbitri(d):
             CK.con_arbitro(m, arb)
         n += 1
     return n
+
+
+def scrivi_panchine(out):
+    """Allenatori e termometro della panchina in app/data/panchine.json (file a parte: si scarica solo quando serve)."""
+    try:
+        import panchine as PN
+        pc = PN.calcola(FD)
+        nomi = {}
+        for m in out.get("matches", []):
+            if m["lg"] in PN.LEGHE:
+                nomi[(m["lg"], m["h"])] = nomi[(m["lg"], m["a"])] = None
+        for k in PN.LEGHE:
+            for r in ((out.get("standings") or {}).get(k) or {}).get("generale", []):
+                nomi[(k, r["team"])] = None
+        sch = {}
+        for (k, t) in nomi:
+            c = PN.abbina(t, [n for n, v in pc.items() if v["lg"] == k])
+            if c:
+                sch[t] = pc[c]
+        with open(os.path.join("app", "data", "panchine.json"), "w", encoding="utf-8") as f:
+            json.dump({"generato": out.get("generato"), "squadre": sch}, f, ensure_ascii=False, separators=(",", ":"))
+        print(f"Panchine: {len(sch)} squadre con allenatore e termometro")
+    except Exception as e:  # noqa: BLE001
+        print("Panchine: errore", e)
 
 
 TARATURA = os.path.join(DATA, "taratura_fattori.json")
@@ -1047,6 +1051,9 @@ def aggiorna_storico(d):
 
 
 def main():
+    if "--panchine" in sys.argv:  # solo allenatori e termometro (workflow "Allenatori", ogni mattina)
+        scrivi_panchine(jload(OUT, {}) or {})
+        return
     if "--live" in sys.argv:
         d = aggiorna_live()
         if d is None:

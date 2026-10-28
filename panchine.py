@@ -4,13 +4,15 @@ verificato in strumenti/test_allenatori.py (AUC 0,73 sulle stagioni 2020/21-2025
 da Football-Data.co.uk (data/fd/stagione_XX.csv). Le probabilità non entrano nelle quote: lo studio mostra che il mercato
 tiene già conto dell'allenatore."""
 import csv
+import re
 import json
 import math
 import os
 from datetime import date, datetime, timezone
 
 LEGHE = ("I1", "I2", "E0", "E1", "SP1", "D1", "F1")
-LIVELLI = [(0.03, "Tranquilla"), (0.08, "Da tenere d'occhio"), (0.15, "Scotta"), (1.01, "Rovente")]
+# soglie rispetto alla media: in un mese circa il 6% degli allenatori lascia la panchina
+LIVELLI = [(0.06, "Tranquilla"), (0.12, "Da tenere d'occhio"), (0.20, "Scotta"), (1.01, "Rovente")]
 
 
 def _jload(p, d=None):
@@ -59,6 +61,55 @@ def _calibra(p, fasce):
         if p <= x1:
             return y0 + (y1 - y0) * (p - x0) / (x1 - x0)
     return min(0.6, p * pts[-1][1] / pts[-1][0])
+
+
+GENERICHE = {"united", "city", "town", "athletic", "rovers", "wanderers", "county", "albion", "real", "sporting", "fc", "ac", "as", "sc", "cf", "club", "de", "calcio", "1"}
+
+
+def parole(x):
+    import unicodedata
+    t = unicodedata.normalize("NFKD", str(x or "")).encode("ascii", "ignore").decode().lower().replace("'", "")
+    return {w for w in re.split(r"[^a-z0-9]+", t) if w and w not in GENERICHE}
+
+
+# nomi dell'app (football-data.org, ESPN) → nomi dei CSV di Football-Data.co.uk, quando le parole non bastano
+ALIAS_FD = {"manchester united": "Man United", "man united": "Man United", "manchester city": "Man City", "man city": "Man City",
+            "atletico madrid": "Ath Madrid", "atletico de madrid": "Ath Madrid", "atleti": "Ath Madrid", "athletic club": "Ath Bilbao", "athletic": "Ath Bilbao",
+            "athletic bilbao": "Ath Bilbao", "barca": "Barcelona", "nottingham forest": "Nott'm Forest", "nottingham": "Nott'm Forest",
+            "paris saint-germain": "Paris SG", "paris saint germain": "Paris SG", "psg": "Paris SG", "sheffield wednesday": "Sheffield Weds",
+            "queens park rangers": "QPR", "wolverhampton wanderers": "Wolves", "wolverhampton": "Wolves", "west bromwich albion": "West Brom",
+            "borussia monchengladbach": "M'gladbach", "monchengladbach": "M'gladbach", "eintracht frankfurt": "Ein Frankfurt", "frankfurt": "Ein Frankfurt",
+            "bayer leverkusen": "Leverkusen", "borussia dortmund": "Dortmund", "1. fc koln": "FC Koln", "fc koln": "FC Koln", "real sociedad": "Sociedad",
+            "celta vigo": "Celta", "celta": "Celta", "real betis": "Betis", "rayo vallecano": "Vallecano", "deportivo alaves": "Alaves", "alaves": "Alaves",
+            "espanyol": "Espanol", "saint-etienne": "St Etienne", "hellas verona": "Verona", "internazionale": "Inter", "inter milan": "Inter",
+            "bayern munich": "Bayern Munich", "bayern munchen": "Bayern Munich", "fc bayern munchen": "Bayern Munich", "brighton hove": "Brighton",
+            "brighton & hove albion": "Brighton", "tottenham hotspur": "Tottenham", "newcastle united": "Newcastle", "west ham united": "West Ham",
+            "leeds united": "Leeds", "hamburger sv": "Hamburg", "st. pauli": "St Pauli", "fc st. pauli": "St Pauli", "sporting gijon": "Sp Gijon",
+            "preston north end": "Preston", "olympique lyonnais": "Lyon", "olympique de marseille": "Marseille", "as monaco": "Monaco"}
+
+
+def _base(x):
+    import unicodedata
+    return unicodedata.normalize("NFKD", str(x or "")).encode("ascii", "ignore").decode().lower().replace(" fc", "").replace("fc ", "").strip()
+
+
+def abbina(nome, candidati):
+    """Il nome di Football-Data più simile (parole in comune, escluse quelle generiche come United o City)."""
+    if nome in candidati:
+        return nome
+    al = ALIAS_FD.get(_base(nome)) or ALIAS_FD.get(_base(nome).replace("-", " "))
+    if al:
+        return al if al in candidati else None
+    a = parole(nome)
+    best, bs = None, 0.0
+    for c in candidati:
+        b = parole(c)
+        if not a or not b:
+            continue
+        s = len(a & b) / len(a | b) + (0.3 if a <= b or b <= a else 0)
+        if s > bs:
+            best, bs = c, s
+    return best if bs >= 0.5 else None
 
 
 def calcola(fd_dir="data/fd", storico="storico"):
@@ -111,7 +162,8 @@ def calcola(fd_dir="data/fd", storico="storico"):
             persi5 = sum(1 for x in u5 if x < -1.2)
             cr = car.get(c["qid"], {"n": 0, "res": 0.0})
             res = (cr["res"] + sum(x[1] for x in mie)) / (cr["n"] + len(mie) + 20)
-            x = [sum(u5) / 5 if len(u5) == 5 else sum(u5) / max(1, len(u5)), sum(u10) / max(1, len(u10)), math.log1p(giorni), max(0, cambi3), persi5, res * 10]
+            # denominatori fissi come nello studio (lì c'era sempre anche la stagione prima): a inizio stagione niente valori estremi
+            x = [sum(u5) / 5, sum(u10) / 10, math.log1p(giorni), max(0, cambi3), persi5, res * 10]
             z = sum(w * (v - mu) / sd for w, v, mu, sd in zip(M["pesi"], x, M["media"], M["scarto"])) + M["intercetta"]
             p30 = _calibra(1 / (1 + math.exp(-z)), T.get("verifica", {}).get("calibrazione") or [])
             livello = next(n for soglia, n in LIVELLI if p30 < soglia)

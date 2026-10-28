@@ -31,6 +31,7 @@ jobs:
       API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
       ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
       FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}
+      GH_DISPATCH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,6 +40,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Apri la cassaforte (diario, modello, storico dei consigli)
+        if: inputs.modo != 'archivio'
+        run: python3 strumenti/cassaforte.py apri || echo "::warning::Cassaforte non aperta"
 
       - name: Archivio voti e diretta (nessun credito delle quote)
         if: inputs.modo == 'archivio'
@@ -61,6 +66,10 @@ jobs:
           python raccoglitore.py --notizie
           python raccoglitore.py --arbitri
           python genera_app.py --live
+
+      - name: Chiudi la cassaforte
+        if: inputs.modo != 'archivio'
+        run: python3 strumenti/cassaforte.py chiudi || echo "::warning::Cassaforte non chiusa"
 
       - name: Salva i dati nell'archivio
         run: |

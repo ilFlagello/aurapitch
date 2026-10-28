@@ -1,6 +1,7 @@
 // Test del modulo account del servizio (node test/test_accesso.mjs): firme delle passkey (ES256 e RS256), token Google,
 // percorso completo con un archivio simulato (registrazione, accesso, esporta, elimina), recensioni, statistiche, amministratore.
-import { verificaGoogle, verificaRegistrazione, verificaAccesso, gestisci } from "../worker/accesso.js";
+import { verificaGoogle, verificaRegistrazione, verificaAccesso, gestisci, firmaValida } from "../worker/accesso.js";
+import { execFileSync } from "node:child_process";
 
 const enc = new TextEncoder();
 const b64u = (buf) => Buffer.from(buf).toString("base64url");
@@ -159,6 +160,19 @@ const resta = [...mem.keys()].filter((k) => /^(a|pk|ses|u|s|gs):/.test(k));
 ok(resta.length === 0, "dopo l'eliminazione non deve restare nulla dell'account: " + resta.join(", "));
 ok(JSON.parse(mem.get("g:GR1")).membri.join() === "altro", "uscita dai gruppi della gara");
 ok((await chiama("/account/io", {}, t1)).st === 401, "dopo l'eliminazione le sessioni non valgono piu");
+
+// ---------- cassaforte: la firma calcolata da strumenti/cassaforte.py (Python) deve valere per il servizio ----------
+{
+  const tok = "token-di-prova-" + Math.random().toString(36).slice(2), corpoC = JSON.stringify({ nome: "modello.json" });
+  const firma = execFileSync("python3", ["-c", "import sys,os; sys.path.insert(0,'strumenti'); import cassaforte as C; print(C.firma(os.environ['GH_DISPATCH_TOKEN'], '/cassaforte/leggi', sys.argv[1]))", corpoC],
+    { env: { ...process.env, GH_DISPATCH_TOKEN: tok } }).toString().trim();
+  const rq = (f, c = corpoC, p = "/cassaforte/leggi") => new Request("https://s.example" + p, { method: "POST", headers: { "X-Firma": f }, body: c });
+  ok(await firmaValida(rq(firma), { GH_TOKEN: tok }, corpoC), "cassaforte: firma Python valida rifiutata");
+  ok(!(await firmaValida(rq(firma), { GH_TOKEN: tok + "x" }, corpoC)), "cassaforte: firma con un altro token accettata");
+  ok(!(await firmaValida(rq(firma), { GH_TOKEN: tok }, corpoC + " ")), "cassaforte: corpo cambiato accettato");
+  ok(!(await firmaValida(rq(firma, corpoC, "/cassaforte/scrivi"), { GH_TOKEN: tok }, corpoC)), "cassaforte: firma riusata su un'altra operazione accettata");
+  ok(!(await firmaValida(rq("1000000000." + firma.split(".")[1]), { GH_TOKEN: tok }, corpoC)), "cassaforte: firma scaduta accettata");
+}
 
 console.log(`Accesso e account: ${prove} controlli, ${errori} errori`);
 process.exit(errori ? 1 : 0);

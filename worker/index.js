@@ -4,7 +4,7 @@
    Archivio: "subs" = iscrizioni con le partite seguite; "state" = ultimo stato visto di ogni partita; "vapid" = chiavi. */
 
 import { DurableObject } from "cloudflare:workers";
-import { gestisci as accesso, ORIGINI, pulisciInattivi } from "./accesso.js";
+import { gestisci as accesso, ORIGINI, pulisciInattivi, firmaValida } from "./accesso.js";
 
 const SITE = "https://site.api.espn.com/apis/site/v2/sports/soccer/";
 // solo l'app AuraPitch puo usare il servizio dal browser; niente dati in cache intermedie, niente indirizzo di provenienza
@@ -50,6 +50,7 @@ export class Archivio extends DurableObject {
     for (const [c, n] of Object.entries(campi)) v[c] = (v[c] || 0) + n;
     this._put(k, JSON.stringify(v), ttl);
   }
+  async chiavi(prefisso) { return this.sql.exec("SELECT k FROM kv WHERE k >= ? AND k < ?", prefisso, prefisso + "\uffff").toArray().map((r) => r.k); }
   async lista(prefisso, max) { return this.sql.exec("SELECT k, v FROM kv WHERE k >= ? AND k < ? AND (exp IS NULL OR exp > ?) ORDER BY k DESC LIMIT ?", prefisso, prefisso + "\uffff", Date.now(), max).toArray().map((r) => [r.k, r.v]); }
   async pulisci() { this.sql.exec("DELETE FROM kv WHERE exp IS NOT NULL AND exp < ?", Date.now()); }
   // voto atomico: legge e scrive profilo e conteggio in un colpo solo
@@ -325,14 +326,38 @@ function troppi(req, max = 20) {
   if (conta.size > 5000) conta.clear();
   return n > max;
 }
+/* ---------- cassaforte: diario delle previsioni, modello imparato, storico dei consigli ----------
+   Non stanno nel repository pubblico ma qui, nell'archivio privato del servizio. Ci accedono solo i processi automatici
+   di GitHub, firmando ogni richiesta (HMAC-SHA256 con il token gia condiviso tra GitHub e il servizio, che non viaggia mai).
+   Firma valida 5 minuti; un file alla volta (max 1,5 MB); nomi ammessi da una lista chiusa. */
+const NOME_CF = /^(diario\/\d{4}-\d{2}-\d{2}\.json|modello\.json|consigli\.json|taratura_fattori\.json)$/;
+async function cassaforte(req, url, env, DB, segnala) {
+  const nojson = (d, st = 200) => new Response(JSON.stringify(d), { status: st, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
+  if (req.method !== "POST") return nojson({ ok: false }, 405);
+  const txt = await req.text();
+  if (txt.length > 1600000) return nojson({ ok: false, err: "troppo grande" }, 413);
+  if (!(await firmaValida(req, env, txt))) { segnala("cassaforte_firma"); return nojson({ ok: false, err: "firma non valida" }, 403); }
+  if (!DB.stub) return nojson({ ok: false, err: "archivio non pronto" }, 503);
+  let d; try { d = JSON.parse(txt); } catch (e) { return nojson({ ok: false }, 400); }
+  if (url.pathname === "/cassaforte/elenco") return nojson({ ok: true, nomi: (await DB.stub.chiavi("cf:")).map((k) => k.slice(3)) });
+  if (!NOME_CF.test(String(d.nome || ""))) return nojson({ ok: false, err: "nome non ammesso" }, 400);
+  if (url.pathname === "/cassaforte/leggi") return nojson({ ok: true, testo: await DB.get("cf:" + d.nome) });
+  if (url.pathname === "/cassaforte/scrivi" && typeof d.testo === "string") { await DB.put("cf:" + d.nome, d.testo); return nojson({ ok: true }); }
+  return nojson({ ok: false }, 404);
+}
+
 async function sha(s) { return b64u(await crypto.subtle.digest("SHA-256", enc.encode(s))).slice(0, 22); }
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const url = new URL(req.url);
     const DB = archivio(env);
     if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
-    const acc = await accesso(req, url, env, DB, json, troppi);
+    // allarmi di sicurezza: conteggi del giorno (richieste respinte, firme e codici sbagliati), letti dal controllo orario
+    const segnala = (tipo) => { try { ctx && ctx.waitUntil(DB.stub ? DB.stub.incr("sic:" + new Date().toISOString().slice(0, 10), { [tipo]: 1 }, 30 * 86400).catch(() => {}) : Promise.resolve()); } catch (e) { /* niente */ } };
+    const troppiS = (r, max) => { const t = troppi(r, max); if (t) segnala("limite"); return t; };
+    if (url.pathname.startsWith("/cassaforte/")) return cassaforte(req, url, env, DB, segnala);
+    const acc = await accesso(req, url, env, DB, json, troppiS, segnala);
     if (acc) return acc;
     if (url.pathname === "/x") {
       let t;
@@ -390,6 +415,7 @@ export default {
       const state = (await DB.get("state", "json")) || {};
       return json({
         iscrizioni: Object.keys(subs).length, partite_seguite: new Set(Object.values(subs).flatMap((x) => (x.follow || []).map((f) => f.lgE + "/" + f.eid))).size,
+        sicurezza: DB.stub ? (await DB.get("sic:" + new Date().toISOString().slice(0, 10), "json")) || {} : null,
         stato_partite: Object.keys(state).length, archivio: DB.stub ? { tipo: "database", chiavi: await DB.stub.conta(), migrazione: (await DB.get("_migrato")) ? "fatta" : "in corso" } : "KV", orologio: (await DB.get("orologio", "json")) || null, vapid: !!(await env.KV.get("vapid")),
       });
     }

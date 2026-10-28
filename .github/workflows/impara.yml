@@ -17,10 +17,16 @@ jobs:
         with: { python-version: "3.12" }
       - name: Stagione in corso da Football-Data (risultati e quote)
         run: python3 -c "import raccoglitore; raccoglitore.scarica_stagione_fd()" || true
+      - name: Apri la cassaforte (tutto il diario)
+        env: { GH_DISPATCH_TOKEN: "${{ secrets.GH_DISPATCH_TOKEN }}" }
+        run: python3 strumenti/cassaforte.py apri --tutto
       - name: Impara dai risultati
         run: |
           pip install -q numpy
           python3 strumenti/impara.py
+      - name: Chiudi la cassaforte (modello nuovo)
+        env: { GH_DISPATCH_TOKEN: "${{ secrets.GH_DISPATCH_TOKEN }}" }
+        run: python3 strumenti/cassaforte.py chiudi
       - name: Salva
         run: |
           git config user.name "aurapitch-raccolta"; git config user.email "aurapitch-raccolta@users.noreply.github.com"

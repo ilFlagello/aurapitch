@@ -41,6 +41,16 @@ async function hmac(env, testo) {
 }
 const impronta = async (token) => b64u(await sha256(token)).slice(0, 32);
 
+/* ---------- firma dei processi automatici (cassaforte): HMAC-SHA256 di "ts\npercorso\nsha256(corpo)" ---------- */
+export async function firmaValida(req, env, corpoTxt) {
+  if (!env.GH_TOKEN) return false;
+  const [ts, sig] = String(req.headers.get("X-Firma") || "").split(".");
+  if (!/^\d{10}$/.test(ts || "") || Math.abs(Date.now() / 1000 - Number(ts)) > 300 || !sig) return false;
+  const k = await crypto.subtle.importKey("raw", enc.encode(env.GH_TOKEN), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+  const corpoH = b64u(await sha256(corpoTxt));
+  try { return await crypto.subtle.verify("HMAC", k, unb64u(sig), enc.encode(ts + "\n" + new URL(req.url).pathname + "\n" + corpoH)); } catch (e) { return false; }
+}
+
 /* ---------- sfide monouso ---------- */
 async function nuovaSfida(DB, extra = {}) {
   const s = casuale(32);
@@ -200,7 +210,7 @@ export async function pulisciInattivi(DB) {
 }
 
 /* ---------- gestione delle richieste: restituisce una Response o null (= non e una rotta di questo modulo) ---------- */
-export async function gestisci(req, url, env, DB, json, troppi) {
+export async function gestisci(req, url, env, DB, json, troppi, segnala = () => {}) {
   const p = url.pathname;
   if (!p.startsWith("/auth/") && !p.startsWith("/account/") && !p.startsWith("/admin/") && p !== "/feedback" && p !== "/evento") return null;
   const origini = env.ORIGINI ? String(env.ORIGINI).split(",") : ORIGINI;
@@ -253,7 +263,7 @@ export async function gestisci(req, url, env, DB, json, troppi) {
     const sf = d && (await usaSfida(DB, d.sfida));
     if (!sf || sf.tipo !== "google" || !sf.rh) return json({ ok: false, err: "richiesta scaduta, riprova dall'app" }, 400);
     const v = await verificaGoogle(d.id_token, env.GOOGLE_CLIENT_ID, d.sfida, env.CHIAVI_GOOGLE_PROVA || (await chiaviGoogle()));
-    if (v.err) return json({ ok: false, err: v.err }, 401);
+    if (v.err) { segnala("google_rifiutato"); return json({ ok: false, err: v.err }, 401); }
     await DB.put("rit:" + d.sfida, JSON.stringify({ g: await hmac(env, "google:" + v.sub), rh: sf.rh }), { expirationTtl: 600 });
     return json({ ok: true });
   }
@@ -263,7 +273,7 @@ export async function gestisci(req, url, env, DB, json, troppi) {
     if (!/^[A-Za-z0-9_-]{43}$/.test(String(d.sfida || "")) || !/^[A-Za-z0-9_-]{43}$/.test(String(d.ritiro || ""))) return json({ ok: false }, 400);
     const r = await DB.get("rit:" + d.sfida, "json");
     if (!r) return json({ ok: true, pronto: false });
-    if (!uguali(enc.encode(r.rh), enc.encode(await impronta(d.ritiro)))) return json({ ok: false, err: "codice di ritiro errato" }, 403);
+    if (!uguali(enc.encode(r.rh), enc.encode(await impronta(d.ritiro)))) { segnala("ritiro_errato"); return json({ ok: false, err: "codice di ritiro errato" }, 403); }
     await DB.delete("rit:" + d.sfida);
     let aid = await DB.get("gs:" + r.g), a, nuovo = false;
     const s = await sessione(req, DB);
@@ -282,7 +292,7 @@ export async function gestisci(req, url, env, DB, json, troppi) {
     const sf = d && (await usaSfida(DB, d.sfida));
     if (!sf || sf.tipo !== "registra" || !sf.aid) return json({ ok: false, err: "richiesta scaduta, riprova" }, 400);
     const v = await verificaRegistrazione(d, d.sfida, rpId, origini);
-    if (v.err) return json({ ok: false, err: v.err }, 401);
+    if (v.err) { segnala("passkey_rifiutata"); return json({ ok: false, err: v.err }, 401); }
     if (await DB.get("pk:" + v.id)) return json({ ok: false, err: "passkey gia registrata" }, 409);
     let a = await DB.get("a:" + sf.aid, "json"), nuovo = false;
     if (a) { const s = await sessione(req, DB); if (!s || s.aid !== sf.aid) return json({ ok: false, err: "accedi prima di aggiungere una passkey" }, 403); }
@@ -301,7 +311,7 @@ export async function gestisci(req, url, env, DB, json, troppi) {
     const pk = /^[A-Za-z0-9_-]{16,700}$/.test(String(d.id || "")) ? await DB.get("pk:" + d.id, "json") : null;
     if (!pk) return json({ ok: false, err: "passkey sconosciuta: forse l'account e stato eliminato" }, 404);
     const v = await verificaAccesso(d, d.sfida, pk, rpId, origini);
-    if (v.err) return json({ ok: false, err: v.err }, 401);
+    if (v.err) { segnala("passkey_rifiutata"); return json({ ok: false, err: v.err }, 401); }
     const a = await DB.get("a:" + pk.aid, "json");
     if (!a) return json({ ok: false, err: "account non trovato" }, 404);
     pk.conta = v.conta;
@@ -312,7 +322,7 @@ export async function gestisci(req, url, env, DB, json, troppi) {
 
   // da qui in poi serve essere dentro
   const s = await sessione(req, DB);
-  if (!s) return json({ ok: false, err: "sessione scaduta: accedi di nuovo" }, 401);
+  if (!s) { segnala("sessione_non_valida"); return json({ ok: false, err: "sessione scaduta: accedi di nuovo" }, 401); }
   const { aid, a } = s;
 
   if (p === "/account/io") return json({ ok: true, account: pubblico(a) });
@@ -365,7 +375,7 @@ export async function gestisci(req, url, env, DB, json, troppi) {
     if (troppi(req, 3)) return json({ ok: false, err: "troppi tentativi" }, 429);
     const d = (await corpo(req, 500)) || {};
     if (!env.ADMIN_CODE || String(env.ADMIN_CODE).length < 12) return json({ ok: false, err: "codice amministratore non impostato" }, 503);
-    if (!uguali(await sha256(String(d.codice || "")), await sha256(String(env.ADMIN_CODE)))) return json({ ok: false, err: "codice errato" }, 403);
+    if (!uguali(await sha256(String(d.codice || "")), await sha256(String(env.ADMIN_CODE)))) { segnala("admin_errato"); return json({ ok: false, err: "codice errato" }, 403); }
     a.admin = true;
     await DB.put("a:" + aid, JSON.stringify(a));
     return json({ ok: true, account: pubblico(a) });

@@ -219,6 +219,16 @@ R["termometro"] = {"campioni": len(eventi), "uscite": int(EY.sum()), "frequenza_
                                 "auc": round(auc, 3) if auc else None, "uscite_nel_10pct_piu_caldo": round(float(yt[ordine[:dec]].sum() / max(1, yt.sum())), 3),
                                 "calibrazione": fasce},
                    "modello": {"variabili": NT, "pesi": np.round(w, 4).tolist(), "intercetta": round(float(b), 4), "media": np.round(mu_t, 4).tolist(), "scarto": np.round(sd_t, 4).tolist()}}
+# modello finale per l'app: stessi pesi stimati su tutte le stagioni (contiene anche gli anni più recenti, con più esoneri)
+mu_f, sd_f = EX.mean(0), EX.std(0) + 1e-9
+Zf = (EX - mu_f) / sd_f
+wf = np.zeros(Zf.shape[1]); bf = math.log(EY.mean() / (1 - EY.mean()))
+for it in range(4000):
+    pz = 1 / (1 + np.exp(-(Zf @ wf + bf)))
+    wf -= 0.5 * (Zf.T @ (pz - EY) / len(EY) + 0.01 * wf); bf -= 0.5 * float(np.mean(pz - EY))
+R["termometro"]["modello_finale"] = {"variabili": NT, "pesi": np.round(wf, 4).tolist(), "intercetta": round(float(bf), 4), "media": np.round(mu_f, 4).tolist(), "scarto": np.round(sd_f, 4).tolist()}
 json.dump(R, open("storico/test_allenatori.json", "w"), ensure_ascii=False, indent=1)
+# rendimento in carriera di ogni allenatore (punti fatti meno attesi dalle quote, per partita) fino alla fine dell'archivio
+json.dump({q: {"n": v[0], "res": round(v[1], 3)} for q, v in carriera.items()}, open("storico/allenatori_carriere.json", "w"), separators=(",", ":"))
 print(json.dumps({k: v for k, v in R.items() if k != "termometro"}, ensure_ascii=False, indent=1)[:3000])
 print(json.dumps(R["termometro"]["verifica"], ensure_ascii=False))

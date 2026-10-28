@@ -96,6 +96,32 @@ def main():
             out[t] = {"wikidata": best, "nome": x["nome"], "allenatori": sorted([a for a in x["all"] if a["da"]], key=lambda a: a["da"])}
         else:
             mancano.append(t)
+    # seconda prova per le squadre non trovate: ricerca per nome su Wikidata (es. Chelsea, Sunderland)
+    ancora = []
+    for t in mancano:
+        nome = ALIAS.get(piano(t), t)
+        trovato = None
+        for q in (nome + " F.C.", nome + " FC", nome):
+            j = get("https://www.wikidata.org/w/api.php?action=wbsearchentities&format=json&language=en&type=item&limit=7&search=" + urllib.parse.quote(q))
+            for x in (j or {}).get("search", []):
+                if "football club" in (x.get("description") or "").lower() and not NO_PRIMA.search(x.get("label", "")) and not NO_PRIMA.search(x.get("description", "")):
+                    trovato = x; break
+            if trovato:
+                break
+        if not trovato:
+            ancora.append(t); continue
+        qid = trovato["id"]
+        jj = get("https://query.wikidata.org/sparql?format=json&query=" + urllib.parse.quote(
+            "SELECT ?coach ?coachLabel ?start ?end WHERE { wd:%s p:P286 ?st . ?st ps:P286 ?coach . OPTIONAL { ?st pq:P580 ?start } OPTIONAL { ?st pq:P582 ?end } "
+            "SERVICE wikibase:label { bd:serviceParam wikibase:language \"en,it\". } }" % qid))
+        al = [{"chi": b["coachLabel"]["value"], "qid": b["coach"]["value"].rsplit("/", 1)[1], "da": data(b.get("start")), "a": data(b.get("end"))} for b in (jj or {}).get("results", {}).get("bindings", [])]
+        al = sorted([a for a in al if a["da"]], key=lambda a: a["da"])
+        if al:
+            out[t] = {"wikidata": qid, "nome": trovato.get("label"), "allenatori": al}
+        else:
+            ancora.append(t)
+        time.sleep(1)
+    mancano = ancora
     os.makedirs("storico", exist_ok=True)
     json.dump({"fonte": "Wikidata (CC0), proprieta P286", "squadre": out, "non_trovate": mancano}, open("storico/allenatori.json", "w"), ensure_ascii=False, indent=0)
     print("abbinate", len(out), "non trovate", len(mancano), mancano[:40])

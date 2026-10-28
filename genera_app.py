@@ -500,7 +500,7 @@ def genera():
     for nome, es in (esd.get("squadre") or {}).items():
         if es.get("lg") in ("I2", "EL", "ECL", "CI") and es.get("risultati") and "es:" + nome not in per_team:
             per_team["es:" + nome] = [{"t": utc(x["t"].replace("Z", "+00:00") if x["t"].endswith("Z") else x["t"]), "avv": x["avv"], "casa": x["casa"], "gf": x["gf"], "gs": x["gs"]} for x in es["risultati"]]
-    medie_ck = {k: CK.medie_stagione(os.path.join(FD, f"stagione_{k}.csv")) for k in ("I1", "I2", "E0", "SP1", "D1")}
+    medie_ck = {k: CK.medie_stagione(os.path.join(FD, f"stagione_{k}.csv")) for k in ("I1", "I2", "E0", "SP1", "D1", "E1", "F1")}
     refs, _ = storia_arbitri(fdp)
     print(f"Arbitri con statistiche: {len(refs)}")
     designati = (jload(os.path.join(DATA, "espn", "arbitri.json"), {}) or {}).get("partite", [])
@@ -683,6 +683,27 @@ def genera():
             delta = (d - oggi).days
             out["days"].append({"k": d.isoformat(), "label": etich.get(delta, f"{GG[d.weekday()]} {d.day}")})
     out["today"] = oggi.isoformat()
+    # allenatori e termometro della panchina (file a parte: si scarica solo quando serve)
+    try:
+        import panchine as PN
+        pc = PN.calcola(FD)
+        nomi = {}
+        for m in out["matches"]:
+            if m["lg"] in PN.LEGHE:
+                nomi[(m["lg"], m["h"])] = nomi[(m["lg"], m["a"])] = None
+        for k in PN.LEGHE:
+            for r in (out["standings"].get(k) or {}).get("generale", []):
+                nomi[(k, r["team"])] = None
+        sch = {}
+        for (k, t) in nomi:
+            c = nome_csv(k, t) or (t if t in pc else None)
+            if c and c in pc:
+                sch[t] = pc[c]
+        with open(os.path.join("app", "data", "panchine.json"), "w", encoding="utf-8") as f:
+            json.dump({"generato": out["generato"], "squadre": sch}, f, ensure_ascii=False, separators=(",", ":"))
+        print(f"Panchine: {len(sch)} squadre con allenatore e termometro")
+    except Exception as e:  # noqa: BLE001
+        print("Panchine: errore", e)
     out["label"] = f"aggiornati il {out['generato'][:5]} alle {out['generato'][-5:]}"
     squadre = {m["h"] for m in out["matches"]} | {m["a"] for m in out["matches"]}
     for v in out["standings"].values():

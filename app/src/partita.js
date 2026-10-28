@@ -1,6 +1,7 @@
 /* AuraPitch - riga partita e scheda partita: diretta, formazioni, IA, statistiche, cronaca, In breve, pagina squadra. */
 import React, { useState, useEffect, useRef } from "react";
 import { scaricaCalendario, immaginePartita } from "./condividi.js";
+import { Citazione, citazionePartita, citazioneArbitro } from "./citazioni.js";
 import { useSummary, loadPlayer, loadCareer, ruolo, findTeam, loadTeam, minuto, ESPN_LG, andamento } from "./live.js";
 import { Voce, AuraLine, C, Crest, Ctx, DOT, FavPill, Flag, Form, GROUPS, Ic, Seg, Sheet, TONE, Tabs, auraCol, evalCode, html, leggiXg, lum, mGroup, mLabel, nf, norm, odd, options, pct, pctL, spiega, store } from "./base.js";
 import { usaVoti } from "./campionati.js";
@@ -858,7 +859,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
           <${TipView} m=${m} sm=${sm} />
           <${Voce} id="fattori" titolo="Come l'IA corregge le quote" icona=${Ic.Sparkles}
             sotto=${(m.fattori || []).filter((f) => f.delta || f.delta_avv).length ? (m.fattori || []).filter((f) => f.delta || f.delta_avv).length + " correzioni per assenze e notizie" : "Nessuna correzione: l'IA segue le quote"}><${FattoriCard} m=${m} /><//>
-          ${m.arbitro && html`<${Voce} id="arbitro" titolo="Arbitro" icona=${Ic.Users} sotto=${m.arbitro.nome + (m.arbitro.ratio && m.arbitro.n >= 8 ? (m.arbitro.ratio.K > 1.08 ? ": ammonisce più della media" : m.arbitro.ratio.K < 0.92 ? ": ammonisce meno della media" : ": nella media") : "")}><${ArbitroCard} m=${m} /><//>`}
+          ${m.arbitro && html`<${Voce} id="arbitro" titolo="Arbitro" icona=${Ic.Users} sotto=${m.arbitro.nome + (m.arbitro.ratio && m.arbitro.n >= 8 ? (m.arbitro.ratio.K > 1.08 ? ": ammonisce più della media" : m.arbitro.ratio.K < 0.92 ? ": ammonisce meno della media" : ": nella media") : "")}><${ArbitroCard} m=${m} />${citazioneArbitro(m) && html`<div className="px-1"><${Citazione} q=${citazioneArbitro(m)} piccola=${true} /></div>`}<//>`}
           ${m.cart && html`<${Voce} id="cartellini" titolo="Cartellini, falli e angoli attesi" icona=${Ic.BarChart3 || Ic.Activity}
             sotto=${[["K", "Cartellini"], ["C", "Angoli"], ["F", "Falli"]].filter(([k]) => m.cart[k]).map(([k, l]) => l + " " + nf(m.cart[k].attesi)).join(" · ")}>
           <div className=${C.card + " p-4 space-y-1.5"}><div className=${C.lab}>Cartellini, falli e angoli attesi</div>
@@ -881,7 +882,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
         ${mt === 4 && html`<${React.Fragment}>
           <div className=${C.card + " p-4 space-y-3"}><div className="flex justify-between items-baseline"><span className=${C.lab}>Probabilità dalle quote</span><span className=${"text-[11px] " + C.mu}>Over 2,5: <b className=${C.tx}>${pct(m.mo)}%</b></span></div>
             <${AuraLine} m=${m} h=${6} labels=${true} />
-            ${!D.demo && m.nb ? html`<div className=${"text-[11px] " + C.mu}>Quota media di ${m.nb} bookmaker${m.prepartita ? ", aggiornata alle " + new Date(m.prepartita).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }) + " (prima del calcio d'inizio)" : ", fotografata al mattino"}.</div>` : null}
+            ${!D.demo && m.nb ? html`<div className=${"text-[11px] " + C.mu}>${m.nb === 1 ? "Quote di DraftKings (tramite ESPN)" : `Quota media di ${m.nb} bookmaker`}${m.prepartita ? ", aggiornata alle " + new Date(m.prepartita).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }) + " (prima del calcio d'inizio)" : ", fotografata al mattino"}.</div>` : null}
             ${m.mk_mattino && html`<div className=${"text-[12px] rounded-lg p-2 " + C.ch + " " + C.tx}><b>Movimento delle quote</b> dal mattino: ${["1", "X", "2"].map((e, i) => { const dd = m.mk[i] - m.mk_mattino[i]; return html`<span key=${e} className="mr-2 whitespace-nowrap tabular-nums">${e} ${pct(m.mk_mattino[i])}% → <b>${pct(m.mk[i])}%</b>${Math.abs(dd) >= 0.02 ? html`<span className=${dd > 0 ? " text-emerald-600 dark:text-emerald-300" : " text-rose-600 dark:text-rose-300"}> ${dd > 0 ? "▲" : "▼"}</span>` : ""}</span>`; })}
               <div className=${"text-[11px] " + C.mu}>Le quote vicine al calcio d'inizio sono le più precise: contengono formazioni e notizie dell'ultima ora.</div></div>`}
             <div className=${"text-[14px] font-semibold pt-1 " + C.tx}>Aggiungi alla tua schedina</div>
@@ -930,8 +931,12 @@ import { Anteprima, partitaSettimana } from "./extra.js";
       return html`<button onClick=${onClick} className=${"mt-3 w-full flex items-center justify-between rounded-[14px] px-3.5 py-2.5 text-[14px] font-semibold " + C.ch + " " + C.tx}><span>${children}</span><${Ic.ChevronRight} size=${17} className=${C.mu} /></button>`;
     }
     function InBreve({ m, sm, vai, onPlayer }) {
-      const { unlocked, setUnlock, addLeg, mySlip, lg } = React.useContext(Ctx);
+      const { unlocked, setUnlock, addLeg, mySlip, lg, D } = React.useContext(Ctx);
       const [avviso, setAvviso] = useState("");
+      // citazione: sempre nei grandi derby, a volte nei big match (le due squadre tra le prime 4, o la partita della settimana)
+      const S0 = D && D.standings[m.lg], pos0 = (t) => (S0 ? S0.generale.findIndex((r) => r.team === t) : -1);
+      const pw0 = D ? partitaSettimana(D) : null;
+      const cit = citazionePartita(m, (pos0(m.h) >= 0 && pos0(m.h) < 4 && pos0(m.a) >= 0 && pos0(m.a) < 4) || (pw0 && pw0.id === m.id));
       const st = sm && sm.st !== "NS" ? sm.st : m.st;
       const tip = m.tip && m.tip.consiglio;
       const inSlip = mySlip.find((x) => x.id === m.id);
@@ -945,6 +950,9 @@ import { Anteprima, partitaSettimana } from "./extra.js";
       const { D: DD } = React.useContext(Ctx);
       const grande = st === "NS" && (partitaSettimana(DD) || {}).id === m.id;
       return html`<${React.Fragment}>
+        ${cit && cit.derby && html`<div className=${C.card + " p-4 relative overflow-hidden"}>
+          <div className=${"text-[12px] font-semibold uppercase tracking-[0.08em] " + C.acc}>${cit.derby}</div>
+          <div className="mt-2"><${Citazione} q=${cit.q} /></div></div>`}
         ${grande && html`<${Anteprima} m=${m} />`}
         ${st === "NS" && tip && html`<div className=${C.card + " p-4"}>
           <div className="flex items-center gap-2 mb-2"><${Ic.Sparkles} size=${17} className=${C.acc} /><span className=${C.lab + " flex-1"}>Il consiglio dell'IA</span>
@@ -971,6 +979,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
           <${Vai} onClick=${() => vai(4)}>Forma, classifica e precedenti<//></div>`}
         ${st === "NS" && sm && sm.formazioni[0] && html`<div className=${C.card + " p-4"}><div className=${C.lab}>Formazioni ufficiali uscite</div>
           <div className=${"text-[14px] mt-1 " + C.mu}>${m.h} ${sm.formazioni[0].formation || ""}, ${m.a} ${(sm.formazioni[1] || {}).formation || ""}.</div><${Vai} onClick=${() => vai(2)}>Guarda le formazioni<//></div>`}
+        ${cit && !cit.derby && st === "NS" && html`<div className="px-1 py-1"><${Citazione} q=${cit.q} piccola=${true} /></div>`}
         <div className=${"grid gap-2 " + (st === "NS" ? "grid-cols-2" : "grid-cols-1")}>
           ${st === "NS" && html`<button onClick=${() => scaricaCalendario([m], lg, (m.h + "-" + m.a).replace(/[^\w-]+/g, "-")).then(() => setAvviso("Apri il file per aggiungerla al calendario (con promemoria 30 minuti prima)."))}
             className=${"py-3 rounded-[16px] text-[14px] font-semibold flex items-center justify-center gap-1.5 " + C.card + " " + C.tx}><${Ic.Calendar} size=${16} />Nel calendario</button>`}

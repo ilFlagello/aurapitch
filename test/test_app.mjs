@@ -13,6 +13,9 @@ const tmp = fs.mkdtempSync(path.join(process.env.RUNNER_TEMP || "/tmp", "ap-test
 const out = path.join(tmp, "base.mjs");
 await esbuild.build({ entryPoints: [path.join(APP, "src/base.js")], bundle: true, platform: "node", format: "esm", outfile: out, nodePaths: [MODS],
   alias: { htm: path.join(APP, "vendor/htm/index.mjs") }, logLevel: "error" });
+const outC = path.join(tmp, "citazioni.mjs");
+await esbuild.build({ entryPoints: [path.join(APP, "src/citazioni.js")], bundle: true, platform: "node", format: "esm", outfile: outC, nodePaths: [MODS],
+  alias: { htm: path.join(APP, "vendor/htm/index.mjs") }, logLevel: "error" });
 globalThis.localStorage = { getItem: () => null, setItem: () => {} };
 globalThis.document = { documentElement: { dataset: {} } };
 const B = await import(pathToFileURL(out).href);
@@ -50,6 +53,16 @@ if (pool.length >= 12) for (const prof of [0, 1, 2]) for (const T of [2, 5, 10, 
   const firme = new Set([1, 2, 3].map((v) => B.buildTarget(pool, prof, T, v).map((l) => l.m.id + l.k).join("|")));
   ok(firme.size >= 2, `stile ${prof}, x${T}: "Un'altra combinazione" non cambia`);
 }
+
+// 5. citazioni: derby riconosciuti (anche al contrario), nessun falso derby, frequenza misurata, autore sempre presente
+const Z = await import(pathToFileURL(outC).href);
+const dd = (h, a) => (Z.derbyDi({ h, a }) || {}).nome;
+ok(dd("Inter", "Milan") === "Derby della Madonnina" && dd("AC Milan", "Inter") === "Derby della Madonnina", "derby di Milano");
+ok(dd("Roma", "Lazio") === "Derby della Capitale" && dd("Liverpool", "Everton") === "Merseyside derby", "derby noti");
+ok(!dd("Paris FC", "Marseille") && !dd("Milan", "Bologna") && !dd("Venezia", "Inter"), "falsi derby");
+ok(Object.values(Z.Q).every((q) => q[0] && q[1]), "citazione senza autore");
+let conCit = 0; for (let i = 0; i < 600; i++) if (Z.citazioneSchedina([{ m: { id: "x" + i }, k: "1" }], 5)) conCit++;
+ok(conCit > 120 && conCit < 290, "frequenza delle citazioni nella schedina: " + conCit + " su 600");
 
 // 4. periodi
 ok(B.inPeriodo("2026-10-28", "oggi", "2026-10-28") && !B.inPeriodo("2026-10-29", "oggi", "2026-10-28"), "periodo oggi");

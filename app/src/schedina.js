@@ -1,6 +1,7 @@
 /* AuraPitch - Schedina IA, schedina come immagine, diario delle giocate. */
 import React, { useState, useEffect } from "react";
 import { immagineSchedina, mercatoBookmaker } from "./condividi.js";
+import { Citazione, citazioneSchedina, citazioneDiario } from "./citazioni.js";
 import { C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
 import { GiocoResponsabile } from "./extra.js";
 import { StoricoCard } from "./partita.js";
@@ -64,6 +65,7 @@ import { StoricoCard } from "./partita.js";
           ${weak && html`<div className=${"rounded-xl border p-3 text-sm " + TONE.bad}><div className="font-semibold flex items-center gap-1.5"><${Ic.AlertTriangle} size=${14} />Anello debole</div>
             <div>${shield && alt ? `Protetto dallo Scudo IA: nella stessa partita ora c'è ${mLabel(weak.m, alt.k, true)} (IA ${pct(alt.p)}%, quota ${odd(alt.q)}). Nuova quota totale ${odd(tot)}${qo ? ", obiettivo ×" + qo : ""}.` : `${weak.m.h} - ${weak.m.a}, ${mLabel(weak.m, weak.k, true)} (IA ${pct(weak.p)}%) è la gamba più fragile.${alt ? "" : " Nella stessa partita non c'è un'alternativa più sicura e sensata."}`}</div>
             ${alt && html`<button onClick=${() => setShield(!shield)} className=${"mt-2 inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full " + (shield ? TONE.good + " border" : C.on)}><${Ic.ShieldCheck} size=${13} />${shield ? "Scudo IA attivo" : "Scudo IA: proteggi"}</button>`}</div>`}
+          ${citazioneSchedina(legs, tot) && html`<div className="pt-1"><${Citazione} q=${citazioneSchedina(legs, tot)} piccola=${true} /></div>`}
           <${Gioca} legs=${legs} />
           ${qo > 0 && html`<button onClick=${() => { setVr(vr + 1); setShield(false); }} className=${"w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Repeat} size=${15} />Un'altra combinazione</button>`}
           <div className="grid grid-cols-2 gap-2 pt-1">
@@ -128,6 +130,7 @@ import { StoricoCard } from "./partita.js";
         ${o && html`<div className="pb-3 space-y-1">${x.legs.map((g, i) => { const e = esitoGamba(g, byId); return html`<div key=${i} className="flex items-center gap-2 text-[13px]">
           <span className=${"flex-1 truncate " + C.tx}>${g.h} - ${g.a}: <b>${g.l}</b></span><span className=${"num text-[15px] " + C.mu}>${odd(g.q)}</span>
           ${e === null ? (chiudibile(g, x) ? html`<span className="flex gap-1">${[[true, "Presa"], [false, "Non presa"]].map(([v, t]) => html`<button key=${t} onClick=${() => segna(x.id, i, v)} className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + (v ? TONE.good : TONE.bad)}>${t}</button>`)}</span>` : html`<${Ic.Clock} size=${15} className=${C.mu} />`) : e ? html`<${Ic.CheckCircle2} size=${15} className="text-[#0F9D84]" />` : html`<${Ic.XCircle} size=${15} className="text-[#FF3D5A]" />`}</div>`; })}
+          ${st !== "aperta" && citazioneDiario(x.id, st === "vinta") && html`<div className="pt-1"><${Citazione} q=${citazioneDiario(x.id, st === "vinta")} piccola=${true} /></div>`}
           <button onClick=${() => setDiario(diario.filter((z) => z.id !== x.id))} className=${"text-[12px] font-semibold " + C.mu}>Elimina dal diario</button></div>`}</div>`; })}
       <p className=${"text-[11px] mt-2 " + C.mu}>Il diario resta su questo telefono. Le giocate su cartellini, falli, angoli e marcatori non si verificano dal risultato: quando la partita è finita segnalo tu qui con "Presa" o "Non presa".</p></div>`;
   }

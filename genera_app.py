@@ -763,6 +763,41 @@ def aggiorna_arbitri(d):
     return n
 
 
+TARATURA = os.path.join(DATA, "taratura_fattori.json")
+MIN_TARATURA = 100  # partite corrette e finite prima di toccare i pesi
+
+
+def SCALA_FATTORI():
+    t = jload(TARATURA, {}) or {}
+    return float(t.get("scala", 1.0)) if t.get("attiva") else 1.0
+
+
+def ritara_fattori(corr, ll):
+    """Ritaratura automatica dei pesi delle correzioni (notizie, assenze, squalifiche).
+    Sulle partite corrette e finite cerca la scala s (0-1,5) che rende più precise le probabilità:
+    p_s = quote x (IA/quote)^s, normalizzata. Con meno di MIN_TARATURA partite non cambia nulla; poi la scala si avvicina
+    a quella migliore man mano che le partite crescono (a metà strada con 100, del tutto con 300), per non inseguire il caso."""
+    n = len(corr)
+    out = {"n": n, "minimo": MIN_TARATURA, "attiva": False, "scala": 1.0, "aggiornata": datetime.now(timezone.utc).isoformat()}
+    if n >= MIN_TARATURA:
+        def err(s):
+            tot = 0.0
+            for v in corr:
+                e = s / max(0.05, v.get("sc", 1.0))  # la correzione salvata era già scalata con la scala di allora
+                q = [max(1e-6, a) * (max(1e-6, b) / max(1e-6, a)) ** e for a, b in zip(v["mk"], v["p"])]
+                z = sum(q)
+                tot += ll([x / z for x in q], v["g"])
+            return tot / n
+        prove = {round(s / 20, 2): err(s / 20) for s in range(0, 31)}
+        migliore = min(prove, key=prove.get)
+        peso = min(1.0, 0.5 + (n - MIN_TARATURA) / (2 * (300 - MIN_TARATURA))) if n < 300 else 1.0
+        scala = round(1 + (migliore - 1) * peso, 2)
+        out.update({"attiva": True, "scala": scala, "migliore": migliore, "errore_1": round(prove[1.0], 4), "errore_0": round(prove[0.0], 4), "errore_migliore": round(prove[migliore], 4)})
+    with open(TARATURA, "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, indent=1)
+    return out["scala"]
+
+
 def aggiorna_prepartita(d):
     """Quote prese 15-70 minuti prima del calcio d'inizio: diventano la nuova base (piu precise di quelle del mattino)."""
     righe = []
@@ -852,7 +887,8 @@ def applica_fattori(d):
         m["segnali"] = segnali[:6]
         m["diffidati"] = diffidati[:8]
         avv = [sum(f.get("delta_avv", 0) for f in tutti if f["lato"] == 1), sum(f.get("delta_avv", 0) for f in tutti if f["lato"] == 0)]
-        nuovo = [round(lh0 * (1 + tot[0] + avv[0]), 3), round(la0 * (1 + tot[1] + avv[1]), 3)]
+        sc = SCALA_FATTORI()  # ritaratura automatica: quanto pesano davvero le correzioni (1 = come da fattori.py)
+        nuovo = [round(lh0 * (1 + sc * (tot[0] + avv[0])), 3), round(la0 * (1 + sc * (tot[1] + avv[1])), 3)]
         firma = zlib.crc32(json.dumps([tutti, nuovo, segnali], sort_keys=True).encode())
         if firma == m.get("_firma"):
             continue
@@ -950,7 +986,7 @@ def aggiorna_storico(d):
         if r is None or (r.get("st") == "NS" and m["st"] == "NS"):
             # finche la partita non inizia si tiene l'ultima versione del consiglio (quote piu recenti)
             r = {"date": m["date"], "lg": m["lg"], "h": m["h"], "a": m["a"], "st": m["st"], "g": m.get("g"), "mk": m.get("mk"), "p": m.get("p"),
-                 "nf": sum(1 for f in m.get("fattori", []) if f.get("delta")), "ver": FT.VERSIONE, "segnali": [x["tipo"] for x in m.get("segnali", [])],
+                 "nf": sum(1 for f in m.get("fattori", []) if f.get("delta")), "sc": SCALA_FATTORI(), "ver": FT.VERSIONE, "segnali": [x["tipo"] for x in m.get("segnali", [])],
                  "tips": {k: {x: v[x] for x in ("c", "l", "p", "q", "qm")} for k, v in tip.items()}}
             st[m["id"]] = r
         if m["st"] in ("FT", "LIVE", "RINV"):
@@ -981,6 +1017,7 @@ def aggiorna_storico(d):
     if corr:
         taratura["errore_quote"] = round(sum(ll(v["mk"], v["g"]) for v in corr) / len(corr), 4)
         taratura["errore_ia"] = round(sum(ll(v["p"], v["g"]) for v in corr) / len(corr), 4)
+    taratura["scala"] = ritara_fattori(corr, ll)
     out = {"generato": datetime.now(timezone.utc).astimezone(ROME).strftime("%d/%m/%Y %H:%M"), "giorni": 30, "riass": riass, "taratura": taratura,
            "lista": [{"date": v["date"], "lg": v["lg"], "h": v["h"], "a": v["a"], "g": v["g"], "tips": v["tips"], "esiti": v["esiti"]} for v in rec[:60]]}
     with open(STORICO_OUT, "w", encoding="utf-8") as f:

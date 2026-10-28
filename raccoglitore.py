@@ -473,8 +473,6 @@ def giro_prepartita(base="data", da_min=15, a_min=70):
     Nei test su 17.508 partite le quote vicine al calcio d'inizio sono le piu precise in assoluto.
     Parte solo se avanzano crediti: tiene da parte quelli per il giro del mattino fino a fine mese."""
     import espn_dati as ES
-    if not os.environ.get("ODDS_API_KEY"):
-        return
     try:
         with open(os.path.join("app", "data", "giornata.json"), encoding="utf-8") as f:
             gio = json.load(f)
@@ -487,7 +485,7 @@ def giro_prepartita(base="data", da_min=15, a_min=70):
             mins = (datetime.fromisoformat(m["ko"]) - ora).total_seconds() / 60
         except (KeyError, ValueError):
             continue
-        if m.get("st") == "NS" and da_min <= mins <= a_min and m.get("lg") in LEGA_APP:
+        if m.get("st") == "NS" and da_min <= mins <= a_min and (m.get("lg") in LEGA_APP or m.get("lg") in ES.ESPN_LG):
             vicine.setdefault(m["lg"], []).append(m)
     if not vicine:
         return
@@ -497,15 +495,6 @@ def giro_prepartita(base="data", da_min=15, a_min=70):
             stato = json.load(f)
     except (OSError, ValueError):
         stato = {}
-    sports, h = odds_api("/sports")  # gratis: serve per i crediti rimasti e le chiavi dei campionati
-    if not sports:
-        return
-    rimasti = int(h.get("x-requests-remaining", "0") or 0)
-    import calendar
-    giorni = calendar.monthrange(ora.year, ora.month)[1] - ora.day + 1
-    riserva = giorni * CREDITI_GIORNO + 10
-    per_titolo = {x["title"]: x["key"] for x in sports}
-    chiavi = {lg["nome"]: per_titolo.get(lg["odds_title"], lg["odds_key"]) for lg in LEAGUES}
     cart = os.path.join(base, ora.strftime("%Y-%m-%d"))
     path = os.path.join(cart, "prepartita.json")
     try:
@@ -513,10 +502,23 @@ def giro_prepartita(base="data", da_min=15, a_min=70):
             righe = json.load(f)
     except (OSError, ValueError):
         righe = []
+    fatte = set()
+    sports, h = odds_api("/sports") if os.environ.get("ODDS_API_KEY") else (None, {})  # gratis: crediti rimasti e chiavi dei campionati
+    if not sports:
+        sports, h = [], {"x-requests-remaining": "0"}
+    rimasti = int(h.get("x-requests-remaining", "0") or 0)
+    import calendar
+    giorni = calendar.monthrange(ora.year, ora.month)[1] - ora.day + 1
+    riserva = giorni * CREDITI_GIORNO + 10
+    per_titolo = {x["title"]: x["key"] for x in sports}
+    chiavi = {lg["nome"]: per_titolo.get(lg["odds_title"], lg["odds_key"]) for lg in LEAGUES}
     for k, ms in vicine.items():
+        if k not in LEGA_APP or not sports:
+            continue
         nome = LEGA_APP[k]
         ultimo = stato.get(k)
         if ultimo and (ora - datetime.fromisoformat(ultimo)).total_seconds() < 50 * 60:
+            fatte.add(k)  # fotografia media recente: non la si sostituisce con quella di un bookmaker solo
             continue
         if rimasti - 2 < riserva:
             print(f"Pre-partita {nome}: saltata, crediti rimasti {rimasti} (riserva per il mattino fino a fine mese: {riserva})")
@@ -524,6 +526,7 @@ def giro_prepartita(base="data", da_min=15, a_min=70):
         ev, h2 = odds_api(f"/sports/{chiavi.get(nome)}/odds", regions="eu", markets="h2h,totals", oddsFormat="decimal", dateFormat="iso")
         rimasti = int(h2.get("x-requests-remaining", rimasti) or rimasti)
         stato[k] = ora.isoformat()
+        fatte.add(k)
         for m in ms:
             best, bs = None, 0
             for e in ev or []:
@@ -537,6 +540,27 @@ def giro_prepartita(base="data", da_min=15, a_min=70):
             if best and bs >= 1.3:
                 righe.append({"id": m["id"], "t": ora.isoformat(), **{f"oa_{a}": b for a, b in riassunto(media_oddsapi(best)).items()}})
         print(f"Pre-partita {nome}: {len(ms)} partite, crediti rimasti {rimasti}")
+    # quote gratuite di ESPN (DraftKings) vicino al calcio d'inizio: tutti i campionati senza crediti (o quando i crediti non bastano)
+    for k, ms in vicine.items():
+        if k in fatte or k not in ES.ESPN_LG:
+            continue
+        ultimo = stato.get("es:" + k)
+        if ultimo and (ora - datetime.fromisoformat(ultimo)).total_seconds() < 50 * 60:
+            continue
+        stato["es:" + k] = ora.isoformat()
+        n = 0
+        for giorno in sorted({datetime.fromisoformat(m["ko"]).strftime("%Y%m%d") for m in ms}):
+            try:
+                evs = ES.get(f"{ES.SITE}{ES.ESPN_LG[k]}/scoreboard?dates={giorno}").get("events", [])
+            except Exception as e:  # noqa: BLE001
+                print(f"Pre-partita ESPN {k}: {e}")
+                continue
+            for m in ms:
+                q = ES.quote_evento(evs, m["h"], m["a"], m["ko"])
+                if q:
+                    righe.append({"id": m["id"], "t": ora.isoformat(), "fonte": "espn", **q})
+                    n += 1
+        print(f"Pre-partita ESPN {k}: {n} partite su {len(ms)} (nessun credito)")
     salva(cart, "prepartita.json", righe)
     salva(base, "prepartita_stato.json", stato)
 

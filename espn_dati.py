@@ -704,3 +704,39 @@ def trova_media(elenco, casa, ospite, giorno):
         if s > bs:
             best, bs = x, s
     return best if bs >= 1.3 else None
+
+
+def quote_evento(evs, casa, ospite, ko):
+    """Quote DraftKings attuali (1X2 e, se la linea e 2,5, Under/Over) della partita casa-ospite nel calendario ESPN,
+    con le stesse chiavi del file delle quote (oa_quota_media_...). None se non ci sono."""
+    try:
+        t0 = datetime.fromisoformat(ko)
+    except ValueError:
+        return None
+    best, bs = None, 0
+    for ev in evs:
+        try:
+            c = (ev.get("competitions") or [{}])[0]
+            h = next(x for x in c["competitors"] if x["homeAway"] == "home")["team"]["displayName"]
+            a = next(x for x in c["competitors"] if x["homeAway"] == "away")["team"]["displayName"]
+            t = datetime.fromisoformat(ev["date"].replace("Z", "+00:00"))
+        except (KeyError, StopIteration, ValueError, TypeError):
+            continue
+        sc = sim(casa, [h]) + sim(ospite, [a])
+        if abs((t - t0).total_seconds()) <= 3 * 3600 and sc > bs:
+            best, bs = c, sc
+    if not best or bs < 1.3:
+        return None
+    o = next((x for x in (best.get("odds") or []) if x and x.get("moneyline")), None)
+    if not o:
+        return None
+    ml = o["moneyline"]
+    q = [_decimale(((ml.get(x) or {}).get("close") or {}).get("odds")) for x in ("home", "draw", "away")]
+    if not all(q):
+        return None
+    r = {"oa_quota_media_1": q[0], "oa_quota_media_X": q[1], "oa_quota_media_2": q[2], "oa_quota_max_1": q[0], "oa_quota_max_X": q[1], "oa_quota_max_2": q[2], "oa_bookmaker_1": 1}
+    tot = o.get("total") or {}
+    qo, qu = _decimale(((tot.get("over") or {}).get("close") or {}).get("odds")), _decimale(((tot.get("under") or {}).get("close") or {}).get("odds"))
+    if o.get("overUnder") == 2.5 and qo and qu:
+        r.update({"oa_quota_media_Over 2.5": qo, "oa_quota_media_Under 2.5": qu, "oa_quota_max_Over 2.5": qo, "oa_quota_max_Under 2.5": qu})
+    return r

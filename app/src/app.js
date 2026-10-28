@@ -375,6 +375,7 @@ import { SlipView } from "./schedina.js";
           ${pushMsg && html`<div className=${"text-xs " + C.tx}>${pushMsg}</div>`}
           ${pushOn && html`<div className="pt-1 space-y-1">${[["promemoria", "Promemoria un'ora prima, con il consiglio IA"], ["formazioni", "Formazioni ufficiali (con la probabilità IA aggiornata)"], ["inizio", "Calcio d'inizio"], ["gol", "Gol"], ["rossi", "Espulsioni"], ["intervallo", "Fine primo tempo"], ["finale", "Risultato finale"]].map(([k, l]) => html`
             <button key=${k} onClick=${() => { const nx = { ...pref, [k]: pref[k] === false }; setPref(nx); store.set("pushPref", nx); }} className="w-full flex items-center gap-3 py-1.5 text-left">
+              <img src=${"avvisi/" + k + ".png"} alt="" className="w-7 h-7 rounded-lg shrink-0" />
               <span className=${"flex-1 text-[14px] " + C.tx}>${l}</span>
               <span className=${"w-10 h-6 rounded-full p-0.5 transition-colors " + (pref[k] !== false ? "bg-[#5B2EE6] dark:bg-[#A58BFF]" : "bg-black/20 dark:bg-white/20")}><span className=${"block w-5 h-5 rounded-full bg-white shadow transition-transform " + (pref[k] !== false ? "translate-x-4" : "")}></span></span></button>`)}</div>`}</div>
         <button onClick=${() => { setProfile(false); setGloss(true); }} className=${"w-full py-2.5 rounded-xl text-sm font-semibold " + C.ch + " " + C.tx}>Glossario delle scommesse</button>

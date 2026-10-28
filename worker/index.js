@@ -174,6 +174,8 @@ function stato(ev) {
   const rossi = (c.details || []).filter((d) => d.redCard).map((d) => ({ min: (d.clock && d.clock.displayValue) || "", chi: ((d.athletesInvolved || [])[0] || {}).displayName || "", casa: (d.team || {}).id === h.team.id }));
   return { st: t.state, half: t.name === "STATUS_HALFTIME", g: h.score == null || a.score == null ? null : [Number(h.score), Number(a.score)], clock: ev.status.displayClock || "", goals, rossi, ko: Date.parse(ev.date) };
 }
+// simboli degli avvisi: forme geometriche, sempre uguali, riconoscibili a colpo d'occhio
+const SIMBOLO = { gol: "◉ ", annullato: "⊘ ", rossi: "▮ ", inizio: "▷ ", intervallo: "◐ ", finale: "■ ", formazioni: "≡ ", promemoria: "◔ ", test: "◎ " };
 const PREF0 = { promemoria: true, inizio: true, gol: true, rossi: true, intervallo: true, finale: true, formazioni: true };
 const vuole = (sub, tipo) => ((sub && sub.pref) || PREF0)[tipo] !== false;
 /* dati dell'app (probabilita IA e marcatori) per arricchire l'avviso delle formazioni; letti al massimo ogni 5 minuti */
@@ -219,15 +221,16 @@ async function controlla(env) {
     if (!s.g) s.g = o ? o.g : [0, 0]; // punteggio assente da ESPN: si tiene quello di prima (niente falsi "gol annullato")
     nuovo[k] = { st: s.st, g: s.g, half: s.half, rossi: s.rossi.length, form: o ? o.form : false, prom: o ? o.prom : false };
     if (!o) continue; // prima volta che la vediamo: nessun avviso
-    const nomi = `${f.h} ${s.g[0]} - ${s.g[1]} ${f.a}`;
-    const push = (title, body, tipo) => msgs.push({ f, ids: ids.filter((id) => vuole(subs[id], tipo)), msg: { title, body, tag: k + "|" + tipo + "|" + s.g.join("-") + "|" + (tipo === "rossi" ? body : ""), url: "./" } });
+    // ogni avviso ha il suo simbolo (geometrico, non un'emoji), la sua icona e la sua vibrazione (vedi sw.js); "stile" sceglie quale
+    const push = (title, body, tipo, stile) => msgs.push({ f, ids: ids.filter((id) => vuole(subs[id], tipo)), msg: { title: (SIMBOLO[stile || tipo] || "") + title, body, tipo: stile || tipo, tag: k + "|" + tipo + "|" + s.g.join("-") + "|" + (tipo === "rossi" ? body : ""), url: "./" } });
+    const ris = `${f.h} ${s.g[0]} - ${s.g[1]} ${f.a}`;
     // promemoria un'ora prima, con il consiglio dell'IA
     if (s.st === "pre" && !o.prom && s.ko - Date.now() < 62 * 60000 && s.ko - Date.now() > 40 * 60000) {
       nuovo[k].prom = true;
       G = G || (await giornata()) || { matches: [] };
       const m = G.matches.find((x) => piano(x.h) === piano(f.h) && piano(x.a) === piano(f.a));
       const t = m && m.tip && m.tip.consiglio;
-      push("Tra un'ora", `${f.h} - ${f.a}` + (t ? `. Consiglio IA: ${t.l} (${Math.round(t.p * 100)}%).` : "."), "promemoria");
+      push("Tra un'ora", `${f.h} - ${f.a}` + (t ? ` · Consiglio IA: ${t.l} (${Math.round(t.p * 100)}%)` : ""), "promemoria");
     }
     // formazioni ufficiali: da 75 minuti prima del calcio d'inizio, controllo ogni 3 minuti finche escono
     if (s.st === "pre" && !o.form && s.ko - Date.now() < 75 * 60000 && new Date().getUTCMinutes() % 3 === 0) {
@@ -245,17 +248,19 @@ async function controlla(env) {
         push("Formazioni ufficiali", body, "formazioni");
       }
     }
-    if (o.st === "pre" && s.st === "in") push("Calcio d'inizio", `${f.h} - ${f.a}`, "inizio");
+    if (o.st === "pre" && s.st === "in") push("Si parte", `${f.h} - ${f.a}`, "inizio");
     if (s.st !== "pre" && (s.g[0] !== o.g[0] || s.g[1] !== o.g[1])) {
       const piu = s.g[0] + s.g[1] > o.g[0] + o.g[1];
       const last = s.goals[s.goals.length - 1];
-      push(piu ? "Gol!" : "Gol annullato", nomi + (last && piu ? ` - ${last.min} ${last.chi}${last.pen ? " (rigore)" : ""}${last.og ? " (autogol)" : ""}` : ""), "gol");
+      const chi = s.g[0] > o.g[0] ? f.h : f.a;
+      if (piu) push(`Gol ${chi}`, ris + (last ? ` · ${last.min} ${last.chi}${last.pen ? " su rigore" : ""}${last.og ? ", autogol" : ""}` : ""), "gol");
+      else push("Gol annullato", ris, "gol", "annullato");
     }
     if (s.rossi.length > (o.rossi || 0)) {
-      for (const r of s.rossi.slice(o.rossi || 0)) push("Espulsione", `${r.chi} (${r.casa ? f.h : f.a}) al ${r.min} - ${nomi}`, "rossi");
+      for (const r of s.rossi.slice(o.rossi || 0)) push(`Rosso a ${r.chi}`, `${r.casa ? f.h : f.a}, ${r.min} · ${ris}`, "rossi");
     }
-    if (!o.half && s.half) push("Fine primo tempo", nomi, "intervallo");
-    if (o.st === "in" && s.st === "post") push("Finale", nomi, "finale");
+    if (!o.half && s.half) push("Intervallo", ris, "intervallo");
+    if (o.st === "in" && s.st === "post") push("Finale", ris, "finale");
   }
   if (JSON.stringify(nuovo) !== JSON.stringify(old)) await DB.put("state", JSON.stringify(nuovo));
   if (!msgs.length) return "nessuna novità";
@@ -351,7 +356,7 @@ export default {
       const subs = (await DB.get("subs", "json")) || {};
       const id = d && d.endpoint ? await sha(d.endpoint) : null;
       if (!id || !subs[id]) return json({ ok: false, err: "iscrizione non trovata" }, 404);
-      const st = await invia(env, await vapid(env), subs[id].sub, { title: "AuraPitch", body: "Notifiche attive: ti avviso di gol e risultati delle tue preferite.", tag: "test", url: "./" });
+      const st = await invia(env, await vapid(env), subs[id].sub, { title: SIMBOLO.test + "AuraPitch", body: "Notifiche attive: ti avviso di gol e risultati delle tue preferite.", tag: "test", tipo: "test", url: "./" });
       return json({ ok: st < 300, status: st });
     }
     if (url.pathname === "/diagnosi") {

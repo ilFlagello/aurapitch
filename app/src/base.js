@@ -447,6 +447,22 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       <div key=${i} onTouchStart=${ts} onTouchEnd=${te} className=${"space-y-3 min-h-[60vh] " + (dir > 0 ? "entra-dx" : dir < 0 ? "entra-sx" : "")}>${children[i]}</div><//>`;
   }
 
+  /* voce a scomparsa: chiusa mostra titolo e un riassunto di una riga, aperta mostra il contenuto completo.
+     L'app ricorda per ogni voce se l'hai lasciata aperta o chiusa. */
+  function Voce({ id, titolo, sotto, icona, aperta = false, children }) {
+    const [o, setO] = useState(() => store.get("voce:" + id, aperta));
+    const giro = () => { setO(!o); store.set("voce:" + id, !o); };
+    const I = icona;
+    if (!o) return html`<button onClick=${giro} aria-expanded="false" className=${C.card + " w-full flex items-center gap-3 px-4 py-3.5 text-left active:scale-[0.99] transition-transform"}>
+      ${I && html`<span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-[#5B2EE6]/10 text-[#5B2EE6] dark:bg-[#A58BFF]/15 dark:text-[#A58BFF]"><${I} size=${17} /></span>`}
+      <span className="flex-1 min-w-0"><span className=${"block text-[15px] font-semibold leading-tight " + C.tx}>${titolo}</span>${sotto && html`<span className=${"block text-[13px] mt-0.5 truncate " + C.mu}>${sotto}</span>`}</span>
+      <${Ic.ChevronDown} size=${18} className=${C.mu} /></button>`;
+    return html`<div className="space-y-2">
+      <button onClick=${giro} aria-expanded="true" className=${"w-full flex items-center gap-2 px-1 pt-1 text-left text-[13px] font-semibold uppercase tracking-[0.06em] " + C.mu}>
+        <span className="flex-1">${titolo}</span><span className="normal-case tracking-normal font-medium">Riduci</span><${Ic.ChevronUp} size=${16} /></button>
+      ${children}</div>`;
+  }
+
   const Ctx = React.createContext(null);
 
-export { html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, ESCLUSI_SLIP, rumore, candidati, buildTarget, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Ctx };
+export { html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, ESCLUSI_SLIP, rumore, candidati, buildTarget, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Voce, Ctx };

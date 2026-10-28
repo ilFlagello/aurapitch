@@ -39,6 +39,11 @@ async function giro(tema) {
   await passo("partita", async () => {
     await p.locator("main button").filter({ hasText: /\d\d:\d\d/ }).first().click(); await p.waitForTimeout(1000);
     for (const n of ["Partita", "Formazioni", "IA", "Statistiche", "Cronaca", "In breve"]) { await tab(n); await foto("partita-" + n.replace(" ", "")); }
+    // voci a scomparsa: si aprono e si richiudono
+    await tab("Statistiche");
+    const voce = p.getByRole("button", { name: /Scontri diretti/ }).first();
+    if (await voce.count()) { await voce.click(); await p.waitForTimeout(200); if (!(await p.getByText("Riduci").count())) errori.push(`[${tema}] voce: non si apre`); await p.getByText("Riduci").first().click(); }
+    await tab("In breve");
     // calendario e immagine della partita: devono produrre un file
     for (const [nome, est] of [["Nel calendario", ".ics"], ["Condividi la partita", ".png"]]) {
       const b = p.getByRole("button", { name: nome }); if (!(await b.count())) continue;

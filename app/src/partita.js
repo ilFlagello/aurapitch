@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { scaricaCalendario, immaginePartita } from "./condividi.js";
 import { useSummary, loadPlayer, loadCareer, ruolo, findTeam, loadTeam, minuto, ESPN_LG, andamento } from "./live.js";
-import { AuraLine, C, Crest, Ctx, DOT, FavPill, Flag, Form, GROUPS, Ic, Seg, Sheet, TONE, Tabs, auraCol, evalCode, html, leggiXg, lum, mGroup, mLabel, nf, norm, odd, options, pct, pctL, spiega, store } from "./base.js";
+import { Voce, AuraLine, C, Crest, Ctx, DOT, FavPill, Flag, Form, GROUPS, Ic, Seg, Sheet, TONE, Tabs, auraCol, evalCode, html, leggiXg, lum, mGroup, mLabel, nf, norm, odd, options, pct, pctL, spiega, store } from "./base.js";
 import { usaVoti } from "./campionati.js";
 import { Anteprima, partitaSettimana } from "./extra.js";
 
@@ -693,9 +693,10 @@ import { Anteprima, partitaSettimana } from "./extra.js";
 
     /* ---- consiglio IA motivato e tutti i mercati ---- */
     function TipView({ m, sm }) {
+      const [tutte, setTutte] = useState(false);
       const { D, setGloss } = React.useContext(Ctx);
       const { mySlip, addLeg, aff } = React.useContext(Ctx);
-      const [why, setWhy] = useState("consiglio");
+      const [why, setWhy] = useState(null); // motivazioni chiuse: si aprono con "Perché questa scelta"
       const affid = (c, p) => { const rows = aff && aff.mercati && aff.mercati[c]; const r = rows && rows.find((x) => p >= x[0] && p < x[1]);
         return r ? `Affidabilità verificata: su ${r[2].toLocaleString("it-IT")} partite di prova (${aff.recenti && aff.recenti.includes(c) ? "2020/21-2025/26" : aff.stagioni}), quando questa giocata era stimata tra il ${Math.round(r[0] * 100)}% e il ${Math.round(r[1] * 100)}% è passata il ${Math.round(r[4] * 100)}% delle volte (stima media ${Math.round(r[3] * 100)}%).` : null; };
       const [grp, setGrp] = useState(null);
@@ -727,12 +728,14 @@ import { Anteprima, partitaSettimana } from "./extra.js";
       const Punti = ({ v }) => v == null ? null : html`<span className=${"num text-[14px] font-bold w-8 text-center rounded-md py-[1px] " + (v >= 75 ? "bg-[#5B2EE6] text-white dark:bg-[#A58BFF] dark:text-[#0E0C18]" : v >= 60 ? C.ch + " " + C.tx : C.mu)} title="Punteggio IA">${v}</span>`;
       return html`<${React.Fragment}>
         <${LiveTips} m=${m} sm=${sm} />
-        ${tip.consiglio ? html`<${Card} k="consiglio" /><div className="grid gap-2"><${Card} k="prudente" /><${Card} k="coraggiosa" /></div>`
+        ${tip.consiglio ? html`<${Card} k="consiglio" />${(tip.prudente || tip.coraggiosa) && html`<${Voce} id="alternative" titolo="Altre due proposte" icona=${Ic.Sparkles}
+            sotto=${[tip.prudente && "Prudente: " + mLabel(m, tip.prudente.c, true), tip.coraggiosa && "Coraggiosa: " + mLabel(m, tip.coraggiosa.c, true)].filter(Boolean).join(" · ")}>
+            <div className="grid gap-2"><${Card} k="prudente" /><${Card} k="coraggiosa" /></div><//>`}`
           : html`<div className=${C.card + " p-4 text-sm " + C.tx}>Nessun consiglio: per questa partita mancano quote sufficienti per stimare i mercati.</div>`}
         ${scelte.length > 0 && html`<div className=${C.card + " p-4"}>
-          <div className="flex items-baseline mb-1"><span className=${C.lab + " flex-1"}>La scelta dell'IA per ogni scommessa</span><span className=${"text-[12px] " + C.mu}>${scelte.length} tipi</span></div>
+          <div className="flex items-baseline mb-1"><span className=${C.lab + " flex-1"}>La scelta dell'IA per ogni scommessa</span><span className=${"text-[12px] " + C.mu}>${tutte ? scelte.length + " tipi" : "le 5 migliori"}</span></div>
           <p className=${"text-[12px] mb-2 " + C.mu}>Per ogni tipo di scommessa, la giocata dove probabilità e dati della partita vanno più d'accordo. Il numero è il punteggio IA (0-100).</p>
-          ${scelte.map(([g, x], i) => { const o = ap === g; return html`<div key=${g} className=${i ? "border-t " + C.bd : ""}>
+          ${(tutte ? scelte : scelte.slice().sort((a, b) => (b[1].s || 0) - (a[1].s || 0)).slice(0, 5)).map(([g, x], i) => { const o = ap === g; return html`<div key=${g} className=${i ? "border-t " + C.bd : ""}>
             <div className="flex items-center gap-2.5 py-2.5 cursor-pointer" onClick=${() => setAp(o ? null : g)}>
               <${Punti} v=${x.s} />
               <span className="flex-1 min-w-0"><span className=${"block text-[12px] " + C.mu}>${g}</span><span className=${"block text-[15px] font-semibold leading-tight " + C.tx}>${mLabel(m, x.c)}</span>${o && html`<span className=${"block text-[13px] mt-0.5 " + C.tx}>${spiega(m, x.c)}</span>`}</span>
@@ -743,8 +746,10 @@ import { Anteprima, partitaSettimana } from "./extra.js";
               ${(x.info || []).map((t) => html`<div key=${t} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 " + DOT.ok}></span><span className=${C.tx}>${t}</span></div>`)}
               ${x.no.map((t) => html`<div key=${t} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 " + DOT.warn}></span><span className=${C.tx}><b>Da tenere d'occhio:</b> ${t}</span></div>`)}
               ${affid(x.c, x.p) && html`<div className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 " + DOT.info}></span><span className=${C.tx}>${affid(x.c, x.p)}</span></div>`}
-              ${!x.si.length && !x.no.length && html`<div className=${C.mu}>Per questo tipo di scommessa non ci sono statistiche dedicate: conta solo la probabilità.</div>`}</div>`}</div>`; })}</div>`}
-        <div className="flex items-baseline pt-1"><span className=${C.lab + " flex-1"}>Tutti i mercati</span><button onClick=${() => setGloss(true)} className=${"text-[13px] font-semibold " + C.acc}>Cosa vogliono dire?</button></div>
+              ${!x.si.length && !x.no.length && html`<div className=${C.mu}>Per questo tipo di scommessa non ci sono statistiche dedicate: conta solo la probabilità.</div>`}</div>`}</div>`; })}
+          ${scelte.length > 5 && html`<button onClick=${() => setTutte(!tutte)} className=${"w-full pt-3 mt-1 border-t text-[14px] font-semibold " + C.bd + " " + C.acc}>${tutte ? "Mostra solo le 5 migliori" : `Mostra tutti i ${scelte.length} tipi di scommessa`}</button>`}</div>`}
+        <${Voce} id="mercati" titolo="Tutti i mercati" icona=${Ic.BarChart3} sotto=${groups.reduce((a, [, l]) => a + l.length, 0) + " giocate in " + groups.length + " gruppi, con quota e punteggio IA"}>
+        <div className="flex items-baseline pt-1"><span className=${"text-[13px] flex-1 " + C.mu}>Tocca un gruppo per aprirlo.</span><button onClick=${() => setGloss(true)} className=${"text-[13px] font-semibold " + C.acc}>Cosa vogliono dire?</button></div>
         <div className=${C.card + " px-4 py-1"}>${groups.map(([g, l], i) => { const o = grp === g; return html`<div key=${g} className=${i ? "border-t " + C.bd : ""}>
           <button onClick=${() => setGrp(o ? null : g)} className=${"w-full flex items-center py-3 text-[15px] font-semibold " + C.tx}><span className="flex-1 text-left">${g}</span><span className=${"num text-[15px] font-semibold mr-2 " + C.mu}>${l.length}</span><${o ? Ic.ChevronUp : Ic.ChevronDown} size=${16} className=${C.mu} /></button>
           ${o && html`<div className="pb-2">${l.map((x) => html`<div key=${x.k} className="flex items-center gap-2 py-1.5">
@@ -753,6 +758,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
             <span className=${"text-xs tabular-nums w-10 text-right " + C.mu}>${pct(x.p)}%</span>
             <span className=${"text-sm font-semibold tabular-nums w-12 text-right " + C.tx}>${odd(x.q)}</span><${AddBtn} c=${x.k} /></div>`)}</div>`}</div>`; })}</div>
         <p className=${"text-[11px] " + C.mu}>Punteggio IA: 55% accordo con le statistiche delle squadre (forma, gol per tempo, differenza reti, cartellini attesi, gol dei giocatori), 45% probabilità. Probabilità calcolate dalle quote medie dei bookmaker (modello dei gol attesi, tempi tarati su 38.700 partite). Quota "media" = raccolta dai bookmaker; quota "stimata" = calcolata dalla probabilità con un margine tipico del 6%, quella reale può variare. Il consiglio sceglie il mercato dove probabilità e statistiche delle squadre vanno d'accordo: non è una garanzia.</p>
+        <//>
       <//>`;
     }
 
@@ -762,6 +768,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
       const L = lg(m.lg);
       const [pOpen, setPOpen] = useState(null);
       const [filt, setFilt] = useState(0);
+      const [clIntera, setClIntera] = useState(false);
       const [l5, setL5] = useState(null);
       const [pl, setPl] = useState(null);
       const { d: sm } = useSummary(m.lgE, m.eid, m.st === "LIVE");
@@ -783,6 +790,9 @@ import { Anteprima, partitaSettimana } from "./extra.js";
       const fav = m.p.indexOf(Math.max(...m.p));
       const S = D.standings[m.lg];
       const st = S ? S[["generale", "casa", "trasferta"][filt]] : [];
+      // classifica ridotta: le due squadre con le due sopra e le due sotto (la prima riga resta sempre)
+      const posSq = [m.h, m.a].map((t) => st.findIndex((r) => r.team === t)).filter((i) => i >= 0);
+      const vicino = (i) => st.length <= 8 || !posSq.length || i === 0 || posSq.some((p) => Math.abs(p - i) <= 2);
       const pos = (t) => (S ? S.generale.findIndex((r) => r.team === t) + 1 : 0);
       const inSlip = mySlip.find((x) => x.id === m.id);
       const tiles = [
@@ -838,20 +848,24 @@ import { Anteprima, partitaSettimana } from "./extra.js";
         ${mt === 1 && html`<${React.Fragment}>
           ${(!sm || sm.st === "NS") && html`<div className=${C.card + " p-4 text-[14px] " + C.mu}>${m.st === "FT" ? "Il resoconto della partita non è disponibile." : `La partita inizia ${m.date === new Date().toISOString().slice(0, 10) ? "oggi" : "il " + m.date.slice(8) + "/" + m.date.slice(5, 7)} alle ${m.time}: qui troverai azione in diretta, andamento, eventi, migliori in campo, mappa dei tiri e statistiche.`}</div>`}
           ${sm && sm.st === "LIVE" && html`<${LiveAction} sm=${sm} m=${m} />`}
-          ${sm && sm.st !== "NS" && html`<${Andamento} sm=${sm} m=${m} />`}
           ${sm && sm.st !== "NS" && html`<${KeyEvents} sm=${sm} m=${m} />`}
           ${sm && sm.st !== "NS" && html`<${Migliori} sm=${sm} m=${m} onPlayer=${(p, j) => setPl({ p, side: j })} />`}
-          ${sm && sm.st !== "NS" && html`<${TiriCard} sm=${sm} m=${m} />`}
-          ${sm && sm.st !== "NS" && html`<${StatsCard} sm=${sm} m=${m} />`}<//>`}
+          ${sm && sm.st !== "NS" && html`<${StatsCard} sm=${sm} m=${m} />`}
+          ${sm && sm.st !== "NS" && html`<${Voce} id="andamento" titolo="Andamento" sotto="Chi ha spinto, minuto per minuto" icona=${Ic.Activity}><${Andamento} sm=${sm} m=${m} /><//>`}
+          ${sm && sm.st !== "NS" && html`<${Voce} id="tiri" titolo="Mappa dei tiri" sotto="Da dove sono partiti i tiri delle due squadre" icona=${Ic.Target || Ic.Activity}><${TiriCard} sm=${sm} m=${m} /><//>`}<//>`}
 
         ${mt === 3 && html`<${Gate} m=${m} title="Analisi IA: probabilità, gol attesi e consiglio">
           <${TipView} m=${m} sm=${sm} />
-          <${FattoriCard} m=${m} />
-          <${ArbitroCard} m=${m} />
-          ${m.cart && html`<div className=${C.card + " p-4 space-y-1.5"}><div className=${C.lab}>Cartellini, falli e angoli attesi</div>
+          <${Voce} id="fattori" titolo="Come l'IA corregge le quote" icona=${Ic.Sparkles}
+            sotto=${(m.fattori || []).filter((f) => f.delta || f.delta_avv).length ? (m.fattori || []).filter((f) => f.delta || f.delta_avv).length + " correzioni per assenze e notizie" : "Nessuna correzione: l'IA segue le quote"}><${FattoriCard} m=${m} /><//>
+          ${m.arbitro && html`<${Voce} id="arbitro" titolo="Arbitro" icona=${Ic.Users} sotto=${m.arbitro.nome + (m.arbitro.ratio && m.arbitro.n >= 8 ? (m.arbitro.ratio.K > 1.08 ? ": ammonisce più della media" : m.arbitro.ratio.K < 0.92 ? ": ammonisce meno della media" : ": nella media") : "")}><${ArbitroCard} m=${m} /><//>`}
+          ${m.cart && html`<${Voce} id="cartellini" titolo="Cartellini, falli e angoli attesi" icona=${Ic.BarChart3 || Ic.Activity}
+            sotto=${[["K", "Cartellini"], ["C", "Angoli"], ["F", "Falli"]].filter(([k]) => m.cart[k]).map(([k, l]) => l + " " + nf(m.cart[k].attesi)).join(" · ")}>
+          <div className=${C.card + " p-4 space-y-1.5"}><div className=${C.lab}>Cartellini, falli e angoli attesi</div>
             ${[["K", "Cartellini"], ["F", "Falli"], ["C", "Calci d'angolo"]].filter(([k]) => m.cart[k]).map(([k, l]) => { const x = m.cart[k]; return html`<div key=${k} className=${"text-sm " + C.tx}><b>${l}: ${nf(x.attesi)}</b> <span className=${C.mu}>(media del campionato ${nf(x.media_lega)}; ${m.h} ${nf(x.casa[0])} fatti e ${nf(x.casa[1])} subiti a partita, ${m.a} ${nf(x.ospite[0])} e ${nf(x.ospite[1])})</span></div>`; })}
-            <div className=${"text-[11px] " + C.mu}>Modello verificato su 7 campionati dal 2012: rispetto alla sola media del campionato sbaglia l'1,6% in meno sui cartellini e lo 0,4% sugli angoli. Le partite equilibrate hanno più cartellini. I mercati sono in "Tutti i mercati", con quota stimata.</div></div>`}
-          <${MeteoCard} m=${m} sm=${sm} />
+            <div className=${"text-[11px] " + C.mu}>Modello verificato su 7 campionati dal 2012: rispetto alla sola media del campionato sbaglia l'1,6% in meno sui cartellini e lo 0,4% sugli angoli. Le partite equilibrate hanno più cartellini. I mercati sono in "Tutti i mercati", con quota stimata.</div></div><//>`}
+          ${m.st === "NS" && html`<${Voce} id="meteo" titolo="Meteo al calcio d'inizio" sotto="Previsioni per lo stadio (se disponibili)" icona=${Ic.Sun}><${MeteoCard} m=${m} sm=${sm} /><//>`}
+          <${Voce} id="laboratorio" titolo="Laboratorio: IA contro quote" icona=${Ic.Calculator || Ic.Activity} sotto=${m.xg && m.xg[0] != null ? `Gol attesi ${nf((m.xg[0] || 0).toFixed(2))} – ${nf((m.xg[1] || 0).toFixed(2))}, quote medie e migliori` : "Quote medie e migliori a confronto"}>
           <div className=${C.card + " p-4 space-y-2"}><div className=${C.lab}>Laboratorio: IA contro quote</div>
             <div className="overflow-x-auto"><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}><th className="text-left font-medium py-1">Esito</th><th className="text-right font-medium">IA</th><th className="text-right font-medium">Quote</th><th className="text-right font-medium">${D.demo ? "Bet365" : "Media"}</th><th className="text-right font-medium">Migliore</th></tr></thead>
               <tbody>${[["1", m.p[0], m.mk[0], m.odds["1"], m.max["1"]], ["X", m.p[1], m.mk[1], m.odds["X"], m.max["X"]], ["2", m.p[2], m.mk[2], m.odds["2"], m.max["2"]],
@@ -861,7 +875,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
               : "Per ora l'IA usa come base la quota media dei bookmaker, perché nei test è la stima più precisa: se ne discosterà solo quando arriveranno formazioni ufficiali e notizie. \"Migliore\" è la quota più alta tra i bookmaker."}</p></div>
           ${m.xg[0] != null && html`<div className=${C.card + " p-4 grid grid-cols-2 gap-2 text-center"}>
             ${[["Gol attesi " + m.h, (m.xg[0] || 0).toFixed(2).replace(".", ",")], ["Gol attesi " + m.a, (m.xg[1] || 0).toFixed(2).replace(".", ",")], ...(m.elo[0] ? [["Elo casa", m.elo[0]], ["Elo ospiti", m.elo[1]]] : [])].map(([a, b]) => html`<div key=${a} className=${"rounded-xl p-2 " + C.ch}>
-              <div className=${"text-base font-semibold tabular-nums " + C.tx}>${b}</div><div className=${"text-[10px] " + C.mu}>${a}</div></div>`)}</div>`}<//>`}
+              <div className=${"text-base font-semibold tabular-nums " + C.tx}>${b}</div><div className=${"text-[10px] " + C.mu}>${a}</div></div>`)}</div>`}<//><//>`}
 
 
         ${mt === 4 && html`<${React.Fragment}>
@@ -882,23 +896,25 @@ import { Anteprima, partitaSettimana } from "./extra.js";
               ${o && html`<div className=${"text-sm mt-2 leading-relaxed " + C.tx}>${t.body}</div>`}</button>`; })}</div>
             ${m.flags.length > 0 && html`<div className="flex flex-wrap gap-1.5">${m.flags.map((f) => html`<span key=${f.text} className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + TONE[f.tone]}>${f.text}</span>`)}</div>`}
           <//>
-          <${Curiosita} m=${m} />
+          ${(m.curiosita || []).length > 0 && html`<${Voce} id="curiosita" titolo="Curiosità" icona=${Ic.Sparkles} sotto=${m.curiosita[0]}><${Curiosita} m=${m} /><//>`}
 
-          <div className=${"flex items-center gap-2 text-sm font-semibold " + C.tx}><${Flag} k=${L.flag} />Classifica ${L.name}</div>
-          ${!(S && S.solo_generale) && html`<${Seg} items=${["Generale", "Solo Casa", "Solo Trasferta"]} val=${filt} set=${setFilt} />`}
+          ${S && html`<div className=${"flex items-center gap-2 text-sm font-semibold " + C.tx}><${Flag} k=${L.flag} />Classifica ${L.name}</div>`}
+          ${S && !S.solo_generale && html`<${Seg} items=${["Generale", "Solo Casa", "Solo Trasferta"]} val=${filt} set=${setFilt} />`}
           <div className=${C.card + " p-2 overflow-x-auto"}><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}>
             <th className="text-left font-medium p-1.5 w-6">#</th><th className="text-left font-medium">Squadra</th><th className="text-right font-medium">G</th><th className="text-right font-medium">V</th><th className="text-right font-medium">N</th><th className="text-right font-medium">P</th><th className="text-right font-medium">DR</th><th className="text-right font-medium pr-1.5">Pt</th></tr></thead>
-            <tbody>${st.map((r, i) => { const hl = r.team === m.h || r.team === m.a; return html`<tr key=${r.team} className=${hl ? "bg-[#5B2EE6]/[0.07] dark:bg-[#A58BFF]/[0.12] font-semibold" : ""}>
+            <tbody>${st.map((r, i) => { const hl = r.team === m.h || r.team === m.a; if (!clIntera && !vicino(i)) return null; return html`<tr key=${r.team} className=${hl ? "bg-[#5B2EE6]/[0.07] dark:bg-[#A58BFF]/[0.12] font-semibold" : ""}>
               <td className="p-1.5">${i + 1}</td><td><span className="flex items-center gap-1.5 min-w-0"><${Crest} t=${r.team} size=${14} /><span className="truncate">${r.team}</span></span></td>
               <td className=${"text-right " + C.mu}>${r.pg}</td><td className="text-right">${r.v}</td><td className="text-right">${r.n}</td><td className="text-right">${r.p}</td><td className="text-right">${r.gf - r.gs > 0 ? "+" : ""}${r.gf - r.gs}</td><td className="text-right pr-1.5 font-semibold">${r.pt}</td></tr>`; })}</tbody></table></div>
+          ${S && st.length > 8 && html`<button onClick=${() => setClIntera(!clIntera)} className=${"w-full -mt-1 text-[14px] font-semibold " + C.acc}>${clIntera ? "Mostra solo le zone delle due squadre" : `Classifica completa (${st.length} squadre)`}</button>`}
           <div className=${C.card + " p-4 space-y-2"}><div className=${C.lab}>Ultime 5</div>
             ${[m.h, m.a].map((t, j) => html`<div key=${t}><button onClick=${() => setL5(l5 === j ? null : j)} className="w-full flex items-center gap-2"><${Crest} t=${t} size=${16} />
               <span className=${"text-sm flex-1 text-left truncate " + C.tx}>${t}</span><${Form} list=${m.last5[j]} /><${Ic.ChevronDown} size=${14} className=${C.mu + (l5 === j ? " rotate-180" : "")} /></button>
               ${l5 === j && html`<div className="mt-2 space-y-1">${m.last5[j].slice().reverse().map((z, q) => html`<div key=${q} className=${"flex justify-between text-xs " + C.tx}><span className=${C.mu}>${z.data}</span><span className="flex-1 px-2 truncate">${z.casa ? "vs" : "@"} ${z.avv}</span><span className="font-semibold tabular-nums">${z.ris}</span></div>`)}</div>`}</div>`)}</div>
+          <${Voce} id="h2h" titolo="Scontri diretti" icona=${Ic.Swords || Ic.Users} sotto=${(m.h2h || []).length ? `Ultimi ${m.h2h.length}: ${m.h2h.slice(0, 3).map((z) => z.ris).join(", ")}${m.h2h.length > 3 ? "…" : ""}` : "Nessun precedente nei dati disponibili"}>
           <div className=${C.card + " p-4"}><div className=${C.lab + " mb-2"}>Scontri diretti</div>
             ${m.h2h.length ? m.h2h.map((z, q) => html`<div key=${q} className=${"flex justify-between text-sm py-1 tabular-nums " + C.tx}><span className=${C.mu + " w-16"}>${z.data}</span><span className="flex-1 text-right pr-2 truncate">${z.casa}</span><b>${z.ris}</b><span className="flex-1 pl-2 truncate">${z.ospite}</span></div>`)
-              : html`<div className=${"text-sm " + C.mu}>${D.demo ? "Nessun precedente negli ultimi 8 anni." : "Nessun precedente nei dati disponibili."}</div>`}</div>
-          ${!S && html`<div className=${C.card + " p-4 text-sm " + C.mu}>Classifica, ultime 5 e precedenti non sono disponibili per questo campionato nella fonte dati gratuita.</div>`}          <${InfoCard} m=${m} sm=${sm} L=${L} /><//>`}
+              : html`<div className=${"text-sm " + C.mu}>${D.demo ? "Nessun precedente negli ultimi 8 anni." : "Nessun precedente nei dati disponibili."}</div>`}</div><//>
+          ${!S && html`<div className=${C.card + " p-4 text-sm " + C.mu}>Classifica, ultime 5 e precedenti non sono disponibili per questo campionato nella fonte dati gratuita.</div>`}          <${Voce} id="info" titolo="Informazioni partita" icona=${Ic.Calendar} sotto=${[L.name, sm && sm.stadio, m.arbitro && "arbitro " + m.arbitro.nome].filter(Boolean).join(" · ")}><${InfoCard} m=${m} sm=${sm} L=${L} /><//><//>`}
 
         ${mt === 5 && (sm ? html`<${Cronaca} sm=${sm} m=${m} />` : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${m.eid ? "Caricamento della cronaca..." : "La cronaca scritta compare quando la partita è collegata alla diretta: di solito dal giorno della partita, con le formazioni ufficiali."}</div>`)}
 

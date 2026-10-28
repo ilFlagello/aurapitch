@@ -1,12 +1,38 @@
 {
-    "iscrizioni": 1,
-    "partite_seguite": 1,
+    "iscrizioni": 2,
+    "partite_seguite": 2,
     "stato_partite": 1,
+    "archivio": {
+        "tipo": "database",
+        "chiavi": [
+            {
+                "p": "_migrato",
+                "n": 1
+            },
+            {
+                "p": "orologio",
+                "n": 1
+            },
+            {
+                "p": "state",
+                "n": 1
+            },
+            {
+                "p": "subs",
+                "n": 1
+            },
+            {
+                "p": "v:",
+                "n": 1
+            }
+        ],
+        "migrazione": "fatta"
+    },
     "orologio": {
-        "slot": "2026-10-28T12:2",
+        "slot": "2026-10-28T12:4",
         "modo": "live",
         "esito": 204,
-        "t": "2026-10-28T12:20:14.087Z"
+        "t": "2026-10-28T12:43:14.342Z"
     },
     "vapid": true
 }

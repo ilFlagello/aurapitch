@@ -1,0 +1,817 @@
+{
+ "descrizione": "Cartellini (K), angoli (C), falli (F): verifica linee per squadra, nuove variabili, dispersione, calibrazione. Allenamento stagioni 2012/13-2019/20, verifica 2020/21-2025/26 (solo dati precedenti alla partita, medie azzerate a ogni stagione come nell'app).",
+ "metriche": "coppie [log-loss del conteggio esatto con binomiale negativa, log-loss media sulle linee Over/Under dell'app]; percentuali negative = errore minore",
+ "confronto": {
+  "K": {
+   "n_partite_test": 14605,
+   "totale": {
+    "base_lega": [
+     2.17303,
+     0.56097
+    ],
+    "attuale": [
+     2.15932,
+     0.55301
+    ],
+    "nuovo": [
+     2.14696,
+     0.54653
+    ],
+    "miglioramento_%": {
+     "attuale_vs_base": [
+      -0.63,
+      -1.42
+     ],
+     "nuovo_vs_base": [
+      -1.2,
+      -2.57
+     ],
+     "nuovo_vs_attuale": [
+      -0.57,
+      -1.17
+     ]
+    }
+   },
+   "squadra": {
+    "base_lega_casa_ospite": [
+     1.7235,
+     0.52013
+    ],
+    "attuale": [
+     1.71798,
+     0.51641
+    ],
+    "nuovo": [
+     1.6971,
+     0.50584
+    ],
+    "miglioramento_%": {
+     "attuale_vs_base": [
+      -0.32,
+      -0.72
+     ],
+     "nuovo_vs_base": [
+      -1.53,
+      -2.75
+     ],
+     "nuovo_vs_attuale": [
+      -1.22,
+      -2.05
+     ]
+    }
+   },
+   "nota": "valori [log-loss per conteggio esatto (NB), log-loss media sulle linee Over/Under]; attuale include l'arbitro dove noto",
+   "media_reale_vs_stima": {
+    "casa": [
+     2.005,
+     2.179,
+     1.971
+    ],
+    "ospite": [
+     2.256,
+     2.161,
+     2.252
+    ],
+    "formato": "[reale, attuale, nuovo]"
+   }
+  },
+  "C": {
+   "n_partite_test": 14605,
+   "totale": {
+    "base_lega": [
+     2.62638,
+     0.64141
+    ],
+    "attuale": [
+     2.6165,
+     0.63561
+    ],
+    "nuovo": [
+     2.61465,
+     0.6349
+    ],
+    "miglioramento_%": {
+     "attuale_vs_base": [
+      -0.38,
+      -0.9
+     ],
+     "nuovo_vs_base": [
+      -0.45,
+      -1.01
+     ],
+     "nuovo_vs_attuale": [
+      -0.07,
+      -0.11
+     ]
+    }
+   },
+   "squadra": {
+    "base_lega_casa_ospite": [
+     2.38142,
+     0.60894
+    ],
+    "attuale": [
+     2.39957,
+     0.60575
+    ],
+    "nuovo": [
+     2.32547,
+     0.57756
+    ],
+    "miglioramento_%": {
+     "attuale_vs_base": [
+      0.76,
+      -0.52
+     ],
+     "nuovo_vs_base": [
+      -2.35,
+      -5.15
+     ],
+     "nuovo_vs_attuale": [
+      -3.09,
+      -4.65
+     ]
+    }
+   },
+   "nota": "valori [log-loss per conteggio esatto (NB), log-loss media sulle linee Over/Under]; attuale include l'arbitro dove noto",
+   "media_reale_vs_stima": {
+    "casa": [
+     5.339,
+     4.878,
+     5.427
+    ],
+    "ospite": [
+     4.395,
+     4.906,
+     4.455
+    ],
+    "formato": "[reale, attuale, nuovo]"
+   }
+  },
+  "F": {
+   "n_partite_test": 14605,
+   "totale": {
+    "base_lega": [
+     3.11583,
+     0.51746
+    ],
+    "attuale": [
+     3.06418,
+     0.49143
+    ],
+    "nuovo": [
+     3.04873,
+     0.48405
+    ],
+    "miglioramento_%": {
+     "attuale_vs_base": [
+      -1.66,
+      -5.03
+     ],
+     "nuovo_vs_base": [
+      -2.15,
+      -6.46
+     ],
+     "nuovo_vs_attuale": [
+      -0.5,
+      -1.5
+     ]
+    }
+   },
+   "squadra": {
+    "base_lega_casa_ospite": [
+     2.74033,
+     0.60872
+    ],
+    "attuale": [
+     2.68667,
+     0.57751
+    ],
+    "nuovo": [
+     2.66945,
+     0.56855
+    ],
+    "miglioramento_%": {
+     "attuale_vs_base": [
+      -1.96,
+      -5.13
+     ],
+     "nuovo_vs_base": [
+      -2.59,
+      -6.6
+     ],
+     "nuovo_vs_attuale": [
+      -0.64,
+      -1.55
+     ]
+    }
+   },
+   "nota": "valori [log-loss per conteggio esatto (NB), log-loss media sulle linee Over/Under]; attuale include l'arbitro dove noto",
+   "media_reale_vs_stima": {
+    "casa": [
+     12.069,
+     12.348,
+     12.038
+    ],
+    "ospite": [
+     12.319,
+     12.334,
+     12.406
+    ],
+    "formato": "[reale, attuale, nuovo]"
+   }
+  }
+ },
+ "modelli_nuovi": {
+  "K": {
+   "intercetta": -0.9182,
+   "pesi": {
+    "lg_side": 0.4109,
+    "t_f": 0.175,
+    "o_s": 0.2698,
+    "home": -0.091,
+    "sbil": -0.1838,
+    "ppgdiff": -0.0772,
+    "arbK": 0.9084,
+    "t_Ff": 0.3353
+   },
+   "r_squadra": 1000.0,
+   "r_totale": 277.68
+  },
+  "C": {
+   "intercetta": 0.4669,
+   "pesi": {
+    "lg_side": 0.2097,
+    "t_f": 0.2251,
+    "o_s": 0.2515,
+    "home": 0.0765,
+    "pdiff": 0.3634
+   },
+   "r_squadra": 14.17,
+   "r_totale": 68.85
+  },
+  "F": {
+   "intercetta": 0.1874,
+   "pesi": {
+    "lg_side": 0.3686,
+    "t_f": 0.5452,
+    "o_s": 0.5643,
+    "home": -0.0249,
+    "eq": 0.16,
+    "arbF": 1.4091,
+    "ppgdiff": -0.0227,
+    "lg_tot": -0.4674
+   },
+   "r_squadra": 249.66,
+   "r_totale": 148.26
+  }
+ },
+ "arbitro_E0E1": {
+  "K": {
+   "n": 5059,
+   "coeff": 0.908,
+   "totale_con_vs_senza_%": [
+    -0.43,
+    -0.95
+   ],
+   "squadra_con_vs_senza_%": [
+    -0.28,
+    -0.51
+   ]
+  },
+  "C": {
+   "n": 5059
+  },
+  "F": {
+   "n": 5059,
+   "coeff": 1.409,
+   "totale_con_vs_senza_%": [
+    -0.39,
+    -1.17
+   ],
+   "squadra_con_vs_senza_%": [
+    -0.24,
+    -0.67
+   ]
+  }
+ },
+ "incidenza_variabili_scelte_drop_one": {
+  "K": {
+   "lg_side": {
+    "peso": 0.4109,
+    "perdita_se_tolta_squadra_%": [
+     0.15,
+     0.27
+    ],
+    "perdita_se_tolta_totale_%": [
+     0.13,
+     0.29
+    ]
+   },
+   "t_f": {
+    "peso": 0.175,
+    "perdita_se_tolta_squadra_%": [
+     0.12,
+     0.21
+    ],
+    "perdita_se_tolta_totale_%": [
+     0.09,
+     0.21
+    ]
+   },
+   "o_s": {
+    "peso": 0.2698,
+    "perdita_se_tolta_squadra_%": [
+     0.2,
+     0.37
+    ],
+    "perdita_se_tolta_totale_%": [
+     0.14,
+     0.3
+    ]
+   },
+   "home": {
+    "peso": -0.091,
+    "perdita_se_tolta_squadra_%": [
+     0.08,
+     0.15
+    ],
+    "perdita_se_tolta_totale_%": [
+     0.03,
+     0.06
+    ]
+   },
+   "sbil": {
+    "peso": -0.1838,
+    "perdita_se_tolta_squadra_%": [
+     0.23,
+     0.48
+    ],
+    "perdita_se_tolta_totale_%": [
+     0.35,
+     0.77
+    ]
+   },
+   "ppgdiff": {
+    "peso": -0.0772,
+    "perdita_se_tolta_squadra_%": [
+     0.11,
+     0.2
+    ],
+    "perdita_se_tolta_totale_%": [
+     0.01,
+     0.01
+    ]
+   },
+   "arbK": {
+    "peso": 0.9084,
+    "perdita_se_tolta_squadra_%": [
+     0.08,
+     0.15
+    ],
+    "perdita_se_tolta_totale_%": [
+     0.12,
+     0.26
+    ]
+   },
+   "t_Ff": {
+    "peso": 0.3353,
+    "perdita_se_tolta_squadra_%": [
+     0.1,
+     0.14
+    ],
+    "perdita_se_tolta_totale_%": [
+     0.08,
+     0.16
+    ]
+   }
+  },
+  "C": {
+   "lg_side": {
+    "peso": 0.2097,
+    "perdita_se_tolta_squadra_%": [
+     0.07,
+     0.15
+    ],
+    "perdita_se_tolta_totale_%": [
+     0.07,
+     0.18
+    ]
+   },
+   "t_f": {
+    "peso": 0.2251,
+    "perdita_se_tolta_squadra_%": [
+     0.1,
+     0.25
+    ],
+    "perdita_se_tolta_totale_%": [
+     0.17,
+     0.42
+    ]
+   },
+   "o_s": {
+    "peso": 0.2515,
+    "perdita_se_tolta_squadra_%": [
+     0.1,
+     0.23
+    ],
+    "perdita_se_tolta_totale_%": [
+     0.2,
+     0.44
+    ]
+   },
+   "home": {
+    "peso": 0.0765,
+    "perdita_se_tolta_squadra_%": [
+     -0.01,
+     -0.03
+    ],
+    "perdita_se_tolta_totale_%": [
+     -0.01,
+     -0.03
+    ]
+   },
+   "pdiff": {
+    "peso": 0.3634,
+    "perdita_se_tolta_squadra_%": [
+     0.83,
+     1.84
+    ],
+    "perdita_se_tolta_totale_%": [
+     0.17,
+     0.43
+    ]
+   }
+  },
+  "F": {
+   "lg_side": {
+    "peso": 0.3686,
+    "perdita_se_tolta_squadra_%": [
+     0.02,
+     0.06
+    ],
+    "perdita_se_tolta_totale_%": [
+     -0.0,
+     0.0
+    ]
+   },
+   "t_f": {
+    "peso": 0.5452,
+    "perdita_se_tolta_squadra_%": [
+     1.03,
+     2.57
+    ],
+    "perdita_se_tolta_totale_%": [
+     0.81,
+     2.45
+    ]
+   },
+   "o_s": {
+    "peso": 0.5643,
+    "perdita_se_tolta_squadra_%": [
+     0.92,
+     2.44
+    ],
+    "perdita_se_tolta_totale_%": [
+     0.66,
+     2.12
+    ]
+   },
+   "home": {
+    "peso": -0.0249,
+    "perdita_se_tolta_squadra_%": [
+     0.01,
+     0.02
+    ],
+    "perdita_se_tolta_totale_%": [
+     0.0,
+     0.0
+    ]
+   },
+   "eq": {
+    "peso": 0.16,
+    "perdita_se_tolta_squadra_%": [
+     0.18,
+     0.5
+    ],
+    "perdita_se_tolta_totale_%": [
+     0.3,
+     0.96
+    ]
+   },
+   "arbF": {
+    "peso": 1.4091,
+    "perdita_se_tolta_squadra_%": [
+     0.09,
+     0.23
+    ],
+    "perdita_se_tolta_totale_%": [
+     0.15,
+     0.4
+    ]
+   },
+   "ppgdiff": {
+    "peso": -0.0227,
+    "perdita_se_tolta_squadra_%": [
+     0.03,
+     0.1
+    ],
+    "perdita_se_tolta_totale_%": [
+     -0.0,
+     -0.01
+    ]
+   },
+   "lg_tot": {
+    "peso": -0.4674,
+    "perdita_se_tolta_squadra_%": [
+     0.03,
+     0.09
+    ],
+    "perdita_se_tolta_totale_%": [
+     0.0,
+     0.01
+    ]
+   }
+  }
+ },
+ "legenda_variabili": {
+  "lg_side": "log media lega del lato (casa o ospite)",
+  "lg_tot": "log media lega totale",
+  "t_f": "log media fatti squadra",
+  "o_s": "log media subiti avversaria",
+  "home": "squadra di casa",
+  "sbil": "|p1-p2|>0,5",
+  "pdiff": "prob. vittoria squadra - avversaria",
+  "eq": "1-|p1-p2|",
+  "pov": "logit Over 2,5",
+  "ppgdiff": "punti/partita squadra - avversaria",
+  "posdiff": "posizione relativa",
+  "t_shots/o_shots": "log tiri squadra/avversaria",
+  "t_sot/o_sot": "log tiri in porta",
+  "t_KF": "log cartellini/falli squadra",
+  "t_Ff": "log falli fatti squadra + subiti avversaria",
+  "t_salv/o_salv": "lotta salvezza (ultimo 40% di stagione, entro 4 punti)",
+  "t_tit/o_tit": "lotta titolo/promozione (entro 4 punti)",
+  "nothing": "nessuna delle due ha nulla in palio",
+  "t_stake/o_stake": "salvezza o titolo",
+  "derby": "stessa citta",
+  "t_prevred/o_prevred": "rosso nella partita precedente",
+  "t_short/o_short": "riposo <=4 giorni",
+  "t_rest": "log giorni di riposo",
+  "arbK/arbF": "log rapporto arbitro (solo E0/E1)",
+  "m_*": "mese della stagione",
+  "t_fv": "media fatti nello stesso campo (casa/trasferta)",
+  "t_s/o_f": "subiti squadra/fatti avversaria"
+ },
+ "dispersione": {
+  "K": {
+   "r_unica_squadra": 1000.0,
+   "r_per_campionato_squadra": {
+    "D1": 1000.0,
+    "E0": 1000.0,
+    "E1": 1000.0,
+    "F1": 1000.0,
+    "I1": 1000.0,
+    "I2": 1000.0,
+    "SP1": 1000.0
+   },
+   "squadra_logloss_[conteggio,linee]_r_unica": [
+    1.6972311379352663,
+    0.5058597619725692
+   ],
+   "squadra_r_per_campionato": [
+    1.6972311379352663,
+    0.5058597619725692
+   ],
+   "totale_r_per_campionato": {
+    "D1": 238.1,
+    "E0": 43.3,
+    "E1": 30.4,
+    "F1": 3315.2,
+    "I1": 10000.0,
+    "I2": 590.9,
+    "SP1": 10000.0
+   },
+   "totale_logloss_r_unica": [
+    2.147355536996229,
+    0.5465695507169462
+   ],
+   "totale_logloss_r_per_campionato": [
+    2.147823000366775,
+    0.5465596502051232
+   ]
+  },
+  "C": {
+   "r_unica_squadra": 14.174354668474399,
+   "r_per_campionato_squadra": {
+    "D1": 13.9,
+    "E0": 13.7,
+    "E1": 15.3,
+    "F1": 12.9,
+    "I1": 13.5,
+    "I2": 15.1,
+    "SP1": 15.2
+   },
+   "squadra_logloss_[conteggio,linee]_r_unica": [
+    2.3254732962071136,
+    0.5775622048475928
+   ],
+   "squadra_r_per_campionato": [
+    2.3255354760250557,
+    0.5775563839268817
+   ],
+   "totale_r_per_campionato": {
+    "D1": 47.7,
+    "E0": 65.1,
+    "E1": 70.2,
+    "F1": 72.5,
+    "I1": 60.6,
+    "I2": 112.0,
+    "SP1": 106.1
+   },
+   "totale_logloss_r_unica": [
+    2.6146936515979,
+    0.6347584391551947
+   ],
+   "totale_logloss_r_per_campionato": [
+    2.6148433842782763,
+    0.6346991969535498
+   ]
+  },
+  "F": {
+   "r_unica_squadra": 249.6596486730986,
+   "r_per_campionato_squadra": {
+    "D1": 144.6,
+    "E0": 659.2,
+    "E1": 1000.0,
+    "F1": 260.0,
+    "I1": 147.1,
+    "I2": 480.4,
+    "SP1": 123.6
+   },
+   "squadra_logloss_[conteggio,linee]_r_unica": [
+    2.669453252103012,
+    0.5685524024570224
+   ],
+   "squadra_r_per_campionato": [
+    2.669414637365653,
+    0.5686508941567622
+   ],
+   "totale_r_per_campionato": {
+    "D1": 108.3,
+    "E0": 864.7,
+    "E1": 840.0,
+    "F1": 131.4,
+    "I1": 99.4,
+    "I2": 102.8,
+    "SP1": 128.2
+   },
+   "totale_logloss_r_unica": [
+    3.047599381083174,
+    0.4836118816712107
+   ],
+   "totale_logloss_r_per_campionato": [
+    3.048547109327894,
+    0.4839015167904818
+   ]
+  }
+ },
+ "calibrazione_sintesi_scarto_medio_prob_over": {
+  "K": {
+   "nuovo": [
+    -0.0044,
+    -0.0098,
+    -0.0115,
+    -0.0061,
+    -0.0054
+   ],
+   "att": [
+    0.0073,
+    0.0076,
+    0.0085,
+    0.0127,
+    0.0098
+   ],
+   "nuovoH": [
+    -0.0148,
+    -0.0239,
+    -0.007,
+    0.0033
+   ],
+   "attH": [
+    0.0082,
+    0.0243,
+    0.0456,
+    0.0433
+   ],
+   "nuovoA": [
+    -0.0161,
+    -0.0214,
+    -0.0023,
+    0.013
+   ],
+   "attA": [
+    -0.0305,
+    -0.0471,
+    -0.0264,
+    -0.0025
+   ]
+  },
+  "C": {
+   "nuovo": [
+    0.0145,
+    0.0164,
+    0.0148,
+    0.0155,
+    0.0154
+   ],
+   "att": [
+    0.0045,
+    0.0049,
+    0.0028,
+    0.0041,
+    0.0055
+   ],
+   "nuovoH": [
+    0.0157,
+    0.0142,
+    0.0124,
+    0.0115,
+    0.0073
+   ],
+   "attH": [
+    0.0014,
+    -0.0213,
+    -0.0467,
+    -0.0646,
+    -0.0743
+   ],
+   "nuovoA": [
+    0.0149,
+    0.016,
+    0.0134,
+    0.0047,
+    0.0024
+   ],
+   "attA": [
+    0.0936,
+    0.1115,
+    0.1027,
+    0.0721,
+    0.0443
+   ]
+  },
+  "F": {
+   "nuovo": [
+    -0.0057,
+    -0.0058,
+    -0.0037,
+    -0.0009,
+    0.0058,
+    0.012,
+    0.0112
+   ],
+   "att": [
+    0.0015,
+    0.0048,
+    0.0098,
+    0.0141,
+    0.0208,
+    0.0255,
+    0.0225
+   ],
+   "nuovoH": [
+    -0.0111,
+    -0.0069,
+    -0.0055,
+    -0.0012,
+    0.001,
+    -0.0024
+   ],
+   "attH": [
+    0.0094,
+    0.018,
+    0.0225,
+    0.0282,
+    0.0301,
+    0.025
+   ],
+   "nuovoA": [
+    0.0023,
+    0.0051,
+    0.0058,
+    0.0078,
+    0.0104,
+    0.0085
+   ],
+   "attA": [
+    -0.0087,
+    -0.0058,
+    -0.0041,
+    -0.0003,
+    0.0045,
+    0.0048
+   ]
+  }
+ }
+}

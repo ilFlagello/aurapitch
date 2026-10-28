@@ -1,0 +1,2121 @@
+{
+ "periodo_allenamento": "2012/13-2019/20",
+ "periodo_verifica": "2020/21-2025/26",
+ "n_allenamento": 22409,
+ "n_verifica": 16321,
+ "n_variabili_grezze": 320,
+ "scelta_iperparametri": {
+  "1x2": {
+   "L2": 0.03,
+   "L1": 0.003,
+   "boost_n": 12,
+   "validazione_interna": {
+    "solo_quote_ricalibrate": 0.9935829953406974,
+    "L2_0.03": 0.9959088682831617,
+    "L2_0.01": 0.9985581561389182,
+    "L2_0.003": 1.0020387735544753,
+    "L2_0.001": 1.0050933697774378,
+    "L2_0.0003": 1.0080696886235339,
+    "L1_0.003": 0.9939858199447755,
+    "L1_0.001": 0.9960503045083249,
+    "L1_0.0005": 0.9995832300904646,
+    "L1_0.0002": 1.004367253733671,
+    "L1_0.0001": 1.0070949350422562,
+    "boost_offset_best": 0.9930824082665893,
+    "boost_offset_n": 12
+   }
+  },
+  "ou": {
+   "L2": 0.03,
+   "L1": 0.003,
+   "boost_n": 84,
+   "validazione_interna": {
+    "solo_quote_ricalibrate": 0.6749438913278931,
+    "L2_0.03": 0.6765356825500292,
+    "L2_0.01": 0.6781989578731302,
+    "L2_0.003": 0.6803644753950842,
+    "L2_0.001": 0.6822189005295674,
+    "L2_0.0003": 0.6836240393924108,
+    "L1_0.003": 0.6748029921966565,
+    "L1_0.001": 0.6766801326685515,
+    "L1_0.0005": 0.6786610157851773,
+    "L1_0.0002": 0.6814390859271509,
+    "L1_0.0001": 0.6831103715238926,
+    "boost_offset_best": 0.6748435303250595,
+    "boost_offset_n": 84
+   }
+  }
+ },
+ "risultati_verifica": {
+  "1x2": {
+   "quote_mattino_grezze": [
+    0.9954309518845431,
+    0.5944501191991823
+   ],
+   "quote_chiusura_tetto": [
+    0.9928058506602384,
+    0.5926635034298386,
+    16321
+   ],
+   "quote_mattino_stesse_partite_chiusura": [
+    0.9954309518845431,
+    0.5944501191991823
+   ],
+   "quote_ricalibrate": [
+    0.9950663819325053,
+    0.5942535420822374
+   ],
+   "logistica_L2": [
+    0.9968785950380151,
+    0.5952416159031602
+   ],
+   "logistica_L1": [
+    0.9949863922098493,
+    0.5941092073067318
+   ],
+   "L1_variabili_non_nulle": 57,
+   "boosting_con_offset": [
+    0.9951877860938264,
+    0.5942682235058795
+   ],
+   "hgb_senza_offset": [
+    1.0005731403523463,
+    0.5973878121739457
+   ],
+   "miglioramento_pct_vs_mattino": {
+    "quote_mattino_grezze": 0.0,
+    "quote_chiusura_tetto": 0.2637,
+    "quote_mattino_stesse_partite_chiusura": 0.0,
+    "quote_ricalibrate": 0.0366,
+    "logistica_L2": -0.1454,
+    "logistica_L1": 0.0447,
+    "boosting_con_offset": 0.0244,
+    "hgb_senza_offset": -0.5166
+   }
+  },
+  "ou": {
+   "quote_mattino_grezze": [
+    0.6763101730845017,
+    0.24172993831849002
+   ],
+   "quote_chiusura_tetto": [
+    0.6741643665756982,
+    0.2406805720943052,
+    16321
+   ],
+   "quote_mattino_stesse_partite_chiusura": [
+    0.6763101730845017,
+    0.24172993831849002
+   ],
+   "quote_ricalibrate": [
+    0.6763795969736864,
+    0.2417614485214827
+   ],
+   "logistica_L2": [
+    0.6781370360777863,
+    0.24258705755183102
+   ],
+   "logistica_L1": [
+    0.6767019401837707,
+    0.24191236301498387
+   ],
+   "L1_variabili_non_nulle": 33,
+   "boosting_con_offset": [
+    0.677184718762531,
+    0.24215550243809392
+   ],
+   "hgb_senza_offset": [
+    0.6784882031628325,
+    0.24276671676841197
+   ],
+   "miglioramento_pct_vs_mattino": {
+    "quote_mattino_grezze": 0.0,
+    "quote_chiusura_tetto": 0.3173,
+    "quote_mattino_stesse_partite_chiusura": 0.0,
+    "quote_ricalibrate": -0.0103,
+    "logistica_L2": -0.2701,
+    "logistica_L1": -0.0579,
+    "boosting_con_offset": -0.1293,
+    "hgb_senza_offset": -0.322
+   }
+  }
+ },
+ "bootstrap": {
+  "1x2_L2": {
+   "guadagno_medio": -0.0014476431534720096,
+   "ic95": [
+    -0.002842622835248406,
+    -2.4044498753131584e-05
+   ],
+   "per_stagione": {
+    "2021": -0.00139,
+    "2122": -0.00021,
+    "2223": -0.00087,
+    "2324": -0.00265,
+    "2425": -0.0006,
+    "2526": -0.00301
+   }
+  },
+  "1x2_L1": {
+   "guadagno_medio": 0.0004445596746938497,
+   "ic95": [
+    -0.0003401828921499509,
+    0.001216909190722633
+   ],
+   "per_stagione": {
+    "2021": 6e-05,
+    "2122": 0.00104,
+    "2223": -0.00039,
+    "2324": 0.00095,
+    "2425": 0.00202,
+    "2526": -0.00099
+   }
+  },
+  "1x2_boost": {
+   "guadagno_medio": 0.00024316579071672874,
+   "ic95": [
+    -7.509645641956347e-05,
+    0.0005501792013722914
+   ],
+   "per_stagione": {
+    "2021": 0.00042,
+    "2122": 0.00059,
+    "2223": 0.00017,
+    "2324": 0.00011,
+    "2425": 0.00059,
+    "2526": -0.00044
+   }
+  },
+  "1x2_quote": {
+   "guadagno_medio": 0.0003645699520377551,
+   "ic95": [
+    3.3974433235521165e-05,
+    0.0006818954226914889
+   ],
+   "per_stagione": {
+    "2021": -2e-05,
+    "2122": 0.00015,
+    "2223": -0.00018,
+    "2324": 0.00106,
+    "2425": 0.0007,
+    "2526": 0.0005
+   }
+  },
+  "ou_L2": {
+   "guadagno_medio": -0.0018268629932845885,
+   "ic95": [
+    -0.002897863531536256,
+    -0.0007388303460219732
+   ],
+   "per_stagione": {
+    "2021": -0.00142,
+    "2122": -0.0006,
+    "2223": -0.00137,
+    "2324": -0.00127,
+    "2425": -0.00282,
+    "2526": -0.00354
+   }
+  },
+  "ou_L1": {
+   "guadagno_medio": -0.0003917670992690608,
+   "ic95": [
+    -0.0009267514415531527,
+    0.00014991416471320427
+   ],
+   "per_stagione": {
+    "2021": -0.00032,
+    "2122": 0.00031,
+    "2223": 0.00021,
+    "2324": -0.0004,
+    "2425": -0.00064,
+    "2526": -0.00155
+   }
+  },
+  "ou_boost": {
+   "guadagno_medio": -0.0008745456780293204,
+   "ic95": [
+    -0.0014669677308283622,
+    -0.00027313442702044533
+   ],
+   "per_stagione": {
+    "2021": -0.00209,
+    "2122": 0.00031,
+    "2223": -0.00085,
+    "2324": -0.00065,
+    "2425": -0.00148,
+    "2526": -0.00049
+   }
+  },
+  "ou_quote": {
+   "guadagno_medio": -6.942388918471573e-05,
+   "ic95": [
+    -0.00022694245842641252,
+    8.903438687779624e-05
+   ],
+   "per_stagione": {
+    "2021": -0.00026,
+    "2122": -0.00021,
+    "2223": -0.00016,
+    "2324": 0.0003,
+    "2425": -0.0002,
+    "2526": 0.00012
+   }
+  }
+ },
+ "modello_migliore": {
+  "1x2": "L1",
+  "ou": "L1"
+ },
+ "pesi_L2_top40": {
+  "1x2": [
+   {
+    "var": "h_xgres_casa10",
+    "fam": "casa_trasferta",
+    "casa_vs_ospite": 0.0134,
+    "pari_vs_ospite": -0.0377
+   },
+   {
+    "var": "h2h_n",
+    "fam": "h2h",
+    "casa_vs_ospite": 0.0376,
+    "pari_vs_ospite": 0.0026
+   },
+   {
+    "var": "a_n7",
+    "fam": "calendario",
+    "casa_vs_ospite": 0.0047,
+    "pari_vs_ospite": -0.0336
+   },
+   {
+    "var": "arb_n",
+    "fam": "arbitro",
+    "casa_vs_ospite": 0.0313,
+    "pari_vs_ospite": -0.0163
+   },
+   {
+    "var": "h_lotta_rel",
+    "fam": "classifica_motivazioni",
+    "casa_vs_ospite": -0.0304,
+    "pari_vs_ospite": -0.0071
+   },
+   {
+    "var": "h_retrocessa",
+    "fam": "classifica_motivazioni",
+    "casa_vs_ospite": 0.0298,
+    "pari_vs_ospite": 0.0092
+   },
+   {
+    "var": "arb_cart",
+    "fam": "arbitro",
+    "casa_vs_ospite": 0.0278,
+    "pari_vs_ospite": -0.0065
+   },
+   {
+    "var": "a_cf_r3",
+    "fam": "tiri_angoli",
+    "casa_vs_ospite": 0.0261,
+    "pari_vs_ospite": -0.0191
+   },
+   {
+    "var": "a_over_r10",
+    "fam": "forma_risultati",
+    "casa_vs_ospite": 0.008,
+    "pari_vs_ospite": -0.0257
+   },
+   {
+    "var": "h_over_r6",
+    "fam": "forma_risultati",
+    "casa_vs_ospite": -0.0141,
+    "pari_vs_ospite": 0.0256
+   },
+   {
+    "var": "arb_tgres",
+    "fam": "arbitro",
+    "casa_vs_ospite": -0.0137,
+    "pari_vs_ospite": 0.0256
+   },
+   {
+    "var": "h_cf_r3",
+    "fam": "tiri_angoli",
+    "casa_vs_ospite": 0.0253,
+    "pari_vs_ospite": -0.0079
+   },
+   {
+    "var": "h_stshare_r6",
+    "fam": "tiri_angoli",
+    "casa_vs_ospite": -0.0141,
+    "pari_vs_ospite": 0.0246
+   },
+   {
+    "var": "a_ca_r6",
+    "fam": "tiri_angoli",
+    "casa_vs_ospite": 0.0241,
+    "pari_vs_ospite": -0.0011
+   },
+   {
+    "var": "h_xgares_e12",
+    "fam": "xG",
+    "casa_vs_ospite": 0.0239,
+    "pari_vs_ospite": 0.0027
+   },
+   {
+    "var": "a_yc_r6",
+    "fam": "disciplina",
+    "casa_vs_ospite": -0.0237,
+    "pari_vs_ospite": -0.0041
+   },
+   {
+    "var": "pinn_vs_media_H",
+    "fam": "mercato_extra",
+    "casa_vs_ospite": 0.0236,
+    "pari_vs_ospite": 0.022
+   },
+   {
+    "var": "h_stf_r6",
+    "fam": "tiri_angoli",
+    "casa_vs_ospite": 0.0146,
+    "pari_vs_ospite": 0.0235
+   },
+   {
+    "var": "a_xgares_r6",
+    "fam": "xG",
+    "casa_vs_ospite": -0.023,
+    "pari_vs_ospite": 0.0013
+   },
+   {
+    "var": "riposo_diff",
+    "fam": "calendario",
+    "casa_vs_ospite": -0.0152,
+    "pari_vs_ospite": 0.0218
+   },
+   {
+    "var": "h_z_rel",
+    "fam": "classifica_motivazioni",
+    "casa_vs_ospite": -0.013,
+    "pari_vs_ospite": 0.0217
+   },
+   {
+    "var": "a_ca_r3",
+    "fam": "tiri_angoli",
+    "casa_vs_ospite": 0.0063,
+    "pari_vs_ospite": 0.0215
+   },
+   {
+    "var": "h_yc_r6",
+    "fam": "disciplina",
+    "casa_vs_ospite": -0.0213,
+    "pari_vs_ospite": 0.0125
+   },
+   {
+    "var": "h_stf_r3",
+    "fam": "tiri_angoli",
+    "casa_vs_ospite": 0.0211,
+    "pari_vs_ospite": 0.0051
+   },
+   {
+    "var": "h_gares_r3",
+    "fam": "forma_vs_mercato",
+    "casa_vs_ospite": -0.0111,
+    "pari_vs_ospite": 0.0211
+   },
+   {
+    "var": "h_z_eur",
+    "fam": "classifica_motivazioni",
+    "casa_vs_ospite": 0.0085,
+    "pari_vs_ospite": -0.021
+   },
+   {
+    "var": "a_over_r3",
+    "fam": "forma_risultati",
+    "casa_vs_ospite": 0.0104,
+    "pari_vs_ospite": -0.0205
+   },
+   {
+    "var": "margine",
+    "fam": "mercato_extra",
+    "casa_vs_ospite": -0.0205,
+    "pari_vs_ospite": 0.0099
+   },
+   {
+    "var": "a_xgres_r3",
+    "fam": "xG",
+    "casa_vs_ospite": -0.0062,
+    "pari_vs_ospite": 0.0201
+   },
+   {
+    "var": "a_n14",
+    "fam": "calendario",
+    "casa_vs_ospite": 0.02,
+    "pari_vs_ospite": 0.007
+   },
+   {
+    "var": "h_gres_r3",
+    "fam": "forma_vs_mercato",
+    "casa_vs_ospite": -0.0016,
+    "pari_vs_ospite": -0.0198
+   },
+   {
+    "var": "h_tgres_r6",
+    "fam": "forma_vs_mercato",
+    "casa_vs_ospite": 0.0197,
+    "pari_vs_ospite": 0.0062
+   },
+   {
+    "var": "a_fo_r3",
+    "fam": "disciplina",
+    "casa_vs_ospite": 0.0112,
+    "pari_vs_ospite": -0.0196
+   },
+   {
+    "var": "a_gres_e12",
+    "fam": "forma_vs_mercato",
+    "casa_vs_ospite": -0.0065,
+    "pari_vs_ospite": -0.0196
+   },
+   {
+    "var": "h_ca_r6",
+    "fam": "tiri_angoli",
+    "casa_vs_ospite": 0.0194,
+    "pari_vs_ospite": -0.0038
+   },
+   {
+    "var": "h_riposo",
+    "fam": "calendario",
+    "casa_vs_ospite": -0.0192,
+    "pari_vs_ospite": -0.014
+   },
+   {
+    "var": "a_fo_r6",
+    "fam": "disciplina",
+    "casa_vs_ospite": -0.019,
+    "pari_vs_ospite": 0.0099
+   },
+   {
+    "var": "mkt_tot",
+    "fam": "mercato_extra",
+    "casa_vs_ospite": 0.0188,
+    "pari_vs_ospite": -0.0167
+   },
+   {
+    "var": "h_sa_e12",
+    "fam": "tiri_angoli",
+    "casa_vs_ospite": 0.0187,
+    "pari_vs_ospite": 0.0008
+   },
+   {
+    "var": "a_pos",
+    "fam": "classifica_motivazioni",
+    "casa_vs_ospite": -0.008,
+    "pari_vs_ospite": -0.0187
+   }
+  ],
+  "1x2_b_offset": 1.0754382628352106,
+  "1x2_intercette": [
+   -0.027562159792446233,
+   0.04772848366696313
+  ],
+  "ou": [
+   {
+    "var": "h_lotta_eur",
+    "fam": "classifica_motivazioni",
+    "peso_over": 0.0347
+   },
+   {
+    "var": "a_sta_r3",
+    "fam": "tiri_angoli",
+    "peso_over": -0.0285
+   },
+   {
+    "var": "h_fin_e12",
+    "fam": "xG",
+    "peso_over": -0.028
+   },
+   {
+    "var": "a_sf_r6",
+    "fam": "tiri_angoli",
+    "peso_over": 0.0272
+   },
+   {
+    "var": "a_pos",
+    "fam": "classifica_motivazioni",
+    "peso_over": 0.025
+   },
+   {
+    "var": "a_sf_r3",
+    "fam": "tiri_angoli",
+    "peso_over": 0.0239
+   },
+   {
+    "var": "meteo_temp",
+    "fam": "meteo",
+    "peso_over": -0.0227
+   },
+   {
+    "var": "h_xgres_casa10",
+    "fam": "casa_trasferta",
+    "peso_over": 0.0222
+   },
+   {
+    "var": "h_sta_r3",
+    "fam": "tiri_angoli",
+    "peso_over": 0.022
+   },
+   {
+    "var": "meteo_vento",
+    "fam": "meteo",
+    "peso_over": -0.0218
+   },
+   {
+    "var": "h_cf_r3",
+    "fam": "tiri_angoli",
+    "peso_over": 0.0212
+   },
+   {
+    "var": "h_sshare_r3",
+    "fam": "tiri_angoli",
+    "peso_over": 0.021
+   },
+   {
+    "var": "max_vs_media_H",
+    "fam": "mercato_extra",
+    "peso_over": 0.0204
+   },
+   {
+    "var": "pinn_vs_media_O",
+    "fam": "mercato_extra",
+    "peso_over": 0.0203
+   },
+   {
+    "var": "derby",
+    "fam": "derby",
+    "peso_over": -0.0201
+   },
+   {
+    "var": "a_neopromossa",
+    "fam": "classifica_motivazioni",
+    "peso_over": -0.0199
+   },
+   {
+    "var": "h_senza_obiettivi",
+    "fam": "classifica_motivazioni",
+    "peso_over": 0.0196
+   },
+   {
+    "var": "h_gares_r6",
+    "fam": "forma_vs_mercato",
+    "peso_over": -0.0181
+   },
+   {
+    "var": "a_ga_e12",
+    "fam": "forma_risultati",
+    "peso_over": -0.0177
+   },
+   {
+    "var": "h_tgres_e4",
+    "fam": "forma_vs_mercato",
+    "peso_over": -0.0174
+   },
+   {
+    "var": "pinn_vs_media_A",
+    "fam": "mercato_extra",
+    "peso_over": 0.0172
+   },
+   {
+    "var": "h_yc_r3",
+    "fam": "disciplina",
+    "peso_over": -0.0163
+   },
+   {
+    "var": "h_ca_r6",
+    "fam": "tiri_angoli",
+    "peso_over": 0.0162
+   },
+   {
+    "var": "h_stshare_r6",
+    "fam": "tiri_angoli",
+    "peso_over": -0.0158
+   },
+   {
+    "var": "a_xgres_r6",
+    "fam": "xG",
+    "peso_over": -0.0158
+   },
+   {
+    "var": "a_senza_obiettivi",
+    "fam": "classifica_motivazioni",
+    "peso_over": 0.0158
+   },
+   {
+    "var": "arb_cart",
+    "fam": "arbitro",
+    "peso_over": 0.0157
+   },
+   {
+    "var": "a_luck_e12",
+    "fam": "forma_vs_mercato",
+    "peso_over": -0.0153
+   },
+   {
+    "var": "h_fin_r3",
+    "fam": "xG",
+    "peso_over": 0.0151
+   },
+   {
+    "var": "a_lotta_eur",
+    "fam": "classifica_motivazioni",
+    "peso_over": 0.015
+   },
+   {
+    "var": "NA_h_xgres_casa10",
+    "fam": "casa_trasferta",
+    "peso_over": -0.015
+   },
+   {
+    "var": "NA_h_xgf_e4",
+    "fam": "xG",
+    "peso_over": -0.0148
+   },
+   {
+    "var": "a_xgf_r10",
+    "fam": "xG",
+    "peso_over": 0.0147
+   },
+   {
+    "var": "h_pts_e4",
+    "fam": "forma_risultati",
+    "peso_over": -0.0146
+   },
+   {
+    "var": "h_ppg",
+    "fam": "classifica_motivazioni",
+    "peso_over": -0.0144
+   },
+   {
+    "var": "h2h_gd",
+    "fam": "h2h",
+    "peso_over": 0.0144
+   },
+   {
+    "var": "h_stshare_r10",
+    "fam": "tiri_angoli",
+    "peso_over": -0.0143
+   },
+   {
+    "var": "h_cf_e4",
+    "fam": "tiri_angoli",
+    "peso_over": 0.0142
+   },
+   {
+    "var": "h_pts_r3",
+    "fam": "forma_risultati",
+    "peso_over": -0.0141
+   },
+   {
+    "var": "a_sa_e12",
+    "fam": "tiri_angoli",
+    "peso_over": 0.0141
+   }
+  ],
+  "ou_b_offset": 1.039956027323067,
+  "ou_intercette": [
+   0.04414988323985977
+  ]
+ },
+ "L1_selezionate": {
+  "1x2": [
+   [
+    "h_z_eur",
+    [
+     0.0,
+     -0.0392
+    ]
+   ],
+   [
+    "h_stshare_r6",
+    [
+     0.0,
+     0.0268
+    ]
+   ],
+   [
+    "h_cf_r3",
+    [
+     0.0258,
+     0.0
+    ]
+   ],
+   [
+    "h_gares_r3",
+    [
+     0.0,
+     0.025
+    ]
+   ],
+   [
+    "h_xgres_casa10",
+    [
+     0.0,
+     -0.0239
+    ]
+   ],
+   [
+    "a_pts_fuori10",
+    [
+     0.0214,
+     0.0
+    ]
+   ],
+   [
+    "arb_n",
+    [
+     0.0213,
+     0.0
+    ]
+   ],
+   [
+    "div_I2",
+    [
+     0.0,
+     0.0209
+    ]
+   ],
+   [
+    "h_over_r6",
+    [
+     0.0,
+     0.02
+    ]
+   ],
+   [
+    "a_over_r10",
+    [
+     0.0,
+     -0.0198
+    ]
+   ],
+   [
+    "a_xgres_r3",
+    [
+     0.0,
+     0.0187
+    ]
+   ],
+   [
+    "a_ca_r6",
+    [
+     0.018,
+     0.0
+    ]
+   ],
+   [
+    "a_gres_r3",
+    [
+     0.0,
+     0.0171
+    ]
+   ],
+   [
+    "a_gares_r6",
+    [
+     0.0,
+     -0.0155
+    ]
+   ],
+   [
+    "h_retrocessa",
+    [
+     0.0153,
+     0.0
+    ]
+   ],
+   [
+    "pinn_vs_media_H",
+    [
+     0.015,
+     0.0083
+    ]
+   ],
+   [
+    "h_luck_r6",
+    [
+     -0.0148,
+     0.0032
+    ]
+   ],
+   [
+    "a_luck_r6",
+    [
+     0.0,
+     0.0141
+    ]
+   ],
+   [
+    "a_ca_r3",
+    [
+     0.0,
+     0.012
+    ]
+   ],
+   [
+    "h_ca_r3",
+    [
+     0.0,
+     -0.0114
+    ]
+   ],
+   [
+    "a_n7",
+    [
+     0.0,
+     -0.0104
+    ]
+   ],
+   [
+    "a_fin_e12",
+    [
+     0.0101,
+     0.0
+    ]
+   ],
+   [
+    "a_cf_r3",
+    [
+     0.0,
+     -0.0099
+    ]
+   ],
+   [
+    "a_over_r3",
+    [
+     0.0097,
+     -0.001
+    ]
+   ],
+   [
+    "h_lotta_rel",
+    [
+     -0.0095,
+     0.0
+    ]
+   ],
+   [
+    "h2h_n",
+    [
+     0.009,
+     0.0
+    ]
+   ],
+   [
+    "riposo_diff",
+    [
+     0.0,
+     0.0089
+    ]
+   ],
+   [
+    "h_tgres_r6",
+    [
+     0.0088,
+     0.0
+    ]
+   ],
+   [
+    "a_pts_r10",
+    [
+     0.0079,
+     0.0
+    ]
+   ],
+   [
+    "arb_tgres",
+    [
+     0.0,
+     0.0079
+    ]
+   ],
+   [
+    "h_sf_r10",
+    [
+     0.0,
+     -0.0076
+    ]
+   ],
+   [
+    "a_xgres_fuori10",
+    [
+     -0.0076,
+     0.0032
+    ]
+   ],
+   [
+    "h_luck_e4",
+    [
+     -0.0072,
+     0.0
+    ]
+   ],
+   [
+    "a_n14",
+    [
+     0.007,
+     0.0
+    ]
+   ],
+   [
+    "h_stf_r3",
+    [
+     0.006,
+     0.0
+    ]
+   ],
+   [
+    "elo_vs_mkt",
+    [
+     -0.0056,
+     0.0
+    ]
+   ],
+   [
+    "a_luck_r10",
+    [
+     0.0055,
+     0.0
+    ]
+   ],
+   [
+    "a_gf_e12",
+    [
+     0.0053,
+     0.0
+    ]
+   ],
+   [
+    "a_yc_r3",
+    [
+     0.0,
+     -0.005
+    ]
+   ],
+   [
+    "a_riposo",
+    [
+     0.0,
+     -0.0048
+    ]
+   ],
+   [
+    "a_sa_e4",
+    [
+     0.0045,
+     0.0
+    ]
+   ],
+   [
+    "h_riposo",
+    [
+     -0.0034,
+     0.0
+    ]
+   ],
+   [
+    "h_fo_r10",
+    [
+     0.0032,
+     0.0
+    ]
+   ],
+   [
+    "h_pos",
+    [
+     0.0,
+     -0.0032
+    ]
+   ],
+   [
+    "arb_cart",
+    [
+     0.003,
+     0.0
+    ]
+   ],
+   [
+    "h_luck_r10",
+    [
+     -0.0028,
+     0.0
+    ]
+   ],
+   [
+    "h_cf_e4",
+    [
+     0.0,
+     -0.0022
+    ]
+   ],
+   [
+    "mkt_tot",
+    [
+     0.0,
+     -0.0019
+    ]
+   ],
+   [
+    "a_luck_r3",
+    [
+     0.0,
+     0.0015
+    ]
+   ],
+   [
+    "a_fo_r3",
+    [
+     0.0,
+     -0.0015
+    ]
+   ],
+   [
+    "div_I1",
+    [
+     -0.0014,
+     0.0
+    ]
+   ],
+   [
+    "weekend",
+    [
+     0.0,
+     -0.0013
+    ]
+   ],
+   [
+    "h_yc_r3",
+    [
+     0.0,
+     0.0012
+    ]
+   ],
+   [
+    "h_yc_r6",
+    [
+     -0.0006,
+     0.0
+    ]
+   ],
+   [
+    "div_E1",
+    [
+     -0.0006,
+     0.0
+    ]
+   ],
+   [
+    "a_xgares_e12",
+    [
+     0.0004,
+     0.0
+    ]
+   ],
+   [
+    "h_neopromossa",
+    [
+     0.0002,
+     0.0
+    ]
+   ]
+  ],
+  "ou": [
+   [
+    "h_cf_r3",
+    [
+     0.0274
+    ]
+   ],
+   [
+    "h_gares_r6",
+    [
+     -0.0229
+    ]
+   ],
+   [
+    "h_sta_r3",
+    [
+     0.0226
+    ]
+   ],
+   [
+    "h_xgres_casa10",
+    [
+     0.0219
+    ]
+   ],
+   [
+    "a_pos",
+    [
+     0.0195
+    ]
+   ],
+   [
+    "a_sf_r3",
+    [
+     0.0192
+    ]
+   ],
+   [
+    "h_fin_e12",
+    [
+     -0.0176
+    ]
+   ],
+   [
+    "h_lotta_eur",
+    [
+     0.0144
+    ]
+   ],
+   [
+    "h_tgres_e4",
+    [
+     -0.0133
+    ]
+   ],
+   [
+    "a_neopromossa",
+    [
+     -0.0112
+    ]
+   ],
+   [
+    "a_xgares_e12",
+    [
+     0.0107
+    ]
+   ],
+   [
+    "h_cf_r6",
+    [
+     0.0102
+    ]
+   ],
+   [
+    "h_stshare_r6",
+    [
+     -0.0092
+    ]
+   ],
+   [
+    "h_yc_r3",
+    [
+     -0.0085
+    ]
+   ],
+   [
+    "a_ga_r3",
+    [
+     -0.0085
+    ]
+   ],
+   [
+    "h_ca_r6",
+    [
+     0.0074
+    ]
+   ],
+   [
+    "derby",
+    [
+     -0.0067
+    ]
+   ],
+   [
+    "h_pts_r10",
+    [
+     -0.0065
+    ]
+   ],
+   [
+    "h_gres_casa10",
+    [
+     0.0064
+    ]
+   ],
+   [
+    "weekend",
+    [
+     0.0054
+    ]
+   ],
+   [
+    "h_ppg",
+    [
+     -0.0052
+    ]
+   ],
+   [
+    "h_sta_e4",
+    [
+     0.0048
+    ]
+   ],
+   [
+    "h_pts_e4",
+    [
+     -0.0041
+    ]
+   ],
+   [
+    "a_gres_r10",
+    [
+     0.0037
+    ]
+   ],
+   [
+    "mese",
+    [
+     0.0037
+    ]
+   ],
+   [
+    "h_cf_e4",
+    [
+     0.0035
+    ]
+   ],
+   [
+    "h_sshare_r3",
+    [
+     0.0031
+    ]
+   ],
+   [
+    "a_sta_r3",
+    [
+     -0.003
+    ]
+   ],
+   [
+    "div_SP1",
+    [
+     -0.0029
+    ]
+   ],
+   [
+    "h_pts_r3",
+    [
+     -0.0028
+    ]
+   ],
+   [
+    "pinn_vs_media_A",
+    [
+     0.001
+    ]
+   ],
+   [
+    "h_gares_e4",
+    [
+     -0.0007
+    ]
+   ],
+   [
+    "h_gares_r3",
+    [
+     -0.0003
+    ]
+   ]
+  ]
+ },
+ "permutazione_famiglie_pct": {
+  "1x2_L2": {
+   "forma_risultati": 0.1234,
+   "tiri_angoli": 0.0851,
+   "calendario": 0.0768,
+   "xG": 0.0628,
+   "mercato_extra": 0.0465,
+   "campionato": 0.036,
+   "arbitro": 0.0185,
+   "casa_trasferta": 0.0133,
+   "elo": 0.008,
+   "h2h": 0.0068,
+   "derby": 0.0014,
+   "meteo": -0.0013,
+   "disciplina": -0.0044,
+   "forma_vs_mercato": -0.0046,
+   "classifica_motivazioni": -0.0124
+  },
+  "1x2_boost": {
+   "tiri_angoli": 0.0176,
+   "xG": 0.0134,
+   "mercato_extra": 0.0065,
+   "forma_risultati": 0.0053,
+   "calendario": 0.0013,
+   "campionato": 0.0006,
+   "arbitro": 0.0002,
+   "derby": 0.0,
+   "classifica_motivazioni": -0.0,
+   "meteo": 0.0,
+   "disciplina": -0.0004,
+   "elo": -0.0011,
+   "h2h": -0.0023,
+   "casa_trasferta": -0.0034,
+   "forma_vs_mercato": -0.0111
+  },
+  "ou_L2": {
+   "forma_risultati": 0.2129,
+   "forma_vs_mercato": 0.1584,
+   "tiri_angoli": 0.0659,
+   "xG": 0.0396,
+   "elo": 0.0325,
+   "classifica_motivazioni": 0.0318,
+   "casa_trasferta": 0.0257,
+   "derby": 0.018,
+   "campionato": 0.009,
+   "h2h": 0.0034,
+   "arbitro": -0.0004,
+   "mercato_extra": -0.0009,
+   "calendario": -0.0064,
+   "disciplina": -0.0096,
+   "meteo": -0.0115
+  },
+  "ou_boost": {
+   "forma_vs_mercato": 0.0248,
+   "casa_trasferta": 0.005,
+   "mercato_extra": 0.0037,
+   "tiri_angoli": 0.0026,
+   "arbitro": 0.0007,
+   "derby": 0.0,
+   "calendario": 0.0,
+   "campionato": 0.0,
+   "meteo": -0.0011,
+   "forma_risultati": -0.0031,
+   "h2h": -0.0038,
+   "elo": -0.0052,
+   "classifica_motivazioni": -0.0096,
+   "disciplina": -0.0107,
+   "xG": -0.0171
+  }
+ },
+ "permutazione_variabili_pct": {
+  "1x2": {
+   "a_n7": 0.0495,
+   "h_cf_r3": 0.0293,
+   "h2h_n": 0.0254,
+   "arb_n": 0.0207,
+   "h_yc_r6": 0.0195,
+   "a_cf_r3": 0.0182,
+   "h_xgres_casa10": 0.0174,
+   "h_over_r6": 0.0158,
+   "h_xgares_e12": 0.0144,
+   "h_retrocessa": 0.0143,
+   "riposo_diff": 0.0126,
+   "a_xgares_r6": 0.011,
+   "a_n14": 0.0108,
+   "h_stf_r3": 0.009,
+   "pinn_vs_media_H": 0.008,
+   "a_xgres_r3": 0.008,
+   "a_yc_r6": 0.0072,
+   "margine": 0.0067,
+   "a_ca_r3": 0.0024,
+   "arb_cart": 0.0015,
+   "h_gares_r3": 0.0007,
+   "arb_tgres": -0.0018,
+   "h_lotta_rel": -0.0022,
+   "a_over_r10": -0.0032,
+   "h_z_rel": -0.0038,
+   "h_stf_r6": -0.0042,
+   "a_ca_r6": -0.0048,
+   "a_over_r3": -0.0048,
+   "h_z_eur": -0.0091,
+   "h_stshare_r6": -0.0394
+  },
+  "ou": {
+   "h_lotta_eur": 0.0412,
+   "a_sta_r3": 0.0241,
+   "a_ga_e12": 0.0238,
+   "a_pos": 0.0174,
+   "a_xgres_r6": 0.0158,
+   "derby": 0.0136,
+   "pinn_vs_media_O": 0.0123,
+   "h_gares_r6": 0.0082,
+   "h_sshare_r3": 0.0076,
+   "h_ca_r6": 0.0073,
+   "a_neopromossa": 0.0068,
+   "a_luck_e12": 0.0058,
+   "h_sta_r3": 0.0057,
+   "a_lotta_eur": 0.0041,
+   "h_senza_obiettivi": 0.0033,
+   "h_tgres_e4": 0.0028,
+   "a_senza_obiettivi": 0.0004,
+   "h_fin_r3": -0.0016,
+   "arb_cart": -0.002,
+   "meteo_temp": -0.0048,
+   "pinn_vs_media_A": -0.006,
+   "h_xgres_casa10": -0.0081,
+   "meteo_vento": -0.0116,
+   "h_stshare_r6": -0.012,
+   "a_sf_r6": -0.0146,
+   "h_yc_r3": -0.0152,
+   "h_cf_r3": -0.0157,
+   "h_fin_e12": -0.0191,
+   "max_vs_media_H": -0.0197,
+   "a_sf_r3": -0.0222
+  }
+ },
+ "calibrazione": {
+  "casa_L1": [
+   {
+    "fascia": "0.0-0.1",
+    "n": 196,
+    "stimata": 0.0789,
+    "reale": 0.0663
+   },
+   {
+    "fascia": "0.1-0.2",
+    "n": 1133,
+    "stimata": 0.1588,
+    "reale": 0.1421
+   },
+   {
+    "fascia": "0.2-0.3",
+    "n": 2222,
+    "stimata": 0.2558,
+    "reale": 0.2363
+   },
+   {
+    "fascia": "0.3-0.4",
+    "n": 3690,
+    "stimata": 0.3519,
+    "reale": 0.3344
+   },
+   {
+    "fascia": "0.4-0.5",
+    "n": 3675,
+    "stimata": 0.4471,
+    "reale": 0.4365
+   },
+   {
+    "fascia": "0.5-0.6",
+    "n": 2532,
+    "stimata": 0.5476,
+    "reale": 0.545
+   },
+   {
+    "fascia": "0.6-0.7",
+    "n": 1522,
+    "stimata": 0.6464,
+    "reale": 0.6544
+   },
+   {
+    "fascia": "0.7-0.8",
+    "n": 909,
+    "stimata": 0.7433,
+    "reale": 0.7327
+   },
+   {
+    "fascia": "0.8-0.9",
+    "n": 388,
+    "stimata": 0.8386,
+    "reale": 0.8144
+   },
+   {
+    "fascia": "0.9-1.0",
+    "n": 54,
+    "stimata": 0.9157,
+    "reale": 0.9259
+   }
+  ],
+  "pareggio_L1": [
+   {
+    "fascia": "0.0-0.1",
+    "n": 171,
+    "stimata": 0.0796,
+    "reale": 0.0877
+   },
+   {
+    "fascia": "0.1-0.2",
+    "n": 2150,
+    "stimata": 0.1644,
+    "reale": 0.174
+   },
+   {
+    "fascia": "0.2-0.3",
+    "n": 10418,
+    "stimata": 0.2598,
+    "reale": 0.262
+   },
+   {
+    "fascia": "0.3-0.4",
+    "n": 3581,
+    "stimata": 0.319,
+    "reale": 0.3354
+   }
+  ],
+  "ospite_L1": [
+   {
+    "fascia": "0.0-0.1",
+    "n": 1169,
+    "stimata": 0.0685,
+    "reale": 0.0787
+   },
+   {
+    "fascia": "0.1-0.2",
+    "n": 3253,
+    "stimata": 0.1542,
+    "reale": 0.1562
+   },
+   {
+    "fascia": "0.2-0.3",
+    "n": 4523,
+    "stimata": 0.2507,
+    "reale": 0.2527
+   },
+   {
+    "fascia": "0.3-0.4",
+    "n": 3506,
+    "stimata": 0.3457,
+    "reale": 0.352
+   },
+   {
+    "fascia": "0.4-0.5",
+    "n": 1900,
+    "stimata": 0.4438,
+    "reale": 0.4616
+   },
+   {
+    "fascia": "0.5-0.6",
+    "n": 1035,
+    "stimata": 0.5462,
+    "reale": 0.5478
+   },
+   {
+    "fascia": "0.6-0.7",
+    "n": 586,
+    "stimata": 0.6427,
+    "reale": 0.6331
+   },
+   {
+    "fascia": "0.7-0.8",
+    "n": 286,
+    "stimata": 0.7419,
+    "reale": 0.7378
+   },
+   {
+    "fascia": "0.8-0.9",
+    "n": 63,
+    "stimata": 0.8356,
+    "reale": 0.8254
+   }
+  ],
+  "over_L1": [
+   {
+    "fascia": "0.2-0.3",
+    "n": 51,
+    "stimata": 0.2826,
+    "reale": 0.1569
+   },
+   {
+    "fascia": "0.3-0.4",
+    "n": 1606,
+    "stimata": 0.3713,
+    "reale": 0.3973
+   },
+   {
+    "fascia": "0.4-0.5",
+    "n": 6630,
+    "stimata": 0.4523,
+    "reale": 0.4431
+   },
+   {
+    "fascia": "0.5-0.6",
+    "n": 5061,
+    "stimata": 0.5464,
+    "reale": 0.5426
+   },
+   {
+    "fascia": "0.6-0.7",
+    "n": 2298,
+    "stimata": 0.6403,
+    "reale": 0.6297
+   },
+   {
+    "fascia": "0.7-0.8",
+    "n": 611,
+    "stimata": 0.7369,
+    "reale": 0.6907
+   },
+   {
+    "fascia": "0.8-0.9",
+    "n": 64,
+    "stimata": 0.8214,
+    "reale": 0.8594
+   }
+  ]
+ },
+ "valore": {
+  "1x2_L1": {
+   "EV>=0.03": {
+    "giocate": 9173,
+    "resa_pct": 3.55,
+    "ic95_resa_pct": [
+     0.57,
+     6.55
+    ],
+    "utile_unita": 325.3,
+    "quota_media": 3.21,
+    "utile_senza_10_vincite_maggiori": 255.9,
+    "per_stagione_resa_pct": {
+     "2021": 0.0,
+     "2122": 4.4,
+     "2223": 2.3,
+     "2324": 6.7,
+     "2425": 8.1,
+     "2526": -1.7
+    }
+   },
+   "pp>=0.03": {
+    "giocate": 1719,
+    "resa_pct": 9.07,
+    "ic95_resa_pct": [
+     2.97,
+     14.74
+    ],
+    "utile_unita": 155.8,
+    "quota_media": 2.48,
+    "utile_senza_10_vincite_maggiori": 117.5,
+    "per_stagione_resa_pct": {
+     "2021": 8.0,
+     "2122": 12.0,
+     "2223": 6.9,
+     "2324": 10.4,
+     "2425": 4.8,
+     "2526": 13.5
+    }
+   },
+   "EV>=0.05": {
+    "giocate": 5238,
+    "resa_pct": 6.72,
+    "ic95_resa_pct": [
+     2.57,
+     11.25
+    ],
+    "utile_unita": 352.1,
+    "quota_media": 3.42,
+    "utile_senza_10_vincite_maggiori": 284.7,
+    "per_stagione_resa_pct": {
+     "2021": -0.8,
+     "2122": 15.8,
+     "2223": 5.1,
+     "2324": 7.9,
+     "2425": 8.3,
+     "2526": 0.6
+    }
+   },
+   "pp>=0.05": {
+    "giocate": 154,
+    "resa_pct": 5.8,
+    "ic95_resa_pct": [
+     -12.05,
+     24.39
+    ],
+    "utile_unita": 8.9,
+    "quota_media": 2.2,
+    "utile_senza_10_vincite_maggiori": -16.1,
+    "per_stagione_resa_pct": {
+     "2021": -39.3,
+     "2122": 33.9,
+     "2223": -8.8,
+     "2324": 5.1,
+     "2425": 1.4,
+     "2526": 68.7
+    }
+   }
+  },
+  "1x2_L2": {
+   "EV>=0.03": {
+    "giocate": 13582,
+    "resa_pct": 1.43,
+    "ic95_resa_pct": [
+     -1.34,
+     4.12
+    ],
+    "utile_unita": 193.9,
+    "quota_media": 3.7,
+    "utile_senza_10_vincite_maggiori": 48.4,
+    "per_stagione_resa_pct": {
+     "2021": 2.8,
+     "2122": 3.9,
+     "2223": 4.9,
+     "2324": -0.9,
+     "2425": 1.4,
+     "2526": -4.6
+    }
+   },
+   "pp>=0.03": {
+    "giocate": 6717,
+    "resa_pct": 4.72,
+    "ic95_resa_pct": [
+     1.16,
+     8.46
+    ],
+    "utile_unita": 317.1,
+    "quota_media": 3.23,
+    "utile_senza_10_vincite_maggiori": 243.4,
+    "per_stagione_resa_pct": {
+     "2021": 3.8,
+     "2122": 11.2,
+     "2223": 8.2,
+     "2324": 0.6,
+     "2425": 2.6,
+     "2526": 0.4
+    }
+   },
+   "EV>=0.05": {
+    "giocate": 11306,
+    "resa_pct": 1.72,
+    "ic95_resa_pct": [
+     -1.47,
+     4.71
+    ],
+    "utile_unita": 194.9,
+    "quota_media": 3.81,
+    "utile_senza_10_vincite_maggiori": 53.4,
+    "per_stagione_resa_pct": {
+     "2021": 2.7,
+     "2122": 3.1,
+     "2223": 6.3,
+     "2324": -0.2,
+     "2425": 0.5,
+     "2526": -3.0
+    }
+   },
+   "pp>=0.05": {
+    "giocate": 2473,
+    "resa_pct": 7.16,
+    "ic95_resa_pct": [
+     1.22,
+     13.06
+    ],
+    "utile_unita": 177.2,
+    "quota_media": 3.18,
+    "utile_senza_10_vincite_maggiori": 125.8,
+    "per_stagione_resa_pct": {
+     "2021": 4.1,
+     "2122": 9.8,
+     "2223": 10.3,
+     "2324": 1.3,
+     "2425": 7.5,
+     "2526": 9.8
+    }
+   }
+  },
+  "1x2_quote": {
+   "EV>=0.03": {
+    "giocate": 1986,
+    "resa_pct": 7.87,
+    "ic95_resa_pct": [
+     1.25,
+     14.6
+    ],
+    "utile_unita": 156.2,
+    "quota_media": 3.28,
+    "utile_senza_10_vincite_maggiori": 113.0,
+    "per_stagione_resa_pct": {
+     "2021": 0.7,
+     "2122": 10.1,
+     "2223": 13.7,
+     "2324": 5.6,
+     "2425": 10.4,
+     "2526": 3.3
+    }
+   },
+   "pp>=0.03": {
+    "giocate": 88,
+    "resa_pct": -14.08,
+    "ic95_resa_pct": [
+     -32.8,
+     5.56
+    ],
+    "utile_unita": -12.4,
+    "quota_media": 1.78,
+    "utile_senza_10_vincite_maggiori": -26.5,
+    "per_stagione_resa_pct": {
+     "2021": -55.4,
+     "2122": -14.7,
+     "2223": -2.1,
+     "2324": -41.9,
+     "2425": -27.6,
+     "2526": 43.9
+    }
+   },
+   "EV>=0.05": {
+    "giocate": 340,
+    "resa_pct": 4.58,
+    "ic95_resa_pct": [
+     -11.25,
+     21.87
+    ],
+    "utile_unita": 15.6,
+    "quota_media": 3.46,
+    "utile_senza_10_vincite_maggiori": -22.7,
+    "per_stagione_resa_pct": {
+     "2021": -16.8,
+     "2122": 18.3,
+     "2223": -43.1,
+     "2324": 27.3,
+     "2425": 14.0,
+     "2526": 34.3
+    }
+   },
+   "pp>=0.05": {
+    "giocate": 13,
+    "resa_pct": 12.46,
+    "ic95_resa_pct": [
+     -55.33,
+     80.62
+    ],
+    "utile_unita": 1.6,
+    "quota_media": 1.97,
+    "utile_senza_10_vincite_maggiori": -3.0,
+    "per_stagione_resa_pct": {
+     "2021": -100.0,
+     "2122": -30.0,
+     "2223": 81.0,
+     "2324": -35.5,
+     "2425": -100.0,
+     "2526": 190.7
+    }
+   }
+  },
+  "ou_L1": {
+   "EV>=0.03": {
+    "giocate": 1286,
+    "resa_pct": -0.7,
+    "ic95_resa_pct": [
+     -5.67,
+     4.63
+    ],
+    "utile_unita": -9.1,
+    "quota_media": 1.89,
+    "utile_senza_10_vincite_maggiori": -27.7,
+    "per_stagione_resa_pct": {
+     "2021": 3.6,
+     "2122": 0.3,
+     "2223": -2.3,
+     "2324": 0.8,
+     "2425": 2.3,
+     "2526": -11.0
+    }
+   },
+   "pp>=0.03": {
+    "giocate": 212,
+    "resa_pct": -11.06,
+    "ic95_resa_pct": [
+     -22.57,
+     0.89
+    ],
+    "utile_unita": -23.5,
+    "quota_media": 1.75,
+    "utile_senza_10_vincite_maggiori": -36.1,
+    "per_stagione_resa_pct": {
+     "2021": -10.1,
+     "2122": -33.6,
+     "2223": -24.7,
+     "2324": -10.5,
+     "2425": -4.3,
+     "2526": 16.3
+    }
+   },
+   "EV>=0.05": {
+    "giocate": 311,
+    "resa_pct": -2.38,
+    "ic95_resa_pct": [
+     -13.14,
+     8.21
+    ],
+    "utile_unita": -7.4,
+    "quota_media": 1.92,
+    "utile_senza_10_vincite_maggiori": -22.4,
+    "per_stagione_resa_pct": {
+     "2021": 7.1,
+     "2122": -16.7,
+     "2223": -3.7,
+     "2324": -4.7,
+     "2425": -2.1,
+     "2526": 6.1
+    }
+   },
+   "pp>=0.05": {
+    "giocate": 24,
+    "resa_pct": -3.58,
+    "ic95_resa_pct": [
+     -32.33,
+     23.17
+    ],
+    "utile_unita": -0.9,
+    "quota_media": 1.53,
+    "utile_senza_10_vincite_maggiori": -6.1,
+    "per_stagione_resa_pct": {
+     "2021": -5.4,
+     "2122": 34.5,
+     "2223": -38.6,
+     "2324": 45.2,
+     "2425": 32.0,
+     "2526": -100.0
+    }
+   }
+  },
+  "ou_L2": {
+   "EV>=0.03": {
+    "giocate": 5565,
+    "resa_pct": -3.21,
+    "ic95_resa_pct": [
+     -5.78,
+     -0.68
+    ],
+    "utile_unita": -178.8,
+    "quota_media": 1.93,
+    "utile_senza_10_vincite_maggiori": -201.8,
+    "per_stagione_resa_pct": {
+     "2021": -0.6,
+     "2122": -2.3,
+     "2223": -5.5,
+     "2324": -1.0,
+     "2425": -5.9,
+     "2526": -4.4
+    }
+   },
+   "pp>=0.03": {
+    "giocate": 2775,
+    "resa_pct": -2.12,
+    "ic95_resa_pct": [
+     -5.49,
+     1.35
+    ],
+    "utile_unita": -58.9,
+    "quota_media": 1.88,
+    "utile_senza_10_vincite_maggiori": -79.3,
+    "per_stagione_resa_pct": {
+     "2021": -0.6,
+     "2122": 0.1,
+     "2223": -4.0,
+     "2324": 1.9,
+     "2425": -0.9,
+     "2526": -11.0
+    }
+   },
+   "EV>=0.05": {
+    "giocate": 3321,
+    "resa_pct": -2.68,
+    "ic95_resa_pct": [
+     -6.08,
+     0.71
+    ],
+    "utile_unita": -89.1,
+    "quota_media": 1.95,
+    "utile_senza_10_vincite_maggiori": -111.6,
+    "per_stagione_resa_pct": {
+     "2021": 0.4,
+     "2122": -2.2,
+     "2223": -4.6,
+     "2324": 3.0,
+     "2425": -5.0,
+     "2526": -9.3
+    }
+   },
+   "pp>=0.05": {
+    "giocate": 852,
+    "resa_pct": 3.56,
+    "ic95_resa_pct": [
+     -2.63,
+     9.65
+    ],
+    "utile_unita": 30.3,
+    "quota_media": 1.87,
+    "utile_senza_10_vincite_maggiori": 12.1,
+    "per_stagione_resa_pct": {
+     "2021": -1.7,
+     "2122": -0.6,
+     "2223": 14.8,
+     "2324": 9.2,
+     "2425": 7.6,
+     "2526": -13.2
+    }
+   }
+  },
+  "ou_quote": {
+   "EV>=0.03": {
+    "giocate": 40,
+    "resa_pct": 5.08,
+    "ic95_resa_pct": [
+     -15.85,
+     25.3
+    ],
+    "utile_unita": 2.0,
+    "quota_media": 1.48,
+    "utile_senza_10_vincite_maggiori": -4.7,
+    "per_stagione_resa_pct": {
+     "2021": -4.4,
+     "2122": -3.2,
+     "2223": -13.1,
+     "2324": 32.0,
+     "2425": 31.0,
+     "2526": 25.0
+    }
+   },
+   "pp>=0.03": {
+    "giocate": 30,
+    "resa_pct": 8.33,
+    "ic95_resa_pct": [
+     -13.87,
+     29.37
+    ],
+    "utile_unita": 2.5,
+    "quota_media": 1.41,
+    "utile_senza_10_vincite_maggiori": -2.8,
+    "per_stagione_resa_pct": {
+     "2021": 1.1,
+     "2122": -10.8,
+     "2223": -20.2,
+     "2324": 32.0,
+     "2425": 32.0,
+     "2526": 53.5
+    }
+   },
+   "EV>=0.05": {
+    "giocate": 21,
+    "resa_pct": 8.95,
+    "ic95_resa_pct": [
+     -19.0,
+     33.14
+    ],
+    "utile_unita": 1.9,
+    "quota_media": 1.43,
+    "utile_senza_10_vincite_maggiori": -3.1,
+    "per_stagione_resa_pct": {
+     "2021": -3.7,
+     "2122": 33.8,
+     "2223": -33.8,
+     "2324": 31.0,
+     "2425": 32.0,
+     "2526": 62.0
+    }
+   },
+   "pp>=0.05": {
+    "giocate": 9,
+    "resa_pct": 10.78,
+    "ic95_resa_pct": [
+     -33.67,
+     45.11
+    ],
+    "utile_unita": 1.0,
+    "quota_media": 1.45,
+    "utile_senza_10_vincite_maggiori": 0.0,
+    "per_stagione_resa_pct": {
+     "2021": -7.2,
+     "2122": 34.5,
+     "2223": 32.0,
+     "2526": 32.0
+    }
+   }
+  }
+ }
+}

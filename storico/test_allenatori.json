@@ -1,86 +1,86 @@
 {
  "partite": 38731,
- "partite_con_allenatori": 18376,
- "allenamento": 5551,
- "verifica": 12825,
- "quote": 0.99249,
+ "partite_con_allenatori": 18757,
+ "allenamento": 5696,
+ "verifica": 13061,
+ "quote": 0.99275,
  "modello": {
   "l2": 0.1,
-  "errore": 0.99312,
-  "miglioramento_pct": -0.063,
+  "errore": 0.99342,
+  "miglioramento_pct": -0.067,
   "ic95_differenza": [
-   2e-05,
-   0.00115
+   0.0001,
+   0.00131
   ],
   "pesi_casa": {
-   "nuovo allenatore casa": 0.0356,
-   "nuovo allenatore ospite": -0.0069,
-   "durata in carica (diff.)": 0.0149,
-   "rendimento in carriera vs quote (diff.)": -0.0256,
-   "esperienza (diff.)": -0.0083
+   "nuovo allenatore casa": 0.0312,
+   "nuovo allenatore ospite": -0.0064,
+   "durata in carica (diff.)": 0.0141,
+   "rendimento in carriera vs quote (diff.)": -0.0257,
+   "esperienza (diff.)": -0.0115
   },
   "pesi_ospite": {
-   "nuovo allenatore casa": -0.0083,
-   "nuovo allenatore ospite": 0.0222,
-   "durata in carica (diff.)": 0.0222,
-   "rendimento in carriera vs quote (diff.)": 0.0391,
-   "esperienza (diff.)": -0.0184
+   "nuovo allenatore casa": -0.0114,
+   "nuovo allenatore ospite": 0.0242,
+   "durata in carica (diff.)": 0.0211,
+   "rendimento in carriera vs quote (diff.)": 0.0441,
+   "esperienza (diff.)": -0.0199
   }
  },
  "singole": {
-  "nuovo allenatore casa": -0.011,
-  "nuovo allenatore ospite": -0.027,
-  "durata in carica (diff.)": -0.01,
-  "rendimento in carriera vs quote (diff.)": -0.023,
-  "esperienza (diff.)": -0.001
+  "nuovo allenatore casa": -0.01,
+  "nuovo allenatore ospite": -0.029,
+  "durata in carica (diff.)": -0.013,
+  "rendimento in carriera vs quote (diff.)": -0.028,
+  "esperienza (diff.)": -0.002
  },
  "rimbalzo": {
-  "cambi": 517,
+  "cambi": 523,
   "punti_vs_attese_5_prima": -0.532,
-  "5_dopo": 0.028,
-  "10_dopo": 0.024,
+  "5_dopo": 0.025,
+  "10_dopo": 0.019,
   "nota": "Valori per partita: punti fatti meno punti attesi dalle quote. Se 'dopo' è vicino a zero, il nuovo allenatore fa quanto previsto dal mercato."
  },
  "termometro": {
-  "campioni": 43466,
-  "uscite": 2598,
-  "frequenza_base": 0.0466,
+  "campioni": 43907,
+  "uscite": 2624,
+  "frequenza_base": 0.0462,
   "verifica": {
-   "n": 26392,
-   "errore_base": 0.25395,
-   "errore_modello": 0.23002,
+   "n": 26612,
+   "errore_base": 0.25492,
+   "errore_modello": 0.2309,
    "auc": 0.734,
-   "uscite_nel_10pct_piu_caldo": 0.317,
+   "uscite_nel_10pct_piu_caldo": 0.31,
    "calibrazione": [
     {
      "fascia": "0%-2%",
-     "n": 4521,
+     "n": 4680,
      "stimata": 0.0142,
-     "reale": 0.0146
+     "reale": 0.0156
     },
     {
      "fascia": "2%-5%",
-     "n": 11718,
-     "stimata": 0.0336,
-     "reale": 0.0395
+     "n": 11782,
+     "stimata": 0.0335,
+     "reale": 0.0396
     },
     {
      "fascia": "5%-10%",
-     "n": 7594,
-     "stimata": 0.0694,
-     "reale": 0.0949
+     "n": 7575,
+     "stimata": 0.0693,
+     "reale": 0.0969
     },
     {
      "fascia": "10%-20%",
-     "n": 2404,
+     "n": 2413,
      "stimata": 0.1298,
-     "reale": 0.2121
+     "reale": 0.2105
     },
     {
      "fascia": "20%-100%",
-     "n": 155,
-     "stimata": 0.2355,
-     "reale": 0.2774
+     "n": 162,
+     "stimata": 0.2346,
+     "reale": 0.2654
     }
    ]
   },
@@ -94,29 +94,64 @@
     "rendimento in carriera"
    ],
    "pesi": [
-    -0.3825,
-    -0.3368,
-    -0.0813,
-    0.0356,
-    -0.0703,
-    -0.2178
+    -0.3818,
+    -0.3408,
+    -0.0767,
+    0.0325,
+    -0.0694,
+    -0.225
    ],
-   "intercetta": -3.2726,
+   "intercetta": -3.285,
    "media": [
-    0.0456,
-    0.0425,
-    5.9521,
-    0.9005,
-    0.8198,
-    0.5524
+    0.0449,
+    0.042,
+    5.9486,
+    0.9053,
+    0.8245,
+    0.5588
    ],
    "scarto": [
-    0.519,
-    0.3563,
-    1.1061,
-    0.8965,
-    0.8275,
-    1.0826
+    0.5191,
+    0.3568,
+    1.1021,
+    0.8932,
+    0.8295,
+    1.084
+   ]
+  },
+  "modello_finale": {
+   "variabili": [
+    "punti vs attese ultime 5",
+    "punti vs attese ultime 10",
+    "durata in carica (log giorni)",
+    "cambi del club negli ultimi 3 anni",
+    "sconfitte pesanti ultime 5",
+    "rendimento in carriera"
+   ],
+   "pesi": [
+    -0.4854,
+    -0.2796,
+    -0.0346,
+    0.1713,
+    -0.0675,
+    -0.2193
+   ],
+   "intercetta": -3.0341,
+   "media": [
+    0.0291,
+    0.0272,
+    5.8999,
+    1.4145,
+    0.8288,
+    0.4872
+   ],
+   "scarto": [
+    0.523,
+    0.3617,
+    1.1183,
+    1.3619,
+    0.8404,
+    0.9873
    ]
   }
  }

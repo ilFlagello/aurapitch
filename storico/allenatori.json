@@ -10244,21 +10244,190 @@
 "a": null
 }
 ]
+},
+"Chelsea": {
+"wikidata": "Q9616",
+"nome": "Chelsea F.C.",
+"allenatori": [
+{
+"chi": "Claudio Ranieri",
+"qid": "Q235068",
+"da": "2000-09-18",
+"a": "2004-06-30"
+},
+{
+"chi": "José Mourinho",
+"qid": "Q79983",
+"da": "2004-07-01",
+"a": "2007-09-20"
+},
+{
+"chi": "Carlo Ancelotti",
+"qid": "Q174614",
+"da": "2009-07-01",
+"a": "2011-05-22"
+},
+{
+"chi": "José Mourinho",
+"qid": "Q79983",
+"da": "2013-07-01",
+"a": "2015-12-17"
+},
+{
+"chi": "Antonio Conte",
+"qid": "Q26580",
+"da": "2016-07-01",
+"a": "2018-07-13"
+},
+{
+"chi": "Maurizio Sarri",
+"qid": "Q3852721",
+"da": "2018-06-14",
+"a": "2019-06-30"
+},
+{
+"chi": "Frank Lampard",
+"qid": "Q41533",
+"da": "2019-07-03",
+"a": "2021-01-25"
+},
+{
+"chi": "Thomas Tuchel",
+"qid": "Q702233",
+"da": "2021-01-26",
+"a": "2022-09-07"
+},
+{
+"chi": "Graham Potter",
+"qid": "Q5593150",
+"da": "2022-09-08",
+"a": "2023-04-02"
+},
+{
+"chi": "Bruno Saltor",
+"qid": "Q440431",
+"da": "2023-04-03",
+"a": "2023-04-05"
+},
+{
+"chi": "Frank Lampard",
+"qid": "Q41533",
+"da": "2023-04-06",
+"a": "2023-06-30"
+},
+{
+"chi": "Mauricio Pochettino",
+"qid": "Q313000",
+"da": "2023-07-01",
+"a": "2024-06-30"
+},
+{
+"chi": "Enzo Maresca",
+"qid": "Q317282",
+"da": "2024-07-01",
+"a": "2026-01-01"
+},
+{
+"chi": "Liam Rosenior",
+"qid": "Q1336865",
+"da": "2026-01-06",
+"a": "2026-04-22"
+},
+{
+"chi": "Calum McFarlane",
+"qid": "Q137668183",
+"da": "2026-04-22",
+"a": "2026-06-01"
+},
+{
+"chi": "Xabi Alonso",
+"qid": "Q208104",
+"da": "2026-07-01",
+"a": null
+}
+]
+},
+"Peterboro": {
+"wikidata": "Q19495",
+"nome": "Peterborough United F.C.",
+"allenatori": [
+{
+"chi": "Grant McCann",
+"qid": "Q2710509",
+"da": "2022-01-24",
+"a": "2023-01-04"
+},
+{
+"chi": "Darren Ferguson",
+"qid": "Q513167",
+"da": "2023-01-04",
+"a": "2025-10-25"
+},
+{
+"chi": "Luke Williams",
+"qid": "Q6702466",
+"da": "2025-10-29",
+"a": "2026-09-19"
+},
+{
+"chi": "Robbie Savage",
+"qid": "Q350799",
+"da": "2026-10-02",
+"a": null
+}
+]
+},
+"Virtus Entella": {
+"wikidata": "Q2276413",
+"nome": "Virtus Entella",
+"allenatori": [
+{
+"chi": "Gian Piero Ventura",
+"qid": "Q2631653",
+"da": "1982-07-01",
+"a": "1983-06-30"
+},
+{
+"chi": "Gian Piero Ventura",
+"qid": "Q2631653",
+"da": "1984-07-01",
+"a": "1986-06-30"
+}
+]
+},
+"Lecco": {
+"wikidata": "Q944876",
+"nome": "Calcio Lecco 1912",
+"allenatori": [
+{
+"chi": "Massimiliano Allegri",
+"qid": "Q354529",
+"da": "2007-07-01",
+"a": "2007-07-17"
+}
+]
+},
+"Mantova": {
+"wikidata": "Q430993",
+"nome": "Mantova 1911",
+"allenatori": [
+{
+"chi": "Ottavio Bianchi",
+"qid": "Q645692",
+"da": "1979-12-10",
+"a": "1980-06-30"
+}
+]
 }
 },
 "non_trovate": [
 "Varese",
 "Sunderland",
-"Chelsea",
-"Peterboro",
 "Augsburg",
 "Trapani",
 "Carpi",
-"Virtus Entella",
 "Cosenza",
 "Pordenone",
-"FeralpiSalo",
-"Lecco",
-"Mantova"
+"FeralpiSalo"
 ]
 }

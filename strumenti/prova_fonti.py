@@ -9,7 +9,7 @@ def get(url):
         raw = r.read()
         return gzip.decompress(raw) if raw[:2] == b"\x1f\x8b" else raw
 
-LEGHE = ["ita.1", "fra.1", "esp.copa_del_rey"] if os.environ.get("BREVE") else ["ita.1", "ita.2", "eng.1", "eng.2", "esp.1", "esp.2", "ger.1", "ger.2", "fra.1", "fra.2", "ned.1", "por.1", "bel.1", "tur.1", "sco.1",
+LEGHE = ["esp.copa_del_rey"] if os.environ.get("BREVE") else ["ita.1", "ita.2", "eng.1", "eng.2", "esp.1", "esp.2", "ger.1", "ger.2", "fra.1", "fra.2", "ned.1", "por.1", "bel.1", "tur.1", "sco.1",
          "aut.1", "sui.1", "gre.1", "den.1", "usa.1", "bra.1", "arg.1", "mex.1", "sau.1", "jpn.1",
          "uefa.champions", "uefa.europa", "uefa.europa.conf", "ita.coppa_italia", "eng.fa", "eng.league_cup", "esp.copa_del_rey",
          "ger.dfb_pokal", "fra.coupe_de_france", "ita.super_cup", "esp.super_cup", "uefa.nations", "fifa.worldq.uefa", "conmebol.libertadores"]
@@ -37,6 +37,7 @@ for lg in LEGHE:
                                     "pari": (x.get("drawOdds") or {}).get("moneyLine"), "chiavi": sorted(x.keys())[:25], "completo": x}
           except Exception as e:
             r["errore"] = "evento: " + str(e)[:80]
+            r.setdefault("evento_problema", {k: v for k, v in ev.items() if k in ("id", "date", "name", "status", "competitions")})
         time.sleep(0.25)
     out["espn"][lg] = r
     print(lg, r["partite"], r["con_quote"], r["errore"] or "")

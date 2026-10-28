@@ -22,6 +22,15 @@ const srv = http.createServer((req, res) => {
 const URL0 = `http://127.0.0.1:${srv.address().port}/`;
 
 const errori = [];
+// budget di velocità: codice scaricato all'avvio (compresso) sotto i 175 KB
+{
+  const zlib = await import("node:zlib");
+  const sw = fs.readFileSync(path.join(DIST, "sw.js"), "utf8");
+  const avvio = ["app.js", ...((/const PARTI = (\[[^\]]*\])/.exec(sw) || [0, "[]"])[1] ? JSON.parse((/const PARTI = (\[[^\]]*\])/.exec(sw) || [0, "[]"])[1]).filter((f) => /chunk-/.test(f)) : [])];
+  const kb = avvio.reduce((n, f) => n + zlib.gzipSync(fs.readFileSync(path.join(DIST, f))).length, 0) / 1024;
+  console.log(`Codice all'avvio: ${kb.toFixed(0)} KB compressi`);
+  if (kb > 175) errori.push(`avvio troppo pesante: ${kb.toFixed(0)} KB compressi (budget 175)`);
+}
 const b = await pw.chromium.launch();
 async function giro(tema) {
   const p = await b.newPage({ viewport: { width: 390, height: 844 }, colorScheme: tema, acceptDownloads: true, hasTouch: true });
@@ -47,6 +56,12 @@ async function giro(tema) {
   const foto = (n) => p.screenshot({ path: path.join(OUT, `${tema}-${n}.png`) });
   const passo = async (nome, fn) => { try { await fn(); } catch (e) { errori.push(`[${tema}] ${nome}: ${e.message.split("\n")[0]}`); } };
   await foto("partite");
+  // apertura con la copia salvata: la lista deve comparire entro 2,5 secondi (in pratica molto meno)
+  await passo0("velocità di apertura", async () => {
+    const t0 = Date.now(); await p.reload(); await p.getByRole("button", { name: /In diretta/ }).waitFor({ timeout: 8000 });
+    const ms = Date.now() - t0; console.log(`[${tema}] apertura: ${ms} ms`);
+    if (ms > 2500) errori.push(`[${tema}] apertura lenta: ${ms} ms`);
+  });
   const tab = async (n) => { await p.getByRole("tab", { name: n, exact: true }).first().click({ timeout: 5000 }); await p.waitForTimeout(250); };
   const dock = async (n) => { await p.getByRole("button", { name: n, exact: true }).click({ timeout: 5000 }); await p.waitForTimeout(600); };
   await passo("partita", async () => {

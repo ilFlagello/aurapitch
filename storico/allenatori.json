@@ -1273,11 +1273,6 @@
 }
 ]
 },
-"Modena": {
-"wikidata": "Q8408",
-"nome": "Modena F.C.",
-"allenatori": []
-},
 "Verona": {
 "wikidata": "Q8639",
 "nome": "Hellas Verona FC",
@@ -1650,16 +1645,6 @@
 }
 ]
 },
-"Pro Vercelli": {
-"wikidata": "Q8455",
-"nome": "F.C. Pro Vercelli 1892",
-"allenatori": []
-},
-"Ternana": {
-"wikidata": "Q8623",
-"nome": "Ternana Calcio",
-"allenatori": []
-},
 "Spezia": {
 "wikidata": "Q8615",
 "nome": "Spezia Calcio",
@@ -1703,9 +1688,16 @@
 ]
 },
 "Vicenza": {
-"wikidata": "Q56542463",
-"nome": "LR Vicenza",
-"allenatori": []
+"wikidata": "Q8643",
+"nome": "Vicenza Calcio",
+"allenatori": [
+{
+"chi": "Nedo Sonetti",
+"qid": "Q1080952",
+"da": "2010-03-28",
+"a": "2010-04-15"
+}
+]
 },
 "Ascoli": {
 "wikidata": "Q6630",
@@ -4300,9 +4292,82 @@
 ]
 },
 "Barcelona": {
-"wikidata": "Q950835",
-"nome": "FC barcelona",
-"allenatori": []
+"wikidata": "Q8780",
+"nome": "RCD Espanyol de Barcelona",
+"allenatori": [
+{
+"chi": "Mauricio Pochettino",
+"qid": "Q313000",
+"da": "2009-01-20",
+"a": "2012-11-26"
+},
+{
+"chi": "Joan Francesc Ferrer Sicilia",
+"qid": "Q5573535",
+"da": "2018-07-01",
+"a": "2019-06-30"
+},
+{
+"chi": "David Gallego",
+"qid": "Q17030351",
+"da": "2019-07-01",
+"a": "2019-10-07"
+},
+{
+"chi": "Pablo Machín",
+"qid": "Q11697229",
+"da": "2019-10-07",
+"a": "2019-12-23"
+},
+{
+"chi": "Abelardo Fernández",
+"qid": "Q318546",
+"da": "2019-12-27",
+"a": "2020-06-27"
+},
+{
+"chi": "Francisco Rufete",
+"qid": "Q534178",
+"da": "2020-06-27",
+"a": "2020-07-20"
+},
+{
+"chi": "Vicente Moreno",
+"qid": "Q3321444",
+"da": "2020-08-04",
+"a": "2022-05-13"
+},
+{
+"chi": "Luis Blanco Garrido",
+"qid": "Q111660241",
+"da": "2022-05-13",
+"a": "2022-06-30"
+},
+{
+"chi": "Diego Martínez Penas",
+"qid": "Q23939734",
+"da": "2022-07-01",
+"a": "2023-04-03"
+},
+{
+"chi": "Luis García Fernández",
+"qid": "Q440855",
+"da": "2023-04-03",
+"a": "2023-11-05"
+},
+{
+"chi": "Luis Miguel Ramis",
+"qid": "Q3323952",
+"da": "2023-11-06",
+"a": "2024-03-12"
+},
+{
+"chi": "Manolo González",
+"qid": "Q107613083",
+"da": "2024-03-12",
+"a": null
+}
+]
 },
 "Sociedad": {
 "wikidata": "Q10315",
@@ -5948,11 +6013,6 @@
 }
 ]
 },
-"Evian Thonon Gaillard": {
-"wikidata": "Q333838",
-"nome": "Evian Thonon Gaillard F.C.",
-"allenatori": []
-},
 "Bordeaux": {
 "wikidata": "Q172476",
 "nome": "FC Girondins de Bordeaux",
@@ -6811,16 +6871,6 @@
 }
 ]
 },
-"Avellino": {
-"wikidata": "Q298217",
-"nome": "U.S. Avellino 1912",
-"allenatori": []
-},
-"Latina": {
-"wikidata": "Q2118510",
-"nome": "Latina Calcio 1932",
-"allenatori": []
-},
 "Bournemouth": {
 "wikidata": "Q19568",
 "nome": "AFC Bournemouth",
@@ -6928,11 +6978,6 @@
 "a": null
 }
 ]
-},
-"Yeovil": {
-"wikidata": "Q19651",
-"nome": "Yeovil Town F.C.",
-"allenatori": []
 },
 "Almeria": {
 "wikidata": "Q10407",
@@ -8441,9 +8486,16 @@
 ]
 },
 "Ajaccio GFCO": {
-"wikidata": "Q627334",
-"nome": "Gazélec Ajaccio",
-"allenatori": []
+"wikidata": "Q270051",
+"nome": "A.C. Ajaccio",
+"allenatori": [
+{
+"chi": "Olivier Pantaloni",
+"qid": "Q2073968",
+"da": "2014-11-06",
+"a": null
+}
+]
 },
 "Benevento": {
 "wikidata": "Q652516",
@@ -10245,6 +10297,30 @@
 }
 ]
 },
+"Modena": {
+"wikidata": "Q8408",
+"nome": "Modena F.C.",
+"allenatori": [
+{
+"chi": "Eugenio Bersellini",
+"qid": "Q1407829",
+"da": "1991-07-01",
+"a": "1992-01-25"
+},
+{
+"chi": "Stefano Pioli",
+"qid": "Q923088",
+"da": "2004-06-15",
+"a": "2006-01-22"
+},
+{
+"chi": "Stefano Pioli",
+"qid": "Q923088",
+"da": "2006-02-08",
+"a": "2006-06-05"
+}
+]
+},
 "Chelsea": {
 "wikidata": "Q9616",
 "nome": "Chelsea F.C.",
@@ -10377,6 +10453,54 @@
 }
 ]
 },
+"Evian Thonon Gaillard": {
+"wikidata": "Q333838",
+"nome": "Evian Thonon Gaillard F.C.",
+"allenatori": [
+{
+"chi": "Christian Coste",
+"qid": "Q2965174",
+"da": "1987-01-01",
+"a": "1988-01-01"
+}
+]
+},
+"Avellino": {
+"wikidata": "Q298217",
+"nome": "U.S. Avellino 1912",
+"allenatori": [
+{
+"chi": "Ottavio Bianchi",
+"qid": "Q645692",
+"da": "1983-11-21",
+"a": "1984-06-30"
+},
+{
+"chi": "Eugenio Bersellini",
+"qid": "Q1407829",
+"da": "1987-10-25",
+"a": "1988-06-30"
+},
+{
+"chi": "Nedo Sonetti",
+"qid": "Q1080952",
+"da": "1989-07-01",
+"a": "1990-02-17"
+},
+{
+"chi": "Zdeněk Zeman",
+"qid": "Q169092",
+"da": "2003-07-01",
+"a": "2004-06-30"
+},
+{
+"chi": "Maurizio Sarri",
+"qid": "Q3852721",
+"da": "2007-06-18",
+"a": "2007-07-23"
+}
+]
+},
 "Virtus Entella": {
 "wikidata": "Q2276413",
 "nome": "Virtus Entella",
@@ -10392,6 +10516,42 @@
 "qid": "Q2631653",
 "da": "1984-07-01",
 "a": "1986-06-30"
+}
+]
+},
+"Cosenza": {
+"wikidata": "Q1136016",
+"nome": "Cosenza Calcio",
+"allenatori": [
+{
+"chi": "Nedo Sonetti",
+"qid": "Q1080952",
+"da": "1979-07-01",
+"a": "1980-06-30"
+},
+{
+"chi": "Luigi Simoni",
+"qid": "Q2537282",
+"da": "1989-07-01",
+"a": "1989-12-04"
+},
+{
+"chi": "Franco Scoglio",
+"qid": "Q980528",
+"da": "1996-12-24",
+"a": "1997-04-02"
+},
+{
+"chi": "Emiliano Mondonico",
+"qid": "Q3052298",
+"da": "2001-10-20",
+"a": "2002-05-06"
+},
+{
+"chi": "Emiliano Mondonico",
+"qid": "Q3052298",
+"da": "2002-11-25",
+"a": "2003-02-11"
 }
 ]
 },
@@ -10421,12 +10581,15 @@
 }
 },
 "non_trovate": [
+"Pro Vercelli",
+"Ternana",
 "Varese",
 "Sunderland",
 "Augsburg",
+"Latina",
 "Trapani",
 "Carpi",
-"Cosenza",
+"Yeovil",
 "Pordenone",
 "FeralpiSalo"
 ]

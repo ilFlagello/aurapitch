@@ -33,7 +33,8 @@ const compiler = await compile(input, {
   },
   loadModule: async () => { throw new Error("nessun plugin"); },
 });
-const src = fs.readFileSync(path.join(ROOT, "src/app.js"), "utf8");
+// le classi Tailwind si cercano in tutti i file dell'app (src/*.js)
+const src = fs.readdirSync(path.join(ROOT, "src")).filter((f) => f.endsWith(".js")).map((f) => fs.readFileSync(path.join(ROOT, "src", f), "utf8")).join("\n");
 const candidates = [...new Set(src.split(/[\s"'`{}()<>;,=+]+/).filter((t) => t && t.length < 120))];
 const css = compiler.build(candidates);
 const min = await esbuild.transform(css, { loader: "css", minify: true });

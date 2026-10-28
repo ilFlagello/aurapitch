@@ -1,0 +1,50 @@
+# AuraPitch - test automatici a ogni modifica del codice (e ogni mattina sui dati del giorno).
+# Se qualcosa si rompe, GitHub manda una mail al proprietario del repository; le schermate della prova restano tra gli "artifacts".
+name: Test
+
+on:
+  push:
+    branches: [main]
+    paths: ["app/src/**", "app/build.mjs", "app/sw.js", "app/index.html", "*.py", "test/**", "worker/**", ".github/workflows/test.yml"]
+  schedule:
+    - cron: "40 6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Librerie
+        working-directory: app
+        run: |
+          npm install --no-audit --no-fund
+          npm install --no-save --no-audit --no-fund playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: Algoritmo (mercati, cartellini, dati pubblicati)
+        run: python3 -m unittest discover -s test -v
+      - name: Logica dell'app (stessi esiti dell'algoritmo, schedina)
+        run: node test/test_app.mjs
+      - name: Servizio notifiche (sintassi)
+        run: node --check worker/index.js
+      - name: Compila l'app
+        working-directory: app
+        run: node build.mjs
+      - name: Interfaccia (tutte le schermate, tema chiaro e scuro)
+        run: node test/test_interfaccia.mjs
+      - name: Schermate della prova
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schermate
+          path: test/schermate
+          retention-days: 7

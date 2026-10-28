@@ -252,16 +252,17 @@ def giro_voti(base="data", giorni=4, massimo=350):
         dir_ = {}
     ora = datetime.now(timezone.utc)
     inizio = datetime(ora.year if ora.month >= 7 else ora.year - 1, 8, 1, tzinfo=timezone.utc)
-    nuove, errori = 0, 0
+    nuove, errori, ultimo_err = 0, 0, ""
     for k, lg in ESPN_LG.items():
         evs, w = [], inizio
         while w <= ora:  # una settimana per richiesta: ESPN non accetta intervalli lunghi
             w2 = min(ora, w + timedelta(days=6))
             try:
-                evs += get(f"{SITE}{lg}/scoreboard?dates={w.strftime('%Y%m%d')}-{w2.strftime('%Y%m%d')}&limit=200").get("events", [])
+                evs += get(f"{SITE}{lg}/scoreboard?dates={w.strftime('%Y%m%d')}-{w2.strftime('%Y%m%d')}").get("events", [])
             except Exception as e:  # noqa: BLE001
                 errori += 1
-                print(f"Voti {k} {w.date()}: {e}")
+                ultimo_err = f"{k} {w.date()}: {str(e)[:150]}"
+                print(f"Voti {ultimo_err}")
             w = w2 + timedelta(days=1)
         for ev in evs:
             if nuove >= massimo:
@@ -294,7 +295,7 @@ def giro_voti(base="data", giorni=4, massimo=350):
                     x["nv"] += 1
     with open(dpath, "w", encoding="utf-8") as f:
         json.dump(dir_, f, separators=(",", ":"))
-    arch = {"fatte": sorted(fatte), "g": G, "completo": nuove < massimo, "errori": errori, "agg": ora.isoformat()}
+    arch = {"fatte": sorted(fatte), "g": G, "completo": nuove < massimo, "errori": errori, "ultimo_errore": ultimo_err, "agg": ora.isoformat()}
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(arch, f, ensure_ascii=False, separators=(",", ":"))

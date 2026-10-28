@@ -1,7 +1,8 @@
-Esecuzione: 2026-10-28T12:21Z
+Esecuzione: 2026-10-28T12:42Z
 Token: ok
 Sottodominio: ilflagello
 Archivio KV: presente
+Database: da creare
 Orologio della raccolta: token presente
 Carico il servizio: ok
 Attivo indirizzo workers.dev: ok

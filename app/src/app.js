@@ -266,7 +266,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         if (prof === 0 && /Marcatori|Cartellini|Falli|angolo|Parziale|Gol esatti|Margine|Tempo con/.test(g)) return false;
         if (prof === 1 && /Marcatori|Parziale|Gol esatti/.test(g)) return false;
         if (prof < 2 && /^EH[MP]2/.test(o.k)) return false;
-        return o.p >= R.pmin && o.q >= 1.08 && o.q <= R.hi * 1.8; })
+        return o.p >= R.pmin && o.q >= Math.max(1.08, R.lo * 0.92) && o.q <= R.hi * 1.8; })
       .map((o) => ({ ...o, sc: (o.s != null ? o.s : 50) / 100 + 0.5 * o.p - 0.35 * Math.abs(Math.log(o.q / qt)) + 0.12 * rumore(m.id + o.k, v) }))
       .sort((a, b) => b.sc - a.sc);
   }

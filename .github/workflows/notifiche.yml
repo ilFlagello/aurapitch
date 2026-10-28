@@ -54,6 +54,10 @@ jobs:
           fi
           log "Archivio KV: ${KV:+presente}"
           export KV
+          # database (Durable Object SQLite, gratuito): si crea con la prima pubblicazione tramite "migrazione" v1
+          TAG=$(curl -s "${H[@]}" $API/workers/scripts | python3 -c "import json,sys; d=json.load(sys.stdin); print(next((s.get('migration_tag') or '' for s in d.get('result') or [] if s.get('id')=='$NOME'), ''))")
+          export TAG
+          log "Database: ${TAG:-da creare}"
           if [ -n "$GH_DISPATCH" ]; then log "Orologio della raccolta: token presente"; else log "Orologio della raccolta: manca il secret GH_DISPATCH_TOKEN"; fi
           # script
           python3 - <<'PY'
@@ -61,7 +65,11 @@ jobs:
           b = [{"type": "kv_namespace", "name": "KV", "namespace_id": os.environ["KV"]}]
           if os.environ.get("GH_DISPATCH"):
               b.append({"type": "secret_text", "name": "GH_TOKEN", "text": os.environ["GH_DISPATCH"]})
-          json.dump({"main_module": "index.js", "compatibility_date": "2024-11-01", "bindings": b}, open("/tmp/meta.json", "w"))
+          b.append({"type": "durable_object_namespace", "name": "ARCH", "class_name": "Archivio"})
+          meta = {"main_module": "index.js", "compatibility_date": "2024-11-01", "bindings": b}
+          if os.environ.get("TAG") != "v1":
+              meta["migrations"] = {"new_tag": "v1", "new_sqlite_classes": ["Archivio"]}
+          json.dump(meta, open("/tmp/meta.json", "w"))
           print("orologio:", "attivo" if os.environ.get("GH_DISPATCH") else "manca il secret GH_DISPATCH_TOKEN")
           PY
           R=$(curl -s -X PUT "${H[@]}" -F "metadata=@/tmp/meta.json;type=application/json" -F "index.js=@worker/index.js;type=application/javascript+module" $API/workers/scripts/$NOME)

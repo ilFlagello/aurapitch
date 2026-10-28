@@ -3,6 +3,8 @@
    per calcio d'inizio, gol ed esito finale. Le chiavi VAPID vengono create dal servizio stesso e restano nel suo archivio (KV).
    Archivio: "subs" = iscrizioni con le partite seguite; "state" = ultimo stato visto di ogni partita; "vapid" = chiavi. */
 
+import { DurableObject } from "cloudflare:workers";
+
 const SITE = "https://site.api.espn.com/apis/site/v2/sports/soccer/";
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET,POST,OPTIONS", "Access-Control-Allow-Headers": "Content-Type" };
 const enc = new TextEncoder();
@@ -11,6 +13,106 @@ const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(
 const unb64u = (s) => { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; return Uint8Array.from(atob(s), (c) => c.charCodeAt(0)); };
 const cat = (...a) => { const out = new Uint8Array(a.reduce((n, x) => n + x.length, 0)); let i = 0; for (const x of a) { out.set(x, i); i += x.length; } return out; };
 const json = (d, s = 200) => new Response(JSON.stringify(d), { status: s, headers: { "Content-Type": "application/json", ...CORS } });
+
+/* ---------- archivio: database SQLite in un Durable Object ----------
+   Prima i dati stavano solo in KV (gratuito: 1000 scritture al giorno, nessuna scrittura atomica).
+   Ora voti, iscrizioni, profili, gruppi, risultati e dati sincronizzati stanno in un unico database (gratuito: 100.000 scritture
+   al giorno). Un solo archivio "main": le operazioni delicate (voto, iscrizione) avvengono tutte dentro, una alla volta,
+   quindi due richieste contemporanee non si sovrascrivono. Se il database non c'è, si torna a KV. Le chiavi VAPID restano in KV. */
+export class Archivio extends DurableObject {
+  constructor(ctx, env) {
+    super(ctx, env);
+    this.sql = ctx.storage.sql;
+    this.sql.exec("CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL, exp INTEGER)");
+  }
+  _get(k) {
+    const r = this.sql.exec("SELECT v, exp FROM kv WHERE k = ?", k).toArray()[0];
+    if (!r) return null;
+    if (r.exp && r.exp < Date.now()) { this.sql.exec("DELETE FROM kv WHERE k = ?", k); return null; }
+    return r.v;
+  }
+  _put(k, v, ttl) {
+    this.sql.exec("INSERT INTO kv (k, v, exp) VALUES (?, ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, exp = excluded.exp", k, v, ttl ? Date.now() + ttl * 1000 : null);
+  }
+  async get(k) { return this._get(k); }
+  async getMany(ks) { return ks.map((k) => this._get(k)); }
+  async put(k, v, ttl) { this._put(k, String(v), ttl); }
+  async del(k) { this.sql.exec("DELETE FROM kv WHERE k = ?", k); }
+  async conta() { return this.sql.exec("SELECT substr(k, 1, instr(k || ':', ':')) AS p, count(*) AS n FROM kv GROUP BY p").toArray(); }
+  async pulisci() { this.sql.exec("DELETE FROM kv WHERE exp IS NOT NULL AND exp < ?", Date.now()); }
+  // voto atomico: legge e scrive profilo e conteggio in un colpo solo
+  async voto(id, chi, s, meta) {
+    const v = JSON.parse(this._get("v:" + id) || "[0,0,0]");
+    const u = JSON.parse(this._get("u:" + chi) || '{"nome":"","gruppi":[],"voti":{}}');
+    const prima = u.voti[id] ? u.voti[id].s : null;
+    if (prima === s) return v;
+    u.voti[id] = { s, ...meta };
+    if (prima != null) v[prima] = Math.max(0, v[prima] - 1);
+    v[s] += 1;
+    this._put("u:" + chi, JSON.stringify(u));
+    this._put("v:" + id, JSON.stringify(v), 60 * 60 * 24 * 21);
+    return v;
+  }
+  // iscrizione atomica alle notifiche: scrive solo se qualcosa cambia davvero
+  async iscrivi(id, nuova, max) {
+    const subs = JSON.parse(this._get("subs") || "{}");
+    const vecchia = subs[id] || null;
+    if (!vecchia && Object.keys(subs).length >= max) return "troppe";
+    const confronta = (x) => x && JSON.stringify({ sub: x.sub, follow: x.follow, pref: x.pref });
+    if (confronta(vecchia) === confronta(nuova)) return "uguale";
+    subs[id] = { ...nuova, t: Date.now(), t0: (vecchia && vecchia.t0) || Date.now() };
+    this._put("subs", JSON.stringify(subs));
+    return "salvata";
+  }
+  async togli(ids) {
+    const subs = JSON.parse(this._get("subs") || "{}");
+    let n = 0;
+    for (const id of ids) if (subs[id]) { delete subs[id]; n++; }
+    if (n) this._put("subs", JSON.stringify(subs));
+    return n;
+  }
+  // copia una tantum dei dati da KV: non sovrascrive quello che il database ha già
+  async migra(righe) {
+    let n = 0;
+    for (const [k, v, exp] of righe) {
+      const ora = this._get(k);
+      if (ora === null) { this.sql.exec("INSERT INTO kv (k, v, exp) VALUES (?, ?, ?)", k, v, exp || null); n++; }
+      else if (k === "subs" || k === "ris") { this._put(k, JSON.stringify({ ...JSON.parse(v), ...JSON.parse(ora) })); n++; } // unione: vince il dato più nuovo
+    }
+    return n;
+  }
+}
+// stessa forma dell'API di KV (get(k, "json"), put(k, v, {expirationTtl}), delete(k)), così il resto del codice non cambia
+function archivio(env) {
+  if (!env.ARCH) return { stub: null, get: (k, t) => env.KV.get(k, t), put: (k, v, o) => env.KV.put(k, v, o), delete: (k) => env.KV.delete(k) };
+  const st = env.ARCH.get(env.ARCH.idFromName("main"));
+  return {
+    stub: st,
+    get: async (k, t) => { const v = await st.get(k); return v == null ? null : t === "json" ? JSON.parse(v) : v; },
+    put: (k, v, o) => st.put(k, v, o && o.expirationTtl),
+    delete: (k) => st.del(k),
+  };
+}
+async function migraDaKV(env) {
+  if (!env.ARCH) return "senza database";
+  const DB = archivio(env);
+  if (await DB.get("_migrato")) return "fatto";
+  const chiavi = [];
+  let cur;
+  do {
+    const l = await env.KV.list(cur ? { cursor: cur } : {});
+    for (const k of l.keys) if (k.name !== "vapid" && !k.name.startsWith("vc:")) chiavi.push(k);
+    cur = l.list_complete ? null : l.cursor;
+  } while (cur);
+  const gia = await DB.stub.getMany(chiavi.map((k) => k.name));
+  const daFare = chiavi.filter((k, i) => gia[i] === null || k.name === "subs" || k.name === "ris");
+  const mancano = daFare.slice(0, 30); // limite di richieste per esecuzione
+  const righe = [];
+  for (const k of mancano) { const v = await env.KV.get(k.name); if (v != null) righe.push([k.name, v, k.expiration ? k.expiration * 1000 : null]); }
+  const n = await DB.stub.migra(righe);
+  if (daFare.length <= 30) await DB.put("_migrato", String(Date.now()));
+  return `copiate ${n}`;
+}
 
 /* ---------- chiavi VAPID ---------- */
 async function vapid(env) {
@@ -92,7 +194,8 @@ async function formazioni(lg, eid) {
   } catch (e) { return null; }
 }
 async function controlla(env) {
-  const subs = (await env.KV.get("subs", "json")) || {};
+  const DB = archivio(env);
+  const subs = (await DB.get("subs", "json")) || {};
   const follow = {};
   for (const [id, s] of Object.entries(subs)) for (const f of s.follow || []) (follow[f.lgE + "|" + f.eid] = follow[f.lgE + "|" + f.eid] || { f, ids: [] }).ids.push(id);
   if (!Object.keys(follow).length) return "nessuna partita seguita";
@@ -105,7 +208,7 @@ async function controlla(env) {
       for (const ev of d.events || []) eventi[lg + "|" + ev.id] = ev;
     } catch (e) { /* si riprova al giro dopo */ }
   }));
-  const old = (await env.KV.get("state", "json")) || {};
+  const old = (await DB.get("state", "json")) || {};
   const nuovo = {};
   let G = null;
   const msgs = [];
@@ -154,7 +257,7 @@ async function controlla(env) {
     if (!o.half && s.half) push("Fine primo tempo", nomi, "intervallo");
     if (o.st === "in" && s.st === "post") push("Finale", nomi, "finale");
   }
-  if (JSON.stringify(nuovo) !== JSON.stringify(old)) await env.KV.put("state", JSON.stringify(nuovo));
+  if (JSON.stringify(nuovo) !== JSON.stringify(old)) await DB.put("state", JSON.stringify(nuovo));
   if (!msgs.length) return "nessuna novità";
   // toccando la notifica si apre la partita nell'app
   G = G || (await giornata()) || { matches: [] };
@@ -168,9 +271,8 @@ async function controlla(env) {
   }
   if (morte.length) {
     // si rilegge subito prima di scrivere, per non cancellare un'iscrizione arrivata nel frattempo
-    const ora = (await env.KV.get("subs", "json")) || {};
-    for (const id of morte) delete ora[id];
-    await env.KV.put("subs", JSON.stringify(ora));
+    if (DB.stub) await DB.stub.togli(morte);
+    else { const ora = (await DB.get("subs", "json")) || {}; for (const id of morte) delete ora[id]; await DB.put("subs", JSON.stringify(ora)); }
   }
   return `${msgs.length} avvisi inviati`;
 }
@@ -178,6 +280,7 @@ async function controlla(env) {
 /* ---------- orologio: avvia la raccolta dati su GitHub (gli avvii programmati di GitHub non partono) ----------
    06:00 UTC giro completo; dalle 10:00 alle 23:50 UTC aggiornamento ogni 10 minuti. Serve il secret GH_TOKEN (permesso Actions: scrittura). */
 async function orologio(env) {
+  const DB = archivio(env);
   if (!env.GH_TOKEN) return "senza token";
   const t = new Date();
   const h = t.getUTCHours(), mi = t.getUTCMinutes();
@@ -186,14 +289,14 @@ async function orologio(env) {
   else if (h >= 10 && h <= 23) modo = "live";
   if (!modo) return "fuori orario";
   const slot = t.toISOString().slice(0, 14) + Math.floor(mi / 10);
-  const ultimo = (await env.KV.get("orologio", "json")) || {};
+  const ultimo = (await DB.get("orologio", "json")) || {};
   if (ultimo.slot === slot) return "gia avviato";
   const r = await fetch("https://api.github.com/repos/ilFlagello/aurapitch/actions/workflows/raccolta.yml/dispatches", {
     method: "POST",
     headers: { Authorization: "Bearer " + env.GH_TOKEN, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "aurapitch-orologio", "Content-Type": "application/json" },
     body: JSON.stringify({ ref: "main", inputs: { modo } }),
   });
-  await env.KV.put("orologio", JSON.stringify({ slot, modo, esito: r.status, t: t.toISOString() }));
+  await DB.put("orologio", JSON.stringify({ slot, modo, esito: r.status, t: t.toISOString() }));
   return `${modo}: ${r.status}`;
 }
 
@@ -210,6 +313,7 @@ async function sha(s) { return b64u(await crypto.subtle.digest("SHA-256", enc.en
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
+    const DB = archivio(env);
     if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
     if (url.pathname === "/vapid") return json({ key: (await vapid(env)).pub });
     if (url.pathname === "/subscribe" && req.method === "POST") {
@@ -218,28 +322,33 @@ export default {
       if (!/^https:\/\/[a-z0-9.-]+(push\.apple\.com|googleapis\.com|mozilla\.com|windows\.com|mozaws\.net)\//.test(d.sub.endpoint)) return json({ ok: false, err: "servizio push non riconosciuto" }, 400);
       const follow = (Array.isArray(d.follow) ? d.follow : []).slice(0, 60).filter((f) => f && /^[a-z0-9._]+$/.test(f.lgE || "") && /^\d+$/.test(String(f.eid || "")))
         .map((f) => ({ lgE: f.lgE, eid: String(f.eid), h: String(f.h || "").slice(0, 40), a: String(f.a || "").slice(0, 40) }));
-      const subs = (await env.KV.get("subs", "json")) || {};
       const id = await sha(d.sub.endpoint);
-      if (Object.keys(subs).length > 500 && !subs[id]) return json({ ok: false, err: "troppe iscrizioni" }, 429);
-      const vecchia = subs[id] || null;
       const pref = {};
       for (const k of Object.keys(PREF0)) pref[k] = !(d.pref && d.pref[k] === false);
-      const confronta = (x) => x && JSON.stringify({ sub: x.sub, follow: x.follow, pref: x.pref });
       const nuova = { sub: { endpoint: d.sub.endpoint, keys: d.sub.keys }, follow, pref };
+      if (DB.stub) {
+        if ((await DB.stub.iscrivi(id, nuova, 5000)) === "troppe") return json({ ok: false, err: "troppe iscrizioni" }, 429);
+        return json({ ok: true, seguite: follow.length });
+      }
+      const subs = (await DB.get("subs", "json")) || {};
+      if (Object.keys(subs).length > 500 && !subs[id]) return json({ ok: false, err: "troppe iscrizioni" }, 429);
+      const vecchia = subs[id] || null;
+      const confronta = (x) => x && JSON.stringify({ sub: x.sub, follow: x.follow, pref: x.pref });
       // si scrive solo se qualcosa è cambiato davvero (limite gratuito: 1000 scritture al giorno)
-      if (confronta(vecchia) !== confronta(nuova)) { subs[id] = { ...nuova, t: Date.now(), t0: (vecchia && vecchia.t0) || Date.now() }; await env.KV.put("subs", JSON.stringify(subs)); }
+      if (confronta(vecchia) !== confronta(nuova)) { subs[id] = { ...nuova, t: Date.now(), t0: (vecchia && vecchia.t0) || Date.now() }; await DB.put("subs", JSON.stringify(subs)); }
       return json({ ok: true, seguite: follow.length });
     }
     if (url.pathname === "/unsubscribe" && req.method === "POST") {
       const d = await req.json().catch(() => null);
-      const subs = (await env.KV.get("subs", "json")) || {};
+      const subs = (await DB.get("subs", "json")) || {};
       const id = d && d.endpoint ? await sha(d.endpoint) : null;
-      if (id && subs[id]) { delete subs[id]; await env.KV.put("subs", JSON.stringify(subs)); }
+      if (id && DB.stub) await DB.stub.togli([id]);
+      else if (id && subs[id]) { delete subs[id]; await DB.put("subs", JSON.stringify(subs)); }
       return json({ ok: true });
     }
     if (url.pathname === "/test" && req.method === "POST") {
       const d = await req.json().catch(() => null);
-      const subs = (await env.KV.get("subs", "json")) || {};
+      const subs = (await DB.get("subs", "json")) || {};
       const id = d && d.endpoint ? await sha(d.endpoint) : null;
       if (!id || !subs[id]) return json({ ok: false, err: "iscrizione non trovata" }, 404);
       const st = await invia(env, await vapid(env), subs[id].sub, { title: "AuraPitch", body: "Notifiche attive: ti avviso di gol e risultati delle tue preferite.", tag: "test", url: "./" });
@@ -247,18 +356,18 @@ export default {
     }
     if (url.pathname === "/diagnosi") {
       // controllo senza dati personali: solo conteggi e stato del servizio
-      const subs = (await env.KV.get("subs", "json")) || {};
-      const state = (await env.KV.get("state", "json")) || {};
+      const subs = (await DB.get("subs", "json")) || {};
+      const state = (await DB.get("state", "json")) || {};
       return json({
         iscrizioni: Object.keys(subs).length, partite_seguite: new Set(Object.values(subs).flatMap((x) => (x.follow || []).map((f) => f.lgE + "/" + f.eid))).size,
-        stato_partite: Object.keys(state).length, orologio: (await env.KV.get("orologio", "json")) || null, vapid: !!(await env.KV.get("vapid")),
+        stato_partite: Object.keys(state).length, archivio: DB.stub ? { tipo: "database", chiavi: await DB.stub.conta(), migrazione: (await DB.get("_migrato")) ? "fatta" : "in corso" } : "KV", orologio: (await DB.get("orologio", "json")) || null, vapid: !!(await env.KV.get("vapid")),
       });
     }
     // sondaggio "chi vince?": un voto per dispositivo (impronta anonima dal browser), chiuso al calcio d'inizio dall'app
     if (url.pathname === "/voti") {
       const id = String(url.searchParams.get("id") || "");
       if (!/^[A-Za-z0-9_-]{1,40}$/.test(id)) return json({ ok: false }, 400);
-      return json({ ok: true, v: (await env.KV.get("v:" + id, "json")) || [0, 0, 0] });
+      return json({ ok: true, v: (await DB.get("v:" + id, "json")) || [0, 0, 0] });
     }
     if (url.pathname === "/voto" && req.method === "POST") {
       const d = await req.json().catch(() => null);
@@ -271,16 +380,18 @@ export default {
       // si vota solo su partite note e non ancora iniziate
       if (!mt) return json({ ok: false, err: "partita sconosciuta" }, 404);
       if (mt.st !== "NS" || Date.parse(mt.ko) <= Date.now()) return json({ ok: false, err: "votazione chiusa" }, 409);
+      const meta = { t: Date.now(), k: mt.ko, d: mt.date, p: mt.mk || mt.p || null, ia: mt.p ? mt.p.indexOf(Math.max(...mt.p)) : null };
+      if (DB.stub) return json({ ok: true, v: await DB.stub.voto(id, chi, s, meta) });
       const k = "v:" + id;
-      const v = (await env.KV.get(k, "json")) || [0, 0, 0];
-      const u = (await env.KV.get("u:" + chi, "json")) || { nome: "", gruppi: [], voti: {} };
+      const v = (await DB.get(k, "json")) || [0, 0, 0];
+      const u = (await DB.get("u:" + chi, "json")) || { nome: "", gruppi: [], voti: {} };
       const prima = u.voti[id] ? u.voti[id].s : null;
       if (prima === s) return json({ ok: true, v }); // nessun cambiamento: nessuna scrittura
       u.voti[id] = { s, t: Date.now(), k: mt.ko, d: mt.date, p: mt.mk || mt.p || null, ia: mt.p ? mt.p.indexOf(Math.max(...mt.p)) : null };
       if (prima != null) v[prima] = Math.max(0, v[prima] - 1);
       v[s] += 1;
-      await env.KV.put("u:" + chi, JSON.stringify(u));
-      await env.KV.put(k, JSON.stringify(v), { expirationTtl: 60 * 60 * 24 * 21 });
+      await DB.put("u:" + chi, JSON.stringify(u));
+      await DB.put(k, JSON.stringify(v), { expirationTtl: 60 * 60 * 24 * 21 });
       return json({ ok: true, v });
     }
     // ---------- gara dei pronostici ----------
@@ -289,9 +400,9 @@ export default {
       const d = await req.clone().json().catch(() => null);
       if (!d || !okChi(d.chi)) return json({ ok: false }, 400);
       if (typeof d.nome === "string") {
-        const u = (await env.KV.get("u:" + d.chi, "json")) || { nome: "", gruppi: [], voti: {} };
+        const u = (await DB.get("u:" + d.chi, "json")) || { nome: "", gruppi: [], voti: {} };
         const nome = d.nome.replace(/[^\p{L}\p{N} ._-]/gu, "").trim().slice(0, 20);
-        if (nome !== u.nome || !(await env.KV.get("u:" + d.chi))) { u.nome = nome; await env.KV.put("u:" + d.chi, JSON.stringify(u)); }
+        if (nome !== u.nome || !(await DB.get("u:" + d.chi))) { u.nome = nome; await DB.put("u:" + d.chi, JSON.stringify(u)); }
         return json({ ok: true, u: { nome: u.nome, gruppi: u.gruppi } });
       }
     }
@@ -299,28 +410,28 @@ export default {
       // lettura: il codice arriva nel corpo (POST) per non finire nei registri; GET resta per le versioni vecchie dell'app
       const chi = req.method === "POST" ? ((await req.clone().json().catch(() => null)) || {}).chi : url.searchParams.get("chi");
       if (!okChi(chi)) return json({ ok: false }, 400);
-      const u = await env.KV.get("u:" + chi, "json");
+      const u = await DB.get("u:" + chi, "json");
       if (!u) return json({ ok: false, err: "codice non trovato" }, 404);
-      const gr = await Promise.all((u.gruppi || []).map(async (g) => ({ code: g, ...((await env.KV.get("g:" + g, "json")) || {}) })));
+      const gr = await Promise.all((u.gruppi || []).map(async (g) => ({ code: g, ...((await DB.get("g:" + g, "json")) || {}) })));
       return json({ ok: true, u: { nome: u.nome, gruppi: gr.map((g) => ({ code: g.code, nome: g.nome, n: (g.membri || []).length })), voti: Object.fromEntries(Object.entries(u.voti || {}).map(([k, v]) => [k, v.s])) } });
     }
     if (url.pathname === "/gruppo" && req.method === "POST") {
       const d = await req.json().catch(() => null);
       if (!d || !okChi(d.chi)) return json({ ok: false }, 400);
-      const u = (await env.KV.get("u:" + d.chi, "json")) || { nome: "", gruppi: [], voti: {} };
+      const u = (await DB.get("u:" + d.chi, "json")) || { nome: "", gruppi: [], voti: {} };
       let code = String(d.code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
       let g;
       if (d.azione === "crea") {
         code = Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join("");
         g = { nome: String(d.nome || "Gruppo").replace(/[^\p{L}\p{N} ._-]/gu, "").trim().slice(0, 24) || "Gruppo", membri: [] };
       } else {
-        g = await env.KV.get("g:" + code, "json");
+        g = await DB.get("g:" + code, "json");
         if (!g) return json({ ok: false, err: "gruppo non trovato" }, 404);
       }
       if (d.azione === "esci") { g.membri = g.membri.filter((x) => x !== d.chi); u.gruppi = u.gruppi.filter((x) => x !== code); }
       else { if (!g.membri.includes(d.chi)) { if (g.membri.length >= 50) return json({ ok: false, err: "gruppo pieno" }, 409); g.membri.push(d.chi); } if (!u.gruppi.includes(code)) u.gruppi.push(code); }
-      await env.KV.put("g:" + code, JSON.stringify(g));
-      await env.KV.put("u:" + d.chi, JSON.stringify(u));
+      await DB.put("g:" + code, JSON.stringify(g));
+      await DB.put("u:" + d.chi, JSON.stringify(u));
       return json({ ok: true, code, nome: g.nome });
     }
     if (url.pathname === "/classifica") {
@@ -328,14 +439,14 @@ export default {
       const chi = q.chi, code = String(q.gruppo || "").toUpperCase(), per = q.periodo || "settimana";
       if (!okChi(chi)) return json({ ok: false }, 400);
       // risultati: archivio "ris" aggiornato con le partite finite del file dell'app
-      const ris = (await env.KV.get("ris", "json")) || {};
+      const ris = (await DB.get("ris", "json")) || {};
       const G1 = await giornata();
       let nuovi = false;
       for (const m of (G1 && G1.matches) || []) if (m.st === "FT" && m.g && !ris[m.id]) { ris[m.id] = [m.g[0] > m.g[1] ? 0 : m.g[0] === m.g[1] ? 1 : 2, m.date]; nuovi = true; }
       if (nuovi) { // archivio dei risultati: si tengono gli ultimi 120 giorni
         const lim = new Date(Date.now() - 120 * 86400000).toISOString().slice(0, 10);
         for (const id of Object.keys(ris)) if (ris[id][1] < lim) delete ris[id];
-        await env.KV.put("ris", JSON.stringify(ris));
+        await DB.put("ris", JSON.stringify(ris));
       }
       const lun = new Date(); lun.setUTCHours(0, 0, 0, 0); lun.setUTCDate(lun.getUTCDate() - ((lun.getUTCDay() + 6) % 7));
       const lunPrima = new Date(lun.getTime() - 7 * 86400000);
@@ -353,12 +464,12 @@ export default {
         }
         return { pt, giuste, giocate, ia, iaG };
       };
-      const io = (await env.KV.get("u:" + chi, "json")) || { nome: "", voti: {} };
+      const io = (await DB.get("u:" + chi, "json")) || { nome: "", voti: {} };
       let membri = [];
       if (code) {
-        const g = await env.KV.get("g:" + code, "json");
+        const g = await DB.get("g:" + code, "json");
         if (!g || !g.membri.includes(chi)) return json({ ok: false, err: "non sei nel gruppo" }, 403);
-        membri = await Promise.all(g.membri.map(async (c) => ({ c, u: (await env.KV.get("u:" + c, "json")) || { nome: "", voti: {} } })));
+        membri = await Promise.all(g.membri.map(async (c) => ({ c, u: (await DB.get("u:" + c, "json")) || { nome: "", voti: {} } })));
       }
       const righe = membri.map(({ c, u }) => ({ nome: u.nome || "Anonimo", io: c === chi, ...punteggio(u) })).sort((a, b) => b.pt - a.pt || b.giuste - a.giuste);
       return json({ ok: true, io: { nome: io.nome, ...punteggio(io) }, righe, da });
@@ -366,19 +477,20 @@ export default {
     // ---------- sincronizzazione tra dispositivi (codice personale) ----------
     if (url.pathname === "/sync" && req.method === "POST") {
       const d = await req.json().catch(() => null);
-      if (d && okChi(d.chi) && d.leggi) return json({ ok: true, dati: (await env.KV.get("s:" + d.chi, "json")) || null });
+      if (d && okChi(d.chi) && d.leggi) return json({ ok: true, dati: (await DB.get("s:" + d.chi, "json")) || null });
       if (!d || !okChi(d.chi) || typeof d.dati !== "object") return json({ ok: false }, 400);
       if (troppi(req, 6)) return json({ ok: false, err: "troppe richieste" }, 429);
       const txt = JSON.stringify(d.dati);
       if (txt.length > 200000) return json({ ok: false, err: "troppi dati" }, 413);
-      await env.KV.put("s:" + d.chi, txt);
+      await DB.put("s:" + d.chi, txt);
       return json({ ok: true });
     }
-    if (url.pathname === "/stato") return json({ orologio: (await env.KV.get("orologio", "json")) || null, token: !!env.GH_TOKEN });
+    if (url.pathname === "/stato") return json({ orologio: (await DB.get("orologio", "json")) || null, token: !!env.GH_TOKEN });
     if (url.pathname === "/") return json({ ok: true, servizio: "AuraPitch notifiche" });
     return json({ ok: false }, 404);
   },
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(Promise.all([controlla(env), orologio(env)]));
+    ctx.waitUntil(Promise.all([controlla(env), orologio(env), migraDaKV(env).catch(() => null),
+      env.ARCH && new Date().getUTCMinutes() === 0 ? archivio(env).stub.pulisci() : null]));
   },
 };

@@ -28,6 +28,8 @@ export class Archivio extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
     this.sql = ctx.storage.sql;
+    this.st = ctx.storage;
+    this.cx = ctx;
     this.sql.exec("CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL, exp INTEGER)");
   }
   _get(k) {
@@ -49,6 +51,14 @@ export class Archivio extends DurableObject {
     const v = JSON.parse(this._get(k) || "{}");
     for (const [c, n] of Object.entries(campi)) v[c] = (v[c] || 0) + n;
     this._put(k, JSON.stringify(v), ttl);
+  }
+  // copia di sicurezza integrata: Cloudflare conserva 30 giorni di storia del database e permette di tornare a un istante preciso
+  async puntoDiRipristino(ts) { try { return { ok: true, segnalibro: !!(await this.st.getBookmarkForTime(ts)) }; } catch (e) { return { ok: false, err: String(e && e.message || e).slice(0, 120) }; } }
+  async ripristina(ts) {
+    const b = await this.st.getBookmarkForTime(ts);
+    await this.st.onNextSessionRestoreBookmark(b);
+    setTimeout(() => this.cx.abort("ripristino"), 50); // il database riparte dall'istante scelto
+    return { ok: true };
   }
   async chiavi(prefisso) { return this.sql.exec("SELECT k FROM kv WHERE k >= ? AND k < ?", prefisso, prefisso + "\uffff").toArray().map((r) => r.k); }
   async lista(prefisso, max) { return this.sql.exec("SELECT k, v FROM kv WHERE k >= ? AND k < ? AND (exp IS NULL OR exp > ?) ORDER BY k DESC LIMIT ?", prefisso, prefisso + "\uffff", Date.now(), max).toArray().map((r) => [r.k, r.v]); }
@@ -339,6 +349,12 @@ async function cassaforte(req, url, env, DB, segnala) {
   if (!(await firmaValida(req, env, txt))) { segnala("cassaforte_firma"); return nojson({ ok: false, err: "firma non valida" }, 403); }
   if (!DB.stub) return nojson({ ok: false, err: "archivio non pronto" }, 503);
   let d; try { d = JSON.parse(txt); } catch (e) { return nojson({ ok: false }, 400); }
+  if (url.pathname === "/cassaforte/ripristino") { // solo dal processo "Ripristino di emergenza" su GitHub (firmato)
+    const ts = Date.parse(String(d.quando || ""));
+    if (!(ts > Date.now() - 30 * 86400000 && ts < Date.now())) return nojson({ ok: false, err: "data fuori dagli ultimi 30 giorni" }, 400);
+    if (d.prova) return nojson(await DB.stub.puntoDiRipristino(ts));
+    return nojson(await DB.stub.ripristina(ts));
+  }
   if (url.pathname === "/cassaforte/elenco") return nojson({ ok: true, nomi: (await DB.stub.chiavi("cf:")).map((k) => k.slice(3)) });
   if (!NOME_CF.test(String(d.nome || ""))) return nojson({ ok: false, err: "nome non ammesso" }, 400);
   if (url.pathname === "/cassaforte/leggi") return nojson({ ok: true, testo: await DB.get("cf:" + d.nome) });

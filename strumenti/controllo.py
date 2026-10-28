@@ -45,7 +45,7 @@ except Exception as e:
     problemi.append(f"File dei dati dell'app illeggibile: {type(e).__name__}")
 
 # 2. ultime esecuzioni dei processi automatici
-for wf, nome in (("raccolta.yml", "Raccolta dati"), ("pubblica.yml", "Pubblicazione app"), ("notifiche.yml", "Servizio notifiche"), ("test.yml", "Test"), ("impara.yml", "Apprendimento")):
+for wf, nome in (("raccolta.yml", "Raccolta dati"), ("pubblica.yml", "Pubblicazione app"), ("notifiche.yml", "Servizio notifiche"), ("test.yml", "Test"), ("impara.yml", "Apprendimento"), ("ripristino.yml", "Prova della copia di sicurezza"), ("codeql.yml", "Analisi sicurezza")):
     try:
         _, j = get(f"https://api.github.com/repos/{REPO}/actions/workflows/{wf}/runs?per_page=5&status=completed", gh=True)
         runs = [r for r in j.get("workflow_runs", []) if r["conclusion"] != "cancelled"]
@@ -58,10 +58,10 @@ for wf, nome in (("raccolta.yml", "Raccolta dati"), ("pubblica.yml", "Pubblicazi
 
 # 2b. apprendimento: il modello si aggiorna ogni mattina
 try:
-    mo = json.load(open("data/modello.json", encoding="utf-8")).get("attivo") or {}
-    agg = datetime.fromisoformat(mo.get("aggiornato", "2000-01-01")).replace(tzinfo=ZoneInfo("UTC"))
+    ia = json.load(open("app/data/ia.json", encoding="utf-8"))  # il modello vero sta nella cassaforte; qui il suo riassunto pubblico
+    agg = datetime.fromisoformat(ia["generato"])
     giorni = (ORA - agg).total_seconds() / 86400
-    (problemi if giorni > 2.5 else note).append(f"Modello dell'IA aggiornato {giorni:.1f} giorni fa ({mo.get('nome', '?')})")
+    (problemi if giorni > 2.5 else note).append(f"Modello dell'IA aggiornato {giorni:.1f} giorni fa ({(ia.get('modello') or {}).get('nome', '?')})")
 except Exception as e:
     note.append(f"Modello dell'IA non leggibile ({type(e).__name__})")
 
@@ -90,6 +90,18 @@ try:
         note.append(f"Servizio notifiche: ok ({dg.get('iscrizioni')} iscrizioni, archivio {(dg.get('archivio') or {}).get('tipo', dg.get('archivio'))})")
 except Exception as e:
     problemi.append(f"Servizio notifiche non raggiungibile ({type(e).__name__})")
+
+# 4a. allarmi di sicurezza: tentativi respinti oggi (firme false, codici sbagliati, raffiche di richieste)
+SOGLIE = {"cassaforte_firma": 3, "admin_errato": 5, "ritiro_errato": 5, "passkey_rifiutata": 40, "google_rifiutato": 40, "sessione_non_valida": 300, "limite": 3000}
+try:
+    sic = dg.get("sicurezza") or {}
+    oltre = [f"{k} {v} (soglia {SOGLIE[k]})" for k, v in sic.items() if k in SOGLIE and v > SOGLIE[k]]
+    if oltre:
+        problemi.append("Possibile attacco o abuso, oggi: " + ", ".join(oltre))
+    else:
+        note.append("Sicurezza: nessuna anomalia (" + (", ".join(f"{k} {v}" for k, v in sic.items()) or "nessun tentativo respinto") + ")")
+except Exception as e:
+    note.append(f"Sicurezza: conteggi non leggibili ({type(e).__name__})")
 
 # 4b. ponte privacy (diretta ESPN attraverso il servizio) e accesso
 try:

@@ -1,0 +1,11 @@
+# Aggiornamenti di sicurezza automatici: GitHub propone una modifica quando una libreria o un'azione ha una versione nuova.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }
+    groups: { azioni: { patterns: ["*"] } }
+  - package-ecosystem: npm
+    directory: /app
+    schedule: { interval: monthly }
+    groups: { librerie: { patterns: ["*"] } }

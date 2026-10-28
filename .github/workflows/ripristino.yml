@@ -1,0 +1,37 @@
+# AuraPitch - copia di sicurezza: il database del servizio (account, gara, dati sincronizzati, cassaforte) ha 30 giorni
+# di storia su Cloudflare. In caso di incidente: Actions -> Ripristino di emergenza -> Run workflow, con data e ora
+# (UTC, es. 2026-11-03T08:00:00Z) e "prova" = no. Con "prova" = si controlla solo che il ripristino sia possibile.
+# Ogni lunedi una prova automatica verifica che la copia di sicurezza funzioni.
+name: Ripristino di emergenza
+on:
+  workflow_dispatch:
+    inputs:
+      quando: { description: "Istante a cui tornare (UTC, es. 2026-11-03T08:00:00Z)", required: true }
+      prova: { description: "Solo prova (si/no)", default: "si" }
+  schedule:
+    - cron: "40 5 * * 1"
+permissions: { contents: read }
+jobs:
+  ripristino:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_DISPATCH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+      QUANDO: ${{ inputs.quando }}
+      PROVA: ${{ inputs.prova }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Ripristino (o prova)
+        run: |
+          python3 - <<'PY'
+          import os, sys
+          from datetime import datetime, timedelta, timezone
+          sys.path.insert(0, "strumenti")
+          import cassaforte as C
+          quando = os.environ.get("QUANDO") or (datetime.now(timezone.utc) - timedelta(hours=6)).strftime("%Y-%m-%dT%H:%M:%SZ")
+          prova = (os.environ.get("PROVA") or "si").strip().lower() != "no"
+          r = C.chiama("/cassaforte/ripristino", {"quando": quando, "prova": prova})
+          print(("Prova" if prova else "RIPRISTINO") + f" a {quando}:", r)
+          if not r.get("ok"):
+              sys.exit(1)
+          PY

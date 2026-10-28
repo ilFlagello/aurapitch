@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { scaricaCalendario, immaginePartita } from "./condividi.js";
 import { Citazione, citazionePartita, citazioneArbitro } from "./citazioni.js";
-import { SchedaAllenatore } from "./panchine.js";
+import { SchedaAllenatore, usaPanchine } from "./panchine.js";
 import { useSummary, loadPlayer, loadCareer, ruolo, findTeam, loadTeam, minuto, ESPN_LG, andamento } from "./live.js";
 import { Voce, AuraLine, C, Crest, Ctx, DOT, FavPill, Flag, Form, GROUPS, Ic, Seg, Sheet, TONE, Tabs, auraCol, evalCode, html, leggiXg, lum, mGroup, mLabel, nf, norm, odd, options, pct, pctL, spiega, store } from "./base.js";
 import { usaVoti } from "./campionati.js";
@@ -935,6 +935,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
     function InBreve({ m, sm, vai, onPlayer }) {
       const { unlocked, setUnlock, addLeg, mySlip, lg, D } = React.useContext(Ctx);
       const [avviso, setAvviso] = useState("");
+      const PAN = usaPanchine();
       // citazione: sempre nei grandi derby, a volte nei big match (le due squadre tra le prime 4, o la partita della settimana)
       const S0 = D && D.standings[m.lg], pos0 = (t) => (S0 ? S0.generale.findIndex((r) => r.team === t) : -1);
       const pw0 = D ? partitaSettimana(D) : null;
@@ -944,6 +945,10 @@ import { Anteprima, partitaSettimana } from "./extra.js";
       const inSlip = mySlip.find((x) => x.id === m.id);
       const sapere = [];
       for (const f of (m.fattori || []).filter((f) => f.delta || f.delta_avv).slice(0, 1)) sapere.push(`${f.chi} (${f.lato ? m.a : m.h}) ${f.tipo === "dubbio" ? "è in dubbio" : f.tipo === "squalifica" ? "è squalificato" : "potrebbe non esserci"}.`);
+      // panchine: debutto di un nuovo allenatore o panchina che scotta
+      for (const [j, t] of [m.h, m.a].entries()) { const pc = PAN && PAN.squadre[t]; if (!pc || sapere.length >= 3) continue;
+        if (pc.livello === "Appena arrivato" && pc.partite === 0) sapere.push(`${t}: prima partita con ${pc.chi} in panchina.`);
+        else if (pc.livello === "Rovente" || pc.livello === "Scotta") sapere.push(`Panchina ${pc.livello === "Rovente" ? "rovente" : "che scotta"} per ${pc.chi} (${t}): ${Math.round(pc.p30 * 100)}% di probabilità che lasci entro 30 giorni.`); }
       for (const t of (m.curiosita || []).slice(0, 3 - sapere.length)) sapere.push(t);
       if (m.arbitro && m.arbitro.ratio && m.arbitro.n >= 8 && Math.abs(m.arbitro.ratio.K - 1) > 0.08 && sapere.length < 4) sapere.push(`Arbitra ${m.arbitro.nome}, ${m.arbitro.ratio.K > 1 ? "di solito più severo" : "di solito meno severo"} della media con i cartellini.`);
       const evs = sm ? sm.eventi.filter((e) => /gol|rigore$|autogol|rosso/.test(e.k) && !/sbagliato|parato/.test(e.k)).slice(-3).reverse() : [];

@@ -43,6 +43,6 @@ for (const f of ["index.html", "manifest.webmanifest", "sw.js", "icon.svg", "ico
 fs.mkdirSync(path.join(OUT, "fonts"), { recursive: true });
 for (const f of fs.readdirSync(path.join(ROOT, "fonts"))) fs.copyFileSync(path.join(ROOT, "fonts", f), path.join(OUT, "fonts", f));
 fs.mkdirSync(path.join(OUT, "data"), { recursive: true });
-for (const f of fs.readdirSync(path.join(ROOT, "data"))) fs.copyFileSync(path.join(ROOT, "data", f), path.join(OUT, "data", f));
+fs.cpSync(path.join(ROOT, "data"), path.join(OUT, "data"), { recursive: true });
 const kb = (f) => (fs.statSync(path.join(OUT, f)).size / 1024).toFixed(0) + " KB";
-console.log("Fatto: app.js", kb("app.js"), "- app.css", kb("app.css"), "- dati", kb("data/giornata.json"));
+console.log("Fatto: app.js", kb("app.js"), "- app.css", kb("app.css"), "- dati", fs.existsSync(path.join(OUT, "data/lista.json")) ? kb("data/lista.json") + " (lista)" : kb("data/giornata.json"));

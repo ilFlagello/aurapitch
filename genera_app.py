@@ -981,10 +981,40 @@ def main():
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(d, f, ensure_ascii=False, separators=(",", ":"))
     scrivi_stato(d)
+    scrivi_lista(d)
     aggiorna_storico(d)
 
 
 STATO_OUT = os.path.join("app", "data", "stato.json")
+# l'app scarica prima una lista leggera; i dettagli di una partita arrivano quando la apri, i mercati quando apri la Schedina
+DETTAGLI = ("markets", "ia", "cart", "curiosita", "xgf", "segnali", "attese", "prec")
+NON_SERVONO = ("_ctx", "_firma")
+
+
+def scrivi_lista(d):
+    cartella = os.path.join("app", "data", "m")
+    os.makedirs(cartella, exist_ok=True)
+    lista, mercati, file_ok = [], {}, set()
+    for m in d.get("matches", []):
+        det = {k: m[k] for k in DETTAGLI if k in m}
+        det["tip"] = m.get("tip")
+        nome = re.sub(r"[^A-Za-z0-9_-]", "_", str(m["id"])) + ".json"
+        file_ok.add(nome)
+        with open(os.path.join(cartella, nome), "w", encoding="utf-8") as f:
+            json.dump(det, f, ensure_ascii=False, separators=(",", ":"))
+        if m.get("markets"):
+            mercati[m["id"]] = m["markets"]
+        leggera = {k: v for k, v in m.items() if k not in DETTAGLI and k not in NON_SERVONO}
+        if isinstance(m.get("tip"), dict):  # nel consiglio restano esito, probabilità e quota; le motivazioni sono nei dettagli
+            leggera["tip"] = {k: {c: x for c, x in t.items() if c not in ("perche", "contro")} if isinstance(t, dict) else t for k, t in m["tip"].items()}
+        lista.append(leggera)
+    for f in os.listdir(cartella):  # via i dettagli delle partite uscite dal file
+        if f.endswith(".json") and f not in file_ok:
+            os.remove(os.path.join(cartella, f))
+    with open(os.path.join("app", "data", "lista.json"), "w", encoding="utf-8") as f:
+        json.dump({**{k: v for k, v in d.items() if k != "matches"}, "matches": lista, "leggera": True}, f, ensure_ascii=False, separators=(",", ":"))
+    with open(os.path.join("app", "data", "mercati.json"), "w", encoding="utf-8") as f:
+        json.dump(mercati, f, ensure_ascii=False, separators=(",", ":"))
 
 
 def scrivi_stato(d):

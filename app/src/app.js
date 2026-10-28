@@ -1663,7 +1663,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <div className="grid grid-cols-3 gap-2">${["Zero Tachicardia", "Classica del Sabato", "Colpaccio da Bar"].map((p, i) => { const lk = i === 2 && !pro; return html`<button key=${p} onClick=${() => (lk ? setUnlock(true) : (setProf(i), setShield(false), setVr(0)))}
           className=${C.card + " p-3 text-xs font-semibold text-center " + C.tx + (prof === i ? " ring-2 ring-[#5B2EE6] dark:ring-[#A58BFF]" : "")}>${p}${lk && html`<div className="text-[10px] mt-1 text-amber-600 dark:text-amber-300 flex items-center justify-center gap-1"><${Ic.Lock} size=${10} />PRO</div>`}</button>`; })}</div>
         <p className=${"text-[12px] " + C.mu}>${["Molte partite con giocate molto probabili (quota 1,10-1,50 ciascuna).", "Giocate equilibrate (quota 1,30-2,30 ciascuna).", "Poche partite con giocate più rischiose, anche tempi, marcatori e handicap."][prof]} ${qo ? `L'IA sceglie in ogni partita, tra tutte le scommesse possibili, quella con il punteggio migliore vicina alla quota che serve.` : ""}</p>
-        <div className=${C.card + " px-4 py-2"}>${legs.length ? legs.map((l) => html`<${LegRow} key=${l.m.id} l=${l} />`) : html`<div className=${"py-3 text-sm " + C.mu}>${pool.length ? "Nessuna partita adatta a questo stile: prova un altro periodo o un altro stile." : "Nessuna partita in questo periodo nei campionati scelti."}</div>`}</div>
+        <div className=${C.card + " px-4 py-2"}>${legs.length ? legs.map((l) => html`<${LegRow} key=${l.m.id} l=${l} />`) : html`<div className=${"py-3 text-sm " + C.mu}>${pool.length && D.leggera && !pool.some((m) => m.markets) ? "Carico le quote di tutte le partite..." : pool.length ? "Nessuna partita adatta a questo stile: prova un altro periodo o un altro stile." : "Nessuna partita in questo periodo nei campionati scelti."}</div>`}</div>
         ${legs.length > 0 && html`<div className=${C.card + " p-4 space-y-2"}>
           <div className="flex justify-between items-baseline text-sm"><span className=${C.mu}>${D.demo ? "Quota totale (Bet365)" : "Quota totale"}${qo ? ", obiettivo ×" + qo : ""}</span><b className=${"num text-[24px] " + C.tx}>${odd(tot)}</b></div>
           ${qo > 0 && !shield && tot < qo * 0.8 && html`<div className=${"text-[13px] rounded-xl p-3 border " + TONE.warn}>Con le partite di questo periodo si arriva al massimo a ${odd(tot)}: scegli un periodo più lungo o uno stile più rischioso.</div>`}
@@ -1945,14 +1945,33 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   /* ---------- app ---------- */
   function App() {
     const [Draw, setD] = useState(null);
+    // dati a strati: lista leggera all'avvio, dettagli di una partita quando la apri, mercati di tutte quando apri la Schedina
+    const [extra, setExtra] = useState({});
+    const [merc, setMerc] = useState(null);
+    const inCarico = useRef({});
+    const caricaDettagli = (id) => {
+      if (!Draw || !Draw.leggera || extra[id] || inCarico.current[id]) return;
+      inCarico.current[id] = true;
+      fetch("data/m/" + String(id).replace(/[^A-Za-z0-9_-]/g, "_") + ".json").then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+        .then((x) => setExtra((e) => ({ ...e, [id]: x })))
+        .catch(() => fetch("data/giornata.json").then((r) => (r.ok ? r.json() : null)).then((d) => d && setD(d)).catch(() => {})) // ripiego: il file completo
+        .finally(() => { inCarico.current[id] = false; });
+    };
+    const caricaMercati = () => {
+      if (!Draw || !Draw.leggera || merc || inCarico.current.merc) return;
+      inCarico.current.merc = true;
+      fetch("data/mercati.json").then((r) => (r.ok ? r.json() : Promise.reject(r.status))).then(setMerc).catch(() => {}).finally(() => { inCarico.current.merc = false; });
+    };
     const live = useLiveScores(Draw ? Draw.matches : null);
-    const D = React.useMemo(() => Draw && { ...Draw, matches: Draw.matches.map((m) => {
+    const D = React.useMemo(() => Draw && { ...Draw, matches: Draw.matches.map((m0) => {
+      const x = extra[m0.id];
+      const m = !Draw.leggera ? m0 : { ...m0, ...(x && !x.mancano ? x : {}), markets: (x && x.markets) || (merc && merc[m0.id]) || m0.markets, dett: !!(x && !x.mancano) };
       const l = live[m.id];
       if (!l) return m;
       const ok = l.st === "LIVE" || l.st === "FT" || (l.st === "RINV" && m.st !== "FT");
       const g = ok && l.g ? l.g : m.g;
       return { ...m, eid: l.eid, lgE: l.lgE, clock: l.clock, hid: l.hid, aid: l.aid, ...(ok ? { st: l.st, g, res: g ? (g[0] > g[1] ? 0 : g[0] === g[1] ? 1 : 2) : m.res } : {}) };
-    }) }, [Draw, live]);
+    }) }, [Draw, live, extra, merc]);
     const [err, setErr] = useState("");
     const [theme, setTheme] = useState(store.get("theme", "system"));
     const [tab, setTab] = useState("partite");
@@ -1993,7 +2012,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const setFavLeagues = (x) => { setFavLeagues0(x); store.set("favLeagues", x); };
     const [tira, setTira] = useState(0);
     const tiraRef = useRef(null);
-    const ricarica = () => fetch("data/giornata.json?t=" + Date.now(), { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((d) => { if (d) { setD(d); setToast("Partite aggiornate"); } }).catch(() => setToast("Nessuna connessione: riprova tra poco"));
+    const ricarica = () => fetch((Draw && Draw.leggera ? "data/lista.json" : "data/giornata.json") + "?t=" + Date.now(), { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((d) => { if (d) { setExtra({}); setMerc(null); setD(d); setToast("Partite aggiornate"); } }).catch(() => setToast("Nessuna connessione: riprova tra poco"));
     const [diario, setDiario0] = useState(store.get("diario", []));
     const setDiario = (d) => { setDiario0(d); store.set("diario", d); };
     const ripristina = (x) => {
@@ -2019,7 +2038,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       fetch("data/push.json").then((r) => (r.ok ? r.json() : null)).then((x) => x && setPushUrl(x.url)).catch(() => {});
       fetch("data/affidabilita.json").then((r) => (r.ok ? r.json() : null)).then(setAff).catch(() => {});
       fetch("data/storico.json").then((r) => (r.ok ? r.json() : null)).then(setStor).catch(() => {});
-      fetch("data/giornata.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).then((d) => { setD(d); if (d.today && (d.days || []).some((x) => x.k === d.today)) setDay(d.today); })
+      fetch("data/lista.json").then((r) => (r.ok ? r.json() : fetch("data/giornata.json").then((r2) => { if (!r2.ok) throw new Error(r2.status); return r2.json(); }))).then((d) => { setD(d); if (d.today && (d.days || []).some((x) => x.k === d.today)) setDay(d.today); })
         .catch(() => setErr("Non riesco a leggere i dati delle partite. Controlla la connessione e ricarica la pagina."));
       try { if ("serviceWorker" in navigator && window.top === window.self) navigator.serviceWorker.register("sw.js").catch(() => {}); } catch (e) { /* non installabile qui */ }
     }, []);
@@ -2129,6 +2148,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       if (sw) sw.addEventListener("message", fn);
       return () => { if (sw) sw.removeEventListener("message", fn); };
     }, []);
+    useEffect(() => { if (open) caricaDettagli(open); }, [open, Draw, extra]);
+    useEffect(() => { if (tab === "schedina") caricaMercati(); }, [tab, Draw, merc]);
     useEffect(() => { if (!daAprire || !D) return; setOpen(daAprire); setMt(0); setTeam(null); window.scrollTo(0, 0); setDaAprire(null); if (location.hash) history.replaceState(null, "", location.pathname); }, [daAprire, D]);
     if (err) return html`<div className="p-6 text-center text-sm ${C.mu}">${err}</div>`;
     if (!D) return html`<div className="p-12 text-center text-sm ${C.mu}">Caricamento delle partite...</div>`;
@@ -2220,7 +2241,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     const ctx = { syncOn, setSyncOn, setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen, mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
     return html`<${Ctx.Provider} value=${ctx}><div className="min-h-screen pb-28">
       ${header}
-      <main className="max-w-[480px] mx-auto">${guideBox}${team ? html`<${TeamView} key=${team.name} />` : open_m ? html`<${MatchView} key=${open_m.id} m=${open_m} />` : views[tab]}</main>
+      <main className="max-w-[480px] mx-auto">${guideBox}${team ? html`<${TeamView} key=${team.name} />` : open_m ? (D.leggera && !open_m.dett ? html`<div className="px-4 pt-16 text-center"><div className=${"text-[15px] font-semibold " + C.tx}>${open_m.h} - ${open_m.a}</div><div className=${"text-[13px] mt-2 " + C.mu}>Carico l'analisi della partita...</div></div>` : html`<${MatchView} key=${open_m.id} m=${open_m} />`) : views[tab]}</main>
       <nav className="fixed inset-x-0 z-40" style=${{ bottom: "calc(10px + env(safe-area-inset-bottom, 0px))", paddingLeft: "calc(12px + env(safe-area-inset-left, 0px))", paddingRight: "calc(12px + env(safe-area-inset-right, 0px))" }}>
         <div className="dock max-w-[456px] mx-auto rounded-[26px] p-1.5 grid grid-cols-4 gap-1">${DOCK.map(([k, l, I]) => { const on = tab === k && !open && !team; return html`<button key=${k} onClick=${() => { setTab(k); setOpen(null); setTeam(null); window.scrollTo(0, 0); }}
           aria-current=${on ? "page" : undefined}

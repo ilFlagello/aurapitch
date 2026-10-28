@@ -24,7 +24,8 @@ for lg in LEGHE:
         except Exception as e:
             r["errore"] = str(e)[:80]; break
         for ev in j.get("events", []):
-            c = ev["competitions"][0]
+          try:
+            c = (ev.get("competitions") or [{}])[0]
             r["partite"] += 1
             o = c.get("odds") or []
             if o:
@@ -34,6 +35,8 @@ for lg in LEGHE:
                     r["esempio"] = {"partita": ev.get("name"), "fornitore": (x.get("provider") or {}).get("name"), "overUnder": x.get("overUnder"),
                                     "casa": (x.get("homeTeamOdds") or {}).get("moneyLine"), "ospite": (x.get("awayTeamOdds") or {}).get("moneyLine"),
                                     "pari": (x.get("drawOdds") or {}).get("moneyLine"), "chiavi": sorted(x.keys())[:25]}
+          except Exception as e:
+            r["errore"] = "evento: " + str(e)[:80]
         time.sleep(0.25)
     out["espn"][lg] = r
     print(lg, r["partite"], r["con_quote"], r["errore"] or "")

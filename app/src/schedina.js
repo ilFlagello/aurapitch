@@ -1,5 +1,6 @@
 /* AuraPitch - Schedina IA, schedina come immagine, diario delle giocate. */
 import React, { useState, useEffect } from "react";
+import { immagineSchedina, mercatoBookmaker } from "./condividi.js";
 import { C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
 import { GiocoResponsabile } from "./extra.js";
 import { StoricoCard } from "./partita.js";
@@ -28,7 +29,10 @@ import { StoricoCard } from "./partita.js";
       const done = legs.filter((l) => hit(l.m, l.k) !== null), won = done.filter((l) => hit(l.m, l.k));
       const mine = mySlip.map((x) => ({ ...x, m: byId[x.id] })).filter((x) => x.m).map((x) => ({ ...x, ...options(x.m).find((o) => o.k === norm(x.k)) }));
       const mTot = mine.reduce((a, l) => a * (l.q || 1), 1), mProb = mine.reduce((a, l) => a * (l.p || 1), 1);
-      const text = (ls, wa) => (wa ? "*Schedina AuraPitch*\n" : "") + ls.map((l) => (wa ? "- " : "") + `${l.m.h} - ${l.m.a}: ${wa ? "*" + mLabel(l.m, l.k, true) + "*" : mLabel(l.m, l.k, true)} @ ${odd(l.q)}`).join("\n") + `\nQuota totale ${odd(ls.reduce((a, l) => a * l.q, 1))}`;
+      // testo da copiare: in ordine di orario, con il mercato scritto come sui siti dei bookmaker
+      const text = (ls, wa) => (wa ? "*Schedina AuraPitch*\n" : "") + ls.slice().sort((a, b) => String(a.m.ko).localeCompare(String(b.m.ko))).map((l) => { const [mer, es] = mercatoBookmaker(l.m, l.k);
+        const ora = new Date(l.m.ko).toLocaleString("it-IT", { weekday: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+        return (wa ? "- " : "") + `${ora} ${l.m.h} - ${l.m.a} | ${mer}: ${wa ? "*" + es + "*" : es} @ ${odd(l.q)}`; }).join("\n") + `\nQuota totale ${odd(ls.reduce((a, l) => a * l.q, 1))}`;
       const LegRow = ({ l, onDel }) => { const h = hit(l.m, l.k); return html`<div className=${"flex items-center gap-2 py-2 border-t first:border-t-0 " + C.bd}>
         <div className="flex-1 min-w-0"><div className=${"text-sm truncate " + C.tx}>${l.m.h} - ${l.m.a}</div><div className=${"text-[11px] " + C.mu}>${lg(l.m.lg).name} - IA ${pct(l.p)}%${l.stima ? " - quota stimata" : ""}${l.shielded ? " - protetta" : ""}</div></div>
         <span className=${"text-sm font-semibold text-right max-w-[45%] leading-tight " + C.tx}>${mLabel(l.m, l.k, true)}</span><span className=${"text-sm tabular-nums w-11 text-right " + C.mu}>${odd(l.q)}</span>
@@ -83,39 +87,7 @@ import { StoricoCard } from "./partita.js";
 
 
   /* ---- schedina come immagine (1080 x altezza variabile), nello stile AuraPitch ---- */
-  async function immagineSchedina(legs, titolo, lg) {
-    try { await document.fonts.ready; } catch (e) { /* caratteri di sistema */ }
-    const W = 1080, H = 360 + legs.length * 150 + 260, c = document.createElement("canvas");
-    c.width = W; c.height = H;
-    const x = c.getContext("2d");
-    x.fillStyle = "#0E0C18"; x.fillRect(0, 0, W, H);
-    const g = x.createRadialGradient(W * 0.85, 0, 10, W * 0.85, 0, 700); g.addColorStop(0, "rgba(123,92,255,0.45)"); g.addColorStop(1, "rgba(123,92,255,0)");
-    x.fillStyle = g; x.fillRect(0, 0, W, H);
-    const BS = '"Big Shoulders", "Figtree", sans-serif', FT = '"Figtree", system-ui, sans-serif';
-    x.strokeStyle = "#A58BFF"; x.lineWidth = 8;
-    for (const [r, o] of [[52, 0.3], [36, 0.55], [22, 1]]) { x.globalAlpha = o; x.beginPath(); x.arc(110, 120, r, 0, Math.PI * 2); x.stroke(); }
-    x.globalAlpha = 1; x.fillStyle = "#F4F2FF"; x.beginPath(); x.arc(110, 120, 9, 0, Math.PI * 2); x.fill();
-    x.font = `800 76px ${BS}`; x.fillText("AuraPitch", 190, 146);
-    x.font = `500 38px ${FT}`; x.fillStyle = "#9A95B3"; x.fillText(titolo, 70, 260);
-    let y = 330;
-    for (const l of legs) {
-      x.fillStyle = "#191626"; x.beginPath(); x.roundRect(50, y, W - 100, 130, 28); x.fill();
-      const [ch, ca] = auraCol(l.m);
-      x.fillStyle = ch; x.fillRect(50, y + 30, 8, 70); x.fillStyle = ca; x.fillRect(50, y + 65, 8, 35);
-      x.fillStyle = "#9A95B3"; x.font = `500 30px ${FT}`; x.fillText(`${l.m.h} - ${l.m.a}  ·  ${(lg(l.m.lg) || {}).name || ""}`.slice(0, 52), 90, y + 52);
-      x.fillStyle = "#F4F2FF"; x.font = `700 40px ${FT}`; x.fillText(mLabel(l.m, l.k, true).slice(0, 34), 90, y + 102);
-      x.font = `800 60px ${BS}`; x.textAlign = "right"; x.fillText(odd(l.q), W - 90, y + 88); x.textAlign = "left";
-      y += 150;
-    }
-    const tot = legs.reduce((a, l) => a * l.q, 1), pr = legs.reduce((a, l) => a * l.p, 1);
-    x.fillStyle = "#9A95B3"; x.font = `500 34px ${FT}`; x.fillText("Quota totale", 70, y + 60); x.fillText(`Probabilità IA ${(pr * 100).toFixed(1).replace(".", ",")}%`, 70, y + 110);
-    x.fillStyle = "#F4F2FF"; x.font = `800 120px ${BS}`; x.textAlign = "right"; x.fillText(odd(tot), W - 70, y + 110); x.textAlign = "left";
-    x.fillStyle = "#6E6A85"; x.font = `400 26px ${FT}`; x.fillText("Stime, non certezze. Gioca responsabilmente.", 70, H - 50);
-    const blob = await new Promise((r) => c.toBlob(r, "image/png"));
-    const file = new File([blob], "schedina-aurapitch.png", { type: "image/png" });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: "Schedina AuraPitch" }); return "condivisa"; }
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = file.name; a.click(); return "scaricata";
-  }
+
 
   /* ---- diario delle giocate: resta sul telefono; l'esito di ogni partita si salva appena è noto ---- */
   function esitoGamba(g, byId) {
@@ -181,4 +153,4 @@ import { StoricoCard } from "./partita.js";
       ${msg && html`<div className=${"text-[12px] " + C.mu}>${msg}</div>`}</div>`;
   }
 
-export { SlipView, immagineSchedina, esitoGamba, statoGiocata, Diario, Gioca };
+export { SlipView, esitoGamba, statoGiocata, Diario, Gioca };

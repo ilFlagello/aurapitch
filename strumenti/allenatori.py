@@ -3,7 +3,8 @@ inizio (P580) e fine (P582). Abbina i club ai nomi di Football-Data (storico/fd_
 Wikidata e' rilasciato in CC0: si puo' usare liberamente."""
 import csv, gzip, json, os, re, sys, time, unicodedata, urllib.parse, urllib.request
 
-PAESI = {"I": ["Q38"], "E": ["Q21", "Q145"], "S": ["Q29"], "D": ["Q183"], "F": ["Q142"]}
+PAESI = {"I": ["Q38"], "E": ["Q21", "Q145"], "S": ["Q29"], "D": ["Q183"], "F": ["Q142", "Q235"]}  # Q235 = Monaco (gioca in Ligue 1)
+NO_PRIMA = re.compile(r"academy|women|femminile|femenino|frauen|feminine|u-?\d\d|under|youth|primavera|reserve|riserve|development|juvenil|\bb\b|\bii\b|giovanili|nachwuchs", re.I)
 SPARQL = """SELECT ?club ?clubLabel (GROUP_CONCAT(DISTINCT ?alt; separator="|") AS ?alts) ?coach ?coachLabel ?start ?end WHERE {
   VALUES ?paese { %s }
   ?club wdt:P31 wd:Q476028 ; wdt:P17 ?paese ; p:P286 ?st .
@@ -14,7 +15,7 @@ SPARQL = """SELECT ?club ?clubLabel (GROUP_CONCAT(DISTINCT ?alt; separator="|") 
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en,it". }
 } GROUP BY ?club ?clubLabel ?coach ?coachLabel ?start ?end"""
 # nomi di Football-Data che non si capiscono dalle parole
-ALIAS = {"man united": "manchester united", "man city": "manchester city", "nott'm forest": "nottingham forest", "ath madrid": "atletico madrid",
+ALIAS = {"mgladbach": "borussia monchengladbach", "nottm forest": "nottingham forest", "man united": "manchester united", "man city": "manchester city", "nott'm forest": "nottingham forest", "ath madrid": "atletico madrid",
          "ath bilbao": "athletic bilbao", "sp gijon": "sporting gijon", "betis": "real betis", "celta": "celta vigo", "sociedad": "real sociedad",
          "espanol": "espanyol", "la coruna": "deportivo la coruna", "vallecano": "rayo vallecano", "m'gladbach": "borussia monchengladbach",
          "ein frankfurt": "eintracht frankfurt", "fc koln": "fc koln", "paris sg": "paris saint-germain", "st etienne": "saint-etienne",
@@ -73,11 +74,13 @@ def main():
         time.sleep(5)
     out, mancano = {}, []
     for t, paese in squadre.items():
-        cerca = tok(ALIAS.get(piano(t), t))
+        cerca = tok(ALIAS.get(piano(t), ALIAS.get(t.lower(), t)))
         best, bs = None, 0
         for c, x in club.items():
             if x["paese"] != paese:
                 continue
+            if NO_PRIMA.search(x["nome"]):
+                continue  # squadre giovanili, femminili, riserve
             for nome in [x["nome"], *x["alias"]]:
                 tt = tok(nome)
                 if not tt or not cerca:
@@ -85,6 +88,7 @@ def main():
                 s = len(cerca & tt) / len(cerca | tt)
                 if cerca <= tt:
                     s += 0.3
+                s += min(0.2, len(x["all"]) / 100)  # a parità di nome, il club con più allenatori registrati (la prima squadra)
                 if s > bs:
                     best, bs = c, s
         if best and bs >= 0.5:

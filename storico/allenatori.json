@@ -13237,6 +13237,42 @@
 }
 ]
 },
+"Buyuksehyr": {
+"wikidata": "Q857938",
+"nome": "İstanbul Başakşehir F.K.",
+"allenatori": [
+{
+"chi": "Abdullah Avcı",
+"qid": "Q26532",
+"da": "2014-08-18",
+"a": "2019-06-30"
+},
+{
+"chi": "Okan Buruk",
+"qid": "Q444318",
+"da": "2019-06-11",
+"a": "2021-01-29"
+},
+{
+"chi": "Emre Belözoğlu",
+"qid": "Q202569",
+"da": "2021-10-12",
+"a": "2023-09-06"
+},
+{
+"chi": "Çağdaş Atan",
+"qid": "Q272727",
+"da": "2023-09-09",
+"a": "2025-09-08"
+},
+{
+"chi": "Nuri Şahin",
+"qid": "Q75857",
+"da": "2025-09-15",
+"a": null
+}
+]
+},
 "Kocaelispor": {
 "wikidata": "Q513237",
 "nome": "Kocaelispor",
@@ -13389,6 +13425,42 @@
 "chi": "Thorsten Fink",
 "qid": "Q558041",
 "da": "2026-02-16",
+"a": null
+}
+]
+},
+"Goztep": {
+"wikidata": "Q1423118",
+"nome": "Göztepe S.K.",
+"allenatori": [
+{
+"chi": "Tamer Tuna",
+"qid": "Q1515689",
+"da": "2017-01-01",
+"a": "2018-05-22"
+},
+{
+"chi": "Kemal Özdeş",
+"qid": "Q6095974",
+"da": "2018-12-10",
+"a": "2019-02-24"
+},
+{
+"chi": "İlhan Palut",
+"qid": "Q78498047",
+"da": "2019-11-05",
+"a": "2021-01-11"
+},
+{
+"chi": "Stjepan Tomas",
+"qid": "Q453130",
+"da": "2022-03-09",
+"a": "2022-04-27"
+},
+{
+"chi": "Stanimir Stoilov",
+"qid": "Q1376437",
+"da": "2023-11-21",
 "a": null
 }
 ]
@@ -13646,6 +13718,54 @@
 {
 "chi": "Peter Bosz",
 "qid": "Q1029982",
+"da": "2023-07-01",
+"a": null
+}
+]
+},
+"For Sittard": {
+"wikidata": "Q854167",
+"nome": "Fortuna Sittard",
+"allenatori": [
+{
+"chi": "René Eijer",
+"qid": "Q2260884",
+"da": "2018-07-01",
+"a": "2019-06-30"
+},
+{
+"chi": "Sjors Ultee",
+"qid": "Q64667231",
+"da": "2019-07-01",
+"a": "2020-06-30"
+},
+{
+"chi": "Kevin Hofland",
+"qid": "Q280287",
+"da": "2020-07-01",
+"a": "2020-11-11"
+},
+{
+"chi": "Sjors Ultee",
+"qid": "Q64667231",
+"da": "2020-11-11",
+"a": "2022-08-22"
+},
+{
+"chi": "Dominik Vergoossen",
+"qid": "Q53252741",
+"da": "2022-08-22",
+"a": "2022-09-11"
+},
+{
+"chi": "Julio Velázquez",
+"qid": "Q901237",
+"da": "2022-09-12",
+"a": "2023-06-30"
+},
+{
+"chi": "Danny Buijs",
+"qid": "Q779338",
 "da": "2023-07-01",
 "a": null
 }
@@ -15493,6 +15613,48 @@
 }
 ]
 },
+"Sp Lisbon": {
+"wikidata": "Q75729",
+"nome": "Sporting CP",
+"allenatori": [
+{
+"chi": "Marcel Keizer",
+"qid": "Q4218949",
+"da": "2018-11-12",
+"a": "2019-09-03"
+},
+{
+"chi": "Leonel Pontes",
+"qid": "Q6526252",
+"da": "2019-09-04",
+"a": "2019-09-27"
+},
+{
+"chi": "Silas",
+"qid": "Q950133",
+"da": "2019-09-27",
+"a": "2020-03-04"
+},
+{
+"chi": "Ruben Amorim",
+"qid": "Q368682",
+"da": "2020-03-05",
+"a": "2024-11-10"
+},
+{
+"chi": "João Pereira",
+"qid": "Q192565",
+"da": "2024-11-11",
+"a": "2024-12-26"
+},
+{
+"chi": "Rui Borges",
+"qid": "Q121147850",
+"da": "2024-12-26",
+"a": null
+}
+]
+},
 "Porto": {
 "wikidata": "Q128446",
 "nome": "FC Porto",
@@ -16393,6 +16555,60 @@
 }
 ]
 },
+"St Truiden": {
+"wikidata": "Q138248",
+"nome": "Sint-Truidense V.V.",
+"allenatori": [
+{
+"chi": "Franky Van der Elst",
+"qid": "Q312619",
+"da": "2011-01-01",
+"a": "2012-01-01"
+},
+{
+"chi": "Marc Brys",
+"qid": "Q2554438",
+"da": "2018-07-01",
+"a": "2019-11-25"
+},
+{
+"chi": "Miloš Kostić",
+"qid": "Q60194849",
+"da": "2020-01-03",
+"a": "2020-06-30"
+},
+{
+"chi": "Kevin Muscat",
+"qid": "Q301236",
+"da": "2020-07-01",
+"a": "2020-12-02"
+},
+{
+"chi": "Bernd Hollerbach",
+"qid": "Q823637",
+"da": "2021-07-01",
+"a": "2023-06-30"
+},
+{
+"chi": "Felice Mazzù",
+"qid": "Q14107962",
+"da": "2024-09-05",
+"a": "2025-04-10"
+},
+{
+"chi": "Wouter Vrancken",
+"qid": "Q630916",
+"da": "2025-04-15",
+"a": "2026-06-25"
+},
+{
+"chi": "Frédéric de Meyer",
+"qid": "Q140159367",
+"da": "2026-07-01",
+"a": null
+}
+]
+},
 "Westerlo": {
 "wikidata": "Q849544",
 "nome": "K.V.C. Westerlo",
@@ -17188,54 +17404,6 @@
 "qid": "Q2631653",
 "da": "1984-07-01",
 "a": "1986-06-30"
-}
-]
-},
-"Cosenza": {
-"wikidata": "Q1136016",
-"nome": "Cosenza Calcio",
-"allenatori": [
-{
-"chi": "Nedo Sonetti",
-"qid": "Q1080952",
-"da": "1979-07-01",
-"a": "1980-06-30"
-},
-{
-"chi": "Luigi Simoni",
-"qid": "Q2537282",
-"da": "1989-07-01",
-"a": "1989-12-04"
-},
-{
-"chi": "Franco Scoglio",
-"qid": "Q980528",
-"da": "1996-12-24",
-"a": "1997-04-02"
-},
-{
-"chi": "Emiliano Mondonico",
-"qid": "Q3052298",
-"da": "2001-10-20",
-"a": "2002-05-06"
-},
-{
-"chi": "Emiliano Mondonico",
-"qid": "Q3052298",
-"da": "2002-11-25",
-"a": "2003-02-11"
-}
-]
-},
-"Lecco": {
-"wikidata": "Q944876",
-"nome": "Calcio Lecco 1912",
-"allenatori": [
-{
-"chi": "Massimiliano Allegri",
-"qid": "Q354529",
-"da": "2007-07-01",
-"a": "2007-07-17"
 }
 ]
 },
@@ -18355,18 +18523,6 @@
 }
 ]
 },
-"Ajaccio GFCO": {
-"wikidata": "Q270051",
-"nome": "A.C. Ajaccio",
-"allenatori": [
-{
-"chi": "Olivier Pantaloni",
-"qid": "Q2073968",
-"da": "2014-11-06",
-"a": null
-}
-]
-},
 "Paris FC": {
 "wikidata": "Q1051013",
 "nome": "Paris FC",
@@ -18396,6 +18552,66 @@
 "a": null
 }
 ]
+},
+"Cosenza": {
+"wikidata": "Q1136016",
+"nome": "Cosenza Calcio",
+"allenatori": [
+{
+"chi": "Nedo Sonetti",
+"qid": "Q1080952",
+"da": "1979-07-01",
+"a": "1980-06-30"
+},
+{
+"chi": "Luigi Simoni",
+"qid": "Q2537282",
+"da": "1989-07-01",
+"a": "1989-12-04"
+},
+{
+"chi": "Franco Scoglio",
+"qid": "Q980528",
+"da": "1996-12-24",
+"a": "1997-04-02"
+},
+{
+"chi": "Emiliano Mondonico",
+"qid": "Q3052298",
+"da": "2001-10-20",
+"a": "2002-05-06"
+},
+{
+"chi": "Emiliano Mondonico",
+"qid": "Q3052298",
+"da": "2002-11-25",
+"a": "2003-02-11"
+}
+]
+},
+"Lecco": {
+"wikidata": "Q944876",
+"nome": "Calcio Lecco 1912",
+"allenatori": [
+{
+"chi": "Massimiliano Allegri",
+"qid": "Q354529",
+"da": "2007-07-01",
+"a": "2007-07-17"
+}
+]
+},
+"Ajaccio GFCO": {
+"wikidata": "Q270051",
+"nome": "A.C. Ajaccio",
+"allenatori": [
+{
+"chi": "Olivier Pantaloni",
+"qid": "Q2073968",
+"da": "2014-11-06",
+"a": null
+}
+]
 }
 },
 "non_trovate": [
@@ -18411,12 +18627,9 @@
 "Pordenone",
 "FeralpiSalo",
 "Corum",
-"Buyuksehyr",
 "Amedspor",
 "Erzurumspor",
-"Goztep",
 "Willem II",
-"For Sittard",
 "AEK",
 "Iraklis",
 "Kalamata",
@@ -18428,10 +18641,8 @@
 "Sabadell",
 "Karlsruhe",
 "Dresden",
-"Sp Lisbon",
 "Academico Viseu",
 "Elversberg",
-"St Truiden",
 "Lommel SK"
 ]
 }

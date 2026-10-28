@@ -222,7 +222,8 @@ import { SlipView } from "./schedina.js";
     if (!D) return html`<div className="p-12 text-center text-sm ${C.mu}">Caricamento delle partite...</div>`;
     const byId = Object.fromEntries(D.matches.map((m) => [m.id, m]));
     const lg = (k) => D.leagues.find((l) => l.k === k);
-    const lgOpen = openL || D.leagues.map((l) => l.k);
+    // senza scelte salvate: aperti i campionati che segui (o i primi 5 se non ne segui), gli altri chiusi con il solo conteggio
+    const lgOpen = openL || (favLeagues && favLeagues.length ? D.leagues.filter((l) => favLeagues.includes(l.k)).map((l) => l.k) : D.leagues.slice(0, 5).map((l) => l.k));
     const goMatch = (id) => { setOpen(id); setMt(0); setTeam(null); window.scrollTo(0, 0); };
     const toggleFavM = (id) => {
       const adding = !favM.includes(id);

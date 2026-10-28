@@ -74,15 +74,15 @@ def _prob(m, f):
     return sum(m[i][j] for i in range(MAXG + 1) for j in range(MAXG + 1) if f(i, j))
 
 
-def gol_attesi(mk, mo):
-    """Gol attesi (casa, ospite) che riproducono le probabilita del mercato 1X2 e Over 2.5."""
+def gol_attesi(mk, mo, linea=2.5):
+    """Gol attesi (casa, ospite) che riproducono le probabilita del mercato 1X2 e Over (di solito 2,5; ESPN a volte da' 3,5)."""
     def err(lh, la):
         m = matrice(lh, la)
         p1 = _prob(m, lambda i, j: i > j)
         p2 = _prob(m, lambda i, j: i < j)
         e = (p1 - mk[0]) ** 2 + (p2 - mk[2]) ** 2
         if mo is not None:
-            e += (_prob(m, lambda i, j: i + j > 2) - mo) ** 2
+            e += (_prob(m, lambda i, j: i + j > linea) - mo) ** 2
         else:
             e += 0.002 * (lh + la - 2.6) ** 2
         return e
@@ -423,7 +423,7 @@ def scegli(mercati, h, a, sh, sa, ctx, nb):
         if best:
             mk, mot, accordo = best
             usati.add(mk["c"])
-            base = f"Probabilità stimata {round(mk['p'] * 100)}%" + (f", ricavata dalle quote medie di {nb} bookmaker." if nb else ", ricavata dalle quote medie dei bookmaker.")
+            base = f"Probabilità stimata {round(mk['p'] * 100)}%" + (", ricavata dalle quote di un bookmaker (DraftKings, tramite ESPN)." if nb == 1 else f", ricavata dalle quote medie di {nb} bookmaker." if nb else ", ricavata dalle quote medie dei bookmaker.")
             perche = [base] + [t for t, ok in mot if ok is not False]
             contro = [t for t, ok in mot if ok is False]
             out[k] = {"c": mk["c"], "l": mk["l"], "p": mk["p"], "q": mk["q"], "qm": mk["qm"], "titolo": pr["nome"],

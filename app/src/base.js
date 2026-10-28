@@ -112,6 +112,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       ${k === "en" && html`<rect width="24" height="16" fill="#f8fafc" /><rect x="10" width="4" height="16" fill="#dc2626" /><rect y="6" width="24" height="4" fill="#dc2626" />`}
       ${k === "es" && html`<rect width="24" height="16" fill="#dc2626" /><rect y="4" width="24" height="8" fill="#facc15" />`}
       ${k === "de" && html`<rect width="24" height="5.34" fill="#111827" /><rect y="5.33" width="24" height="5.34" fill="#dc2626" /><rect y="10.66" width="24" height="5.34" fill="#facc15" />`}
+      ${k === "fr" && html`<rect width="8" height="16" fill="#1d4ed8" /><rect x="8" width="8" height="16" fill="#f8fafc" /><rect x="16" width="8" height="16" fill="#dc2626" />`}
+      ${k === "nl" && html`<rect width="24" height="5.34" fill="#dc2626" /><rect y="5.33" width="24" height="5.34" fill="#f8fafc" /><rect y="10.66" width="24" height="5.34" fill="#1d4ed8" />`}
+      ${k === "pt" && html`<rect width="24" height="16" fill="#dc2626" /><rect width="9.6" height="16" fill="#15803d" /><circle cx="9.6" cy="8" r="2.6" fill="#facc15" />`}
       ${k === "eu" && html`<rect width="24" height="16" fill="#1d4ed8" />`}</svg>`;
   }
 

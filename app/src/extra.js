@@ -5,7 +5,7 @@ import { C, Crest, Ctx, Flag, Ic, Marchio, Sheet, evalCode, hit, html, norm, pct
 import { statoGiocata } from "./schedina.js";
 
   /* ---- partita della settimana: la sfida più importante dei prossimi 7 giorni (competizione, classifica delle due squadre, equilibrio) ---- */
-  const PESO_LEGA = { CL: 3, I1: 2.4, E0: 2.4, SP1: 2.1, D1: 2, EL: 1.6, CI: 1.4, ECL: 1.1, I2: 0.6 };
+  const PESO_LEGA = { CL: 3, I1: 2.4, E0: 2.4, SP1: 2.1, D1: 2, F1: 1.7, EL: 1.6, CI: 1.4, SCI: 1.6, FAC: 1.2, CDR: 1.2, DFB: 1.1, ECL: 1.1, P1: 1, N1: 1, ELC: 0.8, CDF: 0.7, E1: 0.6, I2: 0.6 };
   function partitaSettimana(D) {
     const pos = (k, t) => { const S = D.standings[k]; const i = S ? S.generale.findIndex((r) => r.team === t) : -1; return i < 0 ? 12 : i + 1; };
     let best = null;
@@ -75,7 +75,9 @@ import { statoGiocata } from "./schedina.js";
 
   /* ---- primo avvio: campionati e squadre che ti interessano (mettono in alto le tue partite e attivano gli avvisi) ---- */
   const TUTTE_LEGHE = [["I1", "Serie A", "it"], ["I2", "Serie B", "it"], ["CL", "Champions League", "eu"], ["EL", "Europa League", "eu"], ["ECL", "Conference League", "eu"], ["CI", "Coppa Italia", "it"],
-    ["E0", "Premier League", "en"], ["SP1", "LaLiga", "es"], ["D1", "Bundesliga", "de"]];
+    ["E0", "Premier League", "en"], ["SP1", "LaLiga", "es"], ["D1", "Bundesliga", "de"],
+    ["F1", "Ligue 1", "fr"], ["N1", "Eredivisie", "nl"], ["P1", "Primeira Liga", "pt"], ["E1", "Championship", "en"], ["SCI", "Supercoppa Italiana", "it"],
+    ["FAC", "FA Cup", "en"], ["ELC", "Carabao Cup", "en"], ["CDR", "Copa del Rey", "es"], ["DFB", "DFB-Pokal", "de"], ["CDF", "Coppa di Francia", "fr"]];
   function PrimoAvvio({ onFine }) {
     const { D, setFavTeams, setFavLeagues, setFav } = React.useContext(Ctx);
     const [passo, setPasso] = useState(0);

@@ -547,6 +547,10 @@ if __name__ == "__main__":
         sys.exit(0)
     if "--espn" in sys.argv:
         import espn_dati
+        try:
+            espn_dati.quote_espn()  # quote gratuite dei campionati e delle coppe in più (nessun credito)
+        except Exception as e:  # noqa: BLE001
+            print("ESPN quote: errore", e)
         espn_dati.giro_espn()
         sys.exit(0)
     if "--arbitri" in sys.argv:

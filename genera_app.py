@@ -34,8 +34,14 @@ LEAGUES = [
     ("ECL", "Conference League", "Europa", "eu", None, "Conference League"), ("CI", "Coppa Italia", "Italia", "it", None, "Coppa Italia"),
     ("E0", "Premier League", "Inghilterra", "en", "PL", "Premier League"),
     ("SP1", "LaLiga", "Spagna", "es", "PD", "LaLiga"), ("D1", "Bundesliga", "Germania", "de", "BL1", "Bundesliga"),
+    # quote gratuite da ESPN (DraftKings), classifica e risultati da ESPN
+    ("F1", "Ligue 1", "Francia", "fr", None, "Ligue 1"), ("N1", "Eredivisie", "Olanda", "nl", None, "Eredivisie"),
+    ("P1", "Primeira Liga", "Portogallo", "pt", None, "Primeira Liga"), ("E1", "Championship", "Inghilterra", "en", None, "Championship"),
+    ("SCI", "Supercoppa Italiana", "Italia", "it", None, "Supercoppa Italiana"), ("FAC", "FA Cup", "Inghilterra", "en", None, "FA Cup"),
+    ("ELC", "Carabao Cup", "Inghilterra", "en", None, "Carabao Cup"), ("CDR", "Copa del Rey", "Spagna", "es", None, "Copa del Rey"),
+    ("DFB", "DFB-Pokal", "Germania", "de", None, "DFB-Pokal"), ("CDF", "Coppa di Francia", "Francia", "fr", None, "Coppa di Francia"),
 ]
-PRIORITA = ["CL", "I1", "EL", "CI", "E0", "SP1", "D1", "ECL", "I2"]
+PRIORITA = ["CL", "I1", "EL", "CI", "SCI", "E0", "SP1", "D1", "F1", "ECL", "I2", "FAC", "CDR", "DFB", "ELC", "CDF", "P1", "N1", "E1"]
 GG = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"]
 STOP = {"fc", "ac", "as", "ssc", "afc", "cf", "sc", "us", "usd", "calcio", "club", "de", "del", "cd", "ud", "sd", "rc", "rcd", "sv", "vfb", "vfl", "tsg",
         "bc", "fk", "1", "04", "05", "1899", "1909", "1913", "1919", "1929", "and", "hove", "albion", "hotspur", "wanderers", "the"}
@@ -91,7 +97,7 @@ def fnum(x):
 def carica_quote():
     """Per ogni partita, l'ultima fotografia delle quote presa prima del calcio d'inizio."""
     righe = []
-    for path in sorted(glob.glob(os.path.join(DATA, "*", "partite.csv"))):
+    for path in sorted(glob.glob(os.path.join(DATA, "*", "partite*.csv"))):  # partite.csv (The Odds API) e partite_espn.csv (ESPN)
         giorno = os.path.basename(os.path.dirname(path))
         try:
             with open(path, encoding="utf-8") as f:
@@ -141,7 +147,11 @@ def quote_di(r):
     if q["Over 2.5"] and q["Under 2.5"]:
         mo = round(togli_margine([q["Over 2.5"], q["Under 2.5"]])[0], 4)
     nb = fnum(r.get(f"{src}bookmaker_1"))
-    return {"mk": mk, "mo": mo, "odds": {"1": q["1"], "X": q["X"], "2": q["2"], "O": q["Over 2.5"], "U": q["Under 2.5"]},
+    # quote ESPN con una linea Under/Over diversa da 2,5 (es. 3,5): servono comunque a stimare i gol attesi
+    mo_l, linea = None, fnum(r.get("linea"))
+    if mo is None and linea and fnum(r.get("oa_quota_media_Over L")) and fnum(r.get("oa_quota_media_Under L")):
+        mo_l = round(togli_margine([fnum(r["oa_quota_media_Over L"]), fnum(r["oa_quota_media_Under L"])])[0], 4)
+    return {"mk": mk, "mo": mo, "mo_l": mo_l, "linea": linea, "odds": {"1": q["1"], "X": q["X"], "2": q["2"], "O": q["Over 2.5"], "U": q["Under 2.5"]},
             "max": {"1": mx["1"], "X": mx["X"], "2": mx["2"], "O": mx["Over 2.5"], "U": mx["Under 2.5"]}, "nb": int(nb) if nb else None}
 
 
@@ -518,15 +528,16 @@ def genera():
             return None
         best = max(med["squadre"], key=lambda t: ES.sim(nome, [t]), default=None)
         return best if best and ES.sim(nome, [best]) >= 0.8 else None
-    cl2 = (esd.get("classifiche") or {}).get("I2")
-    if cl2:
-        nostri = [n for n, es in (esd.get("squadre") or {}).items() if es.get("lg") == "I2"]
+    for k_es in ES.SOLO_ESPN:  # classifiche da ESPN (Serie B e campionati senza football-data.org)
+      cl2 = (esd.get("classifiche") or {}).get(k_es)
+      if cl2:
+        nostri = [n for n, es in (esd.get("squadre") or {}).items() if es.get("lg") == k_es]
         righe = []
         for i, r in enumerate(cl2):
             mio = next((n for n in nostri if ES.sim(n, [r["team"]]) >= 0.8), None)
             righe.append({"team": {"id": "es:" + (mio or r["team"]), "shortName": mio or r["team"]}, "position": r["rank"] or i + 1, "points": r["pt"], "playedGames": r["pg"],
                           "won": r["v"], "draw": r["n"], "lost": r["p"], "goalsFor": r["gf"], "goalsAgainst": r["gs"]})
-        classifiche["ES_I2"] = {"TOTAL": righe}
+        classifiche["ES_" + k_es] = {"TOTAL": righe}
     scores = {}
     for path in glob.glob(os.path.join(FD, "scores_*.json")):
         for e in jload(path, []) or []:
@@ -587,9 +598,14 @@ def genera():
             ctx = {"tone": "ok", "text": "Giorni di riposo non disponibili per questo campionato."}
         tabs = classifiche.get(code) if code else classifiche.get("ES_" + k)
         # mercati e consiglio IA motivato
-        lh, la = M.gol_attesi(q["mk"], q["mo"])
+        lh, la = M.gol_attesi(q["mk"], q["mo"]) if q["mo"] is not None or not q.get("mo_l") else M.gol_attesi(q["mk"], q["mo_l"], q["linea"])
         raccolte = {c: v for c, v in (("1", q["odds"]["1"]), ("X", q["odds"]["X"]), ("2", q["odds"]["2"]), ("O2.5", q["odds"]["O"]), ("U2.5", q["odds"]["U"])) if v}
+        if q.get("mo_l") and q.get("linea"):  # quote raccolte sulla linea ESPN (es. Over/Under 3,5)
+            L = ("%g" % q["linea"])
+            raccolte.update({"O" + L: fnum(r.get("oa_quota_media_Over L")), "U" + L: fnum(r.get("oa_quota_media_Under L"))})
         mercati = M.calcola_mercati(lh, la, h, a, raccolte)
+        if q["mo"] is None:  # Over 2,5 senza quota diretta: probabilità del modello (dai gol attesi)
+            q["mo"] = next((x["p"] for x in mercati if x["c"] == "O2.5"), None)
         sh = M.statistiche([z for z in per_team.get(hid, []) if z["t"] < t0]) if hid else None
         sa = M.statistiche([z for z in per_team.get(aid, []) if z["t"] < t0]) if aid else None
         pos = {}

@@ -15,8 +15,15 @@ from datetime import datetime, timedelta, timezone
 
 SITE = "https://site.api.espn.com/apis/site/v2/sports/soccer/"
 STAND = "https://site.api.espn.com/apis/v2/sports/soccer/"
-ESPN_LG = {"I1": "ita.1", "I2": "ita.2", "E0": "eng.1", "SP1": "esp.1", "D1": "ger.1", "CL": "uefa.champions", "EL": "uefa.europa", "ECL": "uefa.europa.conf", "CI": "ita.coppa_italia"}
-COPPE = ("CL", "EL", "ECL", "CI")
+ESPN_LG = {"I1": "ita.1", "I2": "ita.2", "E0": "eng.1", "SP1": "esp.1", "D1": "ger.1", "CL": "uefa.champions", "EL": "uefa.europa", "ECL": "uefa.europa.conf", "CI": "ita.coppa_italia",
+           # campionati e coppe con quote gratuite da ESPN (DraftKings), senza crediti di The Odds API
+           "F1": "fra.1", "N1": "ned.1", "P1": "por.1", "E1": "eng.2",
+           "FAC": "eng.fa", "ELC": "eng.league_cup", "CDR": "esp.copa_del_rey", "DFB": "ger.dfb_pokal", "CDF": "fra.coupe_de_france", "SCI": "ita.super_cup"}
+COPPE = ("CL", "EL", "ECL", "CI", "FAC", "ELC", "CDR", "DFB", "CDF", "SCI")
+SOLO_ESPN = ("I2", "F1", "N1", "P1", "E1")  # campionati con classifica e risultati da ESPN (non da football-data.org)
+# quote da ESPN: nome del campionato come nel file delle quote (deve coincidere con l'ultimo campo di LEAGUES in genera_app.py)
+QUOTE_ESPN = {"F1": "Ligue 1", "N1": "Eredivisie", "P1": "Primeira Liga", "E1": "Championship", "FAC": "FA Cup", "ELC": "Carabao Cup",
+              "CDR": "Copa del Rey", "DFB": "DFB-Pokal", "CDF": "Coppa di Francia", "SCI": "Supercoppa Italiana"}
 SOGLIE_GIALLI = (5, 10)  # squalifica alla 5a e alla 10a ammonizione (regola comune a Serie A, Serie B, Premier, LaLiga, Bundesliga)
 STOP = {"fc", "ac", "as", "ss", "us", "ssc", "afc", "cf", "sc", "calcio", "club", "de", "1907", "1909", "1913", "1919", "bc", "vfb", "vfl", "tsg", "sv", "fsv", "rc", "cd", "ud", "rcd", "ca", "sd", "1846", "04", "05", "1899", "hellas"}
 ALIAS = {"internazionale": "inter", "inter milan": "inter", "ac milan": "milan", "manchester united": "man united", "manchester city": "man city", "bayern munich": "bayern", "tottenham hotspur": "tottenham"}
@@ -505,7 +512,7 @@ def giro_espn(base="data", ore=48):
         except Exception as e:  # noqa: BLE001
             print(f"ESPN colori {k}: {e}")
     out["risultati_lega"] = {}
-    for k in ("I2",) + COPPE:
+    for k in SOLO_ESPN + COPPE:
         evs = []
         for dd in ((-4, -3, -2, -1, 0, 1, 2, 3) if k in COPPE else (-2, -1, 0)):
             giorno = (ora + timedelta(days=dd)).strftime("%Y%m%d")
@@ -520,7 +527,7 @@ def giro_espn(base="data", ore=48):
             except Exception as e:  # noqa: BLE001
                 print(f"ESPN risultati {k} {giorno}: {e}")
         out["risultati_lega"][k] = evs
-    for k in ("I2",):
+    for k in SOLO_ESPN:
         try:
             out["classifiche"][k] = classifica_espn(ESPN_LG[k])
         except Exception as e:  # noqa: BLE001
@@ -553,3 +560,69 @@ def squalificati(sq):
 
 def diffidati(sq):
     return [p for p in sq.get("rosa", []) if p["gialli"] + 1 in SOGLIE_GIALLI]
+
+
+def _decimale(americana):
+    """Quota americana ("+255", "-145") in decimale (3,55; 1,69)."""
+    try:
+        x = float(str(americana).replace("+", ""))
+    except (TypeError, ValueError):
+        return None
+    if x == 0:
+        return None
+    return round(1 + (x / 100 if x > 0 else 100 / -x), 3)
+
+
+def quote_espn(base="data", giorni=7):
+    """Quote DraftKings dal calendario ESPN per i campionati e le coppe di QUOTE_ESPN (gratuite, nessun credito).
+    Scrive data/AAAA-MM-GG/partite_espn.csv con le stesse colonne del file di The Odds API (bookmaker = 1)."""
+    import csv
+    oggi = datetime.now(timezone.utc)
+    righe = []
+    for k, nome in QUOTE_ESPN.items():
+        for dd in range(giorni):
+            giorno = (oggi + timedelta(days=dd)).strftime("%Y%m%d")
+            try:
+                evs = get(f"{SITE}{ESPN_LG[k]}/scoreboard?dates={giorno}").get("events", [])
+            except Exception as e:  # noqa: BLE001
+                print(f"ESPN quote {k} {giorno}: {e}")
+                continue
+            for ev in evs:
+                try:
+                    c = (ev.get("competitions") or [{}])[0]
+                    h = next(x for x in c["competitors"] if x["homeAway"] == "home")
+                    a = next(x for x in c["competitors"] if x["homeAway"] == "away")
+                    o = next((x for x in (c.get("odds") or []) if x and x.get("moneyline")), None)
+                    if not o or (ev.get("status") or {}).get("type", {}).get("state") != "pre":
+                        continue
+                    ml = o["moneyline"]
+                    q = [_decimale(((ml.get(x) or {}).get("close") or {}).get("odds")) for x in ("home", "draw", "away")]
+                    if not all(q) or not all(1.01 < v < 100 for v in q):
+                        continue
+                    tot = o.get("total") or {}
+                    ov, un = (tot.get("over") or {}).get("close") or {}, (tot.get("under") or {}).get("close") or {}
+                    linea = o.get("overUnder")
+                    qo, qu = _decimale(ov.get("odds")), _decimale(un.get("odds"))
+                    r = {"campionato": nome, "casa": h["team"]["displayName"], "ospite": a["team"]["displayName"], "id": "es" + str(ev.get("id")),
+                         "inizio": ev.get("date", "").replace("Z", ":00Z") if ev.get("date", "").count(":") == 1 else ev.get("date"), "stato": "NS",
+                         "oa_quota_media_1": q[0], "oa_quota_media_X": q[1], "oa_quota_media_2": q[2],
+                         "oa_quota_max_1": q[0], "oa_quota_max_X": q[1], "oa_quota_max_2": q[2], "oa_bookmaker_1": 1, "oa_bookmaker_X": 1, "oa_bookmaker_2": 1,
+                         "linea": linea if qo and qu else "", "oa_quota_media_Over L": qo or "", "oa_quota_media_Under L": qu or ""}
+                    if linea == 2.5 and qo and qu:
+                        r.update({"oa_quota_media_Over 2.5": qo, "oa_quota_media_Under 2.5": qu, "oa_quota_max_Over 2.5": qo, "oa_quota_max_Under 2.5": qu,
+                                  "oa_bookmaker_Over 2.5": 1, "oa_bookmaker_Under 2.5": 1})
+                    righe.append(r)
+                except Exception as e:  # noqa: BLE001
+                    print(f"ESPN quote {k}: partita saltata ({e})")
+    if not righe:
+        print("ESPN quote: nessuna partita con quote")
+        return 0
+    cartella = os.path.join(base, datetime.now(timezone.utc).astimezone().strftime("%Y-%m-%d"))
+    os.makedirs(cartella, exist_ok=True)
+    campi = sorted({c for r in righe for c in r})
+    with open(os.path.join(cartella, "partite_espn.csv"), "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=campi)
+        w.writeheader()
+        w.writerows(righe)
+    print(f"ESPN quote: {len(righe)} partite in {len({r['campionato'] for r in righe})} competizioni")
+    return len(righe)

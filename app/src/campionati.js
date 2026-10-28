@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { ruolo, ESPN_LG } from "./live.js";
 import { C, Chip, Crest, Ctx, Flag, Seg, Tabs, html, nf, store } from "./base.js";
 import { Row, VotoChip, caricaVoti } from "./partita.js";
+import { PanchineLega } from "./panchine.js";
 
     /* ---- voti AuraPitch della stagione per campionato (almeno 4 partite con voto) ---- */
     function usaVoti() { const [V, setV] = useState(null); useEffect(() => { caricaVoti().then(setV); }, []); return V; }
@@ -66,8 +67,9 @@ import { Row, VotoChip, caricaVoti } from "./partita.js";
       return html`<div className="px-4 space-y-3">
         <div className="flex gap-2 overflow-x-auto noscroll -mx-4 px-4">${D.leagues.map((l) => html`<${Chip} key=${l.k} on=${k === l.k} onClick=${() => { setK(l.k); store.set("lgSel", l.k); }}><${Flag} k=${l.flag} w=${16} />${l.name}<//>`)}</div>
         <div className=${"flex items-center gap-2 text-sm font-semibold " + C.tx}><${Flag} k=${L.flag} w=${22} />${L.country} - ${L.name} 2026/27</div>
-        <${Tabs} items=${["Classifica", "Marcatori", "Assist", "Voti", "Confronta"]} val=${vista} set=${setVista} />
+        <${Tabs} items=${["Classifica", "Marcatori", "Assist", "Voti", "Confronta", "Panchine"]} val=${vista} set=${setVista} />
         ${vista === 3 && html`<${VotiLega} k=${k} />`}
+        ${vista === 5 && html`<${PanchineLega} k=${k} apriSquadra=${(t) => ESPN_LG[k] && setTeam({ lgE: ESPN_LG[k], name: t })} />`}
         ${vista === 4 && html`<${Confronta} k=${k} />`}
         ${(vista === 1 || vista === 2) && (() => { const sc = ((D.scorers || {})[k] || []).slice().sort((a, b) => (vista === 1 ? b.g - a.g || b.a - a.a : b.a - a.a || b.g - a.g)).filter((r) => (vista === 1 ? r.g : r.a) > 0);
           return sc.length ? html`<div className=${C.card + " px-4 py-1"}>${sc.slice(0, 20).map((r, i) => html`<div key=${r.n + r.t} className=${"flex items-center gap-2 py-2 text-sm " + (i ? "border-t " + C.bd : "") + " " + C.tx}>

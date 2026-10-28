@@ -115,9 +115,12 @@ def calcola(fd_dir="data/fd", storico="storico"):
             z = sum(w * (v - mu) / sd for w, v, mu, sd in zip(M["pesi"], x, M["media"], M["scarto"])) + M["intercetta"]
             p30 = _calibra(1 / (1 + math.exp(-z)), T.get("verifica", {}).get("calibrazione") or [])
             livello = next(n for soglia, n in LIVELLI if p30 < soglia)
+            if len(mie) < 3:  # come nello studio: il termometro si accende dalla terza partita del nuovo allenatore
+                p30, livello = None, "Appena arrivato"
             motivi = []
             if len(u5) >= 3:
-                motivi.append(f"Ultime {len(u5)}: {sum(x[2] for x in s[-5:])} punti, {'+' if sum(u5) >= 0 else ''}{sum(u5):.1f} rispetto a quanto si aspettavano le quote".replace(".", ","))
+                pt = sum(x[2] for x in s[-5:])
+                motivi.append(f"Ultime {len(u5)}: {pt} {'punto' if pt == 1 else 'punti'}, {'+' if sum(u5) >= 0 else ''}{sum(u5):.1f} rispetto a quanto si aspettavano le quote".replace(".", ","))
             if persi5 >= 2:
                 motivi.append(f"{persi5} sconfitte nette nelle ultime 5")
             if cambi3 >= 2:
@@ -126,6 +129,6 @@ def calcola(fd_dir="data/fd", storico="storico"):
                 motivi.append("Arrivato da poco: di solito si concede tempo")
             if cr["n"] >= 30:
                 motivi.append(f"In carriera {'sopra' if res > 0.05 else 'sotto' if res < -0.05 else 'in linea con'} le attese delle quote ({cr['n'] + len(mie)} partite nei campionati seguiti)")
-            out[team] = {"lg": lg, "chi": c["chi"], "da": c["da"], "giorni": giorni, "partite": len(mie), "p30": round(p30, 3), "livello": livello,
+            out[team] = {"lg": lg, "chi": c["chi"], "da": c["da"], "giorni": giorni, "partite": len(mie), "p30": round(p30, 3) if p30 is not None else None, "livello": livello,
                          "motivi": motivi, "precedenti": [{"chi": t["chi"], "da": t["da"], "a": t["a"]} for t in info["allenatori"][-4:-1]]}
     return out

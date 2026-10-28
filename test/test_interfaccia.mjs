@@ -52,7 +52,7 @@ async function giro(tema) {
     }
     await p.getByRole("button", { name: /Partite/ }).first().click(); await p.waitForTimeout(400);
   });
-  await passo("campionati", async () => { await dock("Campionati"); for (const n of ["Classifica", "Marcatori", "Assist", "Voti", "Confronta"]) { await tab(n); } await foto("campionati"); });
+  await passo("campionati", async () => { await dock("Campionati"); for (const n of ["Classifica", "Marcatori", "Assist", "Voti", "Confronta", "Panchine"]) { await tab(n); } await foto("campionati"); });
   await passo("schedina", async () => {
     await dock("Schedina IA"); await tab("Crea con l'IA"); await p.waitForTimeout(800);
     await p.locator("button", { hasText: /^×10$/ }).click(); await p.waitForTimeout(300); await foto("schedina-x10");

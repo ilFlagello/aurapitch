@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { scaricaCalendario, immaginePartita } from "./condividi.js";
 import { Citazione, citazionePartita, citazioneArbitro } from "./citazioni.js";
+import { SchedaAllenatore } from "./panchine.js";
 import { useSummary, loadPlayer, loadCareer, ruolo, findTeam, loadTeam, minuto, ESPN_LG, andamento } from "./live.js";
 import { Voce, AuraLine, C, Crest, Ctx, DOT, FavPill, Flag, Form, GROUPS, Ic, Seg, Sheet, TONE, Tabs, auraCol, evalCode, html, leggiXg, lum, mGroup, mLabel, nf, norm, odd, options, pct, pctL, spiega, store } from "./base.js";
 import { usaVoti } from "./campionati.js";
@@ -664,6 +665,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
         <div className=${C.card + " p-4 flex items-center gap-3"}><${Crest} t=${team.name} size=${52} />
           <div className="flex-1 min-w-0"><div className=${"text-xl font-semibold truncate " + C.tx}>${team.name}</div>
             ${form.length > 0 && html`<div className="mt-1.5"><${Form} list=${form} /></div>`}</div></div>
+        <${SchedaAllenatore} squadra=${team.name} />
         <${Seg} items=${["Partite", "Rosa", "Indisponibili"]} val=${t} set=${setT} />
         ${!d ? html`<div className=${C.card + " p-4 text-sm " + C.mu}>${err || "Caricamento..."}</div>`
           : t === 0 ? html`<${React.Fragment}>

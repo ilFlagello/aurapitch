@@ -1,19 +1,12 @@
 {
-    "iscrizioni": [
-        {
-            "servizio": "web.push.apple.com",
-            "seguite": [
-                "Monza-Napoli (ita.1/401874799)"
-            ],
-            "aggiornata": "2026-10-27T21:45:16.563Z"
-        }
-    ],
-    "stato_partite": {},
+    "iscrizioni": 1,
+    "partite_seguite": 1,
+    "stato_partite": 1,
     "orologio": {
-        "slot": "2026-10-27T22:0",
+        "slot": "2026-10-28T12:2",
         "modo": "live",
         "esito": 204,
-        "t": "2026-10-27T22:00:14.127Z"
+        "t": "2026-10-28T12:20:14.087Z"
     },
     "vapid": true
 }

@@ -20,7 +20,10 @@ SPARQL = """SELECT ?club ?clubLabel (GROUP_CONCAT(DISTINCT ?alt; separator="|") 
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en,it". }
 } GROUP BY ?club ?clubLabel ?coach ?coachLabel ?start ?end"""
 # nomi di Football-Data che non si capiscono dalle parole
-ALIAS = {"barcelona": "fc barcelona", "mgladbach": "borussia monchengladbach", "nottm forest": "nottingham forest", "man united": "manchester united", "man city": "manchester city", "nott'm forest": "nottingham forest", "ath madrid": "atletico madrid",
+ALIAS = {"sp lisbon": "sporting cp", "sp braga": "sporting braga", "aek": "aek athens", "paok": "paok fc", "goztep": "goztepe", "for sittard": "fortuna sittard",
+         "dresden": "dynamo dresden", "karlsruhe": "karlsruher sc", "buyuksehyr": "istanbul basaksehir", "aris": "aris thessaloniki", "willem ii": "willem ii tilburg",
+         "amedspor": "amed sportif", "pau fc": "pau fc", "olympiakos": "olympiacos", "st truiden": "sint-truiden", "waregem": "zulte waregem", "mechelen": "kv mechelen",
+         "st gilloise": "union saint-gilloise", "barcelona": "fc barcelona", "mgladbach": "borussia monchengladbach", "nottm forest": "nottingham forest", "man united": "manchester united", "man city": "manchester city", "nott'm forest": "nottingham forest", "ath madrid": "atletico madrid",
          "ath bilbao": "athletic bilbao", "sp gijon": "sporting gijon", "betis": "real betis", "celta": "celta vigo", "sociedad": "real sociedad",
          "espanol": "espanyol", "la coruna": "deportivo la coruna", "vallecano": "rayo vallecano", "m'gladbach": "borussia monchengladbach",
          "ein frankfurt": "eintracht frankfurt", "fc koln": "fc koln", "paris sg": "paris saint-germain", "st etienne": "saint-etienne",

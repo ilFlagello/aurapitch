@@ -133,6 +133,15 @@ def main():
             ancora.append(t)
         time.sleep(1)
     mancano = ancora
+    # se Wikidata non ha risposto per un paese (capita), si tengono le panchine dell'ultimo archivio buono
+    try:
+        prima = json.load(open("storico/allenatori.json", encoding="utf-8")).get("squadre", {})
+    except (OSError, ValueError):
+        prima = {}
+    for t in list(mancano):
+        if t in prima and prima[t].get("allenatori"):
+            out[t] = prima[t]
+            mancano.remove(t)
     os.makedirs("storico", exist_ok=True)
     json.dump({"fonte": "Wikidata (CC0), proprieta P286", "squadre": out, "non_trovate": mancano}, open("storico/allenatori.json", "w"), ensure_ascii=False, indent=0)
     print("abbinate", len(out), "non trovate", len(mancano), mancano[:40])

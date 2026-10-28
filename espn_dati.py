@@ -253,17 +253,23 @@ def giro_voti(base="data", giorni=4, massimo=350):
     ora = datetime.now(timezone.utc)
     inizio = datetime(ora.year if ora.month >= 7 else ora.year - 1, 8, 1, tzinfo=timezone.utc)
     nuove, errori, ultimo_err = 0, 0, ""
+    scans = set(arch.get("giorni", []))  # "lega|giorno" gia controllati (solo giorni chiusi da almeno 3 giorni)
+    giorno_ev = {}
     for k, lg in ESPN_LG.items():
         evs, w = [], inizio
-        while w <= ora:  # una settimana per richiesta: ESPN non accetta intervalli lunghi
-            w2 = min(ora, w + timedelta(days=6))
-            try:
-                evs += get(f"{SITE}{lg}/scoreboard?dates={w.strftime('%Y%m%d')}-{w2.strftime('%Y%m%d')}").get("events", [])
-            except Exception as e:  # noqa: BLE001
-                errori += 1
-                ultimo_err = f"{k} {w.date()}: {str(e)[:150]}"
-                print(f"Voti {ultimo_err}")
-            w = w2 + timedelta(days=1)
+        while w.date() <= ora.date():  # un giorno per richiesta: ESPN rifiuta gli intervalli di date
+            chiave = f"{k}|{w.strftime('%Y%m%d')}"
+            if chiave not in scans and nuove < massimo:
+                try:
+                    trovati = get(f"{SITE}{lg}/scoreboard?dates={w.strftime('%Y%m%d')}").get("events", [])
+                    evs += trovati
+                    if (ora - w).days >= 3:
+                        giorno_ev[chiave] = [e["id"] for e in trovati if e["status"]["type"].get("completed")]
+                except Exception as e:  # noqa: BLE001
+                    errori += 1
+                    ultimo_err = f"{k} {w.date()}: {str(e)[:150]}"
+                    print(f"Voti {ultimo_err}")
+            w = w + timedelta(days=1)
         for ev in evs:
             if nuove >= massimo:
                 break
@@ -295,7 +301,11 @@ def giro_voti(base="data", giorni=4, massimo=350):
                     x["nv"] += 1
     with open(dpath, "w", encoding="utf-8") as f:
         json.dump(dir_, f, separators=(",", ":"))
-    arch = {"fatte": sorted(fatte), "g": G, "completo": nuove < massimo, "errori": errori, "ultimo_errore": ultimo_err, "agg": ora.isoformat()}
+    # un giorno e chiuso quando tutte le sue partite finite sono nell'archivio (altrimenti si riprende al prossimo giro)
+    for chiave, ids in giorno_ev.items():
+        if all(i in fatte and i in dir_ for i in ids):
+            scans.add(chiave)
+    arch = {"fatte": sorted(fatte), "giorni": sorted(scans), "g": G, "completo": nuove < massimo, "errori": errori, "ultimo_errore": ultimo_err, "agg": ora.isoformat()}
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(arch, f, ensure_ascii=False, separators=(",", ":"))
@@ -312,13 +322,13 @@ def giro_arbitri(base="data", giorni=3):
     Serve quando football-data.org non ha ancora il nome dell'arbitro."""
     ora = datetime.now(timezone.utc)
     out = []
-    da, a_ = ora.strftime("%Y%m%d"), (ora + timedelta(days=giorni)).strftime("%Y%m%d")
     for k, lg in ESPN_LG.items():
-        try:
-            evs = get(f"{SITE}{lg}/scoreboard?dates={da}-{a_}").get("events", [])
-        except Exception as e:  # noqa: BLE001
-            print(f"ESPN arbitri {k}: {e}")
-            continue
+        evs = []
+        for dd in range(giorni + 1):  # un giorno per richiesta: ESPN rifiuta gli intervalli di date
+            try:
+                evs += get(f"{SITE}{lg}/scoreboard?dates={(ora + timedelta(days=dd)).strftime('%Y%m%d')}").get("events", [])
+            except Exception as e:  # noqa: BLE001
+                print(f"ESPN arbitri {k}: {e}")
         for ev in evs:
             try:
                 c = ev["competitions"][0]

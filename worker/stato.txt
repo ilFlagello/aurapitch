@@ -1,4 +1,4 @@
-Esecuzione: 2026-10-29T07:01Z
+Esecuzione: 2026-10-29T10:19Z
 Token: ok
 Sottodominio: ilflagello
 Archivio KV: presente
@@ -8,5 +8,5 @@ Carico il servizio: ok
 Attivo indirizzo workers.dev: ok
 Controllo ogni minuto: ok
 Prova https://aurapitch-push.ilflagello.workers.dev/vapid: HTTP 200
-Accesso con Google: non configurato
-Codice amministratore: manca il secret AURAPITCH_ADMIN
+Accesso con Google: configurato
+Codice amministratore: impostato

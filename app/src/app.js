@@ -14,6 +14,8 @@ const Attesa = () => html`<div className="px-4 space-y-3" aria-busy="true">${[0,
 import { AccountCard, Benvenuto, InvitoRecensione, Legale, PannelloBeta, Recensione, useAccount } from "./fiducia.js";
 import { avviaStatistiche, conta, statAttive } from "./statistiche.js";
 import { VERSIONE as VERS_LEGALE } from "./legale.js";
+import { sezioniLeghe } from "./ordine.js";
+import { Guida } from "./guida.js";
 
   /* ---------- app ---------- */
   function App() {
@@ -65,7 +67,9 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
     const [now, setNow] = useState(Date.now());
     const [unlock, setUnlock] = useState(false);
     const [profile, setProfile] = useState(false);
-    const [guide, setGuide] = useState(store.get("guideSeen", false) ? 0 : 1);
+    const [guida, setGuida] = useState(false); // guida aperta dal "?"
+    const [guidaVista, setGuidaVista] = useState(store.get("guida2", false));
+    const [radarOnly, setRadarOnly] = useState(0);
     const [name, setName] = useState(store.get("name", ""));
     const [fav, setFav] = useState(store.get("fav", ""));
     const [mySlip, setMySlip] = useState(store.get("slip", []));
@@ -336,19 +340,13 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
           <span className=${"text-[10px] font-semibold px-1.5 py-0.5 rounded-md " + C.ch + " " + C.mu}>beta</span></button>
         <button onClick=${() => setUnlock(true)} className=${"text-[11px] font-semibold px-2.5 py-1 rounded-full border tabular-nums " + (pro ? TONE.warn : C.ch + " " + C.tx + " border-transparent")}>${sub || proAccount ? "PRO" : left > 86400 ? "PRO · " + Math.ceil(left / 86400) + " gg" : left > 3600 ? "PRO · " + Math.ceil(left / 3600) + " h" : left > 0 ? "PRO " + mmss(left) : "FREE"}</button>
         <button aria-label="Cerca" onClick=${() => setCerca(true)} className=${"w-8 h-8 rounded-full flex items-center justify-center " + C.ch + " " + C.tx}><${Ic.Search} size=${15} /></button>
-        <button aria-label="Guida rapida" onClick=${() => setGuide(guide ? 0 : 1)} className=${"w-8 h-8 rounded-full flex items-center justify-center " + C.ch + " " + C.tx}><${Ic.HelpCircle} size=${15} /></button>
+        <button aria-label="Guida rapida" onClick=${() => setGuida(true)} className=${"w-8 h-8 rounded-full flex items-center justify-center " + C.ch + " " + C.tx}><${Ic.HelpCircle} size=${15} /></button>
         <button aria-label="Profilo e impostazioni" onClick=${() => setProfile(true)} className=${"w-8 h-8 rounded-full text-[11px] font-semibold " + C.on}>${ini}</button>
       </div></header>`;
 
-    const steps = ["Partite: tocca un campionato per aprirlo. La stella dentro una partita la mette tra le Preferite, in cima, con gli avvisi dei gol.", "Tocca una partita: in \"In breve\" trovi l'essenziale. Scorri col dito a destra o a sinistra per approfondire: Partita, Formazioni, IA, Statistiche, Cronaca.",
-      "Le analisi IA sono libere sulle partite FREE; sulle altre si sbloccano con PRO, e ogni giorno hai un'analisi gratis su una partita a tua scelta.", "In Schedina IA scorri tra Crea, La mia schedina, Diario e Storico IA. Nel Club trovi Gara, Traguardi e Account."];
-    const guideBox = guide > 0 && html`<div className=${"mx-4 mb-3 p-3 rounded-2xl border text-sm flex items-start gap-2 " + TONE.info}>
-      <div className="flex-1"><b>Guida ${guide}/4.</b> ${steps[guide - 1]}</div>
-      <button aria-label="Passo precedente" onClick=${() => setGuide(Math.max(1, guide - 1))}><${Ic.ChevronLeft} size=${18} /></button>
-      <button aria-label=${guide === 4 ? "Chiudi la guida" : "Passo successivo"} onClick=${() => { if (guide === 4) { setGuide(0); store.set("guideSeen", true); } else setGuide(guide + 1); }}>${guide === 4 ? html`<${Ic.X} size=${18} />` : html`<${Ic.ChevronRight} size=${18} />`}</button></div>`;
-
     /* ---- vista partite ---- */
-    const dayMatches = D.matches.filter((m) => (day === "all" || m.date === day) && (!liveOnly || m.st === "LIVE"));
+    const nRadar = D.matches.filter((m) => m.mov && m.st === "NS" && (day === "all" || m.date === day)).length;
+    const dayMatches = D.matches.filter((m) => (day === "all" || m.date === day) && (!liveOnly || m.st === "LIVE") && (!radarOnly || (m.mov && m.st === "NS")));
     // aggiorna tirando giù, su ogni pagina: solo con un gesto verticale partito dall'inizio della pagina
     // (scorrere le chip dei giorni o un elenco orizzontale non deve aggiornare); indicatore "aura" che si riempie e poi gira
     const tsH = (e) => { tiraRef.current = window.scrollY <= 0 && !ricaricando && !e.target.closest("[data-noswipe], input, textarea, .overflow-x-auto") ? [e.touches[0].clientX, e.touches[0].clientY] : null; };
@@ -358,23 +356,6 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
     const teH = () => {
       if (tira >= 64) { setRicaricando(true); const t0 = Date.now(); ricarica().finally(() => setTimeout(() => setRicaricando(false), Math.max(0, 650 - (Date.now() - t0)))); }
       setTira(0); tiraRef.current = null;
-    };
-    /* vetrina dei primi giorni: in 30 secondi si vede cosa sa fare l'app, ogni riquadro porta direttamente alla funzione */
-    const Vetrina = () => {
-      const top = D.matches.filter((m) => m.st === "NS" && m.free)[0] || D.matches.find((m) => m.st === "NS");
-      const vai = (fn) => () => { vibra(); fn(); };
-      const T = [
-        [Ic.Sparkles, "Lettura IA in 10 secondi", top ? `${top.h} - ${top.a}` : "Apri una partita", vai(() => top && goMatch(top.id))],
-        [Ic.Zap, "Schedina IA in un tocco", "Scegli rischio e quota, fa tutto lei", vai(() => { store.set("sch:schedina", 0); transizione(() => setTab("schedina")); window.scrollTo(0, 0); })],
-        [Ic.BarChart3, "Un'IA che si mette alla prova", "Errori e successi, alla luce del sole", vai(() => { store.set("sch:schedina", 3); transizione(() => setTab("schedina")); window.scrollTo(0, 0); })],
-        [Ic.Users, "Sfida gli amici", "Pronostici, classifica e gruppi", vai(() => { store.set("sch:club", 1); transizione(() => setTab("club")); window.scrollTo(0, 0); })],
-      ];
-      return html`<div className=${C.card + " p-4 space-y-3"}>
-        <div className="flex items-center"><span className=${C.lab + " flex-1"}>Cosa puoi fare con AuraPitch</span>
-          <button aria-label="Nascondi" onClick=${() => { store.set("vetrinaNo", true); setToast("Ritrovi tutto nel menu in basso"); }} className=${C.mu}><${Ic.X} size=${16} /></button></div>
-        <div className="grid grid-cols-2 gap-2">${T.map(([I, t, s0, fn]) => html`<button key=${t} onClick=${fn} className=${"text-left rounded-2xl p-3 active:scale-[0.98] transition-transform " + C.ch}>
-          <span className="w-8 h-8 rounded-xl flex items-center justify-center mb-2 bg-[#5B2EE6]/12 text-[#5B2EE6] dark:bg-[#A58BFF]/15 dark:text-[#A58BFF]"><${I} size=${16} /></span>
-          <span className=${"block text-[14px] font-semibold leading-tight " + C.tx}>${t}</span><span className=${"block text-[12px] mt-0.5 leading-snug " + C.mu}>${s0}</span></button>`)}</div></div>`;
     };
     const home = html`<div className="px-4 space-y-3">
       ${banner && html`<div className=${C.card + " p-3 flex gap-3 items-start"}><${Ic.Info} size=${16} className="text-sky-500 shrink-0 mt-0.5" />
@@ -388,18 +369,13 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
           ${installa === "android" && html`<button onClick=${async () => { try { await richiesta.current.prompt(); } catch (e) { /* annullato */ } setInstalla(null); }} className=${"mt-2 px-4 py-2 rounded-full text-[13px] font-semibold " + C.on}>Installa</button>`}</div>
         <button aria-label="Chiudi" onClick=${() => { setInstalla(null); store.set("installaNo", Date.now()); }} className=${C.mu}><${Ic.X} size=${16} /></button></div>`}
       <${InvitoRecensione} onApri=${() => setRecensione("invito")} />
-      ${!store.get("vetrinaNo", false) && consenso && onb && html`<${Vetrina} />`}
-      ${(() => { const R = D.matches.filter((m) => m.mov && m.st === "NS").sort((a, b) => Math.max(...b.mov.dp.map(Math.abs)) - Math.max(...a.mov.dp.map(Math.abs))).slice(0, 4);
-        return R.length > 0 && !liveOnly && html`<div className=${C.card + " p-4"}>
-          <div className="flex items-center gap-2 mb-1"><${Ic.TrendingUp} size=${16} className=${C.acc} /><span className=${C.lab + " flex-1"}>Radar delle quote</span><span className=${"text-[11px] " + C.mu}>${D.matches.filter((m) => m.mov && m.st === "NS").length} in movimento</span></div>
-          <p className=${"text-[12px] mb-1 " + C.mu}>Le quote che si sono mosse di più da quando le abbiamo lette, con il possibile motivo.</p>
-          ${R.map((m, i) => html`<button key=${m.id} onPointerDown=${() => caricaDettagli(m.id)} onClick=${() => goMatch(m.id)} className=${"w-full text-left py-2 " + (i ? "border-t " + C.bd : "")}>
-            <div className="flex items-center gap-2"><span className=${"flex-1 min-w-0 truncate text-[14px] font-semibold " + C.tx}>${m.h} - ${m.a}</span><span className=${"text-[12px] " + C.mu}>${m.time}</span></div>
-            <${Movimento} m=${m} compatto=${true} />${m.mov.perche && html`<div className=${"text-[11px] truncate " + C.mu}>${m.mov.perche}</div>`}</button>`)}</div>`; })()}
       <${Giorni} days=${D.days} day=${day} setDay=${setDay} demo=${D.demo} />
       <div className="flex items-center gap-2 pt-1"><span className=${"text-[22px] font-bold tracking-[-0.02em] flex-1 " + C.tx}>${day === "all" ? "Tutte le partite" : (D.days.find((d) => d.k === day) || {}).label === "Oggi" ? "Oggi" : new Date(day + "T12:00:00").toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }).replace(/^./, (c) => c.toUpperCase())}</span>
-        <button onClick=${() => setLiveOnly(liveOnly ? 0 : 1)} aria-pressed=${!!liveOnly} className=${"inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold " + (liveOnly ? "bg-[#FF3D5A] text-white" : "bg-white dark:bg-[#191626] " + C.tx)}>
-        <span className=${"w-2 h-2 rounded-full " + (liveOnly ? "bg-white" : "bg-[#FF3D5A]" + (D.matches.some((m) => m.st === "LIVE") ? " pulse" : ""))}></span>In diretta${D.matches.some((m) => m.st === "LIVE") ? " " + D.matches.filter((m) => m.st === "LIVE").length : ""}</button></div>
+        <button onClick=${() => { setLiveOnly(liveOnly ? 0 : 1); setRadarOnly(0); }} aria-pressed=${!!liveOnly} className=${"inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold " + (liveOnly ? "bg-[#FF3D5A] text-white" : "bg-white dark:bg-[#191626] " + C.tx)}>
+        <span className=${"w-2 h-2 rounded-full " + (liveOnly ? "bg-white" : "bg-[#FF3D5A]" + (D.matches.some((m) => m.st === "LIVE") ? " pulse" : ""))}></span>In diretta${D.matches.some((m) => m.st === "LIVE") ? " " + D.matches.filter((m) => m.st === "LIVE").length : ""}</button>
+        ${nRadar > 0 && html`<button onClick=${() => { setRadarOnly(radarOnly ? 0 : 1); setLiveOnly(0); }} aria-pressed=${!!radarOnly} aria-label="Quote in movimento"
+          className=${"inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[13px] font-bold " + (radarOnly ? "bg-[#14B8C9] text-white" : "bg-white dark:bg-[#191626] " + C.tx)}><${Ic.TrendingUp} size=${14} className=${radarOnly ? "" : "text-[#14B8C9]"} />${nRadar}</button>`}</div>
+      ${radarOnly ? html`<p className=${"text-[12px] -mt-1 " + C.mu}>Partite con le quote in movimento da quando le abbiamo lette: dentro ogni partita trovi di quanto e il possibile motivo.</p>` : null}
       ${(() => { const fm = dayMatches.filter(mia); return fm.length > 0 && html`<div className=${C.card + " overflow-hidden"}>
         <div className="flex items-center gap-3 px-4 pt-3.5 pb-2.5"><${Ic.Star} size=${18} className="text-amber-400 fill-amber-400" /><span className=${"flex-1 text-[16px] font-semibold " + C.tx}>Le tue partite</span><span className=${"num text-[17px] font-bold " + C.mu}>${fm.length}</span></div>
         <div>${fm.map((m, i) => html`<${Row} key=${m.id} m=${m} i=${i} />`)}</div></div>`; })()}
@@ -412,7 +388,9 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
             <div className="flex items-center gap-2"><${Crest} t=${pw.h} size=${22} /><span className=${"text-[18px] font-bold " + C.tx}>${pw.h}</span><span className=${C.mu}>-</span><span className=${"text-[18px] font-bold " + C.tx}>${pw.a}</span><${Crest} t=${pw.a} size=${22} /></div>
             <div className=${"text-[13px] mt-1 " + C.mu}>${(lg(pw.lg) || {}).name}, ${new Date(pw.ko).toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" })} alle ${pw.time}</div>
             <div className="mt-2.5"><${AuraLine} m=${pw} h=${4} /></div></button></div></div>`; })()}
-      ${D.leagues.slice().sort((a, b) => (favLeagues.includes(b.k) ? 1 : 0) - (favLeagues.includes(a.k) ? 1 : 0)).map((l) => {
+      ${sezioniLeghe(D.leagues.map((l) => l.k).filter((k) => dayMatches.some((m) => m.lg === k)), favLeagues).map((sez) => html`<${React.Fragment} key=${sez.titolo}>
+        <div className=${"px-1 pt-2 text-[12px] font-semibold uppercase tracking-[0.07em] " + C.mu}>${sez.titolo}</div>
+        ${sez.leghe.map((k) => { const l = lg(k);
         const ms = dayMatches.filter((m) => m.lg === l.k);
         if (!ms.length) return null;
         const o = lgOpen.includes(l.k);
@@ -422,7 +400,7 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
             <span className="flex-1 text-left leading-tight"><span className=${"block text-[16px] font-semibold tracking-[-0.01em] " + C.tx}>${l.name}</span><span className=${"block text-[12px] " + C.mu}>${l.country}${ms.some((m) => m.st === "LIVE") ? html`<span className="text-[#FF3D5A] font-semibold">, ${ms.filter((m) => m.st === "LIVE").length} in diretta</span>` : ""}</span></span><span className=${"num text-[17px] font-bold " + C.mu}>${ms.length}</span>
             <${Ic.ChevronDown} size=${16} className=${C.mu + " transition-transform " + (o ? "rotate-180" : "")} /></button>
           ${o && html`<div>${ms.map((m, i) => html`<${Row} key=${m.id} m=${m} i=${i} />`)}</div>`}</div>`;
-      })}
+      })}<//>`)}
       ${!dayMatches.length && html`<div className=${C.card + " p-6 text-center text-sm " + C.mu}>${liveOnly ? "Nessuna partita in corso in questo momento." : "Nessuna partita in questo giorno."}</div>`}
       <p className=${"text-[11px] text-center " + C.mu}>${D.demo ? "Dati: Football-Data.co.uk, ClubElo." : "Dati: quote da The Odds API; classifiche da football-data.org; diretta, cronaca e formazioni da ESPN."} Stemmi generici, non ufficiali.</p></div>`;
 
@@ -434,7 +412,7 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
     const ctx = { invita, gratisOggi, usaGratis, apriSquadra, apriGiocatore, apriLega, A, setRecensione, setLegale, caricaDettagli, caricaMercati, syncOn, setSyncOn, setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen: (v) => (v == null ? indietro() : goMatch(v)), mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
     return html`<${Ctx.Provider} value=${ctx}><div className="min-h-screen pb-28">
       ${header}
-      <main className="max-w-[480px] mx-auto" onTouchStart=${tsH} onTouchMove=${tmH} onTouchEnd=${teH}><${Ricarica} tira=${tira} attivo=${ricaricando} />${!online && html`<div role="status" className=${"mx-4 mb-3 px-3.5 py-2.5 rounded-2xl border text-[13px] flex items-center gap-2 " + TONE.warn}><${Ic.Clock} size=${15} />Sei offline: vedi i dati delle ${(D.generato || "").slice(-5)}. Quando torna la rete, tira giù la pagina per aggiornarli.</div>`}${guideBox}${team ? html`<${TeamView} key=${team.name} />` : open_m ? (D.leggera && !open_m.dett ? html`<div className="px-4 pt-4 space-y-3" aria-busy="true"><div className=${C.card + " p-5 text-center"}><div className=${"text-[17px] font-semibold " + C.tx}>${open_m.h} - ${open_m.a}</div><div className=${"text-[13px] mt-1 " + C.mu}>${online ? "Carico l'analisi della partita..." : "Sei offline: l'analisi di questa partita non è ancora stata scaricata."}</div>
+      <main className="max-w-[480px] mx-auto" onTouchStart=${tsH} onTouchMove=${tmH} onTouchEnd=${teH}><${Ricarica} tira=${tira} attivo=${ricaricando} />${!online && html`<div role="status" className=${"mx-4 mb-3 px-3.5 py-2.5 rounded-2xl border text-[13px] flex items-center gap-2 " + TONE.warn}><${Ic.Clock} size=${15} />Sei offline: vedi i dati delle ${(D.generato || "").slice(-5)}. Quando torna la rete, tira giù la pagina per aggiornarli.</div>`}${team ? html`<${TeamView} key=${team.name} />` : open_m ? (D.leggera && !open_m.dett ? html`<div className="px-4 pt-4 space-y-3" aria-busy="true"><div className=${C.card + " p-5 text-center"}><div className=${"text-[17px] font-semibold " + C.tx}>${open_m.h} - ${open_m.a}</div><div className=${"text-[13px] mt-1 " + C.mu}>${online ? "Carico l'analisi della partita..." : "Sei offline: l'analisi di questa partita non è ancora stata scaricata."}</div>
           <div className="h-2 mt-4 rounded-full bg-[#17152B]/[0.06] dark:bg-white/[0.06] animate-pulse"></div></div>${[0, 1].map((i) => html`<div key=${i} className=${C.card + " h-36 animate-pulse"}></div>`)}</div>` : html`<${MatchView} key=${open_m.id} m=${open_m} />`) : views[tab]}</main>
       <nav className="fixed inset-x-0 z-40" style=${{ bottom: "calc(10px + env(safe-area-inset-bottom, 0px))", paddingLeft: "calc(12px + env(safe-area-inset-left, 0px))", paddingRight: "calc(12px + env(safe-area-inset-right, 0px))" }}>
         <div className="dock max-w-[456px] mx-auto rounded-[26px] p-1.5 grid grid-cols-4 gap-1">${DOCK.map(([k, l, I]) => { const on = tab === k && !open && !team; return html`<button key=${k} onClick=${() => { pila.current = []; vibra(); transizione(() => { setTab(k); setOpen(null); setTeam(null); }); window.scrollTo(0, 0); }}
@@ -465,11 +443,12 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
       ${cerca && html`<${Cerca} onClose=${() => setCerca(false)} />`}
       ${gloss && html`<${Glossario} onClose=${() => setGloss(false)} />`}
       ${!consenso && html`<${Benvenuto} onFine=${() => setConsenso(true)} />`}
+      ${consenso && onb && (guida || !guidaVista) && html`<${Guida} onFine=${() => { setGuida(false); setGuidaVista(true); }} />`}
       ${legale && html`<${Legale} tipo=${legale} onClose=${() => setLegale(null)} />`}
       ${giocatore && html`<${PlayerSheet} p=${{ id: giocatore.id, name: giocatore.name, pos: giocatore.pos }} side=${0} m=${{ h: giocatore.team || "", a: "" }} noMatch=${true} onClose=${() => setGiocatore(null)} />`}
       ${recensione && pushUrl && html`<${Recensione} pushUrl=${pushUrl} dove=${recensione} onClose=${() => setRecensione(null)} />`}
       ${pannello && A.acc && A.acc.admin && html`<${PannelloBeta} A=${A} onClose=${() => setPannello(false)} />`}
-      ${!onb && html`<${PrimoAvvio} onFine=${() => { setOnb(true); store.set("onb", true); store.set("guideSeen", true); setGuide(0);
+      ${!onb && html`<${PrimoAvvio} onFine=${() => { setOnb(true); store.set("onb", true); store.set("guideSeen", true);
         // primo utilizzo: 7 giorni di PRO completo, per vedere subito tutto quello che l'app sa fare (una volta sola per telefono)
         if (!store.get("prova7", 0) && !sub && until < Date.now()) { const u = Date.now() + 7 * 86400e3; store.set("prova7", Date.now()); store.set("until", u); setUntil(u); flash("Benvenuto: 7 giorni di PRO completo, gratis"); } }} />`}
       ${!open && !team && html`<${BarraSchedina} vaiSchedina=${() => { setTab("schedina"); window.scrollTo(0, 0); }} />`}

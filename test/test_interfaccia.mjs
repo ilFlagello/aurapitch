@@ -52,6 +52,20 @@ async function giro(tema) {
     if (await p.getByText("Ho almeno").count()) errori.push(`[${tema}] benvenuto: non si chiude dopo l'accettazione`);
   });
   await p.evaluate(() => { localStorage.setItem("ap:onb", "true"); localStorage.setItem("ap:guideSeen", "true"); localStorage.setItem("ap:swipeOk", "true"); });
+  // guida delle funzionalità: parte da sola la prima volta, "Salta" la ferma per sempre, il "?" la riapre
+  await p.reload(); await p.waitForTimeout(1000);
+  await passo0("guida", async () => {
+    if (!(await p.getByText("Benvenuto in AuraPitch").count())) { errori.push(`[${tema}] la guida non parte al primo avvio`); return; }
+    await p.screenshot({ path: path.join(OUT, `${tema}-guida.png`) });
+    await p.getByRole("button", { name: "Avanti" }).click(); await p.waitForTimeout(200);
+    if (!(await p.getByText("Ogni partita, a colpo d'occhio").count())) errori.push(`[${tema}] guida: "Avanti" non funziona`);
+    await p.getByRole("button", { name: "Salta" }).click(); await p.waitForTimeout(200);
+    await p.reload(); await p.waitForTimeout(1000);
+    if (await p.getByText("Benvenuto in AuraPitch").count()) errori.push(`[${tema}] la guida riparte dopo "Salta"`);
+    await p.getByRole("button", { name: "Guida rapida" }).click(); await p.waitForTimeout(200);
+    if (!(await p.getByText("Benvenuto in AuraPitch").count())) errori.push(`[${tema}] il "?" non riapre la guida`);
+    await p.getByRole("button", { name: "Salta" }).click(); await p.waitForTimeout(200);
+  });
   await p.reload(); await p.waitForTimeout(1200);
   const foto = (n) => p.screenshot({ path: path.join(OUT, `${tema}-${n}.png`) });
   const passo = async (nome, fn) => { try { await fn(); } catch (e) { errori.push(`[${tema}] ${nome}: ${e.message.split("\n")[0]}`); } };

@@ -4,6 +4,7 @@ import { ruolo, ESPN_LG } from "./live.js";
 import { NomeSquadra, NomeGiocatore, C, Chip, Crest, Ctx, Flag, Seg, Tabs, html, nf, store } from "./base.js";
 import { Row, VotoChip, caricaVoti, usaVoti } from "./partita.js";
 import { PanchineLega } from "./panchine.js";
+import { ordinaLeghe } from "./ordine.js";
 
     /* ---- voti AuraPitch della stagione per campionato (almeno 4 partite con voto) ---- */
     function VotiLega({ k }) {
@@ -52,20 +53,21 @@ import { PanchineLega } from "./panchine.js";
 
     /* ---- campionati ---- */
     function LeaguesView() {
-      const { D, lg, fav, setTeam } = React.useContext(Ctx);
+      const { D, lg, fav, setTeam, favLeagues } = React.useContext(Ctx);
+      const ordinate = ordinaLeghe(D.leagues.map((l) => l.k), favLeagues || []).map((q) => lg(q)); // stesso ordine delle Partite
       const V = usaVoti();
       const pn = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       const idDi = (n) => { if (!V) return null; const t = pn(n); const e = Object.entries(V).find(([, v]) => pn(v[5]) === t); return e ? e[0] : null; };
       const votoDi = (n) => { if (!V) return null; const t = pn(n); const x = Object.values(V).find((v) => pn(v[5]) === t) || Object.values(V).find((v) => pn(v[5]).split(" ").slice(-1)[0] === t.split(" ").slice(-1)[0] && pn(v[5])[0] === t[0]); return x && x[1] >= 3 ? x[0] : null; };
       const [vista, setVista] = useState(0);
-      const [k, setK] = useState(() => { const s0 = store.get("lgSel", null); return D.leagues.some((l) => l.k === s0) ? s0 : D.leagues[0].k; });
+      const [k, setK] = useState(() => { const s0 = store.get("lgSel", null); return D.leagues.some((l) => l.k === s0) ? s0 : ordinate[0].k; });
       const [filt, setFilt] = useState(0);
       const L = lg(k);
       const st = D.standings[k] ? D.standings[k][["generale", "casa", "trasferta"][filt]] : [];
       const ms = D.matches.filter((m) => m.lg === k);
       const zone = (i) => { const n = st.length; if (["I1", "E0", "SP1", "D1"].includes(k)) return i < 4 ? "bg-[#5B2EE6] dark:bg-[#A58BFF]" : i >= n - 3 ? "bg-[#FF3D5A]" : ""; return i < 2 ? "bg-[#0F9D84]" : i >= n - 3 ? "bg-[#FF3D5A]" : ""; };
       return html`<div className="px-4 space-y-3">
-        <div className="flex gap-2 overflow-x-auto noscroll -mx-4 px-4">${D.leagues.map((l) => html`<${Chip} key=${l.k} on=${k === l.k} onClick=${() => { setK(l.k); store.set("lgSel", l.k); }}><${Flag} k=${l.flag} w=${16} />${l.name}<//>`)}</div>
+        <div className="flex gap-2 overflow-x-auto noscroll -mx-4 px-4">${ordinate.map((l) => html`<${Chip} key=${l.k} on=${k === l.k} onClick=${() => { setK(l.k); store.set("lgSel", l.k); }}><${Flag} k=${l.flag} w=${16} />${l.name}<//>`)}</div>
         <div className=${"flex items-center gap-2 text-sm font-semibold " + C.tx}><${Flag} k=${L.flag} w=${22} />${L.country} - ${L.name} 2026/27</div>
         <${Tabs} items=${["Classifica", "Marcatori", "Assist", "Voti", "Confronta", "Panchine"]} val=${vista} set=${setVista} />
         ${vista === 3 && html`<${VotiLega} k=${k} />`}

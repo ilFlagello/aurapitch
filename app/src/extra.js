@@ -1,5 +1,6 @@
 /* AuraPitch - partita della settimana, glossario, gioco responsabile, primo avvio, schedina in diretta, ricerca. */
 import { conta } from "./statistiche.js";
+import { sezioniLeghe } from "./ordine.js";
 import { caricaVoti } from "./partita.js";
 import React, { useState, useEffect } from "react";
 import { ESPN_LG } from "./live.js";
@@ -89,9 +90,8 @@ import { statoGiocata, C, Crest, Ctx, Flag, Ic, Marchio, Sheet, evalCode, hit, h
     ["NL", "Nations League", "eu"], ["AMI", "Amichevoli nazionali", "wo"], ["EQ", "Qualificazioni Europei", "eu"], ["WCQ", "Qualificazioni Mondiali", "wo"],
     ["E2", "League One", "en"], ["E3", "League Two", "en"], ["EC", "National League", "en"], ["SC1", "Scottish Championship", "sc"], ["N2", "Eerste Divisie", "nl"], ["KNV", "KNVB Beker", "nl"], ["BR2", "Série B Brasile", "br"], ["CDB", "Copa do Brasil", "br"], ["AR2", "Primera Nacional", "ar"], ["MX2", "Liga de Expansión", "mx"], ["USL", "USL Championship", "us"], ["ACL2", "AFC Champions League Two", "as"], ["WSL", "Women's Super League", "en"], ["AUW", "A-League Women", "au"], ["UWCL", "Champions League femminile", "eu"]];
   // gruppi per il primo avvio: prima le competizioni più seguite, il resto a scomparsa
-  const GRUPPI_LEGHE = [["Italia ed Europa", ["I1", "I2", "CL", "EL", "ECL", "CI", "SCI", "E0", "SP1", "D1", "F1"]], ["Nazionali", ["NL", "AMI", "EQ", "WCQ"]],
-    ["Coppe nazionali", ["FAC", "ELC", "CDR", "DFB", "CDF", "KNV"]], ["Altri campionati europei", ["E1", "SP2", "D2", "F2", "N1", "P1", "B1", "T1", "SC0", "A1", "G1", "DK1", "NO1", "SE1", "E2", "E3", "EC", "SC1", "N2"]],
-    ["Resto del mondo", ["MLS", "BR1", "AR1", "MX1", "SA1", "J1", "COL1", "CHI1", "UY1", "PY1", "EC1", "PE1", "AU1", "LIB", "SUD", "ACL", "BR2", "CDB", "AR2", "MX2", "USL", "ACL2"]], ["Calcio femminile", ["WSL", "AUW", "UWCL"]]];
+  // gruppi per il primo avvio e la scelta delle squadre: stesso ordine di tutta l'app (principali del tuo paese, poi gli altri dalla A alla Z)
+  const GRUPPI_LEGHE = sezioniLeghe(TUTTE_LEGHE.map((x) => x[0])).map((sz) => [sz.titolo, sz.leghe]);
   /* squadre divise per campionato: prima quelli che segui, poi gli altri; ogni squadra una volta sola, nel suo campionato
      (non nella coppa); le nazionali nel loro gruppo */
   function gruppiSquadre(D, lg) {

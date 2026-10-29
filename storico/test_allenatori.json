@@ -35,10 +35,10 @@
   "esperienza (diff.)": -0.003
  },
  "rimbalzo": {
-  "cambi": 721,
-  "punti_vs_attese_5_prima": -0.518,
-  "5_dopo": 0.028,
-  "10_dopo": 0.029,
+  "cambi": 526,
+  "punti_vs_attese_5_prima": -0.532,
+  "5_dopo": 0.025,
+  "10_dopo": 0.021,
   "nota": "Valori per partita: punti fatti meno punti attesi dalle quote. Se 'dopo' è vicino a zero, il nuovo allenatore fa quanto previsto dal mercato."
  },
  "termometro": {

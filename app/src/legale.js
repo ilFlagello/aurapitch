@@ -2,7 +2,7 @@
    le pagine pubbliche privacy.html e termini.html (servono a Google per la schermata di accesso).
    Quando cambia qualcosa di sostanziale: aggiornare VERSIONE e AGGIORNATA (l'app richiede di nuovo l'accettazione). */
 
-export const TITOLARE = { nome: "", email: "" }; // da completare prima di aprire la beta agli estranei
+export const TITOLARE = { nome: "", email: "aurapitch.app@gmail.com" }; // nome del titolare: da confermare
 export const VERSIONE = 1;
 export const AGGIORNATA = "29 ottobre 2026";
 const contatto = () => (TITOLARE.email ? TITOLARE.email : "il modulo \"Scrivici\" nel Profilo dell'app");

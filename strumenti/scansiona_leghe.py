@@ -54,12 +54,19 @@ def main():
     print(f"Competizioni ESPN: {len(slugs)}")
     ris, errori = [], []
     for s in slugs:
+        ev, j = [], {}
         try:
-            j = get(f"https://site.api.espn.com/apis/site/v2/sports/soccer/{s}/scoreboard?dates={rng}&limit=300")
+            j = get(f"https://site.api.espn.com/apis/site/v2/sports/soccer/{s}/scoreboard?dates={rng}")
+            ev = j.get("events", [])
         except Exception as e:  # noqa: BLE001
-            errori.append(f"{s}: {str(e)[:60]}")
-            continue
-        ev = j.get("events", [])
+            # alcune competizioni non accettano un intervallo di date: si prova giorno per giorno
+            for g in range(giorni):
+                try:
+                    j = get(f"https://site.api.espn.com/apis/site/v2/sports/soccer/{s}/scoreboard?dates={(oggi + timedelta(days=g)).strftime('%Y%m%d')}")
+                    ev += j.get("events", [])
+                except Exception as e2:  # noqa: BLE001
+                    errori.append(f"{s}: {str(e2)[:60]}")
+                    break
         if not ev:
             continue
         q = sum(1 for e in ev if ((e.get("competitions") or [{}])[0].get("odds") or []))

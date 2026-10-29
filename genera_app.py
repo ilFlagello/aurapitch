@@ -1262,7 +1262,7 @@ def scrivi_stato(d):
     for m in d.get("matches", []):
         t = (m.get("tip") or {}).get("consiglio")
         righe.append({"id": m["id"], "st": m.get("st"), "ko": m.get("ko"), "date": m.get("date"), "g": m.get("g"), "h": m["h"], "a": m["a"],
-                      "p": m.get("p"), "mk": m.get("mk"),
+                      "p": m.get("p"), "mk": m.get("mk"), "mov": m.get("mov"),
                       "tip": {"consiglio": {"l": t.get("l"), "p": t.get("p")}} if t else None,
                       "marcatori": {k: {"lato": v["lato"], "g": v["g"]} for k, v in (m.get("marcatori") or {}).items() if k.startswith("MARC:") and v.get("g", 0) >= 2}})
     with open(STATO_OUT, "w", encoding="utf-8") as f:

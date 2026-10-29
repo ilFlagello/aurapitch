@@ -113,7 +113,7 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
       const id = setTimeout(() => { fetch(pushUrl + "/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chi: store.get("chi", null), dati }) }).then((r) => { if (r.ok) store.set("syncImpr", impr); }).catch(() => {}); }, 15000);
       return () => clearTimeout(id);
     }, [pushUrl, syncOn, favM, fav, diario, mySlip, name]);
-    const [pref, setPref] = useState(store.get("pushPref", { formazioni: true, inizio: true, gol: true, rossi: true, intervallo: true, finale: true }));
+    const [pref, setPref] = useState(store.get("pushPref", { radar: true, formazioni: true, inizio: true, gol: true, rossi: true, intervallo: true, finale: true }));
     const lastFollow = useRef("");
 
     useEffect(() => {
@@ -472,7 +472,7 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
           <div className=${"text-xs " + C.mu}>Per le partite con la stella e la squadra del cuore, anche con il telefono bloccato. Scegli qui sotto quali avvisi ricevere.</div>
           <button onClick=${pushOn ? disattivaPush : attivaPush} className=${"w-full py-2.5 rounded-xl text-sm font-semibold " + (pushOn ? "bg-white dark:bg-[#2A2640] " + C.tx : C.on)}>${pushOn ? "Disattiva le notifiche" : "Attiva le notifiche"}</button>
           ${pushMsg && html`<div className=${"text-xs " + C.tx}>${pushMsg}</div>`}
-          ${pushOn && html`<div className="pt-1 space-y-1">${[["promemoria", "Promemoria un'ora prima, con il consiglio IA"], ["formazioni", "Formazioni ufficiali (con la probabilità IA aggiornata)"], ["inizio", "Calcio d'inizio"], ["gol", "Gol"], ["rossi", "Espulsioni"], ["intervallo", "Fine primo tempo"], ["finale", "Risultato finale"]].map(([k, l]) => html`
+          ${pushOn && html`<div className="pt-1 space-y-1">${[["radar", "Quote in movimento (Radar), con il motivo"], ["promemoria", "Promemoria un'ora prima, con il consiglio IA"], ["formazioni", "Formazioni ufficiali (con la probabilità IA aggiornata)"], ["inizio", "Calcio d'inizio"], ["gol", "Gol"], ["rossi", "Espulsioni"], ["intervallo", "Fine primo tempo"], ["finale", "Risultato finale"]].map(([k, l]) => html`
             <button key=${k} onClick=${() => { const nx = { ...pref, [k]: pref[k] === false }; setPref(nx); store.set("pushPref", nx); }} className="w-full flex items-center gap-3 py-1.5 text-left">
               <img src=${"avvisi/" + k + ".png"} alt="" className="w-7 h-7 rounded-lg shrink-0" />
               <span className=${"flex-1 text-[14px] " + C.tx}>${l}</span>

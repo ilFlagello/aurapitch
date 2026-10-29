@@ -6,7 +6,7 @@ const VERSIONE = "sviluppo"; // sostituita da build.mjs con l'impronta della ver
 const CACHE = "aurapitch-" + VERSIONE;
 const PARTI = []; // pezzi del codice caricati su richiesta: elenco scritto da build.mjs
 const SHELL = ["./", "index.html", "app.js", "app.css", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png", "fonts/figtree.woff2", "fonts/bigshoulders.woff2", ...PARTI,
-  ...["gol", "annullato", "rossi", "inizio", "intervallo", "finale", "formazioni", "promemoria", "test"].flatMap((t) => [`avvisi/${t}.png`, `avvisi/${t}-badge.png`])];
+  ...["radar", "gol", "annullato", "rossi", "inizio", "intervallo", "finale", "formazioni", "promemoria", "test"].flatMap((t) => [`avvisi/${t}.png`, `avvisi/${t}-badge.png`])];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
@@ -42,7 +42,7 @@ self.addEventListener("fetch", (e) => {
 // Ogni tipo di avviso ha icona, badge e ritmo di vibrazione propri (la vibrazione funziona su Android;
 // iPhone e browser usano sempre il suono di sistema: le web app non possono sceglierlo).
 const AVVISO = {
-  gol: { v: [80, 40, 80, 40, 260], forte: 1 }, annullato: { v: [150, 80, 150] }, rossi: { v: [420], forte: 1 },
+  radar: { v: [40, 30, 40, 30, 120] }, gol: { v: [80, 40, 80, 40, 260], forte: 1 }, annullato: { v: [150, 80, 150] }, rossi: { v: [420], forte: 1 },
   inizio: { v: [60, 60, 60, 60, 60] }, intervallo: { v: [120] }, finale: { v: [200, 100, 200], forte: 1 },
   formazioni: { v: [60, 40, 60] }, promemoria: { v: [100] }, test: { v: [80, 60, 80] },
 };

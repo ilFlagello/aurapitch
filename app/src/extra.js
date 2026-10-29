@@ -6,7 +6,7 @@ import { ESPN_LG } from "./live.js";
 import { statoGiocata, C, Crest, Ctx, Flag, Ic, Marchio, Sheet, evalCode, hit, html, norm, pct, store } from "./base.js";
 
   /* ---- partita della settimana: la sfida più importante dei prossimi 7 giorni (competizione, classifica delle due squadre, equilibrio) ---- */
-  const PESO_LEGA = { NL: 2.6, LIB: 1.2, SA1: 0.6, F2: 0.4, NO1: 0.3, SE1: 0.3, COL1: 0.3, CHI1: 0.3, AU1: 0.3, UY1: 0.2, PY1: 0.2, EC1: 0.2, PE1: 0.2, SUD: 0.6, ACL: 0.5, AMI: 0.8, EQ: 1.5, WCQ: 1.8, CL: 3, I1: 2.4, E0: 2.4, SP1: 2.1, D1: 2, F1: 1.7, EL: 1.6, CI: 1.4, SCI: 1.6, FAC: 1.2, CDR: 1.2, DFB: 1.1, ECL: 1.1, P1: 1, N1: 1, ELC: 0.8, CDF: 0.7, E1: 0.6, I2: 0.6, T1: 0.7, B1: 0.6, SC0: 0.6, BR1: 0.7, AR1: 0.6, MLS: 0.5, MX1: 0.5, D2: 0.5, SP2: 0.5, A1: 0.4, G1: 0.4, DK1: 0.4, J1: 0.4 };
+  const PESO_LEGA = { E2: 0.4, E3: 0.3, EC: 0.2, SC1: 0.2, N2: 0.3, KNV: 0.4, BR2: 0.3, CDB: 0.5, AR2: 0.2, MX2: 0.2, USL: 0.2, ACL2: 0.3, WSL: 0.4, AUW: 0.2, UWCL: 0.6, NL: 2.6, LIB: 1.2, SA1: 0.6, F2: 0.4, NO1: 0.3, SE1: 0.3, COL1: 0.3, CHI1: 0.3, AU1: 0.3, UY1: 0.2, PY1: 0.2, EC1: 0.2, PE1: 0.2, SUD: 0.6, ACL: 0.5, AMI: 0.8, EQ: 1.5, WCQ: 1.8, CL: 3, I1: 2.4, E0: 2.4, SP1: 2.1, D1: 2, F1: 1.7, EL: 1.6, CI: 1.4, SCI: 1.6, FAC: 1.2, CDR: 1.2, DFB: 1.1, ECL: 1.1, P1: 1, N1: 1, ELC: 0.8, CDF: 0.7, E1: 0.6, I2: 0.6, T1: 0.7, B1: 0.6, SC0: 0.6, BR1: 0.7, AR1: 0.6, MLS: 0.5, MX1: 0.5, D2: 0.5, SP2: 0.5, A1: 0.4, G1: 0.4, DK1: 0.4, J1: 0.4 };
   function partitaSettimana(D) {
     const pos = (k, t) => { const S = D.standings[k]; const i = S ? S.generale.findIndex((r) => r.team === t) : -1; return i < 0 ? 12 : i + 1; };
     let best = null;
@@ -86,11 +86,12 @@ import { statoGiocata, C, Crest, Ctx, Flag, Ic, Marchio, Sheet, evalCode, hit, h
     ["F2", "Ligue 2", "fr"], ["NO1", "Eliteserien", "no"], ["SE1", "Allsvenskan", "se"], ["SA1", "Saudi Pro League", "sa"], ["CHI1", "Primera Cile", "cl"], ["COL1", "Liga BetPlay", "co"],
     ["AU1", "A-League", "au"], ["UY1", "Primera Uruguay", "uy"], ["PY1", "Primera Paraguay", "py"], ["EC1", "LigaPro Ecuador", "ec"], ["PE1", "Liga 1 Perù", "pe"],
     ["LIB", "Copa Libertadores", "sam"], ["SUD", "Copa Sudamericana", "sam"], ["ACL", "AFC Champions League", "as"],
-    ["NL", "Nations League", "eu"], ["AMI", "Amichevoli nazionali", "wo"], ["EQ", "Qualificazioni Europei", "eu"], ["WCQ", "Qualificazioni Mondiali", "wo"]];
+    ["NL", "Nations League", "eu"], ["AMI", "Amichevoli nazionali", "wo"], ["EQ", "Qualificazioni Europei", "eu"], ["WCQ", "Qualificazioni Mondiali", "wo"],
+    ["E2", "League One", "en"], ["E3", "League Two", "en"], ["EC", "National League", "en"], ["SC1", "Scottish Championship", "sc"], ["N2", "Eerste Divisie", "nl"], ["KNV", "KNVB Beker", "nl"], ["BR2", "Série B Brasile", "br"], ["CDB", "Copa do Brasil", "br"], ["AR2", "Primera Nacional", "ar"], ["MX2", "Liga de Expansión", "mx"], ["USL", "USL Championship", "us"], ["ACL2", "AFC Champions League Two", "as"], ["WSL", "Women's Super League", "en"], ["AUW", "A-League Women", "au"], ["UWCL", "Champions League femminile", "eu"]];
   // gruppi per il primo avvio: prima le competizioni più seguite, il resto a scomparsa
   const GRUPPI_LEGHE = [["Italia ed Europa", ["I1", "I2", "CL", "EL", "ECL", "CI", "SCI", "E0", "SP1", "D1", "F1"]], ["Nazionali", ["NL", "AMI", "EQ", "WCQ"]],
-    ["Coppe nazionali", ["FAC", "ELC", "CDR", "DFB", "CDF"]], ["Altri campionati europei", ["E1", "SP2", "D2", "F2", "N1", "P1", "B1", "T1", "SC0", "A1", "G1", "DK1", "NO1", "SE1"]],
-    ["Resto del mondo", ["MLS", "BR1", "AR1", "MX1", "SA1", "J1", "COL1", "CHI1", "UY1", "PY1", "EC1", "PE1", "AU1", "LIB", "SUD", "ACL"]]];
+    ["Coppe nazionali", ["FAC", "ELC", "CDR", "DFB", "CDF", "KNV"]], ["Altri campionati europei", ["E1", "SP2", "D2", "F2", "N1", "P1", "B1", "T1", "SC0", "A1", "G1", "DK1", "NO1", "SE1", "E2", "E3", "EC", "SC1", "N2"]],
+    ["Resto del mondo", ["MLS", "BR1", "AR1", "MX1", "SA1", "J1", "COL1", "CHI1", "UY1", "PY1", "EC1", "PE1", "AU1", "LIB", "SUD", "ACL", "BR2", "CDB", "AR2", "MX2", "USL", "ACL2"]], ["Calcio femminile", ["WSL", "AUW", "UWCL"]]];
   /* squadre divise per campionato: prima quelli che segui, poi gli altri; ogni squadra una volta sola, nel suo campionato
      (non nella coppa); le nazionali nel loro gruppo */
   function gruppiSquadre(D, lg) {

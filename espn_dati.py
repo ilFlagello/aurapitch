@@ -23,12 +23,14 @@ ESPN_LG = {"I1": "ita.1", "I2": "ita.2", "E0": "eng.1", "SP1": "esp.1", "D1": "g
            "MLS": "usa.1", "BR1": "bra.1", "AR1": "arg.1", "MX1": "mex.1", "J1": "jpn.1",
            "F2": "fra.2", "NO1": "nor.1", "SE1": "swe.1", "SA1": "ksa.1", "CHI1": "chi.1", "COL1": "col.1", "AU1": "aus.1", "UY1": "uru.1", "PY1": "par.1",
            "EC1": "ecu.1", "PE1": "per.1", "LIB": "conmebol.libertadores", "SUD": "conmebol.sudamericana", "ACL": "afc.champions",
+           # aggiunte dalla scansione del 29/10/2026 (strumenti/scansiona_leghe.py): quote gratuite vere
+           "E2": "eng.3", "E3": "eng.4", "EC": "eng.5", "SC1": "sco.2", "N2": "ned.2", "KNV": "ned.cup", "BR2": "bra.2", "CDB": "bra.copa_do_brazil", "AR2": "arg.2", "MX2": "mex.2", "USL": "usa.usl.1", "ACL2": "afc.cup", "WSL": "eng.w.1", "AUW": "aus.w.1", "UWCL": "uefa.wchampions",
            # nazionali
            "NL": "uefa.nations", "AMI": "fifa.friendly", "EQ": "uefa.euroq", "WCQ": "fifa.worldq.uefa"}
 NAZIONALI = ("NL", "AMI", "EQ", "WCQ")
-COPPE = ("CL", "EL", "ECL", "CI", "FAC", "ELC", "CDR", "DFB", "CDF", "SCI", "LIB", "SUD", "ACL", "NL", "AMI", "EQ", "WCQ")
+COPPE = ("KNV", "CDB", "ACL2", "UWCL", "CL", "EL", "ECL", "CI", "FAC", "ELC", "CDR", "DFB", "CDF", "SCI", "LIB", "SUD", "ACL", "NL", "AMI", "EQ", "WCQ")
 SOLO_ESPN = ("I2", "F1", "N1", "P1", "E1", "D2", "SP2", "B1", "T1", "SC0", "A1", "G1", "DK1", "MLS", "BR1", "AR1", "MX1", "J1",
-             "F2", "NO1", "SE1", "SA1", "CHI1", "COL1", "AU1", "UY1", "PY1", "EC1", "PE1")  # campionati con classifica e risultati da ESPN (non da football-data.org)
+             "F2", "NO1", "SE1", "SA1", "CHI1", "COL1", "AU1", "UY1", "PY1", "EC1", "PE1", "E2", "E3", "EC", "SC1", "N2", "BR2", "AR2", "MX2", "USL", "WSL", "AUW")  # campionati con classifica e risultati da ESPN (non da football-data.org)
 # quote da ESPN: nome del campionato come nel file delle quote (deve coincidere con l'ultimo campo di LEAGUES in genera_app.py)
 QUOTE_ESPN = {"F1": "Ligue 1", "N1": "Eredivisie", "P1": "Primeira Liga", "E1": "Championship", "FAC": "FA Cup", "ELC": "Carabao Cup",
               "CDR": "Copa del Rey", "DFB": "DFB-Pokal", "CDF": "Coppa di Francia", "SCI": "Supercoppa Italiana",
@@ -37,9 +39,10 @@ QUOTE_ESPN = {"F1": "Ligue 1", "N1": "Eredivisie", "P1": "Primeira Liga", "E1": 
               "F2": "Ligue 2", "NO1": "Eliteserien", "SE1": "Allsvenskan", "SA1": "Saudi Pro League", "CHI1": "Primera División Cile", "COL1": "Liga BetPlay",
               "AU1": "A-League", "UY1": "Primera División Uruguay", "PY1": "Primera División Paraguay", "EC1": "LigaPro Ecuador", "PE1": "Liga 1 Perù",
               "LIB": "Copa Libertadores", "SUD": "Copa Sudamericana", "ACL": "AFC Champions League", "NL": "Nations League", "AMI": "Amichevoli nazionali",
-              "EQ": "Qualificazioni Europei", "WCQ": "Qualificazioni Mondiali"}
+              "EQ": "Qualificazioni Europei", "WCQ": "Qualificazioni Mondiali",
+              "E2": "League One", "E3": "League Two", "EC": "National League", "SC1": "Scottish Championship", "N2": "Eerste Divisie", "KNV": "KNVB Beker", "BR2": "Série B Brasile", "CDB": "Copa do Brasil", "AR2": "Primera Nacional", "MX2": "Liga de Expansión", "USL": "USL Championship", "ACL2": "AFC Champions League Two", "WSL": "Women's Super League", "AUW": "A-League Women", "UWCL": "Champions League femminile"}
 # Football-Data.co.uk: quote medie di molti bookmaker per il prossimo turno (fixtures.csv: codice "Div"; new_league_fixtures.csv: paese/campionato)
-FD_DIV = {"F1": "F1", "N1": "N1", "P1": "P1", "E1": "E1", "D2": "D2", "SP2": "SP2", "B1": "B1", "T1": "T1", "SC0": "SC0", "G1": "G1", "F2": "F2"}
+FD_DIV = {"E2": "E2", "E3": "E3", "EC": "EC", "SC1": "SC1", "F1": "F1", "N1": "N1", "P1": "P1", "E1": "E1", "D2": "D2", "SP2": "SP2", "B1": "B1", "T1": "T1", "SC0": "SC0", "G1": "G1", "F2": "F2"}
 FD_NUOVI = {"A1": ("Austria", "Bundesliga"), "DK1": ("Denmark", "Superliga"), "MLS": ("USA", "MLS"), "BR1": ("Brazil", "Serie A"),
             "AR1": ("Argentina", "Liga Profesional"), "MX1": ("Mexico", "Liga MX"), "J1": ("Japan", "J1 League"),
             "NO1": ("Norway", "Eliteserien"), "SE1": ("Sweden", "Allsvenskan")}

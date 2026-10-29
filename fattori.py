@@ -46,7 +46,7 @@ LINGUE = {
     "nl": ("nl", "NL", "NL:nl", "(geblesseerd OR blessure OR geschorst OR twijfelachtig OR selectie)"),
 }
 # lingua delle notizie per campionato (le nazionali usano l'inglese; Italia e altre si aggiungono in genera)
-LINGUA_LEGA = {"I1": "it", "I2": "it", "CI": "it", "SCI": "it", "E0": "en", "E1": "en", "FAC": "en", "ELC": "en", "SC0": "en", "MLS": "en", "CL": "en", "EL": "en", "ECL": "en",
+LINGUA_LEGA = {"E2": "en", "E3": "en", "EC": "en", "SC1": "en", "N2": "nl", "KNV": "nl", "BR2": "pt", "CDB": "pt", "AR2": "es", "MX2": "es", "USL": "en", "ACL2": "en", "WSL": "en", "AUW": "en", "UWCL": "en", "I1": "it", "I2": "it", "CI": "it", "SCI": "it", "E0": "en", "E1": "en", "FAC": "en", "ELC": "en", "SC0": "en", "MLS": "en", "CL": "en", "EL": "en", "ECL": "en",
                "SP1": "es", "SP2": "es", "CDR": "es", "AR1": "es", "MX1": "es", "D1": "de", "D2": "de", "DFB": "de", "A1": "de", "F1": "fr", "CDF": "fr", "B1": "fr",
                "P1": "pt", "BR1": "pt", "N1": "nl", "F2": "fr", "CHI1": "es", "COL1": "es", "UY1": "es", "PY1": "es", "EC1": "es", "PE1": "es", "LIB": "es", "SUD": "es"}
 

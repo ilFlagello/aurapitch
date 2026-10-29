@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 export const ESPN_LG = { I1: "ita.1", I2: "ita.2", CL: "uefa.champions", EL: "uefa.europa", ECL: "uefa.europa.conf", CI: "ita.coppa_italia", E0: "eng.1", SP1: "esp.1", D1: "ger.1",
   F1: "fra.1", N1: "ned.1", P1: "por.1", E1: "eng.2", FAC: "eng.fa", ELC: "eng.league_cup", CDR: "esp.copa_del_rey", DFB: "ger.dfb_pokal", CDF: "fra.coupe_de_france", SCI: "ita.super_cup",
   D2: "ger.2", SP2: "esp.2", B1: "bel.1", T1: "tur.1", SC0: "sco.1", A1: "aut.1", G1: "gre.1", DK1: "den.1", MLS: "usa.1", BR1: "bra.1", AR1: "arg.1", MX1: "mex.1", J1: "jpn.1",
+  E2: "eng.3", E3: "eng.4", EC: "eng.5", SC1: "sco.2", N2: "ned.2", KNV: "ned.cup", BR2: "bra.2", CDB: "bra.copa_do_brazil", AR2: "arg.2", MX2: "mex.2", USL: "usa.usl.1", ACL2: "afc.cup", WSL: "eng.w.1", AUW: "aus.w.1", UWCL: "uefa.wchampions",
   F2: "fra.2", NO1: "nor.1", SE1: "swe.1", SA1: "ksa.1", CHI1: "chi.1", COL1: "col.1", AU1: "aus.1", UY1: "uru.1", PY1: "par.1", EC1: "ecu.1", PE1: "per.1",
   LIB: "conmebol.libertadores", SUD: "conmebol.sudamericana", ACL: "afc.champions", NL: "uefa.nations", AMI: "fifa.friendly", EQ: "uefa.euroq", WCQ: "fifa.worldq.uefa" };
 const SITE = "https://site.api.espn.com/apis/site/v2/sports/soccer/";

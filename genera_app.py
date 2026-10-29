@@ -58,8 +58,24 @@ LEAGUES = [
     # nazionali (nomi in italiano, originali in eh/ea)
     ("NL", "Nations League", "Europa", "eu", None, "Nations League"), ("AMI", "Amichevoli nazionali", "Mondo", "wo", None, "Amichevoli nazionali"),
     ("EQ", "Qualificazioni Europei", "Europa", "eu", None, "Qualificazioni Europei"), ("WCQ", "Qualificazioni Mondiali", "Mondo", "wo", None, "Qualificazioni Mondiali"),
+    # dalla scansione del 29/10/2026 (quote gratuite ESPN)
+    ("E2", "League One", "Inghilterra", "en", None, "League One"),
+    ("E3", "League Two", "Inghilterra", "en", None, "League Two"),
+    ("EC", "National League", "Inghilterra", "en", None, "National League"),
+    ("SC1", "Scottish Championship", "Scozia", "sc", None, "Scottish Championship"),
+    ("N2", "Eerste Divisie", "Olanda", "nl", None, "Eerste Divisie"),
+    ("KNV", "KNVB Beker", "Olanda", "nl", None, "KNVB Beker"),
+    ("BR2", "Série B Brasile", "Brasile", "br", None, "Série B Brasile"),
+    ("CDB", "Copa do Brasil", "Brasile", "br", None, "Copa do Brasil"),
+    ("AR2", "Primera Nacional", "Argentina", "ar", None, "Primera Nacional"),
+    ("MX2", "Liga de Expansión", "Messico", "mx", None, "Liga de Expansión"),
+    ("USL", "USL Championship", "Stati Uniti", "us", None, "USL Championship"),
+    ("ACL2", "AFC Champions League Two", "Asia", "as", None, "AFC Champions League Two"),
+    ("WSL", "Women's Super League", "Inghilterra", "en", None, "Women's Super League"),
+    ("AUW", "A-League Women", "Australia", "au", None, "A-League Women"),
+    ("UWCL", "Champions League femminile", "Europa", "eu", None, "Champions League femminile"),
 ]
-PRIORITA = ["NL", "CL", "I1", "EL", "CI", "SCI", "E0", "SP1", "D1", "F1", "ECL", "I2", "FAC", "CDR", "DFB", "ELC", "CDF", "P1", "N1", "E1", "D2", "SP2", "T1", "B1", "SC0", "BR1", "AR1", "MLS", "MX1", "A1", "G1", "DK1", "J1", "SA1", "LIB", "SUD", "F2", "NO1", "SE1", "COL1", "CHI1", "AU1", "UY1", "PY1", "EC1", "PE1", "ACL", "AMI", "EQ", "WCQ"]
+PRIORITA = ["NL", "CL", "I1", "EL", "CI", "SCI", "E0", "SP1", "D1", "F1", "ECL", "I2", "FAC", "CDR", "DFB", "ELC", "CDF", "P1", "N1", "E1", "D2", "SP2", "T1", "B1", "SC0", "BR1", "AR1", "MLS", "MX1", "A1", "G1", "DK1", "J1", "SA1", "LIB", "SUD", "F2", "NO1", "SE1", "COL1", "CHI1", "AU1", "UY1", "PY1", "EC1", "PE1", "ACL", "AMI", "EQ", "WCQ", "E2", "E3", "EC", "SC1", "N2", "KNV", "BR2", "CDB", "AR2", "MX2", "USL", "ACL2", "WSL", "AUW", "UWCL"]
 GG = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"]
 STOP = {"fc", "ac", "as", "ssc", "afc", "cf", "sc", "us", "usd", "calcio", "club", "de", "del", "cd", "ud", "sd", "rc", "rcd", "sv", "vfb", "vfl", "tsg",
         "bc", "fk", "1", "04", "05", "1899", "1909", "1913", "1919", "1929", "and", "hove", "albion", "hotspur", "wanderers", "the"}

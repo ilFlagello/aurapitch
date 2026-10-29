@@ -69,7 +69,15 @@ def main():
                     break
         if not ev:
             continue
-        q = sum(1 for e in ev if ((e.get("competitions") or [{}])[0].get("odds") or []))
+        def ha_quote(e):  # quote 1X2 vere (non vuote) su una partita non ancora iniziata, come le legge espn_dati.quote_espn
+            if ((e.get("status") or {}).get("type") or {}).get("state") != "pre":
+                return False
+            o = next((x for x in ((e.get("competitions") or [{}])[0].get("odds") or []) if x and x.get("moneyline")), None)
+            if not o:
+                return False
+            q = [ES._decimale(((o["moneyline"].get(x) or {}).get("close") or {}).get("odds")) for x in ("home", "draw", "away")]
+            return all(q) and all(1.01 < v < 100 for v in q)
+        q = sum(1 for e in ev if ha_quote(e))
         nome = ((j.get("leagues") or [{}])[0]).get("name") or s
         ris.append({"slug": s, "nome": nome, "partite": len(ev), "con_quote": q, "gia_in_app": s in gia})
         time.sleep(0.15)

@@ -151,6 +151,19 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
     useEffect(() => store.set("slip", mySlip), [mySlip]);
     useEffect(() => { if (toast) { const id = setTimeout(() => setToast(""), 1800); return () => clearTimeout(id); } }, [toast]);
     const [nuova, setNuova] = useState(false);
+    // invito a installare: solo da browser (non già installata), al massimo una volta alla settimana se chiuso
+    const richiesta = useRef(null);
+    const [installa, setInstalla] = useState(() => { try { const inst = navigator.standalone || window.matchMedia("(display-mode: standalone)").matches; const no = store.get("installaNo", 0);
+      return !inst && Date.now() - no > 7 * 86400e3 && /iPhone|iPad|iPod/.test(navigator.userAgent) && /Safari/.test(navigator.userAgent) && !/CriOS|FxiOS/.test(navigator.userAgent) ? "ios" : null; } catch (e) { return null; } });
+    useEffect(() => { const fn = (e) => { e.preventDefault(); richiesta.current = e; if (Date.now() - store.get("installaNo", 0) > 7 * 86400e3) setInstalla("android"); }; window.addEventListener("beforeinstallprompt", fn); return () => window.removeEventListener("beforeinstallprompt", fn); }, []);
+    // invito: link dell'app con due righe per installarla (iPhone e Android); su telefono si apre il foglio di condivisione
+    const invita = (codice) => {
+      const url = "https://ilflagello.github.io/aurapitch/";
+      const testo = `Prova AuraPitch, l'app che analizza le partite con l'IA (beta gratuita).\n${url}\n\nPer installarla: su iPhone apri il link con Safari, tocca Condividi e poi "Aggiungi alla schermata Home". Su Android apri con Chrome, menu ⋮ e "Installa app".` +
+        (codice ? `\n\nIl tuo codice PRO: ${codice}\nEntra in Il Mio Club > Account, crea l'account e inserisci il codice.` : "");
+      try { if (navigator.share) { navigator.share({ title: "AuraPitch", text: testo }).catch(() => {}); return; } } catch (e) { /* niente condivisione */ }
+      doCopy(testo);
+    };
     const flash = (t) => setToast(t);
     // fiducia: consenso (18+, termini, privacy), account, recensioni, statistiche anonime, pannello beta
     const [consenso, setConsenso] = useState(((store.get("consenso", null) || {}).v || 0) >= VERS_LEGALE);
@@ -238,7 +251,9 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
     }, [D]);
 
     const left = Math.max(0, Math.ceil((until - now) / 1000));
-    const pro = !!sub || left > 0;
+    // PRO regalato con un codice invito: lo decide il servizio (account), non il telefono
+    const proAccount = !!(A.acc && A.acc.pro && (!A.acc.pro.fino || A.acc.pro.fino > now));
+    const pro = !!sub || left > 0 || proAccount;
     // ogni giorno un'analisi PRO gratis su una partita scelta dall'utente (un assaggio che fa tornare, al posto degli spot)
     const oggiG = new Date().toISOString().slice(0, 10);
     const [gratis, setGratis] = useState(store.get("gratisOggi", null));
@@ -319,7 +334,7 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
           <${Marchio} size=${30} />
           <span className=${"num text-[25px] font-extrabold tracking-[0.01em] leading-none " + C.tx}>AuraPitch</span>
           <span className=${"text-[10px] font-semibold px-1.5 py-0.5 rounded-md " + C.ch + " " + C.mu}>beta</span></button>
-        <button onClick=${() => setUnlock(true)} className=${"text-[11px] font-semibold px-2.5 py-1 rounded-full border tabular-nums " + (pro ? TONE.warn : C.ch + " " + C.tx + " border-transparent")}>${sub ? "PRO" : left > 86400 ? "PRO · " + Math.ceil(left / 86400) + " gg" : left > 3600 ? "PRO · " + Math.ceil(left / 3600) + " h" : left > 0 ? "PRO " + mmss(left) : "FREE"}</button>
+        <button onClick=${() => setUnlock(true)} className=${"text-[11px] font-semibold px-2.5 py-1 rounded-full border tabular-nums " + (pro ? TONE.warn : C.ch + " " + C.tx + " border-transparent")}>${sub || proAccount ? "PRO" : left > 86400 ? "PRO · " + Math.ceil(left / 86400) + " gg" : left > 3600 ? "PRO · " + Math.ceil(left / 3600) + " h" : left > 0 ? "PRO " + mmss(left) : "FREE"}</button>
         <button aria-label="Cerca" onClick=${() => setCerca(true)} className=${"w-8 h-8 rounded-full flex items-center justify-center " + C.ch + " " + C.tx}><${Ic.Search} size=${15} /></button>
         <button aria-label="Guida rapida" onClick=${() => setGuide(guide ? 0 : 1)} className=${"w-8 h-8 rounded-full flex items-center justify-center " + C.ch + " " + C.tx}><${Ic.HelpCircle} size=${15} /></button>
         <button aria-label="Profilo e impostazioni" onClick=${() => setProfile(true)} className=${"w-8 h-8 rounded-full text-[11px] font-semibold " + C.on}>${ini}</button>
@@ -366,6 +381,12 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
         <div className=${"text-[13px] flex-1 " + C.tx}>${D.demo ? html`Beta con <b>dati reali</b> della giornata ${D.label}. Le partite sono già giocate: puoi confrontare le letture dell'IA con i risultati.`
           : html`Beta con <b>dati reali</b>, ${D.label}: quote medie di decine di bookmaker (DraftKings per i campionati e le coppe in più), classifiche e risultati in diretta (ogni 30 secondi). Apri una partita e scorri col dito tra le sezioni.`}</div>
         <button aria-label="Chiudi avviso" onClick=${() => { setBanner(false); store.set("banner2", false); }} className=${C.mu}><${Ic.X} size=${16} /></button></div>`}
+      ${installa && html`<div className=${C.card + " p-4 flex items-start gap-3"}>
+        <img src="icon-192.png" alt="" className="w-11 h-11 rounded-xl shrink-0" />
+        <div className="flex-1 min-w-0"><div className=${"text-[15px] font-semibold " + C.tx}>Installa AuraPitch</div>
+          <div className=${"text-[13px] leading-snug " + C.mu}>${installa === "ios" ? html`Tocca <b>Condividi</b> in basso in Safari, poi <b>Aggiungi alla schermata Home</b>: si apre come un'app e ricevi le notifiche.` : "Un tocco e la trovi tra le app, con le notifiche dei gol."}</div>
+          ${installa === "android" && html`<button onClick=${async () => { try { await richiesta.current.prompt(); } catch (e) { /* annullato */ } setInstalla(null); }} className=${"mt-2 px-4 py-2 rounded-full text-[13px] font-semibold " + C.on}>Installa</button>`}</div>
+        <button aria-label="Chiudi" onClick=${() => { setInstalla(null); store.set("installaNo", Date.now()); }} className=${C.mu}><${Ic.X} size=${16} /></button></div>`}
       <${InvitoRecensione} onApri=${() => setRecensione("invito")} />
       ${!store.get("vetrinaNo", false) && consenso && onb && html`<${Vetrina} />`}
       ${(() => { const R = D.matches.filter((m) => m.mov && m.st === "NS").sort((a, b) => Math.max(...b.mov.dp.map(Math.abs)) - Math.max(...a.mov.dp.map(Math.abs))).slice(0, 4);
@@ -410,7 +431,7 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
     const views = { partite: home, campionati: sosp(html`<${LeaguesView} />`), schedina: sosp(html`<${SlipView} />`), club: sosp(html`<${ClubView} />`) };
     const DOCK = [["partite", "Partite", Ic.Calendar], ["campionati", "Campionati", Ic.Trophy], ["schedina", "Schedina IA", Ic.Sparkles], ["club", "Il Mio Club", Ic.Shield]];
 
-    const ctx = { gratisOggi, usaGratis, apriSquadra, apriGiocatore, apriLega, A, setRecensione, setLegale, caricaDettagli, caricaMercati, syncOn, setSyncOn, setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen: (v) => (v == null ? indietro() : goMatch(v)), mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
+    const ctx = { invita, gratisOggi, usaGratis, apriSquadra, apriGiocatore, apriLega, A, setRecensione, setLegale, caricaDettagli, caricaMercati, syncOn, setSyncOn, setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen: (v) => (v == null ? indietro() : goMatch(v)), mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
     return html`<${Ctx.Provider} value=${ctx}><div className="min-h-screen pb-28">
       ${header}
       <main className="max-w-[480px] mx-auto" onTouchStart=${tsH} onTouchMove=${tmH} onTouchEnd=${teH}><${Ricarica} tira=${tira} attivo=${ricaricando} />${!online && html`<div role="status" className=${"mx-4 mb-3 px-3.5 py-2.5 rounded-2xl border text-[13px] flex items-center gap-2 " + TONE.warn}><${Ic.Clock} size=${15} />Sei offline: vedi i dati delle ${(D.generato || "").slice(-5)}. Quando torna la rete, tira giù la pagina per aggiornarli.</div>`}${guideBox}${team ? html`<${TeamView} key=${team.name} />` : open_m ? (D.leggera && !open_m.dett ? html`<div className="px-4 pt-4 space-y-3" aria-busy="true"><div className=${C.card + " p-5 text-center"}><div className=${"text-[17px] font-semibold " + C.tx}>${open_m.h} - ${open_m.a}</div><div className=${"text-[13px] mt-1 " + C.mu}>${online ? "Carico l'analisi della partita..." : "Sei offline: l'analisi di questa partita non è ancora stata scaricata."}</div>
@@ -436,7 +457,9 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
             <span className="flex-1 min-w-0"><span className=${"flex items-center gap-2 text-[15px] font-semibold " + C.tx}>${t}${badge && html`<span className=${"text-[10px] font-bold px-2 py-0.5 rounded-full " + (top ? C.on : TONE.good + " border")}>${badge}</span>`}</span>
               <span className=${"block text-[12px] " + C.mu}>${s0}</span></span>
             <span className=${"num text-[22px] font-bold shrink-0 " + C.tx}>${p0}</span></button>`)}
-        ${pro && html`<button onClick=${() => { setSub(null); setUntil(0); store.set("sub", null); store.set("until", 0); setUnlock(false); }} className=${"w-full text-xs font-medium py-1 " + C.mu}>Torna alla versione gratuita</button>`}
+        <button onClick=${() => { setUnlock(false); setOpen(null); setTeam(null); store.set("sch:club", 3); transizione(() => setTab("club")); window.scrollTo(0, 0); }}
+          className=${"w-full py-2.5 rounded-xl text-[14px] font-semibold " + C.ch + " " + C.tx}>Hai un codice invito? Inseriscilo qui</button>
+        ${pro && !proAccount && html`<button onClick=${() => { setSub(null); setUntil(0); store.set("sub", null); store.set("until", 0); setUnlock(false); }} className=${"w-full text-xs font-medium py-1 " + C.mu}>Torna alla versione gratuita</button>`}
         <p className=${"text-[11px] text-center leading-snug " + C.mu}>Beta: nessun pagamento reale, i prezzi sono quelli previsti al lancio. Ogni giorno hai anche un'analisi PRO gratis su una partita a tua scelta.</p><//>`}
 
       ${cerca && html`<${Cerca} onClose=${() => setCerca(false)} />`}
@@ -490,6 +513,7 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
           <span className="flex-1"><span className=${"block text-sm font-semibold " + C.tx}>Statistiche d'uso anonime</span><span className=${"block text-xs " + C.mu}>Solo conteggi del giorno, senza nulla che ti identifichi.</span></span>
           <span className=${"w-11 h-6 rounded-full p-0.5 transition-colors " + (statOn ? "bg-emerald-500" : "bg-black/20 dark:bg-white/20")}><span className=${"block w-5 h-5 rounded-full bg-white shadow transition-transform " + (statOn ? "translate-x-5" : "")}></span></span></button>
         <div className="grid grid-cols-3 gap-2">${[["sicurezza", "Sicurezza"], ["privacy", "Privacy"], ["termini", "Termini"]].map(([k, l]) => html`<button key=${k} onClick=${() => setLegale(k)} className=${"py-2.5 rounded-xl text-sm font-semibold " + C.ch + " " + C.tx}>${l}</button>`)}</div>
+        <button onClick=${() => invita()} className=${"w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Share} size=${15} />Invita un amico</button>
         <button onClick=${() => { setProfile(false); setRecensione("profilo"); }} className=${"w-full py-2.5 rounded-xl text-sm font-semibold " + C.on}>Dicci cosa ne pensi</button>
         <p className=${"text-[11px] text-center " + C.mu}>Solo per maggiorenni. Il gioco può causare dipendenza: Telefono Verde Nazionale 800 55 88 22.</p><//>`}
 

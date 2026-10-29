@@ -1,7 +1,7 @@
 /* AuraPitch - fiducia: account (Google e passkey), benvenuto con 18+ e consensi, privacy e termini, recensioni, pannello beta.
    Le scelte di sicurezza sono spiegate in worker/accesso.js; qui c'e solo cio che serve al telefono. */
 import React, { useState, useEffect, useRef } from "react";
-import { C, Ic, Marchio, Sheet, TONE, html, store } from "./base.js";
+import { C, Ctx, Ic, Marchio, Sheet, TONE, html, store } from "./base.js";
 import { conta, giorniUso, statAttive } from "./statistiche.js";
 import { AGGIORNATA, VERSIONE, privacy, sicurezza, termini } from "./legale.js";
 
@@ -126,6 +126,7 @@ export function AccountCard({ A, pushUrl, compatta }) {
   const [lavoro, setLavoro] = useState("");
   const [conf, setConf] = useState(false);
   const [admin, setAdmin] = useState(false), [codice, setCodice] = useState("");
+  const [codiceInv, setCodiceInv] = useState("");
   const [pk, setPk] = useState(false);
   const [legale, setLegale] = useState(null);
   const pronta = useRef(null);
@@ -210,7 +211,7 @@ export function AccountCard({ A, pushUrl, compatta }) {
   return html`<div className=${C.card + " p-4 space-y-2.5"}>
     <div className="flex items-center gap-2"><span className=${C.lab + " flex-1"}>${a ? "Il tuo account" : "Account (facoltativo)"}</span>${a && html`<span className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + TONE.good}>attivo</span>`}</div>
     ${!a ? html`<${React.Fragment}>
-        <p className=${"text-[13px] " + C.mu}>Ritrovi preferite, diario, schedina e gara su ogni telefono. Niente email, niente password.</p>
+        <p className=${"text-[13px] " + C.mu}>Ritrovi preferite, diario, schedina e gara su ogni telefono. Niente email, niente password. Hai un codice invito PRO? Prima entra, poi inseriscilo qui.</p>
         <${Bott} onClick=${google} tono=${"bg-white text-[#1F1F1F] border border-black/15 dark:bg-[#F4F2FF] dark:text-[#17152B]"}>Continua con Google</${Bott}>
         ${pk && html`<${Bott} onClick=${entraPasskey} dis=${!!lavoro} tono=${C.on}>${lavoro === "in" ? "Attendi..." : "Entra con " + NOME_PASSKEY}</${Bott}>
           <${Bott} onClick=${creaPasskey} dis=${!!lavoro}>${lavoro === "pk" ? "Attendi..." : "Crea account con " + NOME_PASSKEY}</${Bott}>`}
@@ -221,6 +222,10 @@ export function AccountCard({ A, pushUrl, compatta }) {
           ${(a.passkey || []).map((p) => html`<span key=${p.id} className=${"text-[12px] font-semibold px-2.5 py-1 rounded-full " + C.ch + " " + C.tx}>${NOME_PASSKEY} · ${p.nome || "dispositivo"}</span>`)}
         </div>
         <p className=${"text-[12px] " + C.mu}>Dal ${new Date(a.creato).toLocaleDateString("it-IT")} · preferite, diario, schedina e gara si salvano da soli.</p>
+        ${a.pro ? html`<div className=${"text-[13px] rounded-xl border p-2.5 " + TONE.good}><b>PRO attivo</b> ${a.pro.fino ? "fino al " + new Date(a.pro.fino).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" }) : "per sempre"}${a.pro.piano === "invito" ? " · regalo con codice invito" : ""}</div>`
+          : html`<div className="flex gap-2"><input value=${codiceInv} onChange=${(e) => setCodiceInv(e.target.value.toUpperCase())} placeholder="Codice invito PRO (AP-XXXX-XXXX)" aria-label="Codice invito PRO" autoComplete="off" className=${"flex-1 min-w-0 rounded-xl px-3 py-2 text-[14px] outline-none tracking-[0.04em] " + C.ch + " " + C.tx} />
+            <button disabled=${codiceInv.replace(/[^A-Z0-9]/g, "").length < 10} onClick=${async () => { const x = await A.chiama("/account/riscatta", { codice: codiceInv.trim() }); if (x.ok) { A.setAcc(x.account); setCodiceInv(""); setMsg("Benvenuto in PRO!"); } else setMsg(x.err || "Codice non valido."); }}
+              className=${"px-3 rounded-xl text-[13px] font-semibold disabled:opacity-50 " + C.on}>Attiva</button></div>`}
         ${!compatta && html`<${React.Fragment}>
           ${pk && html`<${Bott} onClick=${creaPasskey} dis=${!!lavoro}>Aggiungi ${NOME_PASSKEY} di questo telefono</${Bott}>`}
           ${!a.google && A.google && html`<${Bott} onClick=${google}>Collega anche Google</${Bott}>`}
@@ -282,6 +287,26 @@ const NOMI_EV = { apertura: "Aperture", nuovo: "Nuovi dispositivi", partita: "Pa
   club: "Scheda Il Mio Club", gara_voto: "Pronostici gara", notifiche_on: "Notifiche attivate", immagine: "Immagini condivise", calendario: "Calendario", accesso_google: "Accessi Google",
   accesso_passkey: "Accessi passkey", account_nuovo: "Account nuovi", recensione: "Recensioni", condividi: "Condivisioni", glossario: "Glossario", installata: "Da app installata",
   giorno_1: "Primo giorno", giorno_2_7: "Giorni 2-7", giorno_8_30: "Giorni 8-30", giorno_30p: "Oltre 30 giorni" };
+function CodiciPro({ A }) {
+  const { invita } = React.useContext(Ctx);
+  const [mesi, setMesi] = useState(3), [nota, setNota] = useState(""), [lista, setLista] = useState(null), [nuovi, setNuovi] = useState([]);
+  const carica = () => A.chiama("/admin/inviti", { azione: "elenco" }).then((x) => x.ok && setLista(x.lista)).catch(() => {});
+  useEffect(() => { carica(); }, []);
+  const crea = async () => { const x = await A.chiama("/admin/inviti", { azione: "crea", mesi, nota }); if (x.ok) { setNuovi(x.codici.map((c) => ({ c, nota }))); setNota(""); carica(); } };
+  const durata = (m) => (m ? m + (m === 1 ? " mese" : " mesi") : "per sempre");
+  return html`<div className="space-y-2">
+    <div className=${"text-[13px] font-semibold pt-2 " + C.tx}>Regala PRO agli amici</div>
+    <div className="flex gap-1.5 flex-wrap">${[1, 3, 6, 12, 0].map((m) => html`<button key=${m} onClick=${() => setMesi(m)} className=${"px-3 py-1.5 rounded-full text-[12px] font-semibold " + (mesi === m ? C.seg : C.ch + " " + C.tx)}>${durata(m)}</button>`)}</div>
+    <div className="flex gap-2"><input value=${nota} onChange=${(e) => setNota(e.target.value)} placeholder="Per chi è? (es. Marco)" aria-label="Per chi è il codice" className=${"flex-1 min-w-0 rounded-xl px-3 py-2 text-[14px] outline-none " + C.ch + " " + C.tx} />
+      <button onClick=${crea} className=${"px-3 rounded-xl text-[13px] font-semibold " + C.on}>Crea codice</button></div>
+    ${nuovi.map((n) => html`<div key=${n.c} className=${"rounded-xl border p-3 flex items-center gap-2 " + TONE.good}><span className="num text-[20px] font-bold flex-1 tracking-[0.06em]">${n.c}</span>
+      <button onClick=${() => invita(n.c)} className=${"px-3 py-1.5 rounded-full text-[12px] font-semibold " + C.on}>Invia</button></div>`)}
+    ${lista && lista.length > 0 && html`<div className="space-y-1">${lista.slice(0, 40).map((x) => html`<div key=${x.codice} className=${"flex items-center gap-2 text-[12px] border-t pt-1 " + C.bd}>
+      <span className=${"num text-[14px] font-semibold " + (x.revocato ? "line-through " + C.mu : C.tx)}>${x.codice}</span><span className=${"flex-1 truncate " + C.mu}>${x.nota || ""} · ${durata(x.mesi)}</span>
+      <span className=${"px-2 rounded-full border " + (x.revocato ? TONE.bad : x.usato ? TONE.good : TONE.ok)}>${x.revocato ? "revocato" : x.usato ? "usato" : "libero"}</span>
+      ${!x.revocato && html`<button onClick=${() => { if (window.confirm("Revocare il codice " + x.codice + (x.usato ? "? L'amico perde il PRO regalato." : "?"))) A.chiama("/admin/inviti", { azione: "revoca", codice: x.codice }).then(carica); }} className="text-rose-600 dark:text-rose-300 font-semibold">Revoca</button>`}</div>`)}</div>`}
+    <p className=${"text-[11px] " + C.mu}>Ogni codice vale una volta sola. L'amico crea l'account (Google o Face ID) e lo inserisce in Il Mio Club, Account. Se revochi un codice già usato, il PRO regalato si toglie.</p></div>`;
+}
 export function PannelloBeta({ A, onClose }) {
   const [R, setR] = useState(null), [err, setErr] = useState("");
   useEffect(() => { A.chiama("/admin/riepilogo").then((x) => (x.ok ? setR(x) : setErr(x.err || "non disponibile"))).catch(() => setErr("nessuna connessione")); }, []);
@@ -294,6 +319,7 @@ export function PannelloBeta({ A, onClose }) {
       <div className=${"text-[13px] font-semibold " + C.tx}>Aperture negli ultimi 30 giorni</div>
       <div className="flex items-end gap-[3px] h-20" role="img" aria-label="Aperture al giorno">${R.giorni.map((g) => html`<div key=${g.g} title=${g.g + ": " + (g.apertura || 0)} className="flex-1 rounded-t bg-[#5B2EE6] dark:bg-[#A58BFF]" style=${{ height: Math.max(2, ((g.apertura || 0) / max) * 100) + "%", opacity: g.apertura ? 1 : 0.25 }}></div>`)}</div>
       <div className="space-y-1">${Object.keys(NOMI_EV).filter((k) => somma(k)).map((k) => html`<div key=${k} className=${"flex justify-between text-[13px] border-t pt-1 " + C.bd}><span className=${C.mu}>${NOMI_EV[k]}</span><b className=${"tabular-nums " + C.tx}>${somma(k)}</b></div>`)}</div>
+      <${CodiciPro} A=${A} />
       <div className=${"text-[13px] font-semibold pt-2 " + C.tx}>Recensioni (${R.recensioni.n})</div>
       ${R.recensioni.lista.length === 0 ? html`<p className=${"text-[13px] " + C.mu}>Ancora nessuna recensione.</p>` : R.recensioni.lista.map((f, i) => html`<div key=${i} className=${"rounded-xl p-3 space-y-1 " + C.ch}>
         <div className="flex items-center gap-2 text-[12px]"><b className=${C.tx}>${f.voto ? f.voto + "/5" : "senza voto"}</b><span className=${"px-2 rounded-full border " + (f.tipo === "problema" ? TONE.bad : f.tipo === "idea" ? TONE.info : TONE.ok)}>${f.tipo}</span>

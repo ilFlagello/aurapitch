@@ -172,9 +172,14 @@ async function apriSessione(DB, aid, a, metodo) {
   await DB.put("a:" + aid, JSON.stringify(a));
   return token;
 }
+// PRO regalato con un codice invito (o, in futuro, pagato): vale se non ha scadenza o se la scadenza e nel futuro
+const proValido = (a) => (a.pro && (!a.pro.fino || a.pro.fino > Date.now()) ? { piano: a.pro.piano, fino: a.pro.fino || null } : null);
 function pubblico(a) {
-  return { creato: a.t0, chi: a.chi, google: !!a.g, passkey: (a.pk || []).map((p) => ({ id: p.id.slice(0, 8), t: p.t, nome: p.nome || "" })), admin: !!a.admin, sessioni: (a.ses || []).length };
+  return { creato: a.t0, chi: a.chi, google: !!a.g, passkey: (a.pk || []).map((p) => ({ id: p.id.slice(0, 8), t: p.t, nome: p.nome || "" })), admin: !!a.admin, sessioni: (a.ses || []).length, pro: proValido(a) };
 }
+const ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // senza 0/O e 1/I: si leggono e si dettano senza errori
+const nuovoInvito = () => "AP-" + Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => ALFABETO[b % 32]).join("").replace(/^(.{4})/, "$1-");
+const okInvito = (c) => /^AP-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(c);
 // il codice personale del telefono (gara, preferite sincronizzate) passa all'account: cosi i dati seguono l'utente su ogni dispositivo
 async function collegaChi(DB, a, chiTelefono) {
   if (!a.chi) a.chi = okChi(chiTelefono) ? chiTelefono : nuovoChi();
@@ -379,6 +384,51 @@ export async function gestisci(req, url, env, DB, json, troppi, segnala = () => 
     a.admin = true;
     await DB.put("a:" + aid, JSON.stringify(a));
     return json({ ok: true, account: pubblico(a) });
+  }
+  // codici invito PRO: li crea l'amministratore dal Pannello beta, l'amico li riscatta con il suo account
+  if (p === "/account/riscatta" && req.method === "POST") {
+    if (troppi(req, 5)) return json({ ok: false, err: "troppi tentativi, riprova tra un minuto" }, 429);
+    const d = (await corpo(req, 300)) || {};
+    const codice = String(d.codice || "").toUpperCase().replace(/\s/g, "");
+    const inv = okInvito(codice) ? await DB.get("inv:" + codice, "json") : null;
+    if (!inv) { segnala("invito_errato"); return json({ ok: false, err: "codice non valido" }, 404); }
+    if (inv.usato) return json({ ok: false, err: "codice già usato" }, 409);
+    if (inv.revocato) return json({ ok: false, err: "codice non più valido" }, 410);
+    const base = proValido(a) && a.pro.fino ? a.pro.fino : Date.now(); // se ha gia un PRO a tempo, si somma
+    a.pro = { piano: "invito", fino: inv.mesi ? base + inv.mesi * 30 * 86400000 : null, codice, t: Date.now() };
+    inv.usato = { t: Date.now(), aid };
+    await DB.put("inv:" + codice, JSON.stringify(inv), { expirationTtl: 2 * 365 * 86400 });
+    await DB.put("a:" + aid, JSON.stringify(a));
+    return json({ ok: true, account: pubblico(a) });
+  }
+  if (p === "/admin/inviti" && req.method === "POST") {
+    if (!a.admin) return json({ ok: false, err: "solo per l'amministratore" }, 403);
+    const d = (await corpo(req, 500)) || {};
+    if (d.azione === "crea") {
+      const mesi = [0, 1, 3, 6, 12].includes(Number(d.mesi)) ? Number(d.mesi) : 1;
+      const nota = String(d.nota || "").replace(/[^\p{L}\p{N} ._-]/gu, "").trim().slice(0, 30);
+      const quanti = Math.max(1, Math.min(20, Number(d.quanti) || 1));
+      const codici = [];
+      for (let i = 0; i < quanti; i++) {
+        const c = nuovoInvito();
+        await DB.put("inv:" + c, JSON.stringify({ mesi, nota, t: Date.now(), usato: null }), { expirationTtl: 365 * 86400 });
+        codici.push(c);
+      }
+      return json({ ok: true, codici, mesi });
+    }
+    if (d.azione === "revoca" && okInvito(String(d.codice || ""))) {
+      const inv = await DB.get("inv:" + d.codice, "json");
+      if (!inv) return json({ ok: false, err: "codice non trovato" }, 404);
+      inv.revocato = Date.now();
+      if (inv.usato && inv.usato.aid) { // si toglie il PRO regalato a chi l'aveva riscattato
+        const b = await DB.get("a:" + inv.usato.aid, "json");
+        if (b && b.pro && b.pro.codice === d.codice) { delete b.pro; await DB.put("a:" + inv.usato.aid, JSON.stringify(b)); }
+      }
+      await DB.put("inv:" + d.codice, JSON.stringify(inv), { expirationTtl: 365 * 86400 });
+      return json({ ok: true });
+    }
+    const lista = (await DB.stub.lista("inv:", 300)).map(([k, v]) => { const x = JSON.parse(v); return { codice: k.slice(4), mesi: x.mesi, nota: x.nota, t: x.t, usato: x.usato ? x.usato.t : null, revocato: x.revocato || null }; }).sort((x, y) => y.t - x.t);
+    return json({ ok: true, lista });
   }
   if (p === "/admin/riepilogo") {
     if (!a.admin) return json({ ok: false, err: "solo per l'amministratore" }, 403);

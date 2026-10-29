@@ -148,6 +148,27 @@ ok((await chiama("/feedback", { voto: 9 })).st === 400, "recensione vuota rifiut
 ok((await chiama("/evento", { ev: { apertura: 1, partita: 3, inventato: 5 } })).ok, "statistiche");
 r = await chiama("/admin/riepilogo", {}, t2);
 ok(r.ok && r.recensioni.n === 1 && r.recensioni.lista[0].testo === "Bella app!" && r.giorni.at(-1).partita === 3 && !("inventato" in r.giorni.at(-1)) && r.account === 1, "riepilogo amministratore");
+// codici invito PRO: crea (amministratore), riscatta (un altro account), non si riusa, revoca toglie il PRO
+r = await chiama("/admin/inviti", { azione: "crea", mesi: 3, nota: "Marco" }, t2);
+ok(r.ok && r.codici.length === 1 && /^AP-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(r.codici[0]), "creazione codice invito");
+const inv = r.codici[0];
+const tel2 = await telefono(-7);
+r = await chiama("/auth/sfida", { tipo: "registra" });
+r = await chiama("/auth/passkey/registra", { ...(await tel2.crea(r.sfida)), sfida: r.sfida });
+const tAmico = r.token;
+ok(!r.account.pro, "account nuovo senza PRO");
+ok((await chiama("/admin/inviti", { azione: "crea", mesi: 1 }, tAmico)).st === 403, "solo l'amministratore crea codici");
+ok((await chiama("/account/riscatta", { codice: "AP-XXXX-YYYY" }, tAmico)).st === 404, "codice inventato rifiutato");
+r = await chiama("/account/riscatta", { codice: inv.toLowerCase() }, tAmico);
+ok(r.ok && r.account.pro && r.account.pro.fino > Date.now() + 80 * 86400000, "riscatto: PRO per 3 mesi");
+ok((await chiama("/account/riscatta", { codice: inv }, t2)).st === 409, "un codice si usa una volta sola");
+r = await chiama("/admin/inviti", { azione: "elenco" }, t2);
+ok(r.ok && r.lista.some((x) => x.codice === inv && x.usato && x.nota === "Marco"), "elenco dei codici");
+ok((await chiama("/admin/inviti", { azione: "revoca", codice: inv }, t2)).ok, "revoca");
+ok(!(await chiama("/account/io", {}, tAmico)).account.pro, "dopo la revoca il PRO regalato sparisce");
+r = await chiama("/admin/inviti", { azione: "crea", mesi: 0 }, t2);
+ok((await chiama("/account/riscatta", { codice: r.codici[0] }, tAmico)).account.pro.fino === null, "codice per sempre");
+ok((await chiama("/account/elimina", { conferma: "ELIMINA" }, tAmico)).ok, "l'amico elimina il suo account");
 mem.set("u:abcdefgh12345678", JSON.stringify({ nome: "Andrea", gruppi: ["GR1"], voti: {} }));
 mem.set("g:GR1", JSON.stringify({ nome: "Amici", membri: ["abcdefgh12345678", "altro"] }));
 mem.set("s:abcdefgh12345678", JSON.stringify({ fav: ["Inter"] }));

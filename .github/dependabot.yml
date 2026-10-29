@@ -1,11 +1,18 @@
 # Aggiornamenti di sicurezza automatici: GitHub propone una modifica quando una libreria o un'azione ha una versione nuova.
+# Le versioni "maggiori" (che possono cambiare comportamento) si valutano a mano: qui solo correzioni e piccoli aggiornamenti.
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: monthly }
     groups: { azioni: { patterns: ["*"] } }
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: npm
     directory: /app
     schedule: { interval: monthly }
     groups: { librerie: { patterns: ["*"] } }
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]

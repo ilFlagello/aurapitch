@@ -459,6 +459,49 @@ def marcatori(rosa, lam, assenti=(), quanti=6):
     return out[:quanti]
 
 
+PESO_CART = {"D": 1.0, "M": 0.9, "F": 0.55, "G": 0.15}   # chi prende piu gialli, a parita di minuti
+PESO_ASSIST = {"M": 1.0, "F": 0.7, "D": 0.45, "G": 0.02}
+QUOTA_ASSISTITI = 0.72  # circa 7 gol su 10 hanno un assist (dati delle grandi leghe)
+
+
+def _presenza(x, N):
+    """Quanto e probabile che giochi e quanto: titolare pieno, ingresso dalla panchina vale circa un terzo."""
+    tit = x.get("tit", 0) / max(1, N)
+    sub = max(0, x.get("pres", 0) - x.get("tit", 0)) / max(1, N)
+    return min(1.0, tit + sub * 0.35) / max(0.35, min(1.0, x.get("pres", 0) / max(1, N)))
+
+
+def _giocatori_quota(rosa, campo, pesi_ruolo, totale_atteso, assenti, quanti, base=3.0):
+    """Schema comune (come i marcatori): quota del giocatore sul totale della squadra (stagione + piccola base per ruolo),
+    per il totale atteso della squadra in questa partita, pesata per i minuti attesi."""
+    reg = [x for x in rosa if x.get("pres", 0) >= 2 and x.get("n") not in assenti]
+    if not reg or totale_atteso <= 0:
+        return []
+    T = sum(x.get(campo, 0) for x in reg)
+    N = max(x.get("pres", 0) for x in reg)
+    pesi = {x["n"]: pesi_ruolo.get(str(x.get("pos") or "M")[0], 0.5) for x in reg}
+    W = sum(pesi.values()) or 1
+    out = []
+    for x in reg:
+        quota = (x.get(campo, 0) + 2.0 * pesi[x["n"]] / W * base) / (T + 2.0 * base)
+        p = 1 - math.exp(-totale_atteso * quota * min(1.15, _presenza(x, N)))
+        if p >= 0.06:
+            out.append({"n": x["n"], "p": round(p, 4), "v": x.get(campo, 0), "pres": x.get("pres", 0), "tit": x.get("tit", 0)})
+    out.sort(key=lambda z: -z["p"])
+    return out[:quanti]
+
+
+def ammoniti(rosa, cartellini_attesi, assenti=(), quanti=5):
+    """Probabilita che un giocatore venga ammonito: quota dei gialli della squadra x gialli attesi della squadra in questa
+    partita (che tengono gia conto di arbitro e avversario), pesata per i minuti attesi."""
+    return _giocatori_quota(rosa, "gialli", PESO_CART, cartellini_attesi or 1.9, assenti, quanti, base=4.0)
+
+
+def assist(rosa, lam, assenti=(), quanti=5):
+    """Probabilita che un giocatore faccia almeno un assist: quota degli assist della squadra x gol attesi con assist."""
+    return _giocatori_quota(rosa, "a", PESO_ASSIST, lam * QUOTA_ASSISTITI, assenti, quanti)
+
+
 # ---------- valutazione IA di tutti i mercati ----------
 
 GRUPPI_CART = {"K": "Cartellini", "C": "Calci d'angolo", "F": "Falli"}
@@ -492,8 +535,14 @@ def valutazioni(mercati, h, a, sh, sa, ctx, cart=None, extra=None, marc=None, ma
         tutti.append({"c": c, "p": p, "q": q or round(max(1.01, (1 - MARGINE) / p), 2), "g": g, "qm": False, "_mot": mot})
     for c, p, q in ((r[0], r[1], r[2]) for r in (marc or [])):
         i = (marc_info or {}).get(c) or {}
-        tutti.append({"c": c, "p": p, "q": q, "g": "Marcatori", "qm": False,
-                      "_mot": [(f"{c[5:]} ha segnato {i.get('g', 0)} gol in {i.get('pres', 0)} presenze ({i.get('tit', 0)} da titolare).", i.get("g", 0) / max(1, i.get("pres", 1)) >= 0.3)]})
+        nome, pr, tit = c.split(":", 1)[1], i.get("pres", 0), i.get("tit", 0)
+        if c.startswith("AMM:"):
+            g, mot = "Ammoniti", [(f"{nome} ha preso {i.get('v', 0)} gialli in {pr} presenze ({tit} da titolare).", i.get("v", 0) / max(1, pr) >= 0.25)]
+        elif c.startswith("ASS:"):
+            g, mot = "Assist", [(f"{nome} ha fatto {i.get('v', 0)} assist in {pr} presenze ({tit} da titolare).", i.get("v", 0) / max(1, pr) >= 0.2)]
+        else:
+            g, mot = "Marcatori", [(f"{nome} ha segnato {i.get('g', 0)} gol in {pr} presenze ({tit} da titolare).", i.get("g", 0) / max(1, pr) >= 0.3)]
+        tutti.append({"c": c, "p": p, "q": q, "g": g, "qm": False, "_mot": mot})
     punti, gruppi = {}, {}
     for x in tutti:
         mot = x.get("_mot")

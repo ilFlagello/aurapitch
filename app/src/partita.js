@@ -4,7 +4,7 @@ import { scaricaCalendario, immaginePartita } from "./condividi.js";
 import { Citazione, citazionePartita, citazioneArbitro } from "./citazioni.js";
 import { SchedaAllenatore, usaPanchine } from "./panchine.js";
 import { useSummary, loadPlayer, loadCareer, ruolo, findTeam, loadTeam, minuto, ESPN_LG, andamento, getJSON } from "./live.js";
-import { NomeSquadra, NomeGiocatore, NomeLega, inizioSwipe, fineSwipe, Voce, AuraLine, C, Crest, Ctx, DOT, FavPill, Flag, Form, GROUPS, Ic, Seg, Sheet, TONE, Tabs, auraCol, evalCode, html, leggiXg, lum, mGroup, mLabel, nf, norm, odd, options, pct, pctL, spiega, store } from "./base.js";
+import { matriceRis, NomeSquadra, NomeGiocatore, NomeLega, inizioSwipe, fineSwipe, Voce, AuraLine, C, Crest, Ctx, DOT, FavPill, Flag, Form, GROUPS, Ic, Seg, Sheet, TONE, Tabs, auraCol, evalCode, html, leggiXg, lum, mGroup, mLabel, nf, norm, odd, options, pct, pctL, spiega, store } from "./base.js";
 import { Anteprima, partitaSettimana } from "./extra.js";
 
     /* ---- riga partita: orario a sinistra, squadre una sopra l'altra, punteggi in colonna, aura delle probabilita sotto ---- */
@@ -32,12 +32,13 @@ import { Anteprima, partitaSettimana } from "./extra.js";
 
     /* ---- gate PRO ---- */
     function Gate({ m, title, children }) {
-    const { unlocked, setUnlock } = React.useContext(Ctx);
+    const { unlocked, setUnlock, gratisOggi, usaGratis } = React.useContext(Ctx);
     return unlocked(m) ? children : html`<div className="space-y-1.5">
       <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300"><${Ic.Lock} size=${12} />${title}</div>
-      <div className="relative rounded-2xl overflow-hidden min-h-[120px]"><div aria-hidden="true" className="blur-md select-none pointer-events-none space-y-3">${children}</div>
-        <button onClick=${() => setUnlock(true)} className="absolute inset-0 flex items-center justify-center p-4 bg-white/30 dark:bg-black/30">
-          <span className=${"px-3 py-2 rounded-full border text-xs font-semibold text-center shadow-sm " + TONE.warn}>Sblocca con PRO o guarda 1 video (15 minuti gratis)</span></button></div></div>`;
+      <div className="relative rounded-2xl overflow-hidden min-h-[140px]"><div aria-hidden="true" className="blur-md select-none pointer-events-none space-y-3">${children}</div>
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 bg-white/40 dark:bg-black/40">
+          ${!gratisOggi && html`<button onClick=${() => usaGratis(m)} className=${"px-4 py-2.5 rounded-full text-[13px] font-semibold shadow-sm flex items-center gap-1.5 " + C.on}><${Ic.Sparkles} size=${14} />Usa l'analisi gratis di oggi qui</button>`}
+          <button onClick=${() => setUnlock(true)} className=${"px-3 py-2 rounded-full border text-xs font-semibold text-center shadow-sm " + TONE.warn}>${gratisOggi ? "Analisi gratis di oggi già usata: scopri PRO" : "Oppure scopri PRO"}</button></div></div></div>`;
   }
 
     /* ---- dati live: azione in campo, momenti chiave, statistiche, cronaca, formazioni, giocatore ---- */
@@ -361,6 +362,33 @@ import { Anteprima, partitaSettimana } from "./extra.js";
         <div className="flex items-center gap-2"><span className=${C.lab + " flex-1"}>Formazione probabile</span><span className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + TONE.info}>stima IA</span></div>
         <div className="flex gap-4">${lato(F[0], m.h)}${lato(F[1], m.a)}</div>
         <p className=${"text-[11px] " + C.mu}>Chi è partito titolare più spesso in stagione, senza indisponibili e squalificati. La barra è la sicurezza della scelta. Le formazioni ufficiali escono circa un'ora prima e qui prendono il posto della stima.</p></div>`;
+    }
+    /* "E se...?": togli uno o piu giocatori importanti e guarda come cambiano le probabilita. Ogni assente toglie alla sua
+       squadra una parte dei gol attesi pari alla sua quota dei gol in stagione, per meta (il sostituto ne recupera una parte):
+       stesso criterio dei fattori dell'algoritmo (fattori.py, SOSTITUTO = 0,5). */
+    function EseCard({ m }) {
+      const [via, setVia] = useState([]);
+      const { D } = React.useContext(Ctx);
+      const info = m.marcatori || {};
+      const cand = Object.entries(info).filter(([c, x]) => c.startsWith("MARC:") && (x.g || 0) >= 1).map(([c, x]) => ({ n: c.slice(5), lato: x.lato, g: x.g })).sort((a, b) => b.g - a.g);
+      const perLato = [0, 1].map((j) => cand.filter((x) => x.lato === j).slice(0, 4));
+      if (!m.xg || cand.length === 0) return null;
+      const gf = (t) => { const r = (((D.standings || {})[m.lg] || {}).generale || []).find((x) => x.team === t); return r && r.gf; };
+      const golSq = [0, 1].map((j) => gf(j ? m.a : m.h) || Math.max(cand.filter((x) => x.lato === j).reduce((a, x) => a + x.g, 0), (perLato[j][0] || {}).g || 1) * 1.6);
+      const lam = [0, 1].map((j) => m.xg[j] * via.filter((x) => x.lato === j).reduce((f, x) => f * (1 - 0.5 * Math.min(0.6, x.g / golSq[j])), 1));
+      const calc = (lh, la) => { const M = matriceRis(lh, la); let p1 = 0, px = 0, o = 0, gg = 0; for (let i = 0; i <= 10; i++) for (let j = 0; j <= 10; j++) { const v = M[i][j]; if (i > j) p1 += v; else if (i === j) px += v; if (i + j > 2.5) o += v; if (i && j) gg += v; } return [p1, px, 1 - p1 - px, o, gg]; };
+      const prima = calc(m.xg[0], m.xg[1]), dopo = calc(lam[0], lam[1]);
+      const tog = (x) => setVia(via.some((y) => y.n === x.n) ? via.filter((y) => y.n !== x.n) : [...via, x]);
+      return html`<div className=${C.card + " p-4 space-y-3"}>
+        <div><div className=${C.lab}>E se...?</div><p className=${"text-[13px] " + C.mu}>Togli un giocatore e guarda come cambierebbe la partita secondo l'IA.</p></div>
+        <div className="grid grid-cols-2 gap-3">${[0, 1].map((j) => html`<div key=${j} className="space-y-1.5"><div className=${"flex items-center gap-1.5 text-[12px] font-semibold " + C.mu}><${Crest} t=${j ? m.a : m.h} size=${13} /><span className="truncate">${j ? m.a : m.h}</span></div>
+          ${perLato[j].map((x) => { const on = via.some((y) => y.n === x.n); return html`<button key=${x.n} onClick=${() => tog(x)} aria-pressed=${on}
+            className=${"w-full flex items-center gap-2 rounded-xl px-2.5 py-2 text-left text-[13px] transition-colors " + (on ? "bg-[#FF3D5A]/10 text-[#C81E3A] dark:text-[#FF8095] line-through" : C.ch + " " + C.tx)}>
+            <span className="flex-1 min-w-0 truncate">${x.n}</span><span className=${"text-[11px] " + (on ? "" : C.mu)}>${x.g} gol</span></button>`; })}</div>`)}</div>
+        <div className=${"rounded-xl p-3 space-y-1.5 " + C.ch}>${[["1 (" + m.h + ")", 0], ["X", 1], ["2 (" + m.a + ")", 2], ["Over 2,5", 3], ["Goal", 4]].map(([l, i]) => { const d = dopo[i] - prima[i];
+          return html`<div key=${l} className="flex items-center gap-2 text-[13px]"><span className=${"flex-1 truncate " + C.tx}>${l}</span><span className=${"tabular-nums " + C.mu}>${pct(prima[i])}%</span>
+            <span className=${C.mu}>→</span><b className=${"tabular-nums w-10 text-right " + C.tx}>${pct(dopo[i])}%</b><span className=${"w-12 text-right text-[12px] tabular-nums " + (Math.abs(d) < 0.005 ? C.mu : d > 0 ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>${Math.abs(d) < 0.005 ? "=" : (d > 0 ? "+" : "") + Math.round(d * 100)}</span></div>`; })}</div>
+        <p className=${"text-[11px] " + C.mu}>${via.length ? "Simulazione: le quote reali non cambiano finché la notizia non è ufficiale." : "Tocca un giocatore per toglierlo."} Stima basata sui gol in stagione: un giocatore che crea gioco senza segnare pesa più di quanto mostri qui.</p></div>`;
     }
     /* radar dei movimenti: le quote si sono spostate da quando l'app le ha viste la prima volta */
     function Movimento({ m, compatto }) {
@@ -957,6 +985,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
         ${mt === 2 && (sm ? html`<${Lineups} sm=${sm} m=${m} onPlayer=${(p) => setPl({ p, side: sm.formazioni[0] && sm.formazioni[0].all.includes(p) ? 0 : 1 })} />` : m.formazione ? html`<${FormazioneProbabile} m=${m} />` : html`<div className=${C.card + " p-4 text-sm " + C.mu}>${m.eid ? "Caricamento delle formazioni..." : "Le formazioni compaiono il giorno della partita, circa un'ora prima del calcio d'inizio."}</div>`)}
         ${mt === 2 && sm && html`<${AssenzeCard} m=${m} sm=${sm} />`}
         </div>
+        ${mt === 2 && m.st === "NS" && html`<${Gate} m=${m} title="E se...? con PRO"><${EseCard} m=${m} /><//>`}
         ${pl && html`<${PlayerSheet} p=${pl.p} side=${pl.side} col=${sm && sm.colors[pl.side]} m=${m} onClose=${() => setPl(null)} />`}
       </div>`;
     }
@@ -1000,7 +1029,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
           ${unlocked(m) ? html`<div className=${"text-[20px] font-bold leading-tight " + C.tx}>${mLabel(m, tip.c)}</div>
             <div className=${"text-[14px] mt-1 " + C.tx}>${spiega(m, tip.c)}</div>
             <div className="flex gap-4 mt-2.5"><span className=${"text-[13px] " + C.mu}>Probabilità <b className=${"num text-[19px] " + C.tx}>${pct(tip.p)}%</b></span><span className=${"text-[13px] " + C.mu}>Quota ${tip.qm ? "" : "stimata "}<b className=${"num text-[19px] " + C.tx}>${odd(tip.q)}</b></span></div>`
-          : html`<button onClick=${() => setUnlock(true)} className=${"w-full text-left text-[14px] rounded-xl p-3 " + C.ch + " " + C.tx}><${Ic.Lock} size=${13} className="inline mr-1" />Sblocca con PRO o con un video di 15 secondi per vedere il consiglio.</button>`}
+          : html`<button onClick=${() => setUnlock(true)} className=${"w-full text-left text-[14px] rounded-xl p-3 " + C.ch + " " + C.tx}><${Ic.Lock} size=${13} className="inline mr-1" />Sblocca con PRO o con l'analisi gratis del giorno per vedere il consiglio.</button>`}
           <${Vai} onClick=${() => vai(3)}>Perché, e tutte le altre giocate<//></div>`}
         ${st !== "NS" && html`<${LiveTips} m=${m} sm=${sm} />`}
         ${st !== "NS" && sm && html`<div className=${C.card + " p-4"}>
@@ -1029,4 +1058,4 @@ import { Anteprima, partitaSettimana } from "./extra.js";
       <//>`;
     }
 
-export { Movimento, FormazioneProbabile, usaVoti, Row, Gate, KEY_T, trasf, PESI, prob1x2, toks, stesso, assenze, AssenzeCard, CampoNotte, TIRI, suNotte, TiriCard, LiveAction, EvIcon, riassunto, righeResoconto, Resoconto, KeyEvents, StatsCard, Cronaca, InfoCard, ArbitroCard, Badges, Lineups, tonoVoto, VotoChip, Migliori, Andamento, Curiosita, Sondaggio, ST_IT, PlayerSheet, _voti, caricaVoti, pois, PESO_SPINTA, spinta, quotaRestante, liveProb, LiveTips, meteoCache, MeteoCard, FattoriCard, StoricoCard, TeamView, TipView, MatchView, Vai, InBreve };
+export { EseCard, Movimento, FormazioneProbabile, usaVoti, Row, Gate, KEY_T, trasf, PESI, prob1x2, toks, stesso, assenze, AssenzeCard, CampoNotte, TIRI, suNotte, TiriCard, LiveAction, EvIcon, riassunto, righeResoconto, Resoconto, KeyEvents, StatsCard, Cronaca, InfoCard, ArbitroCard, Badges, Lineups, tonoVoto, VotoChip, Migliori, Andamento, Curiosita, Sondaggio, ST_IT, PlayerSheet, _voti, caricaVoti, pois, PESO_SPINTA, spinta, quotaRestante, liveProb, LiveTips, meteoCache, MeteoCard, FattoriCard, StoricoCard, TeamView, TipView, MatchView, Vai, InBreve };

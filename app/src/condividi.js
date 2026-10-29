@@ -67,7 +67,7 @@ async function immaginePartita(m, lg, conConsiglio) {
 const NOMI_BOOK = { "Esito finale": "1X2 finale", "Doppia chance": "Doppia chance", "Under/Over": "Under/Over", "Goal/No Goal": "Goal/No Goal", "Multigol": "Multigol",
   "Combo": "Combo", "Handicap": "Handicap europeo", "Risultato esatto": "Risultato esatto", "Parziale/finale": "Parziale/finale", "Gol esatti": "Somma gol",
   "Margine di vittoria": "Margine di vittoria", "Tempo con più gol": "Tempo con più gol", "Tempi": "Segna/vince entrambi i tempi", "Gol squadra": "Under/Over squadra",
-  "Pari/Dispari": "Pari/Dispari", "Marcatori": "Marcatore (in qualsiasi momento)", "Cartellini": "Cartellini", "Calci d'angolo": "Calci d'angolo", "Falli": "Falli" };
+  "Pari/Dispari": "Pari/Dispari", "Marcatori": "Marcatore (in qualsiasi momento)", "Ammoniti": "Giocatore ammonito", "Assist": "Giocatore: assist", "Cartellini": "Cartellini", "Calci d'angolo": "Calci d'angolo", "Falli": "Falli" };
 function mercatoBookmaker(m, k) {
   const g = mGroup(k);
   if (g === "Primo tempo" || g === "Secondo tempo") { const d = mGroup(k.slice(3)); return [(NOMI_BOOK[d] || d) + (g === "Primo tempo" ? " · 1° tempo" : " · 2° tempo"), mLabel(m, k.slice(3), ["1", "X", "2"].includes(k.slice(3)) ? false : true)]; }

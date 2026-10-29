@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { ESPN_LG, useLiveScores, usaPonte } from "./live.js";
-import { Ricarica, vibra, AuraLine, C, Crest, Ctx, Flag, Giorni, Ic, Marchio, Seg, Sheet, TONE, auraCol, hs, html, mmss, store } from "./base.js";
+import { registraColori, Ricarica, vibra, AuraLine, C, Crest, Ctx, Flag, Giorni, Ic, Marchio, Seg, Sheet, TONE, auraCol, hs, html, mmss, store } from "./base.js";
 import { BarraSchedina, Cerca, Glossario, PrimoAvvio, partitaSettimana } from "./extra.js";
 import { MatchView, Movimento, PlayerSheet, Row, TeamView } from "./partita.js";
 // schermate secondarie caricate solo quando servono (avvio piu leggero); poi scaricate in silenzio per l'uso offline
@@ -42,6 +42,7 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
       }
     };
     const live = useLiveScores(Draw ? Draw.matches : null);
+    if (Draw) registraColori(Draw);
     const D = React.useMemo(() => Draw && { ...Draw, matches: Draw.matches.map((m0) => {
       const x = extra[m0.id];
       const m = !Draw.leggera ? m0 : { ...m0, ...(x && !x.mancano ? x : {}), markets: (x && x.markets) || (merc && merc[m0.id]) || m0.markets, dett: !!(x && !x.mancano) };
@@ -62,7 +63,6 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
     const [sub, setSub] = useState(store.get("sub", null));
     const [until, setUntil] = useState(store.get("until", 0));
     const [now, setNow] = useState(Date.now());
-    const [ad, setAd] = useState(null);
     const [unlock, setUnlock] = useState(false);
     const [profile, setProfile] = useState(false);
     const [guide, setGuide] = useState(store.get("guideSeen", false) ? 0 : 1);
@@ -148,11 +148,6 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
     // l'orologio al secondo serve solo per il conto alla rovescia del pass PRO: niente ridisegni inutili quando non è attivo
     // conto alla rovescia del PRO: al secondo solo nell'ultima ora (prima basta un aggiornamento al minuto: niente ridisegni inutili)
     useEffect(() => { if (until <= Date.now()) return; let id; const giro = () => { setNow(Date.now()); if (Date.now() > until) return; id = setTimeout(giro, until - Date.now() > 3600e3 ? 60000 : 1000); }; giro(); return () => clearTimeout(id); }, [until]);
-    useEffect(() => {
-      if (ad === null) return;
-      if (ad === 0) { const u = Date.now() + 15 * 60 * 1000 - 1000; setUntil(u); store.set("until", u); setAd(null); setUnlock(false); flash("PRO attivo per 15 minuti"); return; }
-      const id = setTimeout(() => setAd(ad - 1), 1000); return () => clearTimeout(id);
-    }, [ad]);
     useEffect(() => store.set("slip", mySlip), [mySlip]);
     useEffect(() => { if (toast) { const id = setTimeout(() => setToast(""), 1800); return () => clearTimeout(id); } }, [toast]);
     const [nuova, setNuova] = useState(false);
@@ -244,7 +239,12 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
 
     const left = Math.max(0, Math.ceil((until - now) / 1000));
     const pro = !!sub || left > 0;
-    const unlocked = (m) => pro || m.free;
+    // ogni giorno un'analisi PRO gratis su una partita scelta dall'utente (un assaggio che fa tornare, al posto degli spot)
+    const oggiG = new Date().toISOString().slice(0, 10);
+    const [gratis, setGratis] = useState(store.get("gratisOggi", null));
+    const gratisOggi = gratis && gratis.d === oggiG ? gratis.id : null;
+    const usaGratis = (m) => { if (gratisOggi) return false; const g = { d: oggiG, id: m.id }; setGratis(g); store.set("gratisOggi", g); vibra(12); flash("Analisi gratis di oggi: " + m.h + " - " + m.a); return true; };
+    const unlocked = (m) => pro || m.free || gratisOggi === m.id;
     const ini = (name.trim() ? name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("") : "IO").toUpperCase();
 
 
@@ -326,7 +326,7 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
       </div></header>`;
 
     const steps = ["Partite: tocca un campionato per aprirlo. La stella dentro una partita la mette tra le Preferite, in cima, con gli avvisi dei gol.", "Tocca una partita: in \"In breve\" trovi l'essenziale. Scorri col dito a destra o a sinistra per approfondire: Partita, Formazioni, IA, Statistiche, Cronaca.",
-      "Le analisi IA sono libere sulle partite FREE; sulle altre si sbloccano con PRO o con un video da 15 minuti.", "In Schedina IA scorri tra Crea, La mia schedina, Diario e Storico IA. Nel Club trovi Gara, Traguardi e Account."];
+      "Le analisi IA sono libere sulle partite FREE; sulle altre si sbloccano con PRO, e ogni giorno hai un'analisi gratis su una partita a tua scelta.", "In Schedina IA scorri tra Crea, La mia schedina, Diario e Storico IA. Nel Club trovi Gara, Traguardi e Account."];
     const guideBox = guide > 0 && html`<div className=${"mx-4 mb-3 p-3 rounded-2xl border text-sm flex items-start gap-2 " + TONE.info}>
       <div className="flex-1"><b>Guida ${guide}/4.</b> ${steps[guide - 1]}</div>
       <button aria-label="Passo precedente" onClick=${() => setGuide(Math.max(1, guide - 1))}><${Ic.ChevronLeft} size=${18} /></button>
@@ -410,7 +410,7 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
     const views = { partite: home, campionati: sosp(html`<${LeaguesView} />`), schedina: sosp(html`<${SlipView} />`), club: sosp(html`<${ClubView} />`) };
     const DOCK = [["partite", "Partite", Ic.Calendar], ["campionati", "Campionati", Ic.Trophy], ["schedina", "Schedina IA", Ic.Sparkles], ["club", "Il Mio Club", Ic.Shield]];
 
-    const ctx = { apriSquadra, apriGiocatore, apriLega, A, setRecensione, setLegale, caricaDettagli, caricaMercati, syncOn, setSyncOn, setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen: (v) => (v == null ? indietro() : goMatch(v)), mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
+    const ctx = { gratisOggi, usaGratis, apriSquadra, apriGiocatore, apriLega, A, setRecensione, setLegale, caricaDettagli, caricaMercati, syncOn, setSyncOn, setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen: (v) => (v == null ? indietro() : goMatch(v)), mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
     return html`<${Ctx.Provider} value=${ctx}><div className="min-h-screen pb-28">
       ${header}
       <main className="max-w-[480px] mx-auto" onTouchStart=${tsH} onTouchMove=${tmH} onTouchEnd=${teH}><${Ricarica} tira=${tira} attivo=${ricaricando} />${!online && html`<div role="status" className=${"mx-4 mb-3 px-3.5 py-2.5 rounded-2xl border text-[13px] flex items-center gap-2 " + TONE.warn}><${Ic.Clock} size=${15} />Sei offline: vedi i dati delle ${(D.generato || "").slice(-5)}. Quando torna la rete, tira giù la pagina per aggiornarli.</div>`}${guideBox}${team ? html`<${TeamView} key=${team.name} />` : open_m ? (D.leggera && !open_m.dett ? html`<div className="px-4 pt-4 space-y-3" aria-busy="true"><div className=${C.card + " p-5 text-center"}><div className=${"text-[17px] font-semibold " + C.tx}>${open_m.h} - ${open_m.a}</div><div className=${"text-[13px] mt-1 " + C.mu}>${online ? "Carico l'analisi della partita..." : "Sei offline: l'analisi di questa partita non è ancora stata scaricata."}</div>
@@ -420,20 +420,24 @@ import { VERSIONE as VERS_LEGALE } from "./legale.js";
           aria-current=${on ? "page" : undefined}
           className=${"flex flex-col items-center gap-0.5 py-1.5 rounded-[20px] text-[11px] font-semibold transition-colors " + (on ? "bg-[#5B2EE6]/[0.1] text-[#5B2EE6] dark:bg-[#A58BFF]/[0.16] dark:text-[#A58BFF]" : C.mu)}><${I} size=${22} strokeWidth=${on ? 2.4 : 2} />${l}</button>`; })}</div></nav>
 
-      ${unlock && html`<${Sheet} title="Sblocca AuraPitch PRO" onClose=${() => ad === null && setUnlock(false)}>
-        ${ad !== null ? html`<div className="py-6 text-center space-y-3"><div className="text-sm font-semibold">Spot in corso</div>
-            <div className=${"h-1.5 rounded-full overflow-hidden " + C.ch}><div className="h-1.5 bg-amber-300 transition-all duration-1000" style=${{ width: ((5 - ad) / 5) * 100 + "%" }}></div></div>
-            <div className=${"text-xs " + C.mu}>Ancora ${ad} secondi. Nella beta lo spot è simulato e dura 5 secondi.</div></div>`
-          : html`<${React.Fragment}>
-            <p className=${"text-sm " + C.mu}>PRO sblocca su tutte le partite la lettura in 10 secondi, l'analisi IA e il profilo Colpaccio da Bar.</p>
-            ${[[Ic.Play, "Pass 15 minuti gratis", "Guarda uno spot e usa PRO per 15 minuti", () => setAd(5), true],
-              [Ic.Zap, "Mensile - 4,99 € al mese", "Prezzo indicativo della beta", () => { setSub("mensile"); store.set("sub", "mensile"); setUnlock(false); flash("PRO attivo (simulato)"); }],
-              [Ic.Crown, "Annuale - 29,99 € all'anno", "Risparmi il 50% rispetto al mensile", () => { setSub("annuale"); store.set("sub", "annuale"); setUnlock(false); flash("PRO attivo (simulato)"); }]].map(([I, t, s, fn, hi]) => html`
-              <button key=${t} onClick=${fn} className=${"w-full text-left rounded-2xl border p-3 flex items-center gap-3 " + (hi ? TONE.warn : C.ch + " border-transparent")}>
-                <span className=${"w-9 h-9 rounded-full flex items-center justify-center shrink-0 border " + TONE.warn}><${I} size=${17} /></span>
-                <span><span className="block text-sm font-semibold">${t}</span><span className=${"block text-xs " + C.mu}>${s}</span></span></button>`)}
-            ${pro && html`<button onClick=${() => { setSub(null); setUntil(0); store.set("sub", null); store.set("until", 0); setUnlock(false); }} className=${"w-full text-xs font-medium py-1 " + C.mu}>Torna a FREE</button>`}
-            <p className=${"text-[11px] text-center " + C.mu}>Beta: nessun pagamento reale.</p><//>`}<//>`}
+      ${unlock && html`<${Sheet} title="AuraPitch PRO" onClose=${() => setUnlock(false)}>
+        <div className="rounded-2xl p-4 text-white relative overflow-hidden" style=${{ background: "linear-gradient(135deg, #2A1A6E 0%, #5B2EE6 55%, #8B6CFF 100%)" }}>
+          <div aria-hidden="true" className="absolute -right-10 -top-10 w-40 h-40 rounded-full" style=${{ background: "radial-gradient(circle, rgba(255,255,255,.28), transparent 65%)" }}></div>
+          <div className="text-[12px] font-semibold uppercase tracking-[0.08em] opacity-80">Tutto il potenziale dell'IA</div>
+          <div className="text-[22px] font-bold leading-tight mt-1">Analisi complete su ogni partita, senza pubblicità</div></div>
+        <div className="space-y-2">${[[Ic.Sparkles, "Lettura e analisi IA su tutte le partite", "non solo sulle 3 gratuite del giorno"], [Ic.Zap, "Tutti i mercati e la Schedina IA con esito scelto", "tutte in casa, pareggi, Goal, Over..."],
+          [Ic.TrendingUp, "Radar delle quote e formazione probabile", "con il motivo dei movimenti"], [Ic.Activity, "\u201cE se\u2026?\u201d e allenatore personale", "simula le assenze, impara dalle tue giocate"]].map(([I, t, s0]) => html`
+          <div key=${t} className="flex items-start gap-3"><span className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 bg-[#5B2EE6]/10 text-[#5B2EE6] dark:bg-[#A58BFF]/15 dark:text-[#A58BFF]"><${I} size=${16} /></span>
+            <span><span className=${"block text-[14px] font-semibold " + C.tx}>${t}</span><span className=${"block text-[12px] " + C.mu}>${s0}</span></span></div>`)}</div>
+        ${[["annuale", "Annuale", "34,99 €", "all'anno · 2,92 € al mese", "Risparmi il 42%", true], ["mensile", "Mensile", "4,99 €", "al mese · disdici quando vuoi", null, false],
+          ["fondatori", "Fondatori della beta", "24,99 €", "all'anno, prezzo bloccato per sempre", "Solo per chi prova la beta", false]].map(([k, t, p0, s0, badge, top]) => html`
+          <button key=${k} onClick=${() => { setSub(k); store.set("sub", k); setUnlock(false); vibra(12); flash("PRO attivo (beta: nessun pagamento)"); }}
+            className=${"w-full text-left rounded-2xl p-3.5 flex items-center gap-3 border-2 transition-colors " + (top ? "border-[#5B2EE6] dark:border-[#A58BFF] bg-[#5B2EE6]/[0.05] dark:bg-[#A58BFF]/[0.08]" : "border-transparent " + C.ch)}>
+            <span className="flex-1 min-w-0"><span className=${"flex items-center gap-2 text-[15px] font-semibold " + C.tx}>${t}${badge && html`<span className=${"text-[10px] font-bold px-2 py-0.5 rounded-full " + (top ? C.on : TONE.good + " border")}>${badge}</span>`}</span>
+              <span className=${"block text-[12px] " + C.mu}>${s0}</span></span>
+            <span className=${"num text-[22px] font-bold shrink-0 " + C.tx}>${p0}</span></button>`)}
+        ${pro && html`<button onClick=${() => { setSub(null); setUntil(0); store.set("sub", null); store.set("until", 0); setUnlock(false); }} className=${"w-full text-xs font-medium py-1 " + C.mu}>Torna alla versione gratuita</button>`}
+        <p className=${"text-[11px] text-center leading-snug " + C.mu}>Beta: nessun pagamento reale, i prezzi sono quelli previsti al lancio. Ogni giorno hai anche un'analisi PRO gratis su una partita a tua scelta.</p><//>`}
 
       ${cerca && html`<${Cerca} onClose=${() => setCerca(false)} />`}
       ${gloss && html`<${Glossario} onClose=${() => setGloss(false)} />`}

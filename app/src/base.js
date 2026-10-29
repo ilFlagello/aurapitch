@@ -98,13 +98,38 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       ${labels && html`<div className=${"flex justify-between mt-1.5 text-[12px] " + C.mu}>
         <span>${m.h} <b className=${"num text-[17px] font-bold " + C.tx}>${pct(P[0])}%</b></span><span>Pari <b className=${"num text-[17px] font-bold " + C.tx}>${pct(P[1])}%</b></span><span><b className=${"num text-[17px] font-bold " + C.tx}>${pct(P[2])}%</b> ${m.a}</span></div>`}</div>`;
   }
+  /* stemmi AuraPitch: nessun logo ufficiale (sono marchi dei club), ma i colori veri di maglia (da ESPN) e, quando lo
+     stemma è abbastanza grande, le iniziali della squadra. Riconoscibili a colpo d'occhio, senza problemi di diritti. */
+  const COLORI = {};
+  function registraColori(D) {
+    for (const m of (D && D.matches) || []) (m.col || []).forEach((c, j) => { const t = j ? m.a : m.h; if (c && c[0] && !COLORI[t]) COLORI[t] = c; });
+  }
+  const PAROLE_VUOTE = new Set(["fc", "ac", "as", "ssc", "afc", "cf", "sc", "us", "ss", "cd", "ud", "sd", "rc", "rcd", "sv", "vfb", "vfl", "tsg", "fk", "sk", "if", "bk", "de", "of", "the", "club", "calcio", "1909", "1913", "1907", "real", "athletic"]);
+  function iniziali(t) {
+    const w = String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9 ]/g, " ").split(/\s+/).filter(Boolean);
+    const sig = w.filter((x) => !PAROLE_VUOTE.has(x.toLowerCase()));
+    const u = sig.length ? sig : w;
+    if (/^real\b/i.test(t) && w[1]) return ("R" + w[1][0]).toUpperCase();
+    return (u.length === 1 ? u[0].slice(0, 3) : u[0][0] + u[1][0] + (u[2] && u.length === 3 ? u[2][0] : "")).toUpperCase();
+  }
   function Crest({ t, size = 20 }) {
-    const [a, b, k] = teamColors(t);
+    const [a0, b0, k] = teamColors(t);
+    const vero = COLORI[t];
+    const a = vero ? vero[0] : a0;
+    let b = vero ? vero[1] || b0 : b0;
+    if (vero && dist(a, b) < 120) b = lum(a) > 0.5 ? "#17152B" : "#FFFFFF";
+    const id = "s" + (hs(t) % 100000);
+    const testo = size >= 26 ? iniziali(t) : "";
+    const chiaro = /^#/.test(a) ? lum(a) > 0.62 : false;
     return html`<svg width=${size} height=${size} viewBox="0 0 24 24" className="shrink-0" aria-hidden="true">
+      <defs><linearGradient id=${id} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fff" stopOpacity="0.28" /><stop offset="0.55" stopColor="#fff" stopOpacity="0" /></linearGradient></defs>
       <path d=${SH} fill=${a} />
-      ${k === "v" && html`<path d="M12 2L21 5V12C21 17 17 21 12 22Z" fill=${b} />`}
-      ${k === "h" && html`<rect x="3.2" y="9" width="17.6" height="4" fill=${b} />`}
-      ${k === "s" && html`<circle cx="12" cy="11" r="3.6" fill=${b} />`}
+      ${!testo && k === "v" && html`<path d="M12 2L21 5V12C21 17 17 21 12 22Z" fill=${b} />`}
+      ${!testo && k === "h" && html`<rect x="3.2" y="9" width="17.6" height="4" fill=${b} />`}
+      ${!testo && k === "s" && html`<circle cx="12" cy="11" r="3.6" fill=${b} />`}
+      ${testo && html`<rect x="3" y="15.2" width="18" height="1.6" fill=${b} opacity="0.9" />`}
+      ${testo && html`<text x="12" y="13" textAnchor="middle" fontSize=${testo.length > 2 ? 6.2 : 7.4} fontWeight="800" fontFamily="'Big Shoulders', Figtree, system-ui, sans-serif" fill=${chiaro ? "#17152B" : "#FFFFFF"} letterSpacing="0.2">${testo}</text>`}
+      <path d=${SH} fill=${"url(#" + id + ")"} />
       <path d=${SH} fill="none" stroke=${b} strokeWidth="1.3" /></svg>`;
   }
   function Flag({ k, w = 20 }) {
@@ -152,7 +177,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   const TEMPI = ["T1:", "T2:", "PF", "TPG", "HSET", "ASET", "HVET", "AVET"];
   // stessa logica di valuta() in mercati.py; h1/a1 = risultato del primo tempo (se noto)
   function evalCode(c, h, a, h1, a1) {
-    if (/^[KCF][HA]?[OU]\d/.test(c) || c.startsWith("MARC:")) return null; // cartellini, angoli, falli, marcatori: non verificabili dal solo risultato
+    if (/^[KCF][HA]?[OU]\d/.test(c) || /^(MARC|AMM|ASS):/.test(c)) return null; // cartellini, angoli, falli, marcatori: non verificabili dal solo risultato
     if (c.includes("+")) { const r = c.split("+").map((x) => evalCode(x, h, a, h1, a1)); return r.includes(null) ? null : r.every(Boolean); }
     if (TEMPI.some((t) => c.startsWith(t))) {
       if (h1 == null || a1 == null) return null;
@@ -182,6 +207,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   function mLabel(m, c, short) {
     c = norm(c);
     if (c.startsWith("MARC:")) return "Segna " + c.slice(5) + (short ? "" : " (in qualsiasi momento)");
+    if (c.startsWith("AMM:")) return "Ammonito " + c.slice(4);
+    if (c.startsWith("ASS:")) return "Assist di " + c.slice(4);
     if (/^[KCF][HA][OU]\d/.test(c)) return ({ K: "Cartellini ", C: "Angoli ", F: "Falli " })[c[0]] + (c[1] === "H" ? m.h : m.a) + (c[2] === "O" ? " Over " : " Under ") + nf(c.slice(3));
     if (/^[KCF][OU]\d/.test(c)) return ({ K: "Cartellini ", C: "Angoli ", F: "Falli " })[c[0]] + (c[1] === "O" ? "Over " : "Under ") + nf(c.slice(2));
     if (c.includes("+")) { const ps = c.split("+"), tempi = ps.some((x) => /^T[12]:/.test(x));
@@ -232,6 +259,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     let t;
     if (c.includes("+")) t = c.split("+").map((x, i) => (i ? min1(fine(spiega(m, x, true))) : fine(spiega(m, x, true)))).join(" e ") + ".";
     else if (c.startsWith("MARC:")) t = `${c.slice(5)} segna almeno un gol.`;
+    else if (c.startsWith("AMM:")) t = `${c.slice(4)} riceve almeno un cartellino giallo (vale anche il rosso diretto, secondo il regolamento del bookmaker).`;
+    else if (c.startsWith("ASS:")) t = `${c.slice(4)} fa almeno un assist a un gol.`;
     else if (/^[KCF][HA][OU]/.test(c)) { const v = { K: ["riceve", "cartellini"], C: ["batte", "calci d'angolo"], F: ["commette", "falli"] }[c[0]]; t = `${sq(c[1])} ${v[0]} ${c[2] === "O" ? "almeno " + almeno(c.slice(3)) : "al massimo " + almassimo(c.slice(3))} ${v[1]}.`; }
     else if (/^[KCF][OU]/.test(c)) { const v = { K: "cartellini", C: "calci d'angolo", F: "falli" }[c[0]]; t = `In tutta la partita ci sono ${c[1] === "O" ? "almeno " + almeno(c.slice(2)) : "al massimo " + almassimo(c.slice(2))} ${v}.`; }
     else if (/^T1:(1|X|2|1X|X2|12)$/.test(c)) t = { 1: `${m.h} chiude il primo tempo in vantaggio.`, X: "Il primo tempo finisce in parità.", 2: `${m.a} chiude il primo tempo in vantaggio.`, "1X": `All'intervallo ${m.h} non è in svantaggio.`, X2: `All'intervallo ${m.a} non è in svantaggio.`, 12: "All'intervallo una delle due squadre è in vantaggio." }[c.slice(3)];
@@ -262,9 +291,11 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     return t;
   }
   const GROUPS = ["Esito finale", "Doppia chance", "Under/Over", "Goal/No Goal", "Multigol", "Gol squadra", "Combo", "Primo tempo", "Secondo tempo", "Parziale/finale", "Tempo con più gol", "Tempi",
-    "Handicap", "Margine di vittoria", "Gol esatti", "Risultato esatto", "Marcatori", "Cartellini", "Cartellini squadra", "Falli", "Falli squadra", "Calci d'angolo", "Calci d'angolo squadra", "Pari/Dispari"];
+    "Handicap", "Margine di vittoria", "Gol esatti", "Risultato esatto", "Marcatori", "Assist", "Ammoniti", "Cartellini", "Cartellini squadra", "Falli", "Falli squadra", "Calci d'angolo", "Calci d'angolo squadra", "Pari/Dispari"];
   function mGroup(c) {
     if (c.startsWith("MARC:")) return "Marcatori";
+    if (c.startsWith("AMM:")) return "Ammoniti";
+    if (c.startsWith("ASS:")) return "Assist";
     if (/^[KCF][HA][OU]\d/.test(c)) return ({ K: "Cartellini", C: "Calci d'angolo", F: "Falli" })[c[0]] + " squadra";
     if (/^K[OU]\d/.test(c)) return "Cartellini";
     if (/^C[OU]\d/.test(c)) return "Calci d'angolo";
@@ -337,8 +368,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   function candidati(m, prof, qt, v) {
     const R = PROF_T[prof];
     return options(m).filter((o) => { const g = mGroup(o.k); if (ESCLUSI_SLIP.includes(g)) return false;
-        if (prof === 0 && /Marcatori|Cartellini|Falli|angolo|Parziale|Gol esatti|Margine|Tempo con/.test(g)) return false;
-        if (prof === 1 && /Marcatori|Parziale|Gol esatti/.test(g)) return false;
+        if (prof === 0 && /Marcatori|Assist|Ammoniti|Cartellini|Falli|angolo|Parziale|Gol esatti|Margine|Tempo con/.test(g)) return false;
+        if (prof === 1 && /Marcatori|Assist|Ammoniti|Parziale|Gol esatti/.test(g)) return false;
         if (prof < 2 && /^EH[MP]2/.test(o.k)) return false;
         return o.p >= R.pmin && o.q >= Math.max(1.08, R.lo * 0.92) && o.q <= R.hi * 1.8; })
       .map((o) => ({ ...o, sc: (o.s != null ? o.s : 50) / 100 + 0.5 * o.p - 0.35 * Math.abs(Math.log(o.q / qt)) + (o.stima ? 0 : 0.1) + 0.12 * rumore(m.id + o.k, v) }))
@@ -536,6 +567,37 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       ${children}</div>`;
   }
 
+  /* schedina onesta: due giocate sulla stessa partita non sono indipendenti (Over 2,5 e Goal vanno quasi sempre insieme).
+     Matrice dei risultati con le stesse formule del motore (Poisson con correzione Dixon-Coles), probabilita congiunta
+     delle giocate collegate, e correzione del prodotto delle probabilita mostrate (rapporto congiunta / prodotto). */
+  function matriceRis(lh, la) {
+    const P = (l) => { const o = [Math.exp(-l)]; for (let k = 1; k <= 10; k++) o.push((o[k - 1] * l) / k); return o; };
+    const ph = P(lh), pa = P(la), R = -0.12, DL = 0.06, m = [];
+    let s = 0;
+    for (let i = 0; i <= 10; i++) { m.push([]); for (let j = 0; j <= 10; j++) { let v = ph[i] * pa[j];
+      if (i === 0 && j === 0) v *= 1 - lh * la * R; else if (i === 0 && j === 1) v *= 1 + lh * R; else if (i === 1 && j === 0) v *= 1 + la * R; else if (i === 1 && j === 1) v *= 1 - R;
+      if (i === 0) v *= 1 - DL; if (j === 0) v *= 1 - DL; m[i].push(v); s += v; } }
+    return m.map((r) => r.map((v) => v / s));
+  }
+  function probVera(legs) {
+    const ind = legs.reduce((a, l) => a * (l.p || 1), 1);
+    const per = {};
+    for (const l of legs) (per[l.m.id] = per[l.m.id] || []).push(l);
+    let fatt = 1;
+    const collegate = new Set();
+    for (const gr of Object.values(per)) {
+      if (gr.length < 2 || !gr[0].m.xg) continue;
+      const ok = gr.filter((l) => evalCode(norm(l.k), 1, 0) !== null);
+      if (ok.length < 2) continue;
+      const M = matriceRis(gr[0].m.xg[0], gr[0].m.xg[1]);
+      let j = 0; const marg = ok.map(() => 0);
+      for (let i = 0; i <= 10; i++) for (let k = 0; k <= 10; k++) { const e = ok.map((l) => evalCode(norm(l.k), i, k)); e.forEach((v, q) => { if (v) marg[q] += M[i][k]; }); if (e.every(Boolean)) j += M[i][k]; }
+      const prod = marg.reduce((a, v) => a * v, 1);
+      if (prod > 0) { fatt *= j / prod; ok.forEach((l) => collegate.add(l)); }
+    }
+    return { p: Math.min(1, ind * fatt), ind, collegate, diversa: Math.abs(fatt - 1) > 0.03 };
+  }
+
   /* nomi cliccabili: squadra, giocatore e campionato aprono la loro scheda da qualunque pagina (anche dentro testi e liste) */
   const NOME_CL = "text-left underline-offset-2 decoration-[#5B2EE6]/40 dark:decoration-[#A58BFF]/50 hover:underline active:opacity-60 ";
   function NomeSquadra({ t, lg, lgE, className = "", children }) {
@@ -578,4 +640,4 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     return e.includes(false) ? "persa" : e.every((v) => v === true) ? "vinta" : "aperta";
   }
 
-export { NomeSquadra, NomeGiocatore, NomeLega, Ricarica, vibra, esitoGamba, statoGiocata, html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };
+export { registraColori, iniziali, matriceRis, probVera, NomeSquadra, NomeGiocatore, NomeLega, Ricarica, vibra, esitoGamba, statoGiocata, html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };

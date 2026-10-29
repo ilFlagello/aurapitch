@@ -16,6 +16,9 @@ await esbuild.build({ entryPoints: [path.join(APP, "src/base.js")], bundle: true
 const outC = path.join(tmp, "citazioni.mjs");
 await esbuild.build({ entryPoints: [path.join(APP, "src/citazioni.js")], bundle: true, platform: "node", format: "esm", outfile: outC, nodePaths: [MODS],
   alias: { htm: path.join(APP, "vendor/htm/index.mjs") }, logLevel: "error" });
+const outA = path.join(tmp, "allenatore.mjs");
+await esbuild.build({ entryPoints: [path.join(APP, "src/allenatore.js")], bundle: true, platform: "node", format: "esm", outfile: outA, nodePaths: [MODS],
+  alias: { htm: path.join(APP, "vendor/htm/index.mjs") }, logLevel: "error" });
 globalThis.localStorage = { getItem: () => null, setItem: () => {} };
 globalThis.document = { documentElement: { dataset: {} } };
 const B = await import(pathToFileURL(out).href);
@@ -80,6 +83,31 @@ ok(conCit > 120 && conCit < 290, "frequenza delle citazioni nella schedina: " + 
 ok(B.inPeriodo("2026-10-28", "oggi", "2026-10-28") && !B.inPeriodo("2026-10-29", "oggi", "2026-10-28"), "periodo oggi");
 ok(B.inPeriodo("2026-10-29", "domani", "2026-10-28"), "periodo domani");
 
+// schedina onesta: Over 2,5 e Goal sulla stessa partita sono collegati (la probabilita vera e piu alta del prodotto)
+{
+  const m = { id: "t1", xg: [1.5, 1.2] };
+  const M = B.matriceRis(1.5, 1.2);
+  let tot = 0; for (const r of M) for (const v of r) tot += v;
+  ok(Math.abs(tot - 1) < 1e-9, "matrice dei risultati: la somma deve essere 1");
+  const pv = B.probVera([{ m, k: "O2.5", p: 0.5 }, { m, k: "GG", p: 0.55 }]);
+  ok(pv.diversa && pv.p > pv.ind && pv.collegate.size === 2, "schedina onesta: Over 2,5 + Goal collegati");
+  const pv2 = B.probVera([{ m, k: "1", p: 0.45 }, { m: { id: "t2", xg: [1, 1] }, k: "X", p: 0.3 }]);
+  ok(!pv2.diversa && Math.abs(pv2.p - 0.135) < 1e-9, "schedina onesta: partite diverse restano indipendenti");
+  const pv3 = B.probVera([{ m, k: "1", p: 0.45 }, { m, k: "2", p: 0.3 }]);
+  ok(pv3.p < 1e-6, "schedina onesta: 1 e 2 sulla stessa partita sono impossibili insieme");
+}
+// allenatore personale: riconosce la rincorsa delle perdite
+{
+  const AL = await import(pathToFileURL(outA).href);
+  const t0 = Date.now() - 5 * 86400e3;
+  const g = (ok) => ({ id: "x", k: "1", q: 2, p: 0.5, ok });
+  const diario = [
+    { id: "a", t: t0, imp: 5, q: 2, legs: [g(false)] }, { id: "b", t: t0 + 3600e3, imp: 20, q: 2, legs: [g(false)] },
+    { id: "c", t: t0 + 86400e3, imp: 5, q: 2, legs: [g(true)] }, { id: "d", t: t0 + 2 * 86400e3, imp: 5, q: 2, legs: [g(true)] }, { id: "e", t: t0 + 3 * 86400e3, imp: 5, q: 2, legs: [g(false)] }];
+  const A = AL.analizza(diario, {});
+  ok(A.chiuse.length === 5 && A.rincorse === 1, "allenatore: una rincorsa delle perdite (" + A.rincorse + ")");
+  ok(A.G.length === 1 && A.G[0].n === 5 && A.G[0].prese === 2, "allenatore: conteggio per mercato");
+}
 console.log(`${prove} controlli, ${errori} errori`);
 fs.rmSync(tmp, { recursive: true, force: true });
 process.exit(errori ? 1 : 0);

@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { immagineSchedina, mercatoBookmaker } from "./condividi.js";
 import { Citazione, citazioneSchedina, citazioneDiario } from "./citazioni.js";
-import { esitoGamba, statoGiocata, C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, buildForzata, ESITI_SCHEDINA, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
+import { probVera, esitoGamba, statoGiocata, C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, buildForzata, ESITI_SCHEDINA, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
 import { GiocoResponsabile } from "./extra.js";
 import { StoricoCard } from "./partita.js";
 import { IACard } from "./ia.js";
+import { Allenatore } from "./allenatore.js";
 
     /* ---- schedina ---- */
     function SlipView() {
@@ -28,16 +29,16 @@ import { IACard } from "./ia.js";
         .filter((o) => o.k !== weak.k && o.p >= weak.p + 0.1 && o.q >= 1.15 && evalCode(o.k, 1, 0, 0, 0) !== null)
         .sort((a, b) => b.sc - a.sc)[0] : null;
       if (shield && weak && alt) legs = legs.map((l) => (l === weak ? { m: l.m, ...alt, shielded: true } : l));
-      const tot = legs.reduce((a, l) => a * l.q, 1), prob = legs.reduce((a, l) => a * l.p, 1);
+      const tot = legs.reduce((a, l) => a * l.q, 1), prob = probVera(legs).p;
       const done = legs.filter((l) => hit(l.m, l.k) !== null), won = done.filter((l) => hit(l.m, l.k));
       const mine = mySlip.map((x) => ({ ...x, m: byId[x.id] })).filter((x) => x.m).map((x) => ({ ...x, ...options(x.m).find((o) => o.k === norm(x.k)) }));
-      const mTot = mine.reduce((a, l) => a * (l.q || 1), 1), mProb = mine.reduce((a, l) => a * (l.p || 1), 1);
+      const mTot = mine.reduce((a, l) => a * (l.q || 1), 1), PV = probVera(mine), mProb = PV.p;
       // testo da copiare: in ordine di orario, con il mercato scritto come sui siti dei bookmaker
       const text = (ls, wa) => (wa ? "*Schedina AuraPitch*\n" : "") + ls.slice().sort((a, b) => String(a.m.ko).localeCompare(String(b.m.ko))).map((l) => { const [mer, es] = mercatoBookmaker(l.m, l.k);
         const ora = new Date(l.m.ko).toLocaleString("it-IT", { weekday: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
         return (wa ? "- " : "") + `${ora} ${l.m.h} - ${l.m.a} | ${mer}: ${wa ? "*" + es + "*" : es} @ ${odd(l.q)}`; }).join("\n") + `\nQuota totale ${odd(ls.reduce((a, l) => a * l.q, 1))}`;
       const LegRow = ({ l, onDel }) => { const h = hit(l.m, l.k); return html`<div className=${"flex items-center gap-2 py-2 border-t first:border-t-0 " + C.bd}>
-        <div className="flex-1 min-w-0"><div className=${"text-sm truncate " + C.tx}>${l.m.h} - ${l.m.a}</div><div className=${"text-[11px] " + C.mu}>${lg(l.m.lg).name} - IA ${pct(l.p)}%${l.stima ? " - quota stimata" : ""}${l.shielded ? " - protetta" : ""}</div></div>
+        <div className="flex-1 min-w-0"><div className=${"text-sm truncate " + C.tx}>${l.m.h} - ${l.m.a}</div><div className=${"text-[11px] " + C.mu}>${lg(l.m.lg).name} - IA ${pct(l.p)}%${l.stima ? " - quota stimata" : ""}${l.shielded ? " - protetta" : ""}${PV && PV.collegate && PV.collegate.has(l) ? " - collegata" : ""}</div></div>
         <span className=${"text-sm font-semibold text-right max-w-[45%] leading-tight " + C.tx}>${mLabel(l.m, l.k, true)}</span><span className=${"text-sm tabular-nums w-11 text-right " + C.mu}>${odd(l.q)}</span>
         ${h === null ? null : h ? html`<${Ic.CheckCircle2} size=${17} className="text-emerald-500" />` : html`<${Ic.XCircle} size=${17} className="text-rose-500" />`}
         ${onDel && html`<button aria-label="Rimuovi" onClick=${onDel} className=${C.mu}><${Ic.Trash2} size=${15} /></button>`}</div>`; };
@@ -84,12 +85,14 @@ import { IACard } from "./ia.js";
         ${mine.length > 0 && html`<div className=${C.card + " p-4 space-y-2"}>
           <div className="flex justify-between text-sm"><span className=${C.mu}>Quota totale</span><b className=${"tabular-nums " + C.tx}>${odd(mTot)}</b></div>
           <div className="flex justify-between text-sm"><span className=${C.mu}>Probabilità secondo l'IA</span><b className=${"tabular-nums " + C.tx}>${(mProb * 100).toFixed(1).replace(".", ",")}%</b></div>
+          ${PV.diversa && html`<div className=${"text-[12px] rounded-xl border p-2.5 " + (PV.p < PV.ind ? TONE.warn : TONE.info)}><b>Schedina onesta:</b> ${PV.collegate.size} giocate sono sulla stessa partita e dipendono l'una dall'altra.
+            Moltiplicando le probabilità sembrerebbe il ${(PV.ind * 100).toFixed(1).replace(".", ",")}%, quella vera è il <b>${(PV.p * 100).toFixed(1).replace(".", ",")}%</b>.${PV.p > PV.ind ? " Qui giocano a tuo favore: ma la quota del bookmaker di solito ne tiene già conto." : ""}</div>`}
           <div className="grid grid-cols-3 gap-2 pt-1">
             <button onClick=${() => doCopy(text(mine, false))} className=${"py-2 rounded-xl border text-xs font-semibold " + TONE.good}>Copia</button>
             <button onClick=${() => doCopy(text(mine, true))} className=${"py-2 rounded-xl border text-xs font-semibold " + TONE.good}>WhatsApp</button>
             <button onClick=${() => setMySlip([])} className=${"py-2 rounded-xl text-xs font-semibold " + C.ch + " " + C.tx}>Svuota</button></div>
           <${Gioca} legs=${mine.filter((l) => l.q)} /></div>`}<//>`,
-        html`<${React.Fragment}><${Diario} /><${GiocoResponsabile} compatto=${true} /><//>`,
+        html`<${React.Fragment}><${Diario} /><${Allenatore} /><${GiocoResponsabile} compatto=${true} /><//>`,
         html`<${React.Fragment}><${IACard} /><${StoricoCard} /><//>`]}<//></div>`;
     }
 

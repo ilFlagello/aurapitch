@@ -1046,6 +1046,13 @@ def applica_fattori(d):
                 cm = "MARC:" + x["n"]
                 marc_l.append([cm, x["p"], round(max(1.01, 0.88 / x["p"]), 2), 0])
                 marc_info[cm] = {"lato": lato, "g": x["g"], "pres": x["pres"], "tit": x["tit"]}
+            # scommesse sui giocatori: ammonito (gialli attesi della squadra, gia corretti per arbitro e avversario) e assist
+            k_sq = (((m.get("cart") or {}).get("K") or {}).get("squadre") or [None, None])[lato]
+            for pre, lista in (("AMM:", M.ammoniti(es.get("rosa") or [], k_sq, assenti)), ("ASS:", M.assist(es.get("rosa") or [], lh if lato == 0 else la, assenti))):
+                for x in lista:
+                    cm = pre + x["n"]
+                    marc_l.append([cm, x["p"], round(max(1.01, 0.88 / x["p"]), 2), 0])
+                    marc_info[cm] = {"lato": lato, "v": x["v"], "pres": x["pres"], "tit": x["tit"]}
         extra = extra_di(m)
         m["markets"] = righe_mercati(mercati) + extra + marc_l
         m["marcatori"] = marc_info
@@ -1257,7 +1264,7 @@ def scrivi_stato(d):
         righe.append({"id": m["id"], "st": m.get("st"), "ko": m.get("ko"), "date": m.get("date"), "g": m.get("g"), "h": m["h"], "a": m["a"],
                       "p": m.get("p"), "mk": m.get("mk"),
                       "tip": {"consiglio": {"l": t.get("l"), "p": t.get("p")}} if t else None,
-                      "marcatori": {k: {"lato": v["lato"], "g": v["g"]} for k, v in (m.get("marcatori") or {}).items() if v.get("g", 0) >= 2}})
+                      "marcatori": {k: {"lato": v["lato"], "g": v["g"]} for k, v in (m.get("marcatori") or {}).items() if k.startswith("MARC:") and v.get("g", 0) >= 2}})
     with open(STATO_OUT, "w", encoding="utf-8") as f:
         json.dump({"matches": righe}, f, ensure_ascii=False, separators=(",", ":"))
 

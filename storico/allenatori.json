@@ -17443,18 +17443,6 @@
 }
 ]
 },
-"Lecco": {
-"wikidata": "Q944876",
-"nome": "Calcio Lecco 1912",
-"allenatori": [
-{
-"chi": "Massimiliano Allegri",
-"qid": "Q354529",
-"da": "2007-07-01",
-"a": "2007-07-17"
-}
-]
-},
 "Mantova": {
 "wikidata": "Q430993",
 "nome": "Mantova 1911",
@@ -18598,6 +18586,18 @@
 "qid": "Q1336865",
 "da": "2026-07-07",
 "a": null
+}
+]
+},
+"Lecco": {
+"wikidata": "Q944876",
+"nome": "Calcio Lecco 1912",
+"allenatori": [
+{
+"chi": "Massimiliano Allegri",
+"qid": "Q354529",
+"da": "2007-07-01",
+"a": "2007-07-17"
 }
 ]
 },

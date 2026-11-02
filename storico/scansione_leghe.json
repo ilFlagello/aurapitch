@@ -1,5 +1,5 @@
 {
- "quando": "2026-10-29T07:04+00:00",
+ "quando": "2026-11-02T11:52+00:00",
  "giorni": 10,
  "esaminate": 243,
  "errori": [
@@ -20,11 +20,11 @@
  ],
  "competizioni": [
   {
-   "slug": "arg.2",
-   "nome": "Argentine Nacional B",
-   "partite": 18,
-   "con_quote": 18,
-   "gia_in_app": false
+   "slug": "eng.fa",
+   "nome": "English FA Cup",
+   "partite": 40,
+   "con_quote": 21,
+   "gia_in_app": true
   },
   {
    "slug": "uefa.champions",
@@ -41,365 +41,351 @@
    "gia_in_app": true
   },
   {
-   "slug": "arg.1",
-   "nome": "Argentine Liga Profesional de Fútbol",
-   "partite": 15,
-   "con_quote": 15,
+   "slug": "uefa.europa.conf",
+   "nome": "UEFA Conference League",
+   "partite": 18,
+   "con_quote": 16,
    "gia_in_app": true
   },
   {
-   "slug": "eng.1",
-   "nome": "English Premier League",
+   "slug": "usa.1",
+   "nome": "MLS",
    "partite": 15,
-   "con_quote": 15,
-   "gia_in_app": true
-  },
-  {
-   "slug": "esp.1",
-   "nome": "Spanish LALIGA",
-   "partite": 15,
-   "con_quote": 15,
-   "gia_in_app": true
-  },
-  {
-   "slug": "eng.3",
-   "nome": "English League One",
-   "partite": 15,
-   "con_quote": 13,
-   "gia_in_app": false
-  },
-  {
-   "slug": "ger.1",
-   "nome": "German Bundesliga",
-   "partite": 15,
-   "con_quote": 13,
+   "con_quote": 14,
    "gia_in_app": true
   },
   {
    "slug": "eng.2",
    "nome": "English League Championship",
-   "partite": 36,
+   "partite": 24,
    "con_quote": 12,
    "gia_in_app": true
   },
   {
    "slug": "ita.1",
    "nome": "Italian Serie A",
-   "partite": 17,
-   "con_quote": 12,
-   "gia_in_app": true
-  },
-  {
-   "slug": "eng.5",
-   "nome": "English National League",
-   "partite": 13,
-   "con_quote": 12,
-   "gia_in_app": false
-  },
-  {
-   "slug": "fra.1",
-   "nome": "French Ligue 1",
    "partite": 12,
    "con_quote": 12,
    "gia_in_app": true
   },
   {
-   "slug": "eng.4",
-   "nome": "English League Two",
-   "partite": 13,
+   "slug": "eng.1",
+   "nome": "English Premier League",
+   "partite": 11,
    "con_quote": 11,
-   "gia_in_app": false
+   "gia_in_app": true
   },
   {
-   "slug": "ned.2",
-   "nome": "Dutch Keuken Kampioen Divisie",
-   "partite": 18,
-   "con_quote": 10,
-   "gia_in_app": false
+   "slug": "esp.1",
+   "nome": "Spanish LALIGA",
+   "partite": 11,
+   "con_quote": 11,
+   "gia_in_app": true
   },
   {
-   "slug": "bra.2",
-   "nome": "Brazilian Serie B",
-   "partite": 17,
-   "con_quote": 10,
-   "gia_in_app": false
-  },
-  {
-   "slug": "esp.2",
-   "nome": "Spanish LALIGA 2",
-   "partite": 17,
+   "slug": "fra.1",
+   "nome": "French Ligue 1",
+   "partite": 10,
    "con_quote": 10,
    "gia_in_app": true
   },
   {
    "slug": "ita.2",
    "nome": "Italian Serie B",
-   "partite": 17,
+   "partite": 10,
    "con_quote": 10,
    "gia_in_app": true
   },
   {
    "slug": "jpn.1",
    "nome": "Japanese J.League",
-   "partite": 16,
+   "partite": 10,
    "con_quote": 10,
+   "gia_in_app": true
+  },
+  {
+   "slug": "bra.1",
+   "nome": "Brazilian Serie A",
+   "partite": 10,
+   "con_quote": 9,
    "gia_in_app": true
   },
   {
    "slug": "ksa.1",
    "nome": "Saudi Pro League",
-   "partite": 18,
-   "con_quote": 9,
-   "gia_in_app": true
-  },
-  {
-   "slug": "ger.2",
-   "nome": "German 2. Bundesliga",
-   "partite": 15,
+   "partite": 9,
    "con_quote": 9,
    "gia_in_app": true
   },
   {
    "slug": "ned.1",
    "nome": "Dutch Eredivisie",
-   "partite": 13,
+   "partite": 9,
    "con_quote": 9,
-   "gia_in_app": true
-  },
-  {
-   "slug": "por.1",
-   "nome": "Portuguese Primeira Liga",
-   "partite": 13,
-   "con_quote": 9,
-   "gia_in_app": true
-  },
-  {
-   "slug": "fra.2",
-   "nome": "French Ligue 2",
-   "partite": 18,
-   "con_quote": 8,
-   "gia_in_app": true
-  },
-  {
-   "slug": "mex.2",
-   "nome": "Mexican Liga de Expansión MX",
-   "partite": 16,
-   "con_quote": 8,
-   "gia_in_app": false
-  },
-  {
-   "slug": "nor.1",
-   "nome": "Norwegian Eliteserien",
-   "partite": 10,
-   "con_quote": 8,
-   "gia_in_app": true
-  },
-  {
-   "slug": "chi.1",
-   "nome": "Chilean Primera División",
-   "partite": 8,
-   "con_quote": 8,
-   "gia_in_app": true
-  },
-  {
-   "slug": "usa.usl.1",
-   "nome": "USL Championship",
-   "partite": 8,
-   "con_quote": 8,
-   "gia_in_app": false
-  },
-  {
-   "slug": "col.1",
-   "nome": "Colombian Primera A",
-   "partite": 18,
-   "con_quote": 7,
-   "gia_in_app": true
-  },
-  {
-   "slug": "mex.1",
-   "nome": "Mexican Liga BBVA MX",
-   "partite": 16,
-   "con_quote": 7,
    "gia_in_app": true
   },
   {
    "slug": "bel.1",
    "nome": "Belgian Pro League",
+   "partite": 10,
+   "con_quote": 8,
+   "gia_in_app": true
+  },
+  {
+   "slug": "ger.1",
+   "nome": "German Bundesliga",
+   "partite": 9,
+   "con_quote": 8,
+   "gia_in_app": true
+  },
+  {
+   "slug": "ger.2",
+   "nome": "German 2. Bundesliga",
+   "partite": 9,
+   "con_quote": 8,
+   "gia_in_app": true
+  },
+  {
+   "slug": "chn.1",
+   "nome": "Chinese Super League",
+   "partite": 8,
+   "con_quote": 8,
+   "gia_in_app": false
+  },
+  {
+   "slug": "esp.2",
+   "nome": "Spanish LALIGA 2",
    "partite": 15,
    "con_quote": 7,
    "gia_in_app": true
   },
   {
-   "slug": "tur.1",
-   "nome": "Turkish Super Lig",
-   "partite": 14,
+   "slug": "bra.2",
+   "nome": "Brazilian Serie B",
+   "partite": 13,
+   "con_quote": 7,
+   "gia_in_app": true
+  },
+  {
+   "slug": "fra.2",
+   "nome": "French Ligue 2",
+   "partite": 11,
    "con_quote": 7,
    "gia_in_app": true
   },
   {
    "slug": "eng.w.1",
    "nome": "English Women's Super League",
-   "partite": 9,
-   "con_quote": 7,
-   "gia_in_app": false
-  },
-  {
-   "slug": "gre.1",
-   "nome": "Greek Super League",
-   "partite": 9,
+   "partite": 7,
    "con_quote": 7,
    "gia_in_app": true
   },
   {
-   "slug": "uru.1",
-   "nome": "Liga AUF Uruguaya",
-   "partite": 8,
-   "con_quote": 7,
-   "gia_in_app": true
-  },
-  {
-   "slug": "afc.cup",
-   "nome": "AFC Champions League Two",
-   "partite": 22,
+   "slug": "col.1",
+   "nome": "Colombian Primera A",
+   "partite": 26,
    "con_quote": 6,
-   "gia_in_app": false
+   "gia_in_app": true
   },
   {
-   "slug": "swe.1",
-   "nome": "Swedish Allsvenskan",
-   "partite": 14,
+   "slug": "afc.champions",
+   "nome": "AFC Champions League Elite",
+   "partite": 16,
+   "con_quote": 6,
+   "gia_in_app": true
+  },
+  {
+   "slug": "per.1",
+   "nome": "Peruvian Liga 1",
+   "partite": 15,
+   "con_quote": 6,
+   "gia_in_app": true
+  },
+  {
+   "slug": "chi.1",
+   "nome": "Chilean Primera División",
+   "partite": 10,
+   "con_quote": 6,
+   "gia_in_app": true
+  },
+  {
+   "slug": "tur.1",
+   "nome": "Turkish Super Lig",
+   "partite": 10,
+   "con_quote": 6,
+   "gia_in_app": true
+  },
+  {
+   "slug": "mex.1",
+   "nome": "Mexican Liga BBVA MX",
+   "partite": 9,
+   "con_quote": 6,
+   "gia_in_app": true
+  },
+  {
+   "slug": "nor.1",
+   "nome": "Norwegian Eliteserien",
+   "partite": 8,
    "con_quote": 6,
    "gia_in_app": true
   },
   {
    "slug": "aus.1",
    "nome": "Australian A-League Men",
-   "partite": 11,
+   "partite": 6,
    "con_quote": 6,
    "gia_in_app": true
   },
   {
    "slug": "aut.1",
    "nome": "Austrian Bundesliga",
-   "partite": 9,
-   "con_quote": 6,
-   "gia_in_app": true
-  },
-  {
-   "slug": "par.1",
-   "nome": "Paraguayan Primera División",
    "partite": 6,
    "con_quote": 6,
    "gia_in_app": true
   },
   {
-   "slug": "bra.1",
-   "nome": "Brazilian Serie A",
-   "partite": 15,
+   "slug": "ned.2",
+   "nome": "Dutch Keuken Kampioen Divisie",
+   "partite": 14,
    "con_quote": 5,
    "gia_in_app": true
   },
   {
-   "slug": "sco.2",
-   "nome": "Scottish Championship",
-   "partite": 10,
+   "slug": "por.1",
+   "nome": "Portuguese Primeira Liga",
+   "partite": 11,
    "con_quote": 5,
-   "gia_in_app": false
+   "gia_in_app": true
   },
   {
-   "slug": "aus.w.1",
-   "nome": "Australian A-League Women",
+   "slug": "swe.1",
+   "nome": "Swedish Allsvenskan",
+   "partite": 11,
+   "con_quote": 5,
+   "gia_in_app": true
+  },
+  {
+   "slug": "gre.1",
+   "nome": "Greek Super League",
    "partite": 9,
    "con_quote": 5,
-   "gia_in_app": false
+   "gia_in_app": true
   },
   {
    "slug": "den.1",
    "nome": "Danish Superliga",
-   "partite": 8,
+   "partite": 7,
    "con_quote": 5,
    "gia_in_app": true
   },
   {
-   "slug": "ecu.1",
-   "nome": "LigaPro Ecuador",
-   "partite": 8,
+   "slug": "sco.1",
+   "nome": "Scottish Premiership",
+   "partite": 6,
    "con_quote": 5,
    "gia_in_app": true
   },
   {
-   "slug": "ned.cup",
-   "nome": "Dutch KNVB Beker",
-   "partite": 8,
+   "slug": "arg.3",
+   "nome": "Argentine Primera B",
+   "partite": 5,
    "con_quote": 5,
    "gia_in_app": false
   },
   {
-   "slug": "esp.copa_del_rey",
-   "nome": "Spanish Copa del Rey",
-   "partite": 34,
+   "slug": "sco.2",
+   "nome": "Scottish Championship",
+   "partite": 5,
+   "con_quote": 5,
+   "gia_in_app": true
+  },
+  {
+   "slug": "arg.1",
+   "nome": "Argentine Liga Profesional de Fútbol",
+   "partite": 19,
    "con_quote": 4,
    "gia_in_app": true
   },
   {
-   "slug": "per.1",
-   "nome": "Peruvian Liga 1",
-   "partite": 18,
+   "slug": "par.1",
+   "nome": "Paraguayan Primera División",
+   "partite": 12,
    "con_quote": 4,
    "gia_in_app": true
   },
   {
    "slug": "crc.1",
    "nome": "Costa Rican Primera Division",
-   "partite": 12,
+   "partite": 10,
    "con_quote": 4,
    "gia_in_app": false
   },
   {
-   "slug": "ind.1",
-   "nome": "Indian Super League",
-   "partite": 10,
-   "con_quote": 3,
-   "gia_in_app": false
-  },
-  {
-   "slug": "sco.1",
-   "nome": "Scottish Premiership",
-   "partite": 8,
+   "slug": "arg.2",
+   "nome": "Argentine Nacional B",
+   "partite": 3,
    "con_quote": 3,
    "gia_in_app": true
   },
   {
-   "slug": "uefa.wchampions",
-   "nome": "UEFA Women's Champions League",
-   "partite": 4,
+   "slug": "eng.3",
+   "nome": "English League One",
+   "partite": 3,
    "con_quote": 3,
+   "gia_in_app": true
+  },
+  {
+   "slug": "bra.copa_do_brazil",
+   "nome": "Copa do Brasil",
+   "partite": 2,
+   "con_quote": 2,
+   "gia_in_app": true
+  },
+  {
+   "slug": "ecu.1",
+   "nome": "LigaPro Ecuador",
+   "partite": 10,
+   "con_quote": 1,
+   "gia_in_app": true
+  },
+  {
+   "slug": "mex.w.1",
+   "nome": "Mexican Liga BBVA MX Femenil",
+   "partite": 10,
+   "con_quote": 1,
+   "gia_in_app": false
+  },
+  {
+   "slug": "bol.1",
+   "nome": "Bolivian Liga Profesional",
+   "partite": 9,
+   "con_quote": 1,
    "gia_in_app": false
   },
   {
    "slug": "gua.1",
    "nome": "Guatemalan Liga Nacional",
-   "partite": 13,
-   "con_quote": 2,
+   "partite": 8,
+   "con_quote": 1,
    "gia_in_app": false
   },
   {
-   "slug": "bra.copa_do_brazil",
-   "nome": "Copa do Brasil",
-   "partite": 3,
-   "con_quote": 2,
+   "slug": "ven.1",
+   "nome": "Venezuelan Primera División",
+   "partite": 8,
+   "con_quote": 1,
    "gia_in_app": false
   },
   {
-   "slug": "sco.cis",
-   "nome": "Scottish League Cup",
-   "partite": 2,
-   "con_quote": 2,
-   "gia_in_app": false
+   "slug": "eng.4",
+   "nome": "English League Two",
+   "partite": 1,
+   "con_quote": 1,
+   "gia_in_app": true
   },
   {
-   "slug": "eng.league_cup",
-   "nome": "English Carabao Cup",
+   "slug": "uru.1",
+   "nome": "Liga AUF Uruguaya",
    "partite": 1,
    "con_quote": 1,
    "gia_in_app": true
@@ -407,48 +393,27 @@
   {
    "slug": "usa.ncaa.w.1",
    "nome": "NCAA Women's Soccer",
-   "partite": 300,
+   "partite": 192,
    "con_quote": 0,
    "gia_in_app": false
   },
   {
    "slug": "usa.ncaa.m.1",
    "nome": "NCAA Men's Soccer",
-   "partite": 195,
+   "partite": 140,
    "con_quote": 0,
    "gia_in_app": false
   },
   {
-   "slug": "eng.fa",
-   "nome": "English FA Cup",
-   "partite": 35,
-   "con_quote": 0,
-   "gia_in_app": true
-  },
-  {
-   "slug": "usa.1",
-   "nome": "MLS",
-   "partite": 30,
-   "con_quote": 0,
-   "gia_in_app": true
-  },
-  {
-   "slug": "mex.w.1",
-   "nome": "Mexican Liga BBVA MX Femenil",
-   "partite": 18,
+   "slug": "eng.trophy",
+   "nome": "English EFL Trophy",
+   "partite": 23,
    "con_quote": 0,
    "gia_in_app": false
   },
   {
-   "slug": "uefa.europa.conf",
-   "nome": "UEFA Conference League",
-   "partite": 18,
-   "con_quote": 0,
-   "gia_in_app": true
-  },
-  {
-   "slug": "afc.champions",
-   "nome": "AFC Champions League Elite",
+   "slug": "afc.cup",
+   "nome": "AFC Champions League Two",
    "partite": 16,
    "con_quote": 0,
    "gia_in_app": true
@@ -461,86 +426,44 @@
    "gia_in_app": false
   },
   {
+   "slug": "esp.copa_del_rey",
+   "nome": "Spanish Copa del Rey",
+   "partite": 13,
+   "con_quote": 0,
+   "gia_in_app": true
+  },
+  {
    "slug": "hon.1",
    "nome": "Honduran Liga Nacional",
-   "partite": 15,
-   "con_quote": 0,
-   "gia_in_app": false
-  },
-  {
-   "slug": "rsa.1",
-   "nome": "South African Premiership",
-   "partite": 15,
-   "con_quote": 0,
-   "gia_in_app": false
-  },
-  {
-   "slug": "bol.1",
-   "nome": "Bolivian Liga Profesional",
    "partite": 12,
-   "con_quote": 0,
-   "gia_in_app": false
-  },
-  {
-   "slug": "fifa.wworld.u17",
-   "nome": "FIFA Under-17 Women's World Cup",
-   "partite": 12,
-   "con_quote": 0,
-   "gia_in_app": false
-  },
-  {
-   "slug": "fra.w.1",
-   "nome": "French Première Ligue",
-   "partite": 12,
-   "con_quote": 0,
-   "gia_in_app": false
-  },
-  {
-   "slug": "rus.1",
-   "nome": "Russian Premier League",
-   "partite": 12,
-   "con_quote": 0,
-   "gia_in_app": false
-  },
-  {
-   "slug": "arg.3",
-   "nome": "Argentine Primera B",
-   "partite": 11,
-   "con_quote": 0,
-   "gia_in_app": false
-  },
-  {
-   "slug": "esp.w.1",
-   "nome": "Spanish Liga F",
-   "partite": 11,
    "con_quote": 0,
    "gia_in_app": false
   },
   {
    "slug": "slv.1",
    "nome": "Salvadoran Primera Division",
-   "partite": 11,
+   "partite": 12,
    "con_quote": 0,
    "gia_in_app": false
   },
   {
-   "slug": "ind.2",
-   "nome": "Indian I-League",
+   "slug": "mex.2",
+   "nome": "Mexican Liga de Expansión MX",
    "partite": 10,
    "con_quote": 0,
-   "gia_in_app": false
+   "gia_in_app": true
   },
   {
-   "slug": "ven.1",
-   "nome": "Venezuelan Primera División",
-   "partite": 10,
+   "slug": "esp.w.1",
+   "nome": "Spanish Liga F",
+   "partite": 9,
    "con_quote": 0,
    "gia_in_app": false
   },
   {
-   "slug": "eng.w.fa",
-   "nome": "English Women's FA Cup",
-   "partite": 8,
+   "slug": "rus.1",
+   "nome": "Russian Premier League",
+   "partite": 9,
    "con_quote": 0,
    "gia_in_app": false
   },
@@ -552,9 +475,37 @@
    "gia_in_app": false
   },
   {
-   "slug": "usa.nwsl",
-   "nome": "NWSL",
+   "slug": "uefa.w.europa",
+   "nome": "UEFA Women's Europa Cup",
    "partite": 8,
+   "con_quote": 0,
+   "gia_in_app": false
+  },
+  {
+   "slug": "uefa.wchampions",
+   "nome": "UEFA Women's Champions League",
+   "partite": 8,
+   "con_quote": 0,
+   "gia_in_app": true
+  },
+  {
+   "slug": "rsa.1",
+   "nome": "South African Premiership",
+   "partite": 7,
+   "con_quote": 0,
+   "gia_in_app": false
+  },
+  {
+   "slug": "afc.saff.championship",
+   "nome": "SAFF Championship",
+   "partite": 6,
+   "con_quote": 0,
+   "gia_in_app": false
+  },
+  {
+   "slug": "bol.copa",
+   "nome": "Copa Bolivia",
+   "partite": 6,
    "con_quote": 0,
    "gia_in_app": false
   },
@@ -566,51 +517,44 @@
    "gia_in_app": false
   },
   {
-   "slug": "usa.w.usl.1",
-   "nome": "USL Super League",
+   "slug": "fra.w.1",
+   "nome": "French Première Ligue",
    "partite": 6,
    "con_quote": 0,
    "gia_in_app": false
   },
   {
-   "slug": "ned.w.1",
-   "nome": "Dutch Vrouwen Eredivisie",
+   "slug": "ind.1",
+   "nome": "Indian Super League",
    "partite": 5,
    "con_quote": 0,
    "gia_in_app": false
   },
   {
-   "slug": "bol.copa",
-   "nome": "Copa Bolivia",
-   "partite": 4,
+   "slug": "ind.2",
+   "nome": "Indian Football League",
+   "partite": 5,
    "con_quote": 0,
    "gia_in_app": false
   },
   {
-   "slug": "eng.trophy",
-   "nome": "English EFL Trophy",
-   "partite": 4,
+   "slug": "usa.w.usl.1",
+   "nome": "USL Super League",
+   "partite": 5,
    "con_quote": 0,
    "gia_in_app": false
   },
   {
-   "slug": "sco.tennents",
-   "nome": "Scottish Cup",
+   "slug": "aus.w.1",
+   "nome": "Australian A-League Women",
    "partite": 4,
    "con_quote": 0,
-   "gia_in_app": false
+   "gia_in_app": true
   },
   {
-   "slug": "usa.usl.l1",
-   "nome": "USL League One",
+   "slug": "fifa.wworld.u17",
+   "nome": "FIFA Under-17 Women's World Cup",
    "partite": 4,
-   "con_quote": 0,
-   "gia_in_app": false
-  },
-  {
-   "slug": "can.w.nsl",
-   "nome": "Northern Super League",
-   "partite": 3,
    "con_quote": 0,
    "gia_in_app": false
   },
@@ -622,25 +566,39 @@
    "gia_in_app": false
   },
   {
-   "slug": "uefa.w.europa",
-   "nome": "UEFA Women's Europa Cup",
+   "slug": "can.w.nsl",
+   "nome": "Northern Super League",
    "partite": 2,
    "con_quote": 0,
    "gia_in_app": false
   },
   {
-   "slug": "col.copa",
-   "nome": "Copa Colombia",
+   "slug": "club.friendly",
+   "nome": "Club Friendly",
    "partite": 1,
    "con_quote": 0,
    "gia_in_app": false
   },
   {
-   "slug": "concacaf.central.american.cup",
-   "nome": "Concacaf Central American Cup",
+   "slug": "eng.5",
+   "nome": "English National League",
+   "partite": 1,
+   "con_quote": 0,
+   "gia_in_app": true
+  },
+  {
+   "slug": "eng.w.fa",
+   "nome": "English Women's FA Cup",
    "partite": 1,
    "con_quote": 0,
    "gia_in_app": false
+  },
+  {
+   "slug": "fifa.friendly",
+   "nome": "International Friendly",
+   "partite": 1,
+   "con_quote": 0,
+   "gia_in_app": true
   }
  ]
 }

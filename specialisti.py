@@ -16,7 +16,14 @@ SPECIALISTI = [
     ("casa_trasferta", "Rendimento in casa e in trasferta", "1x2"),
     ("tendenza_gol", "Tendenza gol delle due squadre", "ou"),
     ("scontri_diretti", "Scontri diretti (ultimi 6, negli ultimi 6 anni)", "1x2"),
+    # modello statistico indipendente (non guarda le quote): calcolato dal Motore qui sotto su tutti i risultati
+    ("elo", "Punteggio di forza Elo (dai soli risultati)", "1x2"),
+    ("forza_esito", "Forza d'attacco e difesa: chi segna di piu", "1x2"),
+    ("forza_gol", "Forza d'attacco e difesa: quanti gol", "ou"),
+    ("fortuna", "Fortuna o merito: gol rispetto ai tiri in porta", "1x2"),
+    ("tiri", "Dominio nei tiri in porta", "1x2"),
 ]
+N_MOTORE = 5
 NOMI = [s[0] for s in SPECIALISTI]
 PRINCIPALI = ("I1", "I2", "E0", "E1", "SP1", "D1", "F1")
 
@@ -38,7 +45,7 @@ def _giorni(a, b):
     return d.days if hasattr(d, "days") else None
 
 
-def segnali(storia_h, storia_a, t0, diretti=None):
+def segnali(storia_h, storia_a, t0, diretti=None, motore=None):
     """Lista di valori (uno per specialista, None se mancano i dati) per la partita casa-trasferta che inizia a t0.
     diretti = precedenti tra le due squadre visti dalla squadra di casa di oggi: [{"t", "gf", "gs"}, ...] (in casa e fuori)."""
     h, a = [z for z in storia_h if z["t"] < t0], [z for z in storia_a if z["t"] < t0]
@@ -61,7 +68,51 @@ def segnali(storia_h, storia_a, t0, diretti=None):
     # scontri diretti: punti medi della squadra di casa di oggi negli ultimi 6 precedenti (almeno 3, al massimo 6 anni fa)
     d6 = [z for z in (diretti or []) if z["t"] < t0 and _giorni(t0, z["t"]) is not None and _giorni(t0, z["t"]) <= 6 * 366][-6:]
     out.append((_media([_punti(z) for z in d6]) - 1.35) / 3 if len(d6) >= 3 else None)
+    out += list(motore) if motore else [None] * N_MOTORE
     return [None if v is None else round(v, 4) for v in out]
+
+
+class Motore:
+    """Modello statistico indipendente dalle quote. Legge i risultati in ordine di data e tiene, per ogni squadra:
+    - punteggio Elo (parte da 1500, vantaggio casa 60, K 20);
+    - forza d'attacco e di difesa (medie mobili dei gol fatti e subiti rispetto alla media del campionato);
+    - fortuna (gol meno 0,31 x tiri in porta) e dominio nei tiri in porta (fatti meno subiti), in media mobile.
+    caratteristiche() va chiamata PRIMA di aggiorna() per la stessa partita: cosi usa solo il passato."""
+    A = 0.12  # peso dell'ultima partita nelle medie mobili
+
+    def __init__(self):
+        self.elo, self.att, self.dif, self.n, self.fort, self.tiri, self.lega = {}, {}, {}, {}, {}, {}, {}
+
+    def caratteristiche(self, h, a, lg):
+        ph, pa = piega(h), piega(a)
+        if self.n.get(ph, 0) < 5 or self.n.get(pa, 0) < 5:
+            return [None] * N_MOTORE
+        eh, ea = self.elo.get(ph, 1500), self.elo.get(pa, 1500)
+        mg = self.lega.get(lg, 1.35)
+        xh = mg * 1.12 * (self.att[ph] / mg) * (self.dif[pa] / mg)
+        xa = mg * 0.88 * (self.att[pa] / mg) * (self.dif[ph] / mg)
+        f = [(eh + 60 - ea) / 400, math.log(max(0.05, xh) / max(0.05, xa)) / 2, (xh + xa - 2 * mg) / 2]
+        f.append((self.fort[ph] - self.fort[pa]) / 2 if ph in self.fort and pa in self.fort else None)
+        f.append((self.tiri[ph] - self.tiri[pa]) / 5 if ph in self.tiri and pa in self.tiri else None)
+        return f
+
+    def aggiorna(self, h, a, lg, gh, ga, sh=None, sa=None):
+        ph, pa, A = piega(h), piega(a), self.A
+        mg = self.lega.get(lg, 1.35)
+        self.lega[lg] = mg + 0.02 * ((gh + ga) / 2 - mg)
+        eh, ea = self.elo.get(ph, 1500), self.elo.get(pa, 1500)
+        att = 1 / (1 + 10 ** ((ea - eh - 60) / 400))
+        ris = 1.0 if gh > ga else 0.5 if gh == ga else 0.0
+        k = 20 * (1 + math.log(1 + abs(gh - ga)) / 2)
+        self.elo[ph], self.elo[pa] = eh + k * (ris - att), ea - k * (ris - att)
+        for t, gf, gs in ((ph, gh, ga), (pa, ga, gh)):
+            self.att[t] = self.att.get(t, mg) + A * (gf - self.att.get(t, mg))
+            self.dif[t] = self.dif.get(t, mg) + A * (gs - self.dif.get(t, mg))
+            self.n[t] = self.n.get(t, 0) + 1
+        if sh is not None and sa is not None:
+            for t, gf, tf, ts in ((ph, gh, sh, sa), (pa, ga, sa, sh)):
+                self.fort[t] = self.fort.get(t, 0.0) + A * ((gf - 0.31 * tf) - self.fort.get(t, 0.0))
+                self.tiri[t] = self.tiri.get(t, 0.0) + A * ((tf - ts) - self.tiri.get(t, 0.0))
 
 
 SIGLE = {"fc", "afc", "cf", "sc", "ac", "as", "ssc", "cd", "ud", "sd", "rc", "rcd", "sv", "vfb", "vfl", "tsg", "fk", "sk", "if", "bk", "club", "de", "calcio", "cp", "sad", "ca", "ec", "se", "fbc", "1907", "1909", "1913", "1919", "1899"}

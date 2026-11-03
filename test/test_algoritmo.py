@@ -216,5 +216,20 @@ class Specialisti(unittest.TestCase):
         self.assertEqual(SP.correggi(mk, 0.5, SP.segnali(h, a, t0), "I1", integ), (mk, 0.5))  # gruppo diverso: spento
 
 
+class MotoreStatistico(unittest.TestCase):
+    def test_elo_e_solo_passato(self):
+        import specialisti as SP
+        m = SP.Motore()
+        self.assertEqual(m.caratteristiche("A", "B", "I1"), [None] * SP.N_MOTORE)  # senza partite: nessuna opinione
+        for _ in range(6):
+            m.aggiorna("A", "C", "I1", 3, 0, 8, 2)
+            m.aggiorna("B", "C", "I1", 0, 2, 2, 7)
+        f = m.caratteristiche("A", "B", "I1")
+        self.assertGreater(f[0], 0)  # A piu forte di B (Elo)
+        self.assertGreater(f[1], 0)  # A segna di piu
+        self.assertGreater(f[4], 0)  # A domina nei tiri in porta
+        self.assertEqual(len(SP.segnali([], [], None, None, f)), len(SP.NOMI))
+
+
 if __name__ == "__main__":
     unittest.main()

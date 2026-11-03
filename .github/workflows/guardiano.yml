@@ -20,9 +20,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 strumenti/guardiano.py
-      - name: Prova del revisore (temporanea)
-        if: always()
-        env: { GH_DISPATCH_TOKEN: "${{ secrets.GH_DISPATCH_TOKEN }}" }
-        run: |
-          python3 strumenti/cassaforte.py apri --tutto
-          python3 strumenti/revisore.py || true

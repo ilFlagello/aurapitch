@@ -1392,7 +1392,7 @@ def blocca_consigli(d):
             r = st.get(m["id"]) or {"date": m["date"], "lg": m["lg"], "h": m["h"], "a": m["a"], "st": m.get("st"), "g": m.get("g"), "mk": m.get("mk"), "p": m.get("_p0") or m.get("p"),
                                     "nf": sum(1 for f in m.get("fattori", []) if f.get("delta")), "sc": SCALA_FATTORI(), "ver": FT.VERSIONE, "segnali": [x["tipo"] for x in m.get("segnali", [])]}
             r["tips"] = {k: {x: v[x] for x in ("c", "l", "p", "q", "qm")} for k, v in tip.items() if isinstance(v, dict)}
-            r["tipB"], r["tB"], r["datiB"] = tip, ora.isoformat(timespec="minutes"), info
+            r["tipB"], r["tB"], r["datiB"], r["ko"] = tip, ora.isoformat(timespec="minutes"), info, m.get("ko")
             # partita vista per la prima volta dopo il fischio (dati arrivati tardi): il consiglio si mostra ma non conta
             # nello storico, perche non e stato fissato prima della partita (credibilita del rendimento)
             if ora >= ko:
@@ -1406,6 +1406,28 @@ def blocca_consigli(d):
     with open(STORICO_IN, "w", encoding="utf-8") as f:
         json.dump(st, f, ensure_ascii=False, separators=(",", ":"))
     print(f"Consigli bloccati ora: {nuovi}")
+
+
+def segna_tardivi(st):
+    """Consigli del registro bloccati dopo il calcio d'inizio (anche di partite non piu nel file del giorno): l'orario del
+    fischio si prende dal diario delle previsioni. Restano visibili come "tardivi" ma escono dallo storico e dal rendimento."""
+    diari, n = {}, 0
+    for k, r in st.items():
+        if r.get("tardivo") or not r.get("tB"):
+            continue
+        if not r.get("ko"):
+            if r.get("date") not in diari:
+                diari[r.get("date")] = jload(os.path.join(DIARIO, f"{r.get('date')}.json"), {}) or {}
+            r["ko"] = (diari[r.get("date")].get(k) or {}).get("ko")
+        try:
+            if r.get("ko") and datetime.fromisoformat(r["tB"]) > datetime.fromisoformat(r["ko"]):
+                r["tardivo"] = True
+                r.pop("esiti", None)
+                n += 1
+        except (TypeError, ValueError):
+            continue
+    if n:
+        print(f"Registro dei consigli: {n} consigli bloccati dopo il fischio esclusi dallo storico")
 
 
 def aggiorna_storico(d):
@@ -1442,6 +1464,7 @@ def aggiorna_storico(d):
             r["esiti"] = {k: v for k, v in es.items() if v is not None}
     limite = (datetime.now(timezone.utc).astimezone(ROME).date() - timedelta(days=60)).isoformat()
     st = {k: v for k, v in st.items() if v["date"] >= limite}
+    segna_tardivi(st)
     os.makedirs(os.path.dirname(STORICO_IN), exist_ok=True)
     with open(STORICO_IN, "w", encoding="utf-8") as f:
         json.dump(st, f, ensure_ascii=False, separators=(",", ":"))

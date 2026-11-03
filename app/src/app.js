@@ -28,7 +28,8 @@ import { Guida } from "./guida.js";
     const caricaDettagli = (id) => {
       if (!Draw || !Draw.leggera || extra.has(id) || inCarico.current.get(id)) return;
       inCarico.current.set(id, true);
-      fetch("data/m/" + encodeURIComponent(String(id).replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80)) + ".json") // solo file della stessa app.then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      // solo file della stessa app: nome ripulito e codificato
+      fetch("data/m/" + encodeURIComponent(String(id).replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80)) + ".json").then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
         .then((x) => setExtra((e) => new Map(e).set(id, x)))
         .catch(() => fetch("data/giornata.json").then((r) => (r.ok ? r.json() : null)).then((d) => d && setD(d)).catch(() => {})) // ripiego: il file completo
         .finally(() => { inCarico.current.set(id, false); });
@@ -106,7 +107,7 @@ import { Guida } from "./guida.js";
     const setFavLeagues = (x) => { setFavLeagues0(x); store.set("favLeagues", x); };
     const [tira, setTira] = useState(0);
     const tiraRef = useRef(null);
-    const ricarica = () => fetch(Draw && Draw.leggera ? "data/lista.json" : "data/giornata.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((d) => { if (d) { setExtra({}); setMerc(null); setD(d); setToast("Aggiornato alle " + new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })); } }).catch(() => setToast("Nessuna connessione: riprova tra poco"));
+    const ricarica = () => fetch(Draw && Draw.leggera ? "data/lista.json" : "data/giornata.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((d) => { if (d) { setExtra(new Map()); setMerc(null); setD(d); setToast("Aggiornato alle " + new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })); } }).catch(() => setToast("Nessuna connessione: riprova tra poco"));
     const [diario, setDiario0] = useState(store.get("diario", []));
     const setDiario = (d) => { setDiario0(d); store.set("diario", d); };
     const ripristina = (x) => {

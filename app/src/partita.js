@@ -308,7 +308,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
             <span className=${"flex-1 text-[15px] leading-[1.55] " + C.tx}>${tit && html`<b className="block mb-0.5">${tit}</b>`}<span className=${k ? "" : C.mu}>${corpo}</span></span></div>`;
         }) : html`<div className=${"py-4 text-[15px] " + C.mu}>Nessun commento ancora.</div>`}</div>
         ${list.length > n && html`<button onClick=${() => setN(n + 60)} className=${"w-full py-3 rounded-[14px] text-[14px] font-semibold " + C.ch + " " + C.tx}>Mostra altri commenti</button>`}
-        <p className=${"text-[12px] " + C.mu}>Cronaca minuto per minuto tradotta automaticamente in italiano${sm.st === "LIVE" ? ", aggiornata ogni 20 secondi" : ""}.</p><//>`;
+        <p className=${"text-[12px] " + C.mu}>${sm.leggera ? "Per questo campionato la fonte fornisce solo i momenti chiave (gol, cartellini, cambi): li raccontiamo in italiano con il punteggio aggiornato" : "Cronaca minuto per minuto tradotta automaticamente in italiano"}${sm.st === "LIVE" ? ", aggiornata ogni 20 secondi" : ""}.</p><//>`;
     }
     /* informazioni partita (come FotMob): data, competizione, stadio, arbitro */
     function InfoCard({ m, sm, L }) {

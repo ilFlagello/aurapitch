@@ -74,6 +74,21 @@ function IACard() {
       </div>
     </div>
 
+    ${I.rendimento && I.rendimento.consiglio && (() => { const R = I.rendimento, c = R.consiglio, su = c.profitto >= 0;
+      const euro = (x) => (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(2).replace(".", ",") + " €";
+      const sr = R.serie || [], vs = sr.map((x) => x[1]), lo = Math.min(0, ...vs), hi = Math.max(0, ...vs), W = 300, H = 56;
+      const X = (i) => (sr.length > 1 ? (i / (sr.length - 1)) * W : W / 2), Yv = (v) => H - 4 - ((v - lo) / (hi - lo || 1)) * (H - 8);
+      return html`<div className=${C.card + " p-4 space-y-2"}>
+        <div className=${C.lab}>Se avessi seguito i consigli</div>
+        <div className=${"text-[13px] " + C.mu}>1 € su ogni consiglio dell'IA, bloccato prima del fischio, da quando esiste lo storico:</div>
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span className=${"num text-[32px] font-bold leading-none whitespace-nowrap " + (su ? "text-emerald-600 dark:text-emerald-300" : "text-[#E0314B] dark:text-[#FF7085]")}>${euro(c.profitto)}</span>
+          <span className=${"text-[13px] " + C.mu}>su ${c.n} € giocati (${c.vinti} consigli vinti su ${c.n}, resa ${c.roi >= 0 ? "+" : ""}${num(c.roi, 1)}%)</span></div>
+        ${sr.length > 1 && html`<svg viewBox=${`0 0 ${W} ${H}`} className="w-full h-14" aria-hidden="true"><line x1="0" x2=${W} y1=${Yv(0)} y2=${Yv(0)} className="stroke-black/20 dark:stroke-white/20" strokeDasharray="3 3" />
+          <polyline fill="none" strokeWidth="2" strokeLinejoin="round" className=${su ? "stroke-emerald-500" : "stroke-[#FF3D5A]"} points=${sr.map((x, i) => X(i) + "," + Yv(x[1])).join(" ")} /></svg>`}
+        ${[["prudente", "Alternativa prudente"], ["coraggiosa", "Alternativa coraggiosa"]].filter(([k]) => R[k]).map(([k, n]) => html`<${Riga} key=${k} k=${n} nota=${R[k].vinti + " su " + R[k].n} v=${html`<span className=${R[k].profitto >= 0 ? "text-emerald-600 dark:text-emerald-300" : "text-[#E0314B] dark:text-[#FF7085]"}>${euro(R[k].profitto)}</span>`} />`)}
+        <p className=${"text-[11px] " + C.mu}>Quote quelle mostrate nell'app al momento del blocco. Sono risultati passati su poche settimane: non garantiscono quelli futuri. Gioca solo ciò che puoi permetterti di perdere.</p>
+      </div>`; })()}
+
     <${Voce} id="ia-onesta" titolo="Probabilità oneste" sotto="Quando l'IA dice 60%, succede 6 volte su 10?" icona=${Ic.Activity}>
       <div className=${C.card + " p-4 space-y-2"}>
         <div className="grid grid-cols-3 gap-2">${Object.entries(aff).map(([t, p]) => html`<${Affidabilita} key=${t} titolo=${t} punti=${p} />`)}</div>

@@ -1353,7 +1353,7 @@ def aggiorna_diario(d):
                 n = {"lg": m["lg"], "h": m["h"], "a": m["a"], "date": m["date"], "ko": m["ko"], "xg": m["xg"], "xm": m["xg_mercato"], "mk": m["mk"],
                      "mo": m.get("mo") if od.get("O") and od.get("U") else None, "nf": sum(1 for f in m.get("fattori") or [] if f.get("delta") or f.get("delta_avv")),
                      "ver": ver, "pc": {c: pr[c] for c in CHIAVI_DIARIO if c in pr}, "q": q, "tips": tips, "st": "NS",
-                     "lv": (m.get("dati") or {}).get("lv"), "bl": 1 if (m.get("blocco") or {}).get("st") == "bloccato" else 0}
+                     "lv": (m.get("dati") or {}).get("lv"), "bl": 1 if (m.get("blocco") or {}).get("st") == "bloccato" else 0, "sp": m.get("sp")}
                 if r is None:
                     n.update({"t0": ora, "mk0": n["mk"], "mo0": n["mo"], "xm0": n["xm"], "pc0": n["pc"], "q0": q, "tips0": tips})
                     nuove += 1

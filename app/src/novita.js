@@ -1,6 +1,10 @@
 /* AuraPitch - versione dell'app e novità. A ogni pubblicazione con cambi visibili si aggiunge una voce IN CIMA:
    il numero cresce (1.1, 1.2, ...) e l'app lo mostra nel profilo e nel riquadro "Novità" dopo l'aggiornamento. */
 export const NOVITA = [
+  { v: "1.5", data: "3 novembre 2026", punti: [
+    "Nuovo in \"Come sta andando l'IA\": quanto avresti oggi giocando 1 € su ogni consiglio, con il grafico giorno per giorno",
+    "L'algoritmo impara ogni giorno anche dalle partite vere dell'app, non solo dall'archivio",
+  ] },
   { v: "1.4", data: "3 novembre 2026", punti: [
     "Schedina IA più sensata: niente più giocate sotto quota 1,30 scelte dall'IA",
     "Scegli quante partite mettere in schedina (da 2 a 10) o lascia decidere all'IA",

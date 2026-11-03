@@ -352,14 +352,25 @@ def _ll_multi_B(L, Y, Z, B):
     return float(-np.mean(np.log(np.clip((Q * Y).sum(axis=1), 1e-9, 1))))
 
 
-def integratore(R, codici, P, Y):
+def integratore(R, codici, P, Y, diario=None):
     """Per gruppo di campionati: allenamento sull'80% piu vecchio, prova sul 20% piu recente. Si accende solo se l'insieme degli
     specialisti riduce l'errore di almeno MARGINE_PROMO; il contributo di ognuno = errore in piu quando lo si toglie."""
     X = segnali_archivio(R)
     idx = {c: k for k, c in enumerate(codici)}
-    c3, co = [idx["1"], idx["X"], idx["2"]], [idx["O2.5"], idx["U2.5"]]
     D = np.array([r["d"] for r in R])
     G = np.array([SP.gruppo(r["lg"]) for r in R])
+    # partite vere dell'app (diario): cio che gli specialisti dicevano prima del fischio, con il risultato. Pesano come l'archivio
+    # ma sono le piu recenti, quindi finiscono nella prova finale: l'integratore viene giudicato anche sulle partite dell'app.
+    if diario:
+        dd = [v for v in diario if v.get("sp") and len(v["sp"]) == len(SP.NOMI) and v.get("g") and v.get("mk")]
+        if dd:
+            _, Pd = probabilita(np.array([v["xm"][0] for v in dd]), np.array([v["xm"][1] for v in dd]))
+            Yd = esiti(codici, [v["g"] for v in dd], [v.get("g1") for v in dd])
+            X = np.vstack([X, np.array([[np.nan if x is None else x for x in v["sp"]] for v in dd], dtype=np.float32)])
+            P, Y = np.vstack([P, Pd.astype(np.float32)]), np.vstack([Y, Yd.astype(np.float32)])
+            D, G = np.concatenate([D, [v["date"] for v in dd]]), np.concatenate([G, [SP.gruppo(v["lg"]) for v in dd]])
+            print(f"  integratore: {len(dd)} partite vere dell'app con gli specialisti")
+    c3, co = [idx["1"], idx["X"], idx["2"]], [idx["O2.5"], idx["U2.5"]]
     modello, rapporto = {"specialisti": SP.NOMI, "gruppi": {}}, {}
     for gr in ("principali", "altri"):
         ok = (G == gr) & ~np.isnan(Y[:, c3]).any(axis=1) & ~np.isnan(X).all(axis=1)
@@ -662,6 +673,39 @@ def confronto_bookmaker(diario):
     return {k: {"n": len(v[0]), "ia": round(float(np.mean(v[0])), 4) if v[0] else None, "quote": round(float(np.mean(v[1])), 4) if v[1] else None} for k, v in a.items()}
 
 
+def rendimento_consigli():
+    """Se avessi giocato 1 euro su ogni consiglio (bloccato prima del fischio) da quando esiste il registro: quanto avresti oggi.
+    Per i tre profili, con l'andamento giorno per giorno del consiglio principale. Quote: quelle mostrate nell'app al momento del blocco."""
+    try:
+        with open(os.path.join(RADICE, "data", "consigli.json"), encoding="utf-8") as f:
+            st = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    out, giorni = {}, {}
+    for k in ("consiglio", "prudente", "coraggiosa"):
+        n = vinti = 0
+        prof = 0.0
+        for v in sorted(st.values(), key=lambda v: v["date"]):
+            es = (v.get("esiti") or {}).get(k)
+            t = (v.get("tips") or {}).get(k)
+            if es is None or not t or not t.get("q"):
+                continue
+            n += 1
+            vinti += 1 if es else 0
+            g = (t["q"] - 1) if es else -1.0
+            prof += g
+            if k == "consiglio":
+                giorni[v["date"]] = giorni.get(v["date"], 0.0) + g
+        if n:
+            out[k] = {"n": n, "vinti": vinti, "profitto": round(prof, 2), "roi": round(100 * prof / n, 1)}
+    cum, serie = 0.0, []
+    for d in sorted(giorni):
+        cum += giorni[d]
+        serie.append([d, round(cum, 2)])
+    out["serie"] = serie[-60:]
+    return out
+
+
 def andamento_consigli(tutte=False):
     """Consigli IA settimana per settimana (dal registro dei consigli): vinti contro attesi."""
     try:
@@ -816,7 +860,7 @@ def main():
 
     # 3b) integratore degli specialisti: entra nel modello attivo (genera_app lo applica alle quote prima dei gol attesi)
     try:
-        integ, integ_rap = integratore(R, codici, Ph, Yh)
+        integ, integ_rap = integratore(R, codici, Ph, Yh, fin)
         attivo["integratore"] = integ
         with open(MODELLO, "w", encoding="utf-8") as f:
             json.dump({"attivo": attivo, "prova": {"data": oggi, "da": str(cut), "partite": int(te.sum()), "punteggi": {k: round(v, 5) for k, v in prove.items()}, "motivo": motivo},
@@ -855,7 +899,7 @@ def main():
         "famiglie": fam, "affidabilita": {"fonte": fonte, "gruppi": aff},
         "bookmaker": confronto_bookmaker(diario), "valore": valore_anticipato(diario, codici),
         "peso_ia": {"minimo": MIN_PESO_IA, "famiglie": pesi}, "controllo": controllo,
-        "consigli": andamento_consigli(), "cronologia": cron[-10:],
+        "consigli": andamento_consigli(), "rendimento": rendimento_consigli(), "cronologia": cron[-10:],
         "laboratorio": lab,
         "integratore": integ_rap,
         "semplice": riepilogo_semplice(fin, Yd, codici),

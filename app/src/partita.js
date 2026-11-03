@@ -320,7 +320,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
         ${list.length > n && html`<button onClick=${() => setN(n + 60)} className=${"w-full py-3 rounded-[14px] text-[14px] font-semibold " + C.ch + " " + C.tx}>Mostra altri commenti</button>`}
         <p className=${"text-[12px] " + C.mu}>${sm.leggera ? "Per questo campionato la fonte fornisce solo i momenti chiave (gol, cartellini, cambi): li raccontiamo in italiano con il punteggio aggiornato" : "Cronaca minuto per minuto tradotta automaticamente in italiano"}${sm.st === "LIVE" ? ", aggiornata ogni 20 secondi" : ""}.</p><//>`;
     }
-    /* garanzie del consiglio: (1) si blocca 2 ore prima del calcio d'inizio e non cambia più; (2) con quali dati è stato fatto */
+    /* garanzie del consiglio: (1) si blocca 45 minuti prima del calcio d'inizio e non cambia più; (2) con quali dati è stato fatto */
     function Garanzie({ m }) {
       const b = m.blocco, d = m.dati;
       const ora = (iso) => new Date(iso).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });

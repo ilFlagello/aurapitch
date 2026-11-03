@@ -72,7 +72,7 @@ def get(url, headers=None):
 
 def af(path, **params):
     """Chiamata ad API-Football con controllo del budget giornaliero."""
-    key = os.environ.get("API_FOOTBALL_KEY")
+    key = (os.environ.get("API_FOOTBALL_KEY") or "").strip()  # la chiave incollata nei segreti puo avere un "a capo" in fondo
     if not key:  # fonte facoltativa: senza chiave si va avanti con le altre
         return None
     if BUDGET.af_rimaste is not None and BUDGET.af_rimaste <= AF_RISERVA:
@@ -195,6 +195,7 @@ def giro_completo(base="data"):
     ids = {lg["af"]: lg for lg in LEAGUES}
     partite = {}
 
+    giro_infortuni(base)  # piano gratuito: solo richieste per data (le stagioni in corso non sono incluse)
     fx = af("/fixtures", date=giorno, timezone=TZ)  # una sola richiesta per tutte le partite del giorno
     if fx:
         salva(cart, f"{ora}_af_fixtures.json", fx)
@@ -209,7 +210,7 @@ def giro_completo(base="data"):
     if not fx:
         print("API-Football non disponibile: uso solo The Odds API per partite e quote.")
 
-    for lg in LEAGUES:
+    for lg in ([] if True else LEAGUES):  # infortuni e quote per campionato e stagione: non inclusi nel piano gratuito (vedi giro_infortuni)
         if lg["nome"] not in attivi:
             continue
         inj = af("/injuries", league=lg["af"], season=stagione(oggi), date=giorno, timezone=TZ)
@@ -334,6 +335,51 @@ def giro_fd(base="data", completo=True, max_h2h=40):
     vic = fd("/matches", dateFrom=str(d0), dateTo=str(d0 + timedelta(days=4)))
     if vic:
         salva(cart, "vicine.json", vic)
+
+
+INFORTUNI = os.path.join("data", "infortuni.json")
+
+
+def giro_infortuni(base="data", forza=True):
+    """Infortunati e squalificati di oggi e domani da API-Football (una richiesta per giorno, tutti i campionati).
+    Gira al mattino e ogni 2 ore durante il giorno: le novita del pomeriggio entrano nell'analisi prima del blocco del consiglio.
+    Si salva una versione ridotta (squadra, giocatore, tipo, motivo) in data/infortuni.json."""
+    if not (os.environ.get("API_FOOTBALL_KEY") or "").strip():
+        return
+    ora = datetime.now(timezone.utc)
+    if not forza and not (ora.minute < 10 and ora.hour % 2 == 0):
+        return
+    out = {"aggiornato": ora.isoformat(timespec="minutes"), "squadre": {}}
+    n = 0
+    for dd in (0, 1):
+        giorno = (ora + timedelta(days=dd)).strftime("%Y-%m-%d")
+        page, tot = 1, 1
+        while page <= tot and page <= 5:
+            x = af("/injuries", date=giorno, page=page) if page > 1 else af("/injuries", date=giorno)
+            if not x:
+                break
+            tot = (x.get("paging") or {}).get("total", 1) or 1
+            for it in x.get("response", []):
+                sq = (it.get("team") or {}).get("name")
+                pl = it.get("player") or {}
+                if not sq or not pl.get("name"):
+                    continue
+                out["squadre"].setdefault(sq, []).append({"n": pl["name"], "tipo": pl.get("type") or "", "motivo": pl.get("reason") or "",
+                                                          "giorno": giorno, "fx": (it.get("fixture") or {}).get("id")})
+                n += 1
+            page += 1
+    if n:
+        try:  # per ogni giocatore resta l'ora in cui lo abbiamo visto la prima volta (le notizie vecchie sono gia nelle quote)
+            with open(INFORTUNI, encoding="utf-8") as f:
+                prima = json.load(f).get("squadre", {})
+        except (OSError, ValueError):
+            prima = {}
+        visto = {(sq, x["n"]): x.get("dal") for sq, xs in prima.items() for x in xs}
+        for sq, xs in out["squadre"].items():
+            for x in xs:
+                x["dal"] = visto.get((sq, x["n"])) or out["aggiornato"]
+        salva("data", "infortuni.json", out)
+    print(f"Infortuni (API-Football): {n} giocatori in {len(out['squadre'])} squadre, oggi e domani")
 
 
 def giro_formazioni(base="data", finestra_min=90):
@@ -587,6 +633,9 @@ if __name__ == "__main__":
     if "--notizie" in sys.argv:
         if "--forza" in sys.argv or datetime.now(timezone.utc).minute < 10:
             giro_notizie()
+        sys.exit(0)
+    if "--infortuni" in sys.argv:
+        giro_infortuni(forza="--forza" in sys.argv)
         sys.exit(0)
     if "--formazioni" in sys.argv:
         giro_formazioni()

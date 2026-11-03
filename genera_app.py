@@ -1027,10 +1027,46 @@ def aggiungi_movimenti(d):
     print(f"Radar dei movimenti: {n} partite con quote in movimento")
 
 
+def notizie_infortuni():
+    """Infortunati e squalificati da API-Football (data/infortuni.json) trasformati in "notizie" per i fattori:
+    stesso calcolo delle notizie dei giornali (peso del giocatore, affidabilita, parte gia nelle quote secondo l'ora in cui e comparso)."""
+    d = jload(os.path.join(DATA, "infortuni.json"), {}) or {}
+    per = {}
+    for sq, xs in (d.get("squadre") or {}).items():
+        voci = []
+        for x in xs:
+            tipo, mot = str(x.get("tipo", "")).lower(), str(x.get("motivo", ""))
+            if "question" in tipo or "doubt" in mot.lower():
+                parola = "doubtful"
+            elif "suspen" in mot.lower() or "card" in mot.lower():
+                parola = "suspended"
+            else:
+                parola = "injured, ruled out"
+            voci.append({"t": x.get("dal") or d.get("aggiornato"), "titolo": f"{x['n']} {parola} ({mot})", "fonte": "API-Football", "link": ""})
+        per[SP.piega(sq)] = voci
+    return per
+
+
+def infortuni_di(per, squadra):
+    p = SP.piega(squadra)
+    if p in per:
+        return per[p]
+    a = SP.ALIAS.get(p)
+    if a in per:
+        return per[a]
+    inv = [k for k in per if SP.ALIAS.get(k) == p]  # stesso alias dall'altra parte ("manchester united" -> "man united")
+    if len(inv) == 1:
+        return per[inv[0]]
+    tp = set(p.split())
+    cand = [k for k in per if k and (set(k.split()) <= tp or tp <= set(k.split()))]
+    return per[cand[0]] if len(cand) == 1 else []
+
+
 def applica_fattori(d):
     """Ricalcola gol attesi, mercati e consigli delle partite non iniziate con i fattori (per ora: notizie su indisponibili).
     Base = lettura delle quote; ogni fattore pesa secondo fattori.py e la somma per squadra ha un tetto. Restituisce quante partite cambiano."""
     notizie = jload(NOTIZIE, {}) or {}
+    infortuni = notizie_infortuni()
     espn = (jload(ESPN, {}) or {}).get("squadre", {})
     voti = (jload(os.path.join(DATA, "espn", "voti.json"), {}) or {}).get("g", {})
     marc = d.get("scorers") or {}
@@ -1054,7 +1090,7 @@ def applica_fattori(d):
             foto, ko = None, None
         tutti, tot, segnali, diffidati = [], [0.0, 0.0], [], []
         for lato, sq in enumerate((m["h"], m["a"])):
-            items = (notizie.get(sq) or {}).get("items", [])
+            items = (notizie.get(sq) or {}).get("items", []) + infortuni_di(infortuni, sq)
             es = espn.get(sq) or {}
             if es.get("rosa"):
                 # voto medio e quota dei minuti della stagione (archivio dei voti AuraPitch): servono al peso difensivo
@@ -1188,7 +1224,10 @@ STORICO_IN = os.path.join(DATA, "consigli.json")
 STORICO_OUT = os.path.join("app", "data", "storico.json")
 
 
-BLOCCO_ORE = 2  # il consiglio si blocca 2 ore prima del calcio d'inizio e da li non cambia piu (credibilita: niente ritocchi a ridosso)
+# il consiglio si blocca 45 minuti prima del calcio d'inizio e da li non cambia piu. Fino ad allora gli specialisti lavorano:
+# notizie e infortuni (ogni ora / ogni 2 ore), formazioni ufficiali (escono circa 60 minuti prima), quote pre-partita (15-70 minuti prima).
+# 45 minuti lasciano il tempo di leggere l'analisi e giocare, e il consiglio resta lo stesso fino al risultato.
+BLOCCO_MIN = 45
 TITOLI_QUOTE = {"consiglio": "Indicazione dalle quote", "prudente": "Alternativa prudente (dalle quote)", "coraggiosa": "Alternativa coraggiosa (dalle quote)"}
 
 
@@ -1228,7 +1267,7 @@ def livello_dati(m):
 
 
 def blocca_consigli(d):
-    """Ogni consiglio si blocca BLOCCO_ORE prima del calcio d'inizio (o al giro del mattino, se fino ad allora non ci sono altri giri)
+    """Ogni consiglio si blocca BLOCCO_MIN minuti prima del calcio d'inizio (o al giro del mattino, se fino ad allora non ci sono altri giri)
     e resta quello fino a fine partita, giusto o sbagliato. Il consiglio bloccato vive nel registro privato dei consigli (cassaforte)."""
     st = jload(STORICO_IN, {}) or {}
     ora = datetime.now(timezone.utc)
@@ -1256,7 +1295,7 @@ def blocca_consigli(d):
             ko = datetime.fromisoformat(m["ko"])
         except (ValueError, TypeError, KeyError):
             continue
-        limite = ko - timedelta(hours=BLOCCO_ORE)
+        limite = ko - timedelta(minutes=BLOCCO_MIN)
         if m.get("st") != "NS" or ora >= limite or prossimo > limite:
             r = st.get(m["id"]) or {"date": m["date"], "lg": m["lg"], "h": m["h"], "a": m["a"], "st": m.get("st"), "g": m.get("g"), "mk": m.get("mk"), "p": m.get("_p0") or m.get("p"),
                                     "nf": sum(1 for f in m.get("fattori", []) if f.get("delta")), "sc": SCALA_FATTORI(), "ver": FT.VERSIONE, "segnali": [x["tipo"] for x in m.get("segnali", [])]}

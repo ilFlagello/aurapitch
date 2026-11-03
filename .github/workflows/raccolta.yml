@@ -64,6 +64,7 @@ jobs:
           python raccoglitore.py --aggiorna
           python raccoglitore.py --prepartita
           python raccoglitore.py --notizie
+          python raccoglitore.py --infortuni
           python raccoglitore.py --arbitri
           python genera_app.py --live
 

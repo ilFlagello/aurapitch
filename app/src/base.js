@@ -406,13 +406,17 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   }
   /* schedina dei giocatori: marcatori, assist, ammoniti (o un mix). Un giocatore per partita (due della stessa partita
      dipendono l'uno dall'altro), quota minima QUOTA_MIN, scelti per punteggio IA e probabilità; con quota obiettivo si avvicina il totale */
-  const TIPI_GIOCATORI = [["MARC", "Marcatori"], ["ASS", "Assist"], ["AMM", "Ammoniti"], ["MIX", "Mix"]];
-  function buildGiocatori(matches, tipo, T, v, nP) {
-    const pref = tipo === "MIX" ? ["MARC", "ASS", "AMM"] : [tipo];
+  // voci della schedina, selezionabili insieme: P = esiti delle partite, poi giocatori
+  const TIPI_GIOCATORI = [["P", "Partite"], ["MARC", "Marcatori"], ["ASS", "Assist"], ["AMM", "Ammoniti"]];
+  function buildGiocatori(matches, tipi, T, v, nP, prof = 1) {
+    const sel0 = Array.isArray(tipi) ? tipi : tipi === "MIX" ? ["MARC", "ASS", "AMM"] : [tipi];
+    const pref = sel0.filter((t) => t !== "P"), partite = sel0.includes("P");
     const pool = [];
     for (const m of matches) {
-      const c = options(m).filter((o) => pref.some((p) => o.k.startsWith(p + ":")) && o.q >= QUOTA_MIN && o.q <= 8 && o.p >= 0.12)
-        .map((o) => ({ ...o, sc: (o.s != null ? o.s : 50) / 100 + 0.8 * o.p + 0.06 * rumore(m.id + o.k, v) })).sort((a, b) => b.sc - a.sc);
+      const gioc = options(m).filter((o) => pref.some((p) => o.k.startsWith(p + ":")) && o.q >= QUOTA_MIN && o.q <= 8 && o.p >= 0.12)
+        .map((o) => ({ ...o, sc: (o.s != null ? o.s : 50) / 100 + 0.8 * o.p + 0.06 * rumore(m.id + o.k, v) }));
+      const esiti = partite ? candidati(m, prof, T ? Math.max(QUOTA_MIN, 1.7) : 1.6, v).filter((o) => !/^(MARC|ASS|AMM):/.test(o.k)) : [];
+      const c = [...gioc, ...esiti].sort((a, b) => b.sc - a.sc);
       if (c.length) pool.push({ m, c });
     }
     pool.sort((a, b) => b.c[0].sc - a.c[0].sc);

@@ -23,6 +23,7 @@ import specialisti as SP
 import cartellini as CK
 import espn_dati as ES
 import fattori as FT
+import giocatori as GC
 import mercati as M
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -1021,7 +1022,7 @@ def aggiungi_movimenti(d):
         perche = None
         if motivo:
             sq = m["h"] if motivo["lato"] == 0 else m["a"]
-            perche = f"{motivo['chi']} ({sq}): " + dict(squalifica="squalificato", infortunio="indisponibile", dubbio="in dubbio").get(motivo.get("tipo"), motivo.get("tipo") or "notizia")
+            perche = f"{motivo['chi']} ({sq}): " + dict(squalifica="squalificato", infortunio="indisponibile", dubbio="in dubbio", panchina="in panchina", assente="fuori dai convocati").get(motivo.get("tipo"), motivo.get("tipo") or "notizia")
         m["mov"] = {"da": q0, "a": q1, "dp": dp, "dal": r.get("t0"), "perche": perche}
         n += 1
     print(f"Radar dei movimenti: {n} partite con quote in movimento")
@@ -1069,6 +1070,8 @@ def applica_fattori(d):
     infortuni = notizie_infortuni()
     espn = (jload(ESPN, {}) or {}).get("squadre", {})
     voti = (jload(os.path.join(DATA, "espn", "voti.json"), {}) or {}).get("g", {})
+    # formazioni ufficiali (espn_dati.giro_formazioni, ogni 10 minuti): entrano nei fattori prima del blocco del consiglio
+    formazioni = (jload(os.path.join(DATA, "espn", "formazioni.json"), {}) or {}).get("partite", {})
     marc = d.get("scorers") or {}
     cambi = 0
     prossima = {}  # prima partita non iniziata di ogni squadra: e li che si sconta una squalifica
@@ -1089,6 +1092,8 @@ def applica_fattori(d):
         except ValueError:
             foto, ko = None, None
         tutti, tot, segnali, diffidati = [], [0.0, 0.0], [], []
+        fm = formazioni.get(m["id"]) or {}
+        uff = [dict(fm[k], t=fm.get("t")) if fm.get(k) else None for k in ("h", "a")]
         for lato, sq in enumerate((m["h"], m["a"])):
             items = (notizie.get(sq) or {}).get("items", []) + infortuni_di(infortuni, sq)
             es = espn.get(sq) or {}
@@ -1099,12 +1104,14 @@ def applica_fattori(d):
                     v = voti.get(x.get("id"))
                     if v and v.get("nv", 0) >= 3:
                         x["vm"], x["minq"] = round(v["sv"] / v["nv"], 2), round(v["min"] / (90 * giornate), 3)
+                    if v:  # per gli specialisti dei giocatori: ultime 5 partite, rigori tirati, minuti in stagione
+                        x["u5"], x["rig"], x["min_v"] = v.get("u5"), v.get("rig", 0), v.get("min")
                 gioc, gol = es["rosa"], sum(x["g"] for x in es["rosa"]) or None
                 squal = ES.squalificati(es) if prossima.get(sq) == m["ko"] else []
                 diffidati += [{"chi": p["n"], "lato": lato, "gialli": p["gialli"]} for p in ES.diffidati(es) if p["g"] + p["a"] > 0 or p["tit"] >= 3]
             else:
                 gioc, gol, squal = [g for g in marc.get(m["lg"], []) if g["t"] == sq], (c.get("gol") or [None, None])[lato], []
-            lista, t, sg = FT.fattori_squadra(sq, lato, items, gioc, gol, foto, ko, squal, prossima.get(sq) == m["ko"])
+            lista, t, sg = FT.fattori_squadra(sq, lato, items, gioc, gol, foto, ko, squal, prossima.get(sq) == m["ko"], formazione=uff[lato])
             tutti += lista
             tot[lato] = t
             segnali += [dict(x, lato=lato) for x in sg]
@@ -1156,7 +1163,7 @@ def applica_fattori(d):
             if f.get("delta_avv"):
                 eff.append(f"gol attesi di {avv} +{str(round(f['delta_avv'] * 100, 1)).replace('.', ',')}% (peso in difesa)")
             testo = ", ".join(eff)
-            righe.append(((f"Squalifica: {f['chi']} ({f['titolo'].split(': ', 1)[-1]}). " if f.get("fonte_tipo") == "cartellini" else
+            righe.append(((f"{f['titolo']}. " if f.get("fonte_tipo") == "formazione" else f"Squalifica: {f['chi']} ({f['titolo'].split(': ', 1)[-1]}). " if f.get("fonte_tipo") == "cartellini" else
                           f"Notizia ({f['fonte'] or 'stampa'}): {f['chi']} {dict(squalifica='squalificato', infortunio='indisponibile', dubbio='in dubbio').get(f['tipo'], f['tipo'])}. ")
                          + testo[:1].upper() + testo[1:] + (" (in parte già nelle quote)." if f["prezzo"] < 1 else "."), (f["delta"] or 0) < 0))
         for v in tip.values():
@@ -1165,24 +1172,49 @@ def applica_fattori(d):
             # le assenze che abbassano i gol attesi vanno tra le cose "da tenere d'occhio", non tra i motivi a favore
             v["perche"] += [t for t, neg in righe if not neg]
             v.setdefault("contro", []).extend(t for t, neg in righe if neg)
-        assenti = {f["chi"] for f in tutti if (f.get("delta") or f.get("delta_avv")) and f.get("affidabilita", 0) >= 0.6}
+        # chi parte dalla panchina non e assente: per marcatori, assist e ammoniti conta come "gioca un terzo della partita"
+        assenti = {f["chi"] for f in tutti if (f.get("delta") or f.get("delta_avv")) and f.get("affidabilita", 0) >= 0.6 and f.get("tipo") != "panchina"}
+        if any(uff):
+            m["uff"] = [bool(x) for x in uff]
+        else:
+            m.pop("uff", None)
         m["formazione"] = [formazione_probabile(espn.get(sq) or {}, assenti, prossima.get(sq) == m["ko"]) for sq in (m["h"], m["a"])]
         if not any(m["formazione"]):
             m.pop("formazione", None)
-        marc_l, marc_info = [], {}
+        # scommesse sui giocatori: probabilita di base (mercati.py) poi agenti sui giocatori (giocatori.py): specialisti calcolati
+        # sempre e salvati nel diario; la taratura del verificatore cambia la probabilita solo quando ha dimostrato di migliorarla
+        marc_l, marc_info, pg = [], {}, {}
+        kk = (m.get("cart") or {}).get("K") or {}
+        arb_k = (((m.get("arbitro") or {}).get("ratio") or {}).get("K"))
         for lato, sq in enumerate((m["h"], m["a"])):
             es = espn.get(sq) or {}
-            for x in M.marcatori(es.get("rosa") or [], lh if lato == 0 else la, assenti):
-                cm = "MARC:" + x["n"]
-                marc_l.append([cm, x["p"], round(max(1.01, 0.88 / x["p"]), 2), 0])
-                marc_info[cm] = {"lato": lato, "g": x["g"], "pres": x["pres"], "tit": x["tit"]}
-            # scommesse sui giocatori: ammonito (gialli attesi della squadra, gia corretti per arbitro e avversario) e assist
-            k_sq = (((m.get("cart") or {}).get("K") or {}).get("squadre") or [None, None])[lato]
-            for pre, lista in (("AMM:", M.ammoniti(es.get("rosa") or [], k_sq, assenti)), ("ASS:", M.assist(es.get("rosa") or [], lh if lato == 0 else la, assenti))):
+            rosa = es.get("rosa") or []
+            per_nome = {x["n"]: x for x in rosa}
+            presenza = {}
+            if uff[lato]:
+                for x in rosa:
+                    st_ = FT._da_formazione(x, uff[lato])
+                    if st_ in ("titolare", "panchina"):
+                        presenza[x["n"]] = st_
+            rig = [x.get("rig") for x in rosa if x.get("u5") is not None]
+            k_sq = (kk.get("squadre") or [None, None])[lato]
+            ctx = {"lam": lh if lato == 0 else la, "k": k_sq, "k_lega": (kk.get("media_lega") or 0) / 2 or None, "arb": arb_k,
+                   "rig_max": max([r or 0 for r in rig]) if rig else None}
+
+            def aggiungi(pre, x, info):
+                cm = pre + x["n"]
+                sg_ = GC.segnali(pre[:-1], per_nome.get(x["n"]) or {}, dict(ctx, stato=presenza.get(x["n"])))
+                p = GC.applica(pre[:-1], x["p"], sg_)
+                marc_l.append([cm, p, round(max(1.01, 0.88 / p), 2), 0])
+                marc_info[cm] = info
+                pg[cm] = [x["p"], p] + sg_
+            for x in M.marcatori(rosa, ctx["lam"], assenti, presenza=presenza):
+                aggiungi("MARC:", x, {"lato": lato, "g": x["g"], "pres": x["pres"], "tit": x["tit"]})
+            # ammonito (gialli attesi della squadra, gia corretti per arbitro e avversario) e assist
+            for pre, lista in (("AMM:", M.ammoniti(rosa, k_sq, assenti, presenza=presenza)), ("ASS:", M.assist(rosa, ctx["lam"], assenti, presenza=presenza))):
                 for x in lista:
-                    cm = pre + x["n"]
-                    marc_l.append([cm, x["p"], round(max(1.01, 0.88 / x["p"]), 2), 0])
-                    marc_info[cm] = {"lato": lato, "v": x["v"], "pres": x["pres"], "tit": x["tit"]}
+                    aggiungi(pre, x, {"lato": lato, "v": x["v"], "pres": x["pres"], "tit": x["tit"]})
+        m["_pg"] = pg
         extra = extra_di(m)
         m["markets"] = righe_mercati(mercati) + extra + marc_l
         m["marcatori"] = marc_info
@@ -1249,13 +1281,15 @@ def livello_dati(m):
         fonti.append("statistiche dell'arbitro")
     if any(f.get("delta") or f.get("delta_avv") for f in m.get("fattori") or []):
         fonti.append("notizie su assenze e squalifiche")
-    if m.get("formazione"):
+    if any(m.get("uff") or []):
+        fonti.append("formazioni ufficiali")
+    elif m.get("formazione"):
         fonti.append("formazione probabile")
     # affidabilita dei dati (0-100): quanta informazione ha l'algoritmo su questa partita, oltre alle quote
     pf = m.get("fattori") or []
     punti = {"quote": 30 if nb >= 10 else 25 if nb >= 5 else 15 if nb >= 2 else 10, "archivio": 20 if m["lg"] in cal_lg else 0,
              "forma": 10 if (m.get("last5") or m.get("forma")) else 0, "classifica": 5 if m.get("_classifica") else 0, "xg": 10 if m.get("xgf") else 0,
-             "arbitro": 5 if m.get("arbitro") else 0, "notizie": 10 if pf else 0, "formazione": 10 if m.get("formazione") else 0}
+             "arbitro": 5 if m.get("arbitro") else 0, "notizie": 10 if pf else 0, "formazione": 15 if any(m.get("uff") or []) else 10 if m.get("formazione") else 0}
     score = min(100, sum(punti.values()))
     if nb < 5 and m["lg"] not in cal_lg:
         lv = "quote"
@@ -1392,7 +1426,9 @@ def aggiorna_diario(d):
                 n = {"lg": m["lg"], "h": m["h"], "a": m["a"], "date": m["date"], "ko": m["ko"], "xg": m["xg"], "xm": m["xg_mercato"], "mk": m["mk"],
                      "mo": m.get("mo") if od.get("O") and od.get("U") else None, "nf": sum(1 for f in m.get("fattori") or [] if f.get("delta") or f.get("delta_avv")),
                      "ver": ver, "pc": {c: pr[c] for c in CHIAVI_DIARIO if c in pr}, "q": q, "tips": tips, "st": "NS",
-                     "lv": (m.get("dati") or {}).get("lv"), "bl": 1 if (m.get("blocco") or {}).get("st") == "bloccato" else 0, "sp": m.get("sp")}
+                     "lv": (m.get("dati") or {}).get("lv"), "bl": 1 if (m.get("blocco") or {}).get("st") == "bloccato" else 0, "sp": m.get("sp"),
+                     # giocatori: [probabilita di base, probabilita mostrata, specialisti...] (le controlla giocatori.py a partita finita)
+                     "pg": m.get("_pg") or (r or {}).get("pg"), "uff": m.get("uff") or (r or {}).get("uff")}
                 if r is None:
                     n.update({"t0": ora, "mk0": n["mk"], "mo0": n["mo"], "xm0": n["xm"], "pc0": n["pc"], "q0": q, "tips0": tips})
                     nuove += 1
@@ -1406,6 +1442,32 @@ def aggiorna_diario(d):
             with open(path, "w", encoding="utf-8") as f:  # una partita per riga: git conserva solo le righe cambiate
                 f.write("{\n" + ",\n".join(json.dumps(k) + ":" + json.dumps(dd[k], ensure_ascii=False, separators=(",", ":")) for k in sorted(dd)) + "\n}\n")
     print(f"Diario: {nuove} nuove previsioni")
+
+
+def aggiorna_consenso(d):
+    """Specialista "consenso": i pronostici 1/X/2 dei tipster AuraPitch (servizio, /consenso: solo somme anonime, pesate per bravura)
+    entrano nei segnali di ogni partita non iniziata. Pesa solo quando l'integratore (strumenti/impara.py) lo trova utile."""
+    import urllib.request
+    try:
+        url = (jload(os.path.join("app", "data", "push.json"), {}) or {}).get("url")
+        req = urllib.request.Request(url + "/consenso", headers={"User-Agent": "aurapitch-raccolta"})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            cons = (json.loads(r.read().decode()) or {}).get("p") or {}
+    except Exception as e:  # noqa: BLE001 - senza servizio il consenso resta vuoto
+        print(f"Consenso della community: non disponibile ({e})")
+        return 0
+    i, n = SP.NOMI.index("consenso"), 0
+    for m in d.get("matches", []):
+        if m.get("st") != "NS" or not m.get("sp"):
+            continue
+        sp = list(m["sp"]) + [None] * (len(SP.NOMI) - len(m["sp"]))
+        v = SP.consenso(cons.get(m["id"]), m.get("mk"))
+        if sp[i] != v:
+            sp[i] = v
+            n += 1
+        m["sp"] = sp
+    print(f"Consenso della community: {sum(1 for c in cons.values() if c and c[3] >= 5)} partite con almeno 5 pronostici, {n} aggiornate")
+    return n
 
 
 def main():
@@ -1423,11 +1485,13 @@ def main():
             print("Nessuna partita con quote nei prossimi giorni: il file dell'app non viene toccato.")
             return
         print(f"Partite: {len(d['matches'])}; campionati: {[l['name'] for l in d['leagues']]}; FREE: {[m['h'] + '-' + m['a'] for m in d['matches'] if m['free']]}")
+    aggiorna_consenso(d)
     blocca_consigli(d)
     aggiungi_movimenti(d)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
-        json.dump(d, f, ensure_ascii=False, separators=(",", ":"))
+        # le probabilita di base e gli specialisti dei giocatori (_pg) vanno solo nel diario, non nel file pubblico dell'app
+        json.dump({**d, "matches": [{k: v for k, v in m.items() if k != "_pg"} for m in d.get("matches", [])]}, f, ensure_ascii=False, separators=(",", ":"))
     scrivi_stato(d)
     scrivi_lista(d)
     aggiorna_storico(d)
@@ -1439,7 +1503,7 @@ STATO_OUT = os.path.join("app", "data", "stato.json")
 DETTAGLI = ("markets", "ia", "cart", "curiosita", "xgf", "segnali", "attese", "prec", "forma", "ctx", "h2h", "last5", "odds", "max", "elo", "foto",
             "arbitro", "xg_mercato", "fattori", "formazione")
 FATTORI_LISTA = ("chi", "lato", "tipo", "fonte", "delta")  # nella lista resta un riassunto delle assenze (pagina squadra)
-NON_SERVONO = ("_ctx", "_firma", "_p0", "sp", "xg_base")
+NON_SERVONO = ("_ctx", "_firma", "_p0", "sp", "xg_base", "_pg")
 
 
 def scrivi_lista(d):

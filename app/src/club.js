@@ -1,7 +1,7 @@
 /* AuraPitch - Il Mio Club: squadra del cuore, gara dei pronostici, codice personale, riepilogo, medaglie. */
 import React, { useState, useEffect } from "react";
 import { ESPN_LG } from "./live.js";
-import { statoGiocata, C, Crest, Ctx, Flag, Form, Ic, Schede, Seg, html, store } from "./base.js";
+import { statoGiocata, C, Crest, Ctx, Flag, Form, Ic, Schede, Seg, TONE, html, store } from "./base.js";
 import { GiocoResponsabile, gruppiSquadre } from "./extra.js";
 import { scaricaCalendario } from "./condividi.js";
 import { Row } from "./partita.js";
@@ -60,6 +60,38 @@ import { conta } from "./statistiche.js";
         <div className="flex gap-2"><input value=${codice} onChange=${(e) => setCodice(e.target.value.toUpperCase())} placeholder="Nome gruppo o codice" aria-label="Nome del nuovo gruppo o codice di un gruppo" maxLength=${24} className=${"flex-1 min-w-0 rounded-xl px-3 py-2 text-[14px] outline-none " + C.ch + " " + C.tx} />
           <button onClick=${() => api("/gruppo", { chi, azione: "entra", code: codice }).then((x) => { if (x.ok) { setGr(x.code); store.set("garaGruppo", x.code); setCodice(""); carica(); } else setMsg("Codice non trovato."); })} className=${"px-3 rounded-xl text-[13px] font-semibold " + C.ch + " " + C.tx}>Entra</button>
           <button onClick=${() => api("/gruppo", { chi, azione: "crea", nome: codice || "Amici" }).then((x) => { if (x.ok) { setGr(x.code); store.set("garaGruppo", x.code); setCodice(""); carica(); setMsg("Gruppo creato: codice " + x.code + "."); } })} className=${"px-3 rounded-xl text-[13px] font-semibold " + C.on}>Crea</button></div></div>`;
+    }
+    /* ---- Tipster AuraPitch: storico verificato dal servizio e classifica di chi sceglie di comparire ----
+       Contano solo i pronostici registrati dal servizio prima del calcio d'inizio, confrontati con i risultati: nessuno può
+       correggerli o aggiungerli dopo. Rendimento in punti (niente soldi): +10 = ogni 100 pronostici, 10 punti meglio delle quote. */
+    function Tipster() {
+      const { pushUrl } = React.useContext(Ctx);
+      const [per, setPer] = useState(0);
+      const [d, setD] = useState(null);
+      const [msg, setMsg] = useState("");
+      const chi = codiceChi();
+      const carica = () => fetch(pushUrl + "/tipster", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chi, periodo: per ? "tutto" : "mese" }) })
+        .then((r) => r.json()).then((x) => x.ok && setD(x)).catch(() => setD(null));
+      useEffect(() => { if (pushUrl) carica(); }, [pushUrl, per]);
+      if (!pushUrl || !d) return null;
+      const io = d.io, segno = (v) => (v > 0 ? "+" : "") + v;
+      const pubblica = (v) => fetch(pushUrl + "/profilo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chi, pubblico: v }) })
+        .then((r) => r.json()).then((x) => { if (x.ok) { setMsg(v ? "Compari nella classifica Tipster (con il nome della gara)." : "Non compari più nella classifica Tipster."); carica(); } }).catch(() => setMsg("Non riesco a collegarmi."));
+      return html`<div className=${C.card + " p-4 space-y-3"}>
+        <div className="flex items-center gap-2"><span className=${C.lab + " flex-1"}>Tipster AuraPitch</span><span className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + TONE.good}>verificato</span></div>
+        <p className=${"text-[13px] " + C.mu}>I pronostici della gara, controllati dal servizio: contano solo quelli registrati prima del calcio d'inizio, confrontati con i risultati ufficiali.</p>
+        <${Seg} small=${true} items=${["Ultimi 30 giorni", "Da sempre"]} val=${per} set=${setPer} />
+        ${io && html`<div className="grid grid-cols-3 gap-2">${[["Pronostici", io.n], ["Indovinati", io.n ? io.pct + "%" : "-"], ["Rendimento", io.n ? segno(io.resa) : "-"]].map(([l, v]) => html`<div key=${l} className=${"rounded-[14px] p-2.5 " + C.ch}>
+          <div className=${"text-[11px] " + C.mu}>${l}</div><div className=${"num text-[22px] font-bold " + C.tx}>${v}</div></div>`)}</div>
+          <div className=${"text-[13px] " + C.tx}>${io.pos ? `Sei ${io.pos}° nella classifica.` : io.n < d.minimo ? `Ti mancano ${d.minimo - io.n} pronostici verificati per entrare in classifica.` : io.pub ? "In classifica dal prossimo aggiornamento (ogni ora)." : "Hai abbastanza pronostici: puoi comparire in classifica."}</div>`}
+        ${io && io.nome && html`<label className=${"flex items-center gap-2 text-[14px] " + C.tx}><input type="checkbox" checked=${!!io.pub} onChange=${(e) => pubblica(e.target.checked)} className="w-4 h-4" />Mostrami nella classifica Tipster</label>`}
+        ${io && !io.nome && html`<div className=${"text-[12px] " + C.mu}>Per comparire in classifica scegli prima un nome nella gara dei pronostici.</div>`}
+        ${d.righe.length > 0 ? html`<div>${d.righe.map((r, i) => html`<div key=${i} className=${"flex items-center gap-2 py-1.5 border-t first:border-t-0 " + C.bd}>
+          <span className=${"num w-6 text-[17px] font-bold " + C.mu}>${i + 1}</span><span className=${"flex-1 min-w-0 truncate text-[14px] " + C.tx}>${r.nome}</span>
+          <span className=${"text-[12px] tabular-nums " + C.mu}>${r.giuste}/${r.n}</span><span className=${"num w-12 text-right text-[18px] font-bold " + (r.resa >= 0 ? "text-[#0F9D84]" : "text-[#FF3D5A]")}>${segno(r.resa)}</span></div>`)}</div>`
+          : html`<div className=${"text-[13px] " + C.mu}>Ancora nessun tipster con almeno ${d.minimo} pronostici verificati in questo periodo.</div>`}
+        ${msg && html`<div className=${"text-[12px] " + C.mu}>${msg}</div>`}
+        <p className=${"text-[11px] " + C.mu}>Rendimento: punti guadagnati ogni 100 pronostici se ognuno valesse alla quota "giusta" delle probabilità di mercato al momento del voto (senza margine del bookmaker). Sopra zero vuol dire più bravo del mercato. L'ordine tiene conto anche di quanti pronostici ci sono, così poche giocate fortunate non bastano. I pronostici dei tipster aiutano anche l'IA: pesano di più quelli dei più bravi. Nessuna scommessa, nessun premio in denaro.</p></div>`;
     }
     /* ---- codice personale: preferite, diario e schedina anche su un altro dispositivo ---- */
     function Codice() {
@@ -158,9 +190,9 @@ import { conta } from "./statistiche.js";
         <div className=${C.card + " p-4 space-y-2"}><label htmlFor="fav" className=${C.lab}>${fav ? "Cambia squadra" : "Squadra del cuore"}</label>
           <select id="fav" value=${fav} onChange=${(e) => { setFav(e.target.value); store.set("fav", e.target.value); }} className=${"w-full rounded-xl px-3 py-2 text-sm " + C.ch + " " + C.tx}>
             ${!fav && html`<option value="">Scegli...</option>`}${gruppiSquadre(D, favLeagues || []).map((g) => html`<optgroup key=${g.k} label=${g.nome}>${g.nomi.map((t) => html`<option key=${t} value=${t}>${t}</option>`)}</optgroup>`)}</select></div><//>`,
-        html`<${Gara} />`,
+        html`<${React.Fragment}><${Gara} /><${Tipster} /><//>`,
         html`<${React.Fragment}><${Riepilogo} /><${Medaglie} /><//>`,
         html`<${React.Fragment}><${AccountCard} A=${A} pushUrl=${pushUrl} />${!(A && A.acc) && html`<${Codice} />`}<${GiocoResponsabile} /><//>`]}<//></div>`;
     }
 
-export { codiceChi, Gara, Codice, Riepilogo, Medaglie, ClubView };
+export { codiceChi, Gara, Tipster, Codice, Riepilogo, Medaglie, ClubView };

@@ -21,7 +21,7 @@ RADICE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(RADICE, "data")
 IMPRONTE = os.path.join(DATA, ".cassaforte.json")  # impronte dei file scaricati: si rimanda solo cio che cambia
 APERTA = os.path.join(DATA, ".cassaforte_aperta")  # senza un'apertura riuscita non si rimanda nulla (niente storico sovrascritto)
-FISSI = ["modello.json", "consigli.json"]
+FISSI = ["modello.json", "consigli.json", "giocatori_verifica.json", "taratura_giocatori.json"]  # + agenti sui giocatori (giocatori.py)
 
 
 def _b64u(b):
@@ -109,7 +109,11 @@ def chiudi():
         if len(testo) > 1500000:
             print(f"Cassaforte: {nome} troppo grande, saltato")
             continue
-        chiama("/cassaforte/scrivi", {"nome": nome, "testo": testo})
+        try:
+            chiama("/cassaforte/scrivi", {"nome": nome, "testo": testo})
+        except RuntimeError as e:  # un file rifiutato non deve bloccare gli altri (per esempio il diario)
+            print(f"Cassaforte: {nome} non salvato ({e})")
+            continue
         impronte[nome] = _impronta(p)
         n += 1
     with open(IMPRONTE, "w", encoding="utf-8") as f:

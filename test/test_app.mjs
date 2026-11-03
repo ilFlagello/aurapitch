@@ -57,6 +57,22 @@ if (pool.length >= 12) for (const prof of [0, 1, 2]) for (const T of [2, 5, 10, 
   ok(firme.size >= 2, `stile ${prof}, x${T}: "Un'altra combinazione" non cambia`);
 }
 
+// 3b. i tre stili si sentono: Zero Tachicardia più probabile e a quota più bassa, La Classica con più partite, Colpaccio a quota alta
+if (pool.length >= 12) {
+  const S = [0, 1, 2].map((prof) => B.buildSlip(pool, prof, 0));
+  const R = B.PROFILI_SLIP;
+  S.forEach((L, prof) => {
+    ok(L.length === R[prof].n, `stile ${prof}: ${L.length} partite invece di ${R[prof].n}`);
+    ok(new Set(L.map((l) => l.m.id)).size === L.length, `stile ${prof}: partite doppie`);
+    ok(L.every((l) => l.q >= B.QUOTA_MIN), `stile ${prof}: quota sotto il minimo`);
+  });
+  const pm = (L) => L.reduce((a, l) => a + l.p, 0) / L.length, qm = (L) => L.reduce((a, l) => a + Math.log(l.q), 0) / L.length;
+  ok(pm(S[0]) > pm(S[1]) && pm(S[1]) > pm(S[2]), "stili: la probabilità media delle giocate deve scendere da Zero Tachicardia a Colpaccio");
+  ok(qm(S[0]) < qm(S[1]) && qm(S[1]) < qm(S[2]), "stili: la quota media delle giocate deve salire da Zero Tachicardia a Colpaccio");
+  ok(S[2].every((l) => l.q >= 2.0), "Colpaccio da Bar: tutte le giocate a quota alta");
+  ok(B.buildSlip(pool, 1, 7).length === 7, "numero di partite scelto dall'utente rispettato");
+}
+
 // 6. schedina con esito scelto: stesso esito in ogni partita, nessuna partita doppia, quota vicina all'obiettivo
 if (pool.length >= 12) for (const es of ["1", "X", "GG", "O2.5", "FAV"]) {
   const L0 = B.buildForzata(pool, es, 1, 0, 0);

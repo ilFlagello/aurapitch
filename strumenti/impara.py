@@ -22,6 +22,7 @@ import json
 import math
 import os
 import sys
+import warnings
 from datetime import datetime, timedelta, timezone
 
 import numpy as np
@@ -46,6 +47,7 @@ MARGINE_PROMO = 0.0005  # il candidato deve battere l'attivo di almeno lo 0,05% 
 PESO_DIARIO = 3.0  # le partite vere dell'app contano piu dell'archivio (sono quelle che l'algoritmo vede oggi)
 MIN_PESO_IA = 100  # partite corrette dall'IA prima di imparare il peso della correzione
 MIN_DIARIO_CTRL = 300  # esiti del diario prima di poter bocciare il modello attivo
+MIN_SEGNALE = 300  # partite con un valore prima che uno specialista possa pesare nell'integratore (prima resta in ombra)
 
 GRUPPI, DERIVATI, famiglia, FAMIGLIE = CB.GRUPPI, CB.DERIVATI, CB.famiglia, CB.FAMIGLIE
 
@@ -362,7 +364,9 @@ def integratore(R, codici, P, Y, diario=None):
     # partite vere dell'app (diario): cio che gli specialisti dicevano prima del fischio, con il risultato. Pesano come l'archivio
     # ma sono le piu recenti, quindi finiscono nella prova finale: l'integratore viene giudicato anche sulle partite dell'app.
     if diario:
-        dd = [v for v in diario if v.get("sp") and len(v["sp"]) == len(SP.NOMI) and v.get("g") and v.get("mk")]
+        # i diari scritti prima di uno specialista nuovo hanno meno valori: quelli mancanti valgono "nessun dato"
+        dd = [dict(v, sp=list(v["sp"]) + [None] * (len(SP.NOMI) - len(v["sp"]))) for v in diario
+              if v.get("sp") and len(v["sp"]) <= len(SP.NOMI) and v.get("g") and v.get("mk")]
         if dd:
             _, Pd = probabilita(np.array([v["xm"][0] for v in dd]), np.array([v["xm"][1] for v in dd]))
             Yd = esiti(codici, [v["g"] for v in dd], [v.get("g1") for v in dd])
@@ -378,8 +382,14 @@ def integratore(R, codici, P, Y, diario=None):
             rapporto[gr] = {"partite": int(ok.sum()), "stato": "dati insufficienti"}
             continue
         Xg = X[ok]
-        mu, sd = np.nanmean(Xg, axis=0), np.nanstd(Xg, axis=0) + 1e-6
+        # specialisti in ombra: con meno di MIN_SEGNALE partite con un valore non possono ancora pesare (es. consenso della community)
+        ombra = [i for i in range(Xg.shape[1]) if int(np.sum(~np.isnan(Xg[:, i]))) < MIN_SEGNALE]
+        with warnings.catch_warnings():  # colonne senza nessun valore: media "vuota", gestita qui sotto
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            mu, sd = np.nanmean(Xg, axis=0), np.nanstd(Xg, axis=0) + 1e-6
+        mu, sd = np.where(np.isnan(mu), 0.0, mu), np.where(np.isnan(sd), 1.0, sd)
         Z = np.nan_to_num((Xg - mu) / sd)
+        Z[:, ombra] = 0
         P3 = P[ok][:, c3].astype(np.float64)
         L = np.log(np.clip(P3 / P3.sum(axis=1, keepdims=True), 1e-6, 1))
         Y3 = Y[ok][:, c3].astype(np.float64)
@@ -389,7 +399,7 @@ def integratore(R, codici, P, Y, diario=None):
         # scelta degli specialisti utili su una validazione interna (l'ultimo 25% dell'allenamento): via chi peggiora
         cut2 = np.sort(Dg[tr])[int(tr.sum() * 0.75)]
         fi, va = tr & (Dg < cut2), tr & (Dg >= cut2)
-        usa = list(range(Z.shape[1]))
+        usa = [i for i in range(Z.shape[1]) if i not in ombra]
 
         def val(cols):
             Zc = np.zeros_like(Z)
@@ -414,7 +424,7 @@ def integratore(R, codici, P, Y, diario=None):
         contributi = {}
         for i, n in enumerate(SP.NOMI):
             if n not in scelti:
-                contributi[n] = None
+                contributi[n] = "in ombra" if i in ombra else None
                 continue
             Zs = Z.copy()
             Zs[:, i] = 0
@@ -440,7 +450,8 @@ def integratore(R, codici, P, Y, diario=None):
                                  "B": [[round(float(x), 5) for x in row] for row in (Bf if attivo else np.zeros_like(B))],
                                  "b_ou": [round(float(v), 5) for v in b_ou] if b_ou is not None else None}
         rapporto[gr] = {"partite": int(ok.sum()), "verifica": int(te.sum()), "guadagno_1x2": round(100 * guad, 4),
-                        "guadagno_ou": None if guad_ou is None else round(100 * guad_ou, 4), "attivo": bool(attivo), "contributi": contributi, "scelti_1x2": scelti}
+                        "guadagno_ou": None if guad_ou is None else round(100 * guad_ou, 4), "attivo": bool(attivo), "contributi": contributi, "scelti_1x2": scelti,
+                        "in_ombra": {SP.NOMI[i]: int(np.sum(~np.isnan(Xg[:, i]))) for i in ombra}}
         print(f"  integratore {gr}: 1X2 {100 * guad:+.3f}%, O/U {'-' if guad_ou is None else f'{100 * guad_ou:+.3f}%'} su {int(te.sum())} partite mai viste; contributi {contributi}")
     return modello, rapporto
 

@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 
-VERSIONE = "fattori-3"
+VERSIONE = "fattori-4"  # fattori-4: formazioni ufficiali (ESPN) dentro i fattori, prima del blocco del consiglio
 SOSTITUTO = 0.5
 AFFIDABILITA = {"squalifica": 0.9, "squalifica_gialli": 0.8, "infortunio": 0.7, "dubbio": 0.3, "assente": 1.0, "panchina": 0.6}
 GIA_NELLE_QUOTE = 0.25
@@ -136,9 +136,26 @@ ALLENATORE = ["esonerat", "esonero", "nuovo allenatore", "nuovo tecnico", "panch
               "entlassen", "neuer trainer", "trennt sich von trainer"]
 
 
-def fattori_squadra(squadra, lato, notizie, giocatori, gol_squadra, foto_utc, ko_utc, squalifiche=(), prima_partita=True):
+def in_lista(nome, lista):
+    """Il giocatore e in una lista di nomi (stessa fonte ESPN: nome identico; altrimenti cognome in comune nei due versi)."""
+    p = piano(nome)
+    return any(piano(x) == p or (_cognome_in(nome, x) and _cognome_in(x, nome)) for x in lista or [])
+
+
+def _da_formazione(g, formazione):
+    """"titolare", "panchina" o "assente" (fuori dai convocati) secondo la formazione ufficiale; None se la formazione non c'e."""
+    if not formazione or len(formazione.get("xi") or []) != 11:
+        return None
+    if in_lista(g["n"], formazione["xi"]):
+        return "titolare"
+    return "panchina" if in_lista(g["n"], formazione.get("pan")) else "assente"
+
+
+def fattori_squadra(squadra, lato, notizie, giocatori, gol_squadra, foto_utc, ko_utc, squalifiche=(), prima_partita=True, formazione=None):
     """Correzioni per una squadra: notizie (infortuni, squalifiche, dubbi) e squalifiche dall'ultima partita.
     giocatori: rosa con gol e assist di stagione (ESPN) o, in mancanza, i migliori marcatori (football-data).
+    formazione: formazione ufficiale {"xi", "pan", "t"} se gia uscita. E' la fonte piu affidabile: chi e titolare non e assente
+    (qualunque cosa dicessero le notizie), chi parte dalla panchina o non e convocato pesa come assenza (panchina 0,6, fuori 1).
     Restituisce (lista fattori, correzione relativa totale, segnali senza peso)."""
     if not gol_squadra:  # gol della squadra non noti: somma dei gol della rosa, o stima prudente dai marcatori
         gol_squadra = max(sum(x["g"] for x in giocatori) * (1.0 if len(giocatori) > 15 else 1.4), 1)
@@ -177,6 +194,33 @@ def fattori_squadra(squadra, lato, notizie, giocatori, gol_squadra, foto_utc, ko
         old = per_giocatore.get(g["n"])
         if old is None or f["delta"] - f["delta_avv"] < old["delta"] - old.get("delta_avv", 0):  # tra notizia e cartellini vale la correzione piu forte, non la somma
             per_giocatore[g["n"]] = f
+    if formazione and len(formazione.get("xi") or []) == 11:
+        try:
+            tf = datetime.fromisoformat(formazione["t"]) if formazione.get("t") else None
+        except ValueError:
+            tf = None
+        prezzo = GIA_NELLE_QUOTE if foto_utc and tf and tf < foto_utc else 1.0  # quote lette dopo le formazioni: il mercato le conosce gia
+        for g in regolari:
+            stato = _da_formazione(g, formazione)
+            if stato == "titolare":
+                per_giocatore.pop(g["n"], None)  # in campo dall'inizio: le voci di assenza non valgono piu
+                continue
+            quota, dif = _quota(g, gol_squadra), _difesa(g)
+            pres = g.get("pres") or 0
+            abituale = pres and (g.get("tit") or 0) / pres >= 0.5
+            if stato == "panchina" and not abituale:
+                per_giocatore.pop(g["n"], None)  # riserva che resta riserva: nessuna notizia
+                continue
+            if quota < 0.03 and dif < 0.01 and not abituale:
+                continue
+            aff = AFFIDABILITA[stato]
+            if round(quota * (1 - SOSTITUTO) * aff * prezzo, 4) == 0 and round(dif * (1 - SOSTITUTO) * aff * prezzo, 4) == 0:
+                per_giocatore.pop(g["n"], None)  # assenza che non sposta nulla (es. secondo portiere): non si mostra
+                continue
+            per_giocatore[g["n"]] = {"tipo": stato, "chi": g["n"], "lato": lato, "squadra": squadra, "quota": round(quota, 3), "affidabilita": aff, "prezzo": prezzo,
+                                     "delta": round(-quota * (1 - SOSTITUTO) * aff * prezzo, 4), "delta_avv": round(dif * (1 - SOSTITUTO) * aff * prezzo, 4),
+                                     "titolo": f"Formazione ufficiale: {g['n']} " + ("parte dalla panchina" if stato == "panchina" else "non è tra i convocati"),
+                                     "fonte": "Formazioni ufficiali ESPN", "link": "", "t": formazione.get("t") or "", "fonte_tipo": "formazione"}
     lista = sorted(per_giocatore.values(), key=lambda f: f["delta"])
     somma = sum(f["delta"] for f in lista)
     if somma < -TETTO:  # oltre il tetto: tutte le correzioni ridotte in proporzione

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { immagineSchedina, mercatoBookmaker } from "./condividi.js";
 import { Citazione, citazioneSchedina, citazioneDiario } from "./citazioni.js";
-import { TIPI_GIOCATORI, buildGiocatori, QUOTA_MIN, probVera, esitoGamba, statoGiocata, C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, buildForzata, ESITI_SCHEDINA, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
+import { TIPI_GIOCATORI, buildGiocatori, QUOTA_MIN, probVera, esitoGamba, statoGiocata, C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, buildForzata, PROFILI_SLIP, ESITI_SCHEDINA, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
 import { GiocoResponsabile } from "./extra.js";
 import { StoricoCard } from "./partita.js";
 import { IACard } from "./ia.js";
@@ -11,7 +11,9 @@ import { Allenatore } from "./allenatore.js";
     /* ---- schedina ---- */
     function SlipView() {
       const { D, lg, byId, pro, mySlip, setMySlip, setUnlock, doCopy, favLeagues, caricaMercati } = React.useContext(Ctx);
-      const [prof, setProf] = useState(0);
+      const [prof, setProf0] = useState(() => { const v = store.get("slipProf", 0); return [0, 1, 2].includes(v) ? v : 0; });
+      const setProf = (v) => { setProf0(v); store.set("slipProf", v); };
+      useEffect(() => { if (prof === 2 && !pro) setProf0(0); }, [pro]); // Colpaccio da Bar è PRO: finito il PRO si torna allo stile base
       // campionati della schedina: se non li hai mai scelti qui, quelli che segui
       const [off, setOff0] = useState(() => store.get("slipOff", null) || (favLeagues && favLeagues.length ? D.leagues.map((l) => l.k).filter((k) => !favLeagues.includes(k)) : []));
       const setOff = (nx) => { setOff0(nx); store.set("slipOff", nx); if (caricaMercati) caricaMercati(D.leagues.map((l) => l.k).filter((k) => !nx.includes(k))); };
@@ -29,7 +31,7 @@ import { Allenatore } from "./allenatore.js";
       const tipoG = tipi.length === 1 && tipi[0] === "P" ? "" : tipi.join("+");
       const today = D.today || new Date().toISOString().slice(0, 10);
       const pool = D.matches.filter((m) => !off.includes(m.lg) && (D.demo || m.st === "NS") && (D.demo || inPeriodo(m.date, per, today)));
-      let legs = tipoG ? buildGiocatori(pool, tipi, qo, vr, nP, prof) : esito ? buildForzata(pool, esito, prof, qo, vr, nP) : qo ? buildTarget(pool, prof, qo, vr, nP) : buildSlip(pool, prof, nP);
+      let legs = tipoG ? buildGiocatori(pool, tipi, qo, vr, nP, prof) : esito ? buildForzata(pool, esito, prof, qo, vr, nP) : qo ? buildTarget(pool, prof, qo, vr, nP) : buildSlip(pool, prof, nP, vr);
       const weak = legs.length ? legs.reduce((a, b) => (a.p < b.p ? a : b)) : null;
       const alt = weak && !esito ? candidati(weak.m, Math.max(0, prof - 1), weak.q, 0)
         .filter((o) => o.k !== weak.k && o.p >= weak.p + 0.1 && o.q >= QUOTA_MIN && evalCode(o.k, 1, 0, 0, 0) !== null)
@@ -73,9 +75,9 @@ import { Allenatore } from "./allenatore.js";
         <//>`}
         ${!tipoG && esito && html`<p className=${"text-[12px] -mt-1 " + C.mu}>Tutte le partite con lo stesso esito: l'IA sceglie quelle dove è più probabile e più d'accordo con i dati delle squadre${qo ? ", fino alla quota che hai chiesto" : ""}.</p>`}
         ${(!tipoG || tipi.includes("P")) && html`<${React.Fragment}><div className=${"text-[14px] font-semibold " + C.tx}>Stile</div>
-        <div className="grid grid-cols-3 gap-2">${["Zero Tachicardia", "Classica del Sabato", "Colpaccio da Bar"].map((p, i) => { const lk = i === 2 && !pro; return html`<button key=${p} onClick=${() => (lk ? setUnlock(true) : (setProf(i), setShield(false), setVr(0)))}
+        <div className="grid grid-cols-3 gap-2">${PROFILI_SLIP.map((P, i) => { const p = P.nome, lk = i === 2 && !pro; return html`<button key=${p} onClick=${() => (lk ? setUnlock(true) : (setProf(i), setShield(false), setVr(0)))}
           className=${C.card + " p-3 text-xs font-semibold text-center " + C.tx + (prof === i ? " ring-2 ring-[#5B2EE6] dark:ring-[#A58BFF]" : "")}>${p}${lk && html`<div className="text-[10px] mt-1 text-amber-600 dark:text-amber-300 flex items-center justify-center gap-1"><${Ic.Lock} size=${10} />PRO</div>`}</button>`; })}</div>
-        <p className=${"text-[12px] " + C.mu}>${["Giocate molto probabili (quota 1,30-1,65 ciascuna).", "Giocate equilibrate (quota 1,30-2,30 ciascuna).", "Poche partite con giocate più rischiose, anche tempi, marcatori e handicap."][prof]} ${qo ? `L'IA sceglie in ogni partita, tra tutte le scommesse possibili, quella con il punteggio migliore vicina alla quota che serve.` : ""}</p>
+        <p className=${"text-[12px] " + C.mu}>${PROFILI_SLIP[prof].testo} ${nP ? "" : `Di base ${PROFILI_SLIP[prof].n} partite: puoi sceglierne un altro numero qui sopra.`} ${qo ? `Con una quota totale da raggiungere, il numero di partite segue la quota e l'IA sceglie in ogni partita la giocata migliore vicina alla quota che serve.` : ""}</p>
         <//>`}
         <div className=${C.card + " px-4 py-2"}>${legs.length ? legs.map((l) => html`<${LegRow} key=${l.m.id} l=${l} />`) : html`<div className=${"py-3 text-sm " + C.mu}>${pool.length && D.leggera && !pool.some((m) => m.markets) ? "Carico le quote di tutte le partite..." : pool.length ? "Nessuna partita adatta a questo stile: prova un altro periodo o un altro stile." : "Nessuna partita in questo periodo nei campionati scelti."}</div>`}</div>
         ${legs.length > 0 && html`<div className=${C.card + " p-4 space-y-2"}>
@@ -90,7 +92,7 @@ import { Allenatore } from "./allenatore.js";
             ${alt && html`<button onClick=${() => setShield(!shield)} className=${"mt-2 inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full " + (shield ? TONE.good + " border" : C.on)}><${Ic.ShieldCheck} size=${13} />${shield ? "Scudo IA attivo" : "Scudo IA: proteggi"}</button>`}</div>`}
           ${citazioneSchedina(legs, tot) && html`<div className="pt-1"><${Citazione} q=${citazioneSchedina(legs, tot)} piccola=${true} /></div>`}
           <${Gioca} legs=${legs} />
-          ${qo > 0 && html`<button onClick=${() => { setVr(vr + 1); setShield(false); }} className=${"w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Repeat} size=${15} />Un'altra combinazione</button>`}
+          ${(qo > 0 || (!tipoG && !esito)) && html`<button onClick=${() => { setVr(vr + 1); setShield(false); }} className=${"w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Repeat} size=${15} />Un'altra combinazione</button>`}
           <div className="grid grid-cols-2 gap-2 pt-1">
             <button onClick=${() => doCopy(text(legs, false))} className=${"py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Copy} size=${15} />Copia testo</button>
             <button onClick=${() => doCopy(text(legs, true))} className=${"py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Smartphone} size=${15} />Testo WhatsApp</button></div></div>`}

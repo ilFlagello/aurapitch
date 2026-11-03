@@ -166,6 +166,21 @@ print(json.dumps(out))`;
   }
   console.log("schedine IA confrontate con l'app:", confronti);
 }
+// diretta: barra della pressione (chi spinge negli ultimi 15 minuti) dalla cronaca
+{
+  const outP = path.join(tmp, "pressione.mjs");
+  await esbuild.build({ entryPoints: [path.join(APP, "src/pressione.js")], bundle: true, platform: "node", format: "esm", outfile: outP, logLevel: "error" });
+  const PR = await import(pathToFileURL(outP).href);
+  const cr = [{ min: "52'", side: 0, type: "shot-on-target", x: 88 }, { min: "55'", side: 0, type: "corner-awarded" }, { min: "58'", side: 0, type: "shot-off-target", x: 80 },
+    { min: "60'", side: 1, type: "shot-blocked", x: 75 }, { min: "61'", side: 0, type: "ball-touch", x: 78 }, { min: "62'", side: 1, type: "foul", x: 90 },
+    { min: "20'", side: 1, type: "shot-on-target", x: 90 }, { min: "45'+2'", side: 1, type: "goal", x: 95 }];
+  const a = PR.pressione(cr, 63);
+  ok(Math.abs(a.sp[0] - 1.9) < 1e-9 && Math.abs(a.sp[1] - 0.4) < 1e-9, `pressione: pesi e finestra di 15 minuti (${a.sp})`);
+  ok(a.chi === 0 && a.quota > 0.8, "pressione: spinge la squadra di casa");
+  ok(PR.pressione(cr, 49).sp[1] === 1, "pressione: gol in recupero dentro la finestra");
+  ok(PR.pressione([{ min: "10'", side: 0, type: "corner-awarded" }], 12).quota === null, "pressione: troppe poche azioni");
+  ok(PR.conPosizioni(cr) && !PR.conPosizioni([{ min: "1'", side: 0, type: "goal" }]), "cronaca con e senza posizioni");
+}
 console.log(`${prove} controlli, ${errori} errori`);
 fs.rmSync(tmp, { recursive: true, force: true });
 process.exit(errori ? 1 : 0);

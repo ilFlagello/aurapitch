@@ -181,7 +181,43 @@ async function giro(tema) {
   if (/undefined|NaN/.test(testo)) errori.push(`[${tema}] testo con "undefined" o "NaN" nell'ultima schermata`);
   await p.close();
 }
+// diretta (punto 4 del 3/11): barra "Chi spinge adesso" con una partita finta in corso (scoreboard e scheda ESPN finti)
+async function giroPressione(tema) {
+  const L = JSON.parse(fs.readFileSync(path.join(DIST, "data", "lista.json"), "utf8"));
+  const m0 = L.matches.find((m) => m.date === L.today && ["CL", "I1", "E0", "SP1", "D1"].includes(m.lg));
+  if (!m0) return;
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, colorScheme: tema, hasTouch: true, serviceWorkers: "block" });
+  const p = await ctx.newPage();
+  p.on("pageerror", (e) => errori.push(`[${tema} pressione] errore: ${e.message}`));
+  const cors = { "Access-Control-Allow-Origin": "*" };
+  const sq = (j) => ({ homeAway: j ? "away" : "home", score: j ? "0" : "1", team: { id: j ? "2" : "1", displayName: j ? m0.a : m0.h, shortDisplayName: j ? m0.a : m0.h, name: j ? m0.a : m0.h, color: j ? "1d4ed8" : "dc2626" } });
+  const stato = { type: { state: "in", name: "STATUS_SECOND_HALF", completed: false }, displayClock: "63'" };
+  const giocata = (min, j, tipo, x) => ({ time: { displayValue: min, value: parseInt(min) * 60 }, text: "Attempt saved.", play: { type: { type: tipo }, team: { displayName: j ? m0.a : m0.h }, fieldPositionX: x, fieldPositionY: 40, period: { number: 2 } } });
+  await p.route(/^(?!http:\/\/127\.0\.0\.1)/, (r) => {
+    const u = decodeURIComponent(r.request().url());
+    if (/\/scoreboard\?dates=/.test(u)) return r.fulfill({ headers: cors, json: { events: [{ id: "555", date: m0.ko, status: stato, competitions: [{ competitors: [sq(0), sq(1)] }] }] } });
+    if (/\/summary\?event=555/.test(u)) return r.fulfill({ headers: cors, json: { header: { competitions: [{ competitors: [sq(0), sq(1)], status: stato }] }, keyEvents: [], rosters: [], boxscore: { teams: [] },
+      commentary: [giocata("52'", 0, "shot-on-target", 88), giocata("55'", 0, "corner-awarded", 99), giocata("58'", 0, "shot-off-target", 80), giocata("60'", 1, "shot-blocked", 75), giocata("61'", 0, "ball-touch", 78)] } });
+    return r.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+  });
+  await p.goto(URL0); await p.waitForTimeout(800);
+  await p.evaluate(() => { localStorage.setItem("ap:onb", "true"); localStorage.setItem("ap:guideSeen", "true"); localStorage.setItem("ap:swipeOk", "true"); });
+  if (await p.getByText("Ho almeno").count()) { await p.locator("#eta").check(); await p.locator("#acc").check(); await p.getByRole("button", { name: "Entra", exact: true }).click(); }
+  await p.reload(); await p.waitForTimeout(1500);
+  if (await p.getByRole("button", { name: "Salta" }).count()) await p.getByRole("button", { name: "Salta" }).click();
+  try {
+    await p.locator("main button").filter({ hasText: m0.h }).filter({ hasText: m0.a }).first().click({ timeout: 5000 }); await p.waitForTimeout(800);
+    await p.getByRole("tab", { name: "Partita", exact: true }).first().click(); await p.waitForTimeout(800);
+    if (!(await p.getByText("Chi spinge adesso").count())) errori.push(`[${tema}] diretta: manca la barra della pressione`);
+    else if (!(await p.getByText("Sta spingendo " + m0.h).count())) errori.push(`[${tema}] diretta: la pressione non indica la squadra di casa`);
+    await p.screenshot({ path: path.join(OUT, `${tema}-pressione.png`) });
+    const t = await p.evaluate(() => document.body.innerText);
+    if (/undefined|NaN/.test(t)) errori.push(`[${tema}] diretta: testo con "undefined" o "NaN"`);
+  } catch (e) { errori.push(`[${tema}] diretta: ${e.message.split("\n")[0]}`); }
+  await ctx.close();
+}
 for (const t of ["light", "dark"]) await giro(t);
+await giroPressione("light");
 await b.close(); srv.close();
 console.log(errori.length ? errori.join("\n") : "Interfaccia: nessun errore");
 process.exit(errori.length ? 1 : 0);

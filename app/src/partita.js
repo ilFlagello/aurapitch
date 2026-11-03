@@ -6,6 +6,7 @@ import { SchedaAllenatore, usaPanchine } from "./panchine.js";
 import { useSummary, loadPlayer, loadCareer, ruolo, findTeam, loadTeam, minuto, ESPN_LG, andamento, getJSON } from "./live.js";
 import { matriceRis, NomeSquadra, NomeGiocatore, NomeLega, inizioSwipe, fineSwipe, Voce, AuraLine, C, Crest, Ctx, DOT, FavPill, Flag, Form, GROUPS, Ic, Seg, Sheet, TONE, Tabs, auraCol, evalCode, html, leggiXg, lum, mGroup, mLabel, nf, norm, odd, options, pct, pctL, spiega, store } from "./base.js";
 import { Anteprima, partitaSettimana } from "./extra.js";
+import { pressione, conPosizioni } from "./pressione.js";
 
     /* ---- riga partita: orario a sinistra, squadre una sopra l'altra, punteggi in colonna, aura delle probabilita sotto ---- */
     function usaVoti() { const [V, setV] = useState(null); useEffect(() => { caricaVoti().then(setV); }, []); return V; }
@@ -153,6 +154,22 @@ import { Anteprima, partitaSettimana } from "./extra.js";
           <div className=${"text-[13px] " + C.tx}><b className="num text-[19px]">${t}</b> tiri, <b className="num text-[19px]">${p}</b> in porta, <b className="num text-[19px]">${g}</b> gol</div></div>`; })}</div>
         <div className=${"flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[12px] " + C.mu}><span>● gol (punto bianco)</span><span>● in porta o palo</span><span>○ fuori</span><span>◇ respinto</span></div>
         ${s ? html`<div className=${"mt-2 text-[14px] rounded-xl p-2.5 " + C.ch + " " + C.tx}><b className="num text-[16px] mr-1">${s.min}</b>${s.text}</div>` : html`<div className=${"mt-2 text-[12px] " + C.mu}>Tocca un tiro per leggere com'è andata.</div>`}</div>`;
+    }
+    /* barra della pressione in diretta: chi spinge negli ultimi 15 minuti (dalla cronaca, gli stessi pesi della probabilità in diretta) */
+    function Pressione({ sm, m }) {
+      const mn = minuto(sm.clock || "");
+      const P = pressione(sm.cronaca, mn);
+      const [ch, ca] = auraCol(m);
+      const q = P.quota;
+      return html`<div className=${C.card + " p-4"}>
+        <div className="flex items-baseline mb-2"><span className=${C.lab + " flex-1"}>Chi spinge adesso</span><span className=${"text-[12px] " + C.mu}>ultimi 15 minuti</span></div>
+        ${q == null ? html`<div className=${"text-[14px] " + C.mu}>Poche azioni negli ultimi 15 minuti: nessuna delle due squadre sta spingendo.</div>` : html`<${React.Fragment}>
+          <div className="flex h-3 rounded-full overflow-hidden gap-[3px]" role="img" aria-label=${`Pressione: ${m.h} ${pct(q)}%, ${m.a} ${pct(1 - q)}%`}>
+            <i className="block rounded-full transition-all duration-700" style=${{ width: pct(q) + "%", background: ch }}></i>
+            <i className="block rounded-full transition-all duration-700" style=${{ width: pct(1 - q) + "%", background: ca }}></i></div>
+          <div className="flex justify-between mt-1.5 text-[13px]"><span className=${C.tx}><b className="num text-[17px]">${pct(q)}%</b> ${m.h}</span><span className=${C.tx}>${m.a} <b className="num text-[17px]">${pct(1 - q)}%</b></span></div>
+          <div className=${"text-[13px] mt-1 font-semibold " + C.tx}>${P.chi == null ? "Partita in equilibrio" : "Sta spingendo " + (P.chi ? m.a : m.h)}</div><//>`}
+        <div className=${"text-[11px] mt-1.5 " + C.mu}>Tiri, angoli${conPosizioni(sm.cronaca) ? " e azioni nell'ultimo terzo" : ""} dalla cronaca ESPN: la stessa spinta che muove la probabilità in diretta.</div></div>`;
     }
     function LiveAction({ sm, m }) {
       const [open, setOpen] = useState(false);
@@ -1000,7 +1017,9 @@ import { Anteprima, partitaSettimana } from "./extra.js";
 
         ${mt === 1 && html`<${React.Fragment}>
           ${(!sm || sm.st === "NS") && html`<div className=${C.card + " p-4 text-[14px] " + C.mu}>${m.st === "FT" ? "Il resoconto della partita non è disponibile." : `La partita inizia ${m.date === new Date().toISOString().slice(0, 10) ? "oggi" : "il " + m.date.slice(8) + "/" + m.date.slice(5, 7)} alle ${m.time}: qui troverai azione in diretta, andamento, eventi, migliori in campo, mappa dei tiri e statistiche.`}</div>`}
-          ${sm && sm.st === "LIVE" && html`<${LiveAction} sm=${sm} m=${m} />`}
+          ${sm && sm.st === "LIVE" && html`<${Pressione} sm=${sm} m=${m} />`}
+          ${sm && sm.st === "LIVE" && conPosizioni(sm.cronaca) && html`<${LiveAction} sm=${sm} m=${m} />`}
+          ${sm && sm.st !== "NS" && sm.cronaca.length > 0 && !conPosizioni(sm.cronaca) && html`<div className=${C.card + " p-4 text-[13px] " + C.mu}>Per questa partita ESPN dà solo i momenti principali, senza la posizione in campo: niente mappa dei tiri e niente azione sul campo. Restano eventi, statistiche e la barra della pressione.</div>`}
           ${sm && sm.st !== "NS" && html`<${KeyEvents} sm=${sm} m=${m} />`}
           ${sm && sm.st !== "NS" && html`<${ProbDiretta} sm=${sm} m=${m} />`}
           ${sm && sm.st !== "NS" && html`<${Migliori} sm=${sm} m=${m} onPlayer=${(p, j) => setPl({ p, side: j })} />`}
@@ -1149,4 +1168,4 @@ import { Anteprima, partitaSettimana } from "./extra.js";
       <//>`;
     }
 
-export { EseCard, Movimento, PercheCambiato, ProbDiretta, momentiDiretta, golRestanti, FormazioneProbabile, usaVoti, Row, Gate, KEY_T, trasf, PESI, prob1x2, toks, stesso, assenze, AssenzeCard, CampoNotte, TIRI, suNotte, TiriCard, LiveAction, EvIcon, riassunto, righeResoconto, Resoconto, KeyEvents, StatsCard, Cronaca, InfoCard, ArbitroCard, Badges, Lineups, tonoVoto, VotoChip, Migliori, Andamento, Curiosita, Sondaggio, ST_IT, PlayerSheet, _voti, caricaVoti, pois, PESO_SPINTA, spinta, quotaRestante, liveProb, LiveTips, meteoCache, MeteoCard, FattoriCard, StoricoCard, TeamView, TipView, MatchView, Vai, InBreve };
+export { EseCard, Movimento, PercheCambiato, ProbDiretta, momentiDiretta, golRestanti, FormazioneProbabile, usaVoti, Row, Gate, KEY_T, trasf, PESI, prob1x2, toks, stesso, assenze, AssenzeCard, CampoNotte, TIRI, suNotte, TiriCard, LiveAction, EvIcon, riassunto, righeResoconto, Resoconto, KeyEvents, StatsCard, Cronaca, InfoCard, ArbitroCard, Badges, Lineups, tonoVoto, VotoChip, Migliori, Andamento, Curiosita, Sondaggio, ST_IT, PlayerSheet, _voti, caricaVoti, pois, PESO_SPINTA, spinta, quotaRestante, liveProb, LiveTips, meteoCache, MeteoCard, FattoriCard, StoricoCard, TeamView, TipView, MatchView, Pressione, Vai, InBreve };

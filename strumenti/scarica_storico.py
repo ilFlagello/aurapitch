@@ -20,13 +20,30 @@ COL = ["Div", "Date", "Time", "HomeTeam", "AwayTeam", "FTHG", "FTAG", "HTHG", "H
        "B365>2.5", "B365<2.5", "P>2.5", "P<2.5", "Avg>2.5", "Avg<2.5", "BbAv>2.5", "BbAv<2.5", "PC>2.5", "PC<2.5", "AvgC>2.5", "AvgC<2.5",
        "AHh", "PAHH", "PAHA", "AvgAHH", "AvgAHA"]
 righe = 0
-SALTA_FD = os.path.exists(os.path.join(OUT, "fd_partite.csv.gz")) and os.environ.get("RIFAI_FD") != "1"
-with (open(os.devnull, "w") if SALTA_FD else gzip.open(os.path.join(OUT, "fd_partite.csv.gz"), "wt", encoding="utf-8", newline="")) as f:
+# campionati dell'archivio: i 7 storici dal 2012/13, gli altri dal 2019/20 (abbastanza partite per imparare, archivio leggero)
+PRINCIPALI = ("I1", "I2", "E0", "E1", "SP1", "D1", "F1")
+ALTRI = ("D2", "SP2", "F2", "N1", "B1", "P1", "T1", "G1", "SC0", "SC1", "E2", "E3", "EC")
+# campionati extraeuropei e nordici (football-data.co.uk/new/<PAESE>.csv): codice del file -> codice AuraPitch
+NUOVI = {"ARG": "AR1", "AUT": "A1", "BRA": "BR1", "DNK": "DK1", "JPN": "J1", "MEX": "MX1", "NOR": "NO1", "SWE": "SE1", "USA": "MLS", "CHN": "CN1"}
+DAL_ALTRI = 2019
+
+
+def divisioni_presenti(p):
+    try:
+        with gzip.open(p, "rt", encoding="utf-8") as f:
+            return {r["Div"] for r in csv.DictReader(f)}
+    except (OSError, KeyError):
+        return set()
+
+
+ARCHIVIO = os.path.join(OUT, "fd_partite.csv.gz")
+SALTA_FD = os.environ.get("RIFAI_FD") != "1" and divisioni_presenti(ARCHIVIO) >= set(PRINCIPALI + ALTRI) | set(NUOVI.values())
+with (open(os.devnull, "w") if SALTA_FD else gzip.open(ARCHIVIO, "wt", encoding="utf-8", newline="")) as f:
     w = csv.writer(f)
     w.writerow(["Season"] + COL)
     for anno in ([] if SALTA_FD else range(2012, 2026)):
         stag = f"{anno % 100:02d}{(anno + 1) % 100:02d}"
-        for div in ("I1", "I2", "E0", "E1", "SP1", "D1", "F1"):
+        for div in PRINCIPALI + (ALTRI if anno >= DAL_ALTRI else ()):
             try:
                 raw = get(f"https://www.football-data.co.uk/mmz4281/{stag}/{div}.csv")
             except Exception as e:  # noqa: BLE001
@@ -39,6 +56,32 @@ with (open(os.devnull, "w") if SALTA_FD else gzip.open(os.path.join(OUT, "fd_par
                 w.writerow([stag] + [r.get(c, "") for c in COL])
                 righe += 1
             time.sleep(0.5)
+    # campionati "nuovi": un file per paese con tutte le stagioni; quote di chiusura (AvgC*), niente Over/Under
+    for paese, div in ({} if SALTA_FD else NUOVI).items():
+        try:
+            raw = get(f"https://www.football-data.co.uk/new/{paese}.csv")
+        except Exception as e:  # noqa: BLE001
+            print("errore", paese, e)
+            continue
+        testo = raw.decode("utf-8-sig", "replace") if raw[:3] == b"\xef\xbb\xbf" else raw.decode("latin-1")
+        n0 = righe
+        for r in csv.DictReader(io.StringIO(testo)):
+            se = str(r.get("Season") or "")
+            try:
+                a0 = int(se[:4])
+            except ValueError:
+                continue
+            if a0 < DAL_ALTRI or not r.get("Home"):
+                continue
+            stag = f"{a0 % 100:02d}{(a0 + 1) % 100:02d}"
+            x = {"Div": div, "Date": r.get("Date", ""), "Time": r.get("Time", ""), "HomeTeam": r.get("Home", ""), "AwayTeam": r.get("Away", ""),
+                 "FTHG": r.get("HG", ""), "FTAG": r.get("AG", ""), "MaxH": r.get("MaxCH", ""), "MaxD": r.get("MaxCD", ""), "MaxA": r.get("MaxCA", ""),
+                 "PSCH": r.get("PSCH", ""), "PSCD": r.get("PSCD", ""), "PSCA": r.get("PSCA", ""), "AvgCH": r.get("AvgCH", ""), "AvgCD": r.get("AvgCD", ""), "AvgCA": r.get("AvgCA", ""),
+                 "B365CH": r.get("B365CH", ""), "B365CD": r.get("B365CD", ""), "B365CA": r.get("B365CA", "")}
+            w.writerow([stag] + [x.get(c, "") for c in COL])
+            righe += 1
+        print(paese, div, righe - n0, "partite")
+        time.sleep(0.5)
 print("Football-Data: righe", righe)
 
 LEGHE_US = {"EPL": "E0", "La_liga": "SP1", "Bundesliga": "D1", "Serie_A": "I1", "Ligue_1": "F1"}

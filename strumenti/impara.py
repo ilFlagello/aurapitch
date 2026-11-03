@@ -195,7 +195,7 @@ def carica_storico():
             pass
     ok = []
     for r in righe:
-        q = [_primo(r, "Avg" + e, "BbAv" + e, "B365" + e) for e in "HDA"]
+        q = [_primo(r, "Avg" + e, "BbAv" + e, "B365" + e, "AvgC" + e, "PSC" + e) for e in "HDA"]  # campionati "nuovi": solo quote di chiusura
         o = [_primo(r, "Avg" + e, "BbAv" + e, "B365" + e) for e in (">2.5", "<2.5")]
         g = [_f(r.get("FTHG")), _f(r.get("FTAG"))]
         if any(math.isnan(x) or x <= 1 for x in q) or any(math.isnan(x) for x in g):
@@ -218,7 +218,7 @@ def prepara_storico(righe):
     lam = gol_attesi(mk, mo)
     codici, P = probabilita(lam[:, 0], lam[:, 1])
     Y = esiti(codici, [r["g"] for r in righe], [r["g1"] for r in righe])
-    return codici, P, Y
+    return codici, P.astype(np.float32), Y.astype(np.float32)  # meta memoria: l'archivio ora ha ~80.000 partite
 
 
 # ---------- laboratorio: segnali nuovi provati ogni giorno, in ombra, su partite mai viste ----------
@@ -622,7 +622,7 @@ def main():
         Yd = esiti(codici, [v["g"] for v in fin], [v.get("g1") for v in fin])
     else:
         Pd = Pm = Yd = np.zeros((0, len(codici)))
-    P, Y = np.vstack([Ph, Pd]), np.vstack([Yh, Yd])
+    P, Y = np.vstack([Ph, Pd.astype(np.float32)]), np.vstack([Yh, Yd.astype(np.float32)])
     W = np.concatenate([np.ones(len(Ph)), np.full(len(Pd), PESO_DIARIO)])
     LG = np.concatenate([LGh, np.array([v["lg"] for v in fin], dtype=LGh.dtype if len(LGh) else object)])
     D = np.concatenate([Dh, np.array([v["date"] for v in fin], dtype=Dh.dtype if len(Dh) else object)])

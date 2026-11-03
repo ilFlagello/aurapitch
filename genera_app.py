@@ -1117,6 +1117,82 @@ STORICO_IN = os.path.join(DATA, "consigli.json")
 STORICO_OUT = os.path.join("app", "data", "storico.json")
 
 
+BLOCCO_ORE = 2  # il consiglio si blocca 2 ore prima del calcio d'inizio e da li non cambia piu (credibilita: niente ritocchi a ridosso)
+TITOLI_QUOTE = {"consiglio": "Indicazione dalle quote", "prudente": "Alternativa prudente (dalle quote)", "coraggiosa": "Alternativa coraggiosa (dalle quote)"}
+
+
+def livello_dati(m):
+    """Quanti dati ha AuraPitch oltre alle quote: "completa", "parziale" o "quote" (solo bookmaker, nessuna elaborazione propria)."""
+    nb = m.get("nb") or 0
+    try:
+        cal_lg = (CB.modello() or {}).get("cal_lg") or {}
+    except Exception:  # noqa: BLE001
+        cal_lg = {}
+    fonti = []
+    if nb >= 5:
+        fonti.append(f"quote medie di {nb} bookmaker")
+    if m["lg"] in cal_lg:
+        fonti.append("archivio storico del campionato")
+    if m.get("xgf"):
+        fonti.append("gol attesi (xG) delle squadre")
+    if m.get("arbitro"):
+        fonti.append("statistiche dell'arbitro")
+    if any(f.get("delta") or f.get("delta_avv") for f in m.get("fattori") or []):
+        fonti.append("notizie su assenze e squalifiche")
+    if m.get("formazione"):
+        fonti.append("formazione probabile")
+    if nb < 5 and m["lg"] not in cal_lg:
+        lv = "quote"
+    elif nb >= 5 and m["lg"] in cal_lg and len(fonti) >= 3:
+        lv = "completa"
+    else:
+        lv = "parziale"
+    return {"lv": lv, "fonti": fonti, "nb": nb}
+
+
+def blocca_consigli(d):
+    """Ogni consiglio si blocca BLOCCO_ORE prima del calcio d'inizio (o al giro del mattino, se fino ad allora non ci sono altri giri)
+    e resta quello fino a fine partita, giusto o sbagliato. Il consiglio bloccato vive nel registro privato dei consigli (cassaforte)."""
+    st = jload(STORICO_IN, {}) or {}
+    ora = datetime.now(timezone.utc)
+    prossimo = ora.replace(hour=10, minute=0, second=0, microsecond=0) if ora.hour < 10 else ora + timedelta(minutes=10)  # prossimo giro di raccolta
+    nuovi = 0
+    for m in d.get("matches", []):
+        tip = m.get("tip")
+        if not isinstance(tip, dict) or not tip:
+            continue
+        info = livello_dati(m)
+        r = st.get(m["id"])
+        if r and r.get("tipB"):
+            m["tip"], m["dati"] = r["tipB"], r.get("datiB", info)
+            m["blocco"] = {"st": "bloccato", "t": r["tB"]}
+            continue
+        if info["lv"] == "quote" and (tip.get("consiglio") or {}).get("titolo") != TITOLI_QUOTE["consiglio"]:  # niente elaborazione propria: lo diciamo chiaramente
+            tip = {k: dict(v, titolo=TITOLI_QUOTE.get(k, v.get("titolo")), perche=[f"Per questa partita AuraPitch ha solo le quote di {info['nb'] or 1} bookmaker e nessun archivio del campionato: l'indicazione viene dalle quote, senza un'elaborazione propria."] + list(v.get("perche") or []))
+                   if isinstance(v, dict) else v for k, v in tip.items()}
+            m["tip"] = tip
+        m["dati"] = info
+        try:
+            ko = datetime.fromisoformat(m["ko"])
+        except (ValueError, TypeError, KeyError):
+            continue
+        limite = ko - timedelta(hours=BLOCCO_ORE)
+        if m.get("st") != "NS" or ora >= limite or prossimo > limite:
+            r = st.get(m["id"]) or {"date": m["date"], "lg": m["lg"], "h": m["h"], "a": m["a"], "st": m.get("st"), "g": m.get("g"), "mk": m.get("mk"), "p": m.get("_p0") or m.get("p"),
+                                    "nf": sum(1 for f in m.get("fattori", []) if f.get("delta")), "sc": SCALA_FATTORI(), "ver": FT.VERSIONE, "segnali": [x["tipo"] for x in m.get("segnali", [])]}
+            r["tips"] = {k: {x: v[x] for x in ("c", "l", "p", "q", "qm")} for k, v in tip.items() if isinstance(v, dict)}
+            r["tipB"], r["tB"], r["datiB"] = tip, ora.isoformat(timespec="minutes"), info
+            st[m["id"]] = r
+            m["blocco"] = {"st": "bloccato", "t": r["tB"]}
+            nuovi += 1
+        else:
+            m["blocco"] = {"st": "provvisorio", "t": limite.isoformat(timespec="minutes")}
+    os.makedirs(os.path.dirname(STORICO_IN), exist_ok=True)
+    with open(STORICO_IN, "w", encoding="utf-8") as f:
+        json.dump(st, f, ensure_ascii=False, separators=(",", ":"))
+    print(f"Consigli bloccati ora: {nuovi}")
+
+
 def aggiorna_storico(d):
     """Salva i consigli IA prima del calcio d'inizio e li verifica a fine partita (storico trasparente)."""
     st = jload(STORICO_IN, {}) or {}
@@ -1125,7 +1201,7 @@ def aggiorna_storico(d):
         if not tip:
             continue
         r = st.get(m["id"])
-        if r is None or (r.get("st") == "NS" and m["st"] == "NS"):
+        if r is None or (r.get("st") == "NS" and m["st"] == "NS" and not r.get("tipB")):  # bloccato = non si tocca piu
             # finche la partita non inizia si tiene l'ultima versione del consiglio (quote piu recenti)
             r = {"date": m["date"], "lg": m["lg"], "h": m["h"], "a": m["a"], "st": m["st"], "g": m.get("g"), "mk": m.get("mk"), "p": m.get("_p0") or m.get("p"),
                  "nf": sum(1 for f in m.get("fattori", []) if f.get("delta")), "sc": SCALA_FATTORI(), "ver": FT.VERSIONE, "segnali": [x["tipo"] for x in m.get("segnali", [])],
@@ -1133,6 +1209,9 @@ def aggiorna_storico(d):
             st[m["id"]] = r
         if m["st"] in ("FT", "LIVE", "RINV"):
             r["st"], r["g"], r["g1"] = m["st"], m.get("g"), m.get("g1")
+        if r["st"] == "FT":  # a partita finita il consiglio completo non serve piu: resta la versione corta (registro leggero)
+            r.pop("tipB", None)
+            r.pop("datiB", None)
         if r["st"] == "FT" and r.get("g"):
             es = {k: esito_sicuro(v["c"], r["g"], r.get("g1")) for k, v in r["tips"].items()}
             r["esiti"] = {k: v for k, v in es.items() if v is not None}
@@ -1193,7 +1272,8 @@ def aggiorna_diario(d):
                 tips = {k: [v["c"], v.get("q"), 1 if v.get("qm") else 0] for k, v in (m.get("tip") or {}).items() if isinstance(v, dict)}
                 n = {"lg": m["lg"], "h": m["h"], "a": m["a"], "date": m["date"], "ko": m["ko"], "xg": m["xg"], "xm": m["xg_mercato"], "mk": m["mk"],
                      "mo": m.get("mo") if od.get("O") and od.get("U") else None, "nf": sum(1 for f in m.get("fattori") or [] if f.get("delta") or f.get("delta_avv")),
-                     "ver": ver, "pc": {c: pr[c] for c in CHIAVI_DIARIO if c in pr}, "q": q, "tips": tips, "st": "NS"}
+                     "ver": ver, "pc": {c: pr[c] for c in CHIAVI_DIARIO if c in pr}, "q": q, "tips": tips, "st": "NS",
+                     "lv": (m.get("dati") or {}).get("lv"), "bl": 1 if (m.get("blocco") or {}).get("st") == "bloccato" else 0}
                 if r is None:
                     n.update({"t0": ora, "mk0": n["mk"], "mo0": n["mo"], "xm0": n["xm"], "pc0": n["pc"], "q0": q, "tips0": tips})
                     nuove += 1
@@ -1224,6 +1304,7 @@ def main():
             print("Nessuna partita con quote nei prossimi giorni: il file dell'app non viene toccato.")
             return
         print(f"Partite: {len(d['matches'])}; campionati: {[l['name'] for l in d['leagues']]}; FREE: {[m['h'] + '-' + m['a'] for m in d['matches'] if m['free']]}")
+    blocca_consigli(d)
     aggiungi_movimenti(d)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:

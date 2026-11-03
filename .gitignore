@@ -12,3 +12,5 @@ data/modello.json
 data/consigli.json
 data/taratura_fattori.json
 data/.cassaforte*
+data/giocatori_verifica.json
+data/taratura_giocatori.json

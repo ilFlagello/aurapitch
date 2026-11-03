@@ -367,7 +367,7 @@ function troppi(req, max = 20) {
    Non stanno nel repository pubblico ma qui, nell'archivio privato del servizio. Ci accedono solo i processi automatici
    di GitHub, firmando ogni richiesta (HMAC-SHA256 con il token gia condiviso tra GitHub e il servizio, che non viaggia mai).
    Firma valida 5 minuti; un file alla volta (max 1,5 MB); nomi ammessi da una lista chiusa. */
-const NOME_CF = /^(diario\/\d{4}-\d{2}-\d{2}\.json|modello\.json|consigli\.json|taratura_fattori\.json)$/;
+const NOME_CF = /^(diario\/\d{4}-\d{2}-\d{2}\.json|modello\.json|consigli\.json|taratura_fattori\.json|giocatori_verifica\.json|taratura_giocatori\.json)$/;
 async function cassaforte(req, url, env, DB, segnala) {
   const nojson = (d, st = 200) => new Response(JSON.stringify(d), { status: st, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
   if (req.method !== "POST") return nojson({ ok: false }, 405);
@@ -390,6 +390,70 @@ async function cassaforte(req, url, env, DB, segnala) {
 }
 
 async function sha(s) { return b64u(await crypto.subtle.digest("SHA-256", enc.encode(s))).slice(0, 22); }
+
+/* ---------- Tipster AuraPitch: storico verificato, classifica, consenso della community ----------
+   Verificato = deciso dal servizio, non dall'utente: conta solo un pronostico registrato qui prima del calcio d'inizio (ora del
+   servizio), confrontato con il risultato del file dell'app. Nessun tipster esterno (risultati non verificabili).
+   Rendimento: punti guadagnati ogni 100 pronostici se ognuno valesse alla quota "giusta" delle probabilità del mercato al momento
+   del voto (senza margine del bookmaker): +10 vuol dire che ha fatto meglio del mercato. Bravura = rendimento tirato verso zero
+   quando i pronostici sono pochi (30 di "fortuna" in più), così chi ne indovina 3 su 3 non scavalca chi ne ha 200. */
+const TIP_MIN = { tutto: 20, mese: 10 };
+async function aggiornaRis(DB) {
+  const ris = (await DB.get("ris", "json")) || {};
+  const G1 = await giornata();
+  let nuovi = false;
+  for (const m of (G1 && G1.matches) || []) if (m.st === "FT" && m.g && !ris[m.id]) { ris[m.id] = [m.g[0] > m.g[1] ? 0 : m.g[0] === m.g[1] ? 1 : 2, m.date]; nuovi = true; }
+  if (nuovi) { // archivio dei risultati: si tengono gli ultimi 365 giorni (storico dei tipster)
+    const lim = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10);
+    for (const id of Object.keys(ris)) if (ris[id][1] < lim) delete ris[id];
+    await DB.put("ris", JSON.stringify(ris));
+  }
+  return { ris, G1 };
+}
+function statTipster(u, ris, da = "0000") {
+  let n = 0, giuste = 0, resa = 0, nq = 0;
+  for (const [id, v] of Object.entries(u.voti || {})) {
+    const r = ris[id];
+    if (!r || r[1] < da || ![0, 1, 2].includes(v.s)) continue;
+    if (!v.t || !v.k || v.t >= Date.parse(v.k)) continue; // pronostico arrivato dopo il fischio: non conta
+    n++;
+    const preso = v.s === r[0];
+    if (preso) giuste++;
+    const p = v.p && Number(v.p[v.s]);
+    if (p > 0.02 && p < 0.98) { nq++; resa += preso ? 1 / p - 1 : -1; }
+  }
+  return { n, giuste, pct: n ? Math.round((100 * giuste) / n) : 0, resa: nq ? Math.round((100 * resa) / nq) : 0, brav: nq ? Math.round((1000 * resa) / (nq + 30)) / 10 : 0, nq };
+}
+async function aggiornaTipster(env) {
+  const DB = archivio(env);
+  if (!DB.stub) return null;
+  const { ris, G1 } = await aggiornaRis(DB);
+  const mese = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+  const aperte = new Set(((G1 && G1.matches) || []).filter((m) => m.st === "NS").map((m) => m.id));
+  const cl = { mese: [], tutto: [] }, cons = {};
+  for (const [k, txt] of await DB.stub.lista("u:", 50000)) {
+    let u;
+    try { u = JSON.parse(txt); } catch (e) { continue; }
+    const tot = statTipster(u, ris), m30 = statTipster(u, ris, mese);
+    // peso nel consenso: 1 per chi è nuovo; da 20 pronostici verificati sale o scende con la bravura (tra 0,5 e 2)
+    const w = tot.nq >= TIP_MIN.tutto ? Math.min(2, Math.max(0.5, Math.exp(tot.brav / 25))) : 1;
+    for (const [id, v] of Object.entries(u.voti || {})) {
+      if (!aperte.has(id) || ![0, 1, 2].includes(v.s)) continue;
+      const c = cons[id] || (cons[id] = [0, 0, 0, 0]);
+      c[v.s] = Math.round((c[v.s] + w) * 100) / 100;
+      c[3] += 1;
+    }
+    if (!u.nome || !u.pub) continue; // in classifica solo chi lo ha scelto
+    const h = (await sha("tip|" + k)).slice(0, 12);
+    if (tot.n >= TIP_MIN.tutto) cl.tutto.push({ h, nome: u.nome, ...tot });
+    if (m30.n >= TIP_MIN.mese) cl.mese.push({ h, nome: u.nome, ...m30 });
+  }
+  for (const x of Object.values(cl)) x.sort((a, b) => b.brav - a.brav || b.n - a.n);
+  const t = Date.now();
+  await DB.put("tip:cl", JSON.stringify({ t, mese: cl.mese.slice(0, 100), tutto: cl.tutto.slice(0, 100) }));
+  await DB.put("tip:cons", JSON.stringify({ t, p: cons }));
+  return { t, cons };
+}
 
 export default {
   async fetch(req, env, ctx) {
@@ -498,6 +562,11 @@ export default {
     if (url.pathname === "/profilo" && req.method === "POST") {
       const d = await req.clone().json().catch(() => null);
       if (!d || !okChi(d.chi)) return json({ ok: false }, 400);
+      if (typeof d.pubblico === "boolean") { // classifica Tipster: ci si entra solo per scelta
+        const u = (await DB.get("u:" + d.chi, "json")) || { nome: "", gruppi: [], voti: {} };
+        if (!!u.pub !== d.pubblico) { u.pub = d.pubblico; await DB.put("u:" + d.chi, JSON.stringify(u)); await DB.delete("tip:cl"); }
+        return json({ ok: true, pub: u.pub });
+      }
       if (typeof d.nome === "string") {
         const u = (await DB.get("u:" + d.chi, "json")) || { nome: "", gruppi: [], voti: {} };
         const nome = d.nome.replace(/[^\p{L}\p{N} ._-]/gu, "").trim().slice(0, 20);
@@ -513,7 +582,7 @@ export default {
       const u = await DB.get("u:" + chi, "json");
       if (!u) return json({ ok: false, err: "codice non trovato" }, 404);
       const gr = await Promise.all((u.gruppi || []).map(async (g) => ({ code: g, ...((await DB.get("g:" + g, "json")) || {}) })));
-      return json({ ok: true, u: { nome: u.nome, gruppi: gr.map((g) => ({ code: g.code, nome: g.nome, n: (g.membri || []).length })), voti: Object.fromEntries(Object.entries(u.voti || {}).map(([k, v]) => [k, v.s])) } });
+      return json({ ok: true, u: { nome: u.nome, pub: !!u.pub, gruppi: gr.map((g) => ({ code: g.code, nome: g.nome, n: (g.membri || []).length })), voti: Object.fromEntries(Object.entries(u.voti || {}).map(([k, v]) => [k, v.s])) } });
     }
     if (url.pathname === "/gruppo" && req.method === "POST") {
       if (troppi(req, 15)) return json({ ok: false, err: "troppe richieste" }, 429);
@@ -541,15 +610,7 @@ export default {
       const chi = q.chi, code = String(q.gruppo || "").toUpperCase(), per = q.periodo || "settimana";
       if (!okChi(chi)) return json({ ok: false }, 400);
       // risultati: archivio "ris" aggiornato con le partite finite del file dell'app
-      const ris = (await DB.get("ris", "json")) || {};
-      const G1 = await giornata();
-      let nuovi = false;
-      for (const m of (G1 && G1.matches) || []) if (m.st === "FT" && m.g && !ris[m.id]) { ris[m.id] = [m.g[0] > m.g[1] ? 0 : m.g[0] === m.g[1] ? 1 : 2, m.date]; nuovi = true; }
-      if (nuovi) { // archivio dei risultati: si tengono gli ultimi 120 giorni
-        const lim = new Date(Date.now() - 120 * 86400000).toISOString().slice(0, 10);
-        for (const id of Object.keys(ris)) if (ris[id][1] < lim) delete ris[id];
-        await DB.put("ris", JSON.stringify(ris));
-      }
+      const { ris } = await aggiornaRis(DB);
       const lun = new Date(); lun.setUTCHours(0, 0, 0, 0); lun.setUTCDate(lun.getUTCDate() - ((lun.getUTCDay() + 6) % 7));
       const lunPrima = new Date(lun.getTime() - 7 * 86400000);
       const da = per === "settimana" ? lun.toISOString().slice(0, 10) : per === "scorsa" ? lunPrima.toISOString().slice(0, 10) : "0000";
@@ -576,6 +637,32 @@ export default {
       const righe = membri.map(({ c, u }) => ({ nome: u.nome || "Anonimo", io: c === chi, ...punteggio(u) })).sort((a, b) => b.pt - a.pt || b.giuste - a.giuste);
       return json({ ok: true, io: { nome: io.nome, ...punteggio(io) }, righe, da });
     }
+    // ---------- Tipster AuraPitch ----------
+    if (url.pathname === "/tipster") {
+      if (troppi(req, 40)) return json({ ok: false, err: "troppe richieste" }, 429);
+      const q = req.method === "POST" ? (await req.json().catch(() => null)) || {} : Object.fromEntries(url.searchParams);
+      const per = q.periodo === "tutto" ? "tutto" : "mese";
+      let cl = await DB.get("tip:cl", "json");
+      if (!cl || Date.now() - cl.t > 2 * 3600e3) { await aggiornaTipster(env); cl = (await DB.get("tip:cl", "json")) || { t: Date.now(), mese: [], tutto: [] }; }
+      const lista = cl[per] || [];
+      let io = null;
+      if (okChi(q.chi)) {
+        const u = (await DB.get("u:" + q.chi, "json")) || { voti: {} };
+        const ris = (await DB.get("ris", "json")) || {};
+        const da = per === "mese" ? new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10) : "0000";
+        const h = (await sha("tip|u:" + q.chi)).slice(0, 12);
+        const pos = lista.findIndex((x) => x.h === h);
+        io = { ...statTipster(u, ris, da), pos: pos >= 0 ? pos + 1 : null, pub: !!u.pub, nome: u.nome || "" };
+      }
+      return json({ ok: true, agg: cl.t, minimo: TIP_MIN[per], io, righe: lista.slice(0, 50).map(({ h, nq, ...x }) => x) });
+    }
+    // consenso della community per le partite non iniziate: solo somme anonime (per lo specialista "consenso" dell'algoritmo)
+    if (url.pathname === "/consenso") {
+      if (troppi(req, 30)) return json({ ok: false, err: "troppe richieste" }, 429);
+      let c = await DB.get("tip:cons", "json");
+      if (!c || Date.now() - c.t > 20 * 60e3) c = (await aggiornaTipster(env)) || c || { t: Date.now(), p: {} };
+      return json({ ok: true, agg: c.t, p: c.p || c.cons || {} });
+    }
     // ---------- sincronizzazione tra dispositivi (codice personale) ----------
     if (url.pathname === "/sync" && req.method === "POST") {
       const d = await req.json().catch(() => null);
@@ -594,6 +681,7 @@ export default {
   },
   async scheduled(event, env, ctx) {
     ctx.waitUntil(Promise.all([controlla(env), orologio(env), migraDaKV(env).catch(() => null),
+      env.ARCH && new Date().getUTCMinutes() === 7 ? aggiornaTipster(env).catch(() => null) : null,
       env.ARCH && new Date().getUTCMinutes() === 0 ? archivio(env).stub.pulisci() : null,
       env.ARCH && new Date().getUTCHours() === 3 && new Date().getUTCMinutes() === 0 ? pulisciInattivi(archivio(env)).catch(() => 0) : null]));
   },

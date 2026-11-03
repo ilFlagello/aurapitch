@@ -10,7 +10,7 @@ Uso:
   export API_FOOTBALL_KEY=...   (da dashboard.api-football.com, Account -> My Access)
   export ODDS_API_KEY=...       (dalla mail di the-odds-api.com)
   python3 raccoglitore.py                 # giro completo di oggi
-  python3 raccoglitore.py --formazioni    # solo formazioni delle partite che iniziano entro 90 minuti
+  python3 raccoglitore.py --formazioni    # formazioni ufficiali (ESPN, poi API-Football) delle partite che iniziano entro 90-100 minuti
 Pensato per girare in automatico (per esempio con GitHub Actions): una volta al mattino il giro completo,
 ogni 30 minuti nei giorni di partita il giro "--formazioni".
 Usa solo la libreria standard di Python: nessuna installazione richiesta.
@@ -638,6 +638,11 @@ if __name__ == "__main__":
         giro_infortuni(forza="--forza" in sys.argv)
         sys.exit(0)
     if "--formazioni" in sys.argv:
+        try:  # formazioni ufficiali ESPN (gratuite, tutti i campionati ESPN): entrano nei fattori prima del blocco a 45 minuti
+            import espn_dati
+            espn_dati.giro_formazioni()
+        except Exception as e:  # noqa: BLE001
+            print("Formazioni ESPN: errore", e)
         giro_formazioni()
     elif "--aggiorna" in sys.argv:
         giro_fd(completo=False)

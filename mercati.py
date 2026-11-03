@@ -436,9 +436,13 @@ def scegli(mercati, h, a, sh, sa, ctx, nb):
 PESO_RUOLO = {"F": 1.0, "M": 0.45, "D": 0.15, "G": 0.0}
 
 
-def marcatori(rosa, lam, assenti=(), quanti=6):
+PRESENZA_UFFICIALE = {"titolare": 1.0, "panchina": 0.3}  # con la formazione ufficiale: chi parte dalla panchina gioca circa un terzo
+
+
+def marcatori(rosa, lam, assenti=(), quanti=6, presenza=None):
     """Probabilita che un giocatore segni (in qualsiasi momento): quota dei gol della squadra (gol in stagione, con una
-    piccola base per ruolo) x gol attesi della squadra, pesata per quanto spesso parte titolare. Esclude gli indisponibili."""
+    piccola base per ruolo) x gol attesi della squadra, pesata per quanto spesso parte titolare. Esclude gli indisponibili.
+    presenza = {nome: "titolare"/"panchina"} dalla formazione ufficiale: sostituisce la stima dei minuti."""
     reg = [x for x in rosa if x.get("pres", 0) >= 2 and x.get("n") not in assenti]
     if not reg:
         return []
@@ -452,6 +456,8 @@ def marcatori(rosa, lam, assenti=(), quanti=6):
         tit = x.get("tit", 0) / max(1, N)
         sub = max(0, x.get("pres", 0) - x.get("tit", 0)) / max(1, N)
         att = min(1.0, tit * 1.0 + sub * 0.35) / max(0.35, min(1.0, x.get("pres", 0) / max(1, N)))
+        if presenza and x["n"] in presenza:
+            att = PRESENZA_UFFICIALE[presenza[x["n"]]]
         p = min(0.6, 1 - math.exp(-lam * quota * min(1.15, att)))  # tetto: nemmeno i bomber migliori segnano piu di 6 volte su 10
         if p >= 0.06:
             out.append({"n": x["n"], "p": round(p, 4), "g": x.get("g", 0), "pres": x.get("pres", 0), "tit": x.get("tit", 0)})
@@ -471,7 +477,7 @@ def _presenza(x, N):
     return min(1.0, tit + sub * 0.35) / max(0.35, min(1.0, x.get("pres", 0) / max(1, N)))
 
 
-def _giocatori_quota(rosa, campo, pesi_ruolo, totale_atteso, assenti, quanti, base=3.0):
+def _giocatori_quota(rosa, campo, pesi_ruolo, totale_atteso, assenti, quanti, base=3.0, presenza=None):
     """Schema comune (come i marcatori): quota del giocatore sul totale della squadra (stagione + piccola base per ruolo),
     per il totale atteso della squadra in questa partita, pesata per i minuti attesi."""
     reg = [x for x in rosa if x.get("pres", 0) >= 2 and x.get("n") not in assenti]
@@ -484,22 +490,23 @@ def _giocatori_quota(rosa, campo, pesi_ruolo, totale_atteso, assenti, quanti, ba
     out = []
     for x in reg:
         quota = (x.get(campo, 0) + 2.0 * pesi[x["n"]] / W * base) / (T + 2.0 * base)
-        p = 1 - math.exp(-totale_atteso * quota * min(1.15, _presenza(x, N)))
+        pr = PRESENZA_UFFICIALE[presenza[x["n"]]] if presenza and x["n"] in presenza else _presenza(x, N)
+        p = 1 - math.exp(-totale_atteso * quota * min(1.15, pr))
         if p >= 0.06:
             out.append({"n": x["n"], "p": round(p, 4), "v": x.get(campo, 0), "pres": x.get("pres", 0), "tit": x.get("tit", 0)})
     out.sort(key=lambda z: -z["p"])
     return out[:quanti]
 
 
-def ammoniti(rosa, cartellini_attesi, assenti=(), quanti=5):
+def ammoniti(rosa, cartellini_attesi, assenti=(), quanti=5, presenza=None):
     """Probabilita che un giocatore venga ammonito: quota dei gialli della squadra x gialli attesi della squadra in questa
     partita (che tengono gia conto di arbitro e avversario), pesata per i minuti attesi."""
-    return _giocatori_quota(rosa, "gialli", PESO_CART, cartellini_attesi or 1.9, assenti, quanti, base=4.0)
+    return _giocatori_quota(rosa, "gialli", PESO_CART, cartellini_attesi or 1.9, assenti, quanti, base=4.0, presenza=presenza)
 
 
-def assist(rosa, lam, assenti=(), quanti=5):
+def assist(rosa, lam, assenti=(), quanti=5, presenza=None):
     """Probabilita che un giocatore faccia almeno un assist: quota degli assist della squadra x gol attesi con assist."""
-    return _giocatori_quota(rosa, "a", PESO_ASSIST, lam * QUOTA_ASSISTITI, assenti, quanti)
+    return _giocatori_quota(rosa, "a", PESO_ASSIST, lam * QUOTA_ASSISTITI, assenti, quanti, presenza=presenza)
 
 
 # ---------- valutazione IA di tutti i mercati ----------

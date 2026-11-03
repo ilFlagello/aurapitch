@@ -196,8 +196,14 @@ def voti_partita(summ):
     g = [0, 0]
     for c in comp["competitors"]:
         g[lato[c["team"]["id"]]] = int(c.get("score") or 0)
-    entra, esce = {}, {}
+    entra, esce, rigori = {}, {}, {}
     for e in summ.get("keyEvents") or []:
+        tipo = str((e.get("type") or {}).get("type") or "") + " " + str((e.get("type") or {}).get("text") or "")
+        # rigori tirati (segnati, sbagliati o parati) nei tempi di gioco, non nella serie finale: servono allo specialista "rigorista"
+        if "penalty" in tipo.lower() and "shootout" not in tipo.lower() and int((e.get("period") or {}).get("number") or 1) <= 4:
+            chi = next((p.get("athlete", {}).get("displayName") for p in e.get("participants") or [] if p.get("athlete")), None)
+            if chi:
+                rigori[chi] = rigori.get(chi, 0) + 1
         if ((e.get("type") or {}).get("type")) == "substitution":
             ps = [p.get("athlete", {}).get("displayName") for p in e.get("participants") or []]
             mi = _minuto((e.get("clock") or {}).get("displayValue"))
@@ -219,8 +225,105 @@ def voti_partita(summ):
             pos = (p.get("position") or {}).get("abbreviation")
             v = voto_giocatore(st, pos, p.get("starter"), minuti, g[j], g[1 - j])
             out.append({"id": a.get("id"), "n": nome, "team": r.get("team", {}).get("displayName"), "pos": pos, "min": minuti, "v": v,
-                        "g": int(st.get("totalGoals") or 0), "a": int(st.get("goalAssists") or 0), "tit": bool(p.get("starter"))})
+                        "g": int(st.get("totalGoals") or 0), "a": int(st.get("goalAssists") or 0), "tit": bool(p.get("starter")),
+                        "gi": int(st.get("yellowCards") or 0), "ro": int(st.get("redCards") or 0), "rig": rigori.get(nome, 0)})
     return out
+
+
+def tabellino(summ, righe, k):
+    """Tabellino essenziale di una partita finita, per il verificatore dei giocatori (giocatori.py): chi ha giocato, chi ha
+    segnato, chi ha fatto assist, chi ha preso un cartellino (giallo o rosso)."""
+    comp = summ["header"]["competitions"][0]
+    sq = {c["homeAway"]: c["team"]["displayName"] for c in comp["competitors"]}
+    return {"lg": k, "t": comp.get("date") or (summ.get("header") or {}).get("date"), "h": sq.get("home"), "a": sq.get("away"),
+            "in": [r["n"] for r in righe], "marc": [r["n"] for r in righe if r["g"] > 0], "ass": [r["n"] for r in righe if r["a"] > 0],
+            "amm": [r["n"] for r in righe if r.get("gi") or r.get("ro")]}
+
+
+def formazioni_da_scheda(summ):
+    """Titolari e panchina dalla scheda ESPN di una partita non ancora iniziata: ci sono solo quando le formazioni sono ufficiali
+    (circa un'ora prima). Restituisce [casa, ospite], ognuna {"xi": [...], "pan": [...], "modulo"} oppure None."""
+    out = [None, None]
+    for r in summ.get("rosters") or []:
+        j = 0 if r.get("homeAway") == "home" else 1
+        xi, pan = [], []
+        for p in r.get("roster") or []:
+            nome = (p.get("athlete") or {}).get("displayName")
+            if nome:
+                (xi if p.get("starter") else pan).append(nome)
+        if len(xi) == 11:
+            out[j] = {"xi": xi, "pan": pan, "modulo": r.get("formation")}
+    return out
+
+
+FORMAZIONI = os.path.join("data", "espn", "formazioni.json")
+
+
+def giro_formazioni(base="data", prima_min=100, dopo_min=20):
+    """Formazioni ufficiali per le partite che iniziano entro 'prima_min' minuti (giro "live", ogni 10 minuti): entrano nei fattori
+    dell'algoritmo prima che il consiglio si blocchi (45 minuti prima del fischio). Una richiesta per campionato e giorno, poi la
+    scheda solo delle partite che non hanno ancora le formazioni. File: data/espn/formazioni.json, chiave = id della partita nell'app."""
+    path = os.path.join(base, "espn", "formazioni.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            arch = json.load(f)
+    except (OSError, ValueError):
+        arch = {}
+    part = arch.get("partite") or {}
+    try:
+        with open(os.path.join("app", "data", "giornata.json"), encoding="utf-8") as f:
+            gio = json.load(f)
+    except (OSError, ValueError):
+        print("Formazioni: file dell'app non trovato, salto.")
+        return 0
+    ora = datetime.now(timezone.utc)
+    vicine = {}
+    for m in gio.get("matches", []):
+        if m.get("st") != "NS" or m.get("lg") not in ESPN_LG:
+            continue
+        try:
+            ko = datetime.fromisoformat(m["ko"])
+        except (KeyError, ValueError):
+            continue
+        if -timedelta(minutes=dopo_min) <= ko - ora <= timedelta(minutes=prima_min):
+            g = part.get(m["id"]) or {}
+            if not (g.get("h") and g.get("a")):
+                vicine.setdefault((m["lg"], ko.strftime("%Y%m%d")), []).append(m)
+    nuove = 0
+    for (k, giorno), ms in vicine.items():
+        try:
+            evs = get(f"{SITE}{ESPN_LG[k]}/scoreboard?dates={giorno}").get("events", [])
+        except Exception as e:  # noqa: BLE001
+            print(f"Formazioni {k} {giorno}: {e}")
+            continue
+        for m in ms:
+            ev = None
+            for e in evs:
+                c = e["competitions"][0]
+                h = next((x for x in c["competitors"] if x["homeAway"] == "home"), {}).get("team", {})
+                a = next((x for x in c["competitors"] if x["homeAway"] == "away"), {}).get("team", {})
+                if sim(m["h"], [h.get("displayName"), h.get("shortDisplayName")]) >= 0.8 and sim(m["a"], [a.get("displayName"), a.get("shortDisplayName")]) >= 0.8:
+                    ev = e
+                    break
+            if not ev:
+                continue
+            try:
+                f = formazioni_da_scheda(get(f"{SITE}{ESPN_LG[k]}/summary?event={ev['id']}"))
+            except Exception as e:  # noqa: BLE001
+                print(f"Formazioni {m['h']}-{m['a']}: {e}")
+                continue
+            if f[0] or f[1]:
+                vecchia = part.get(m["id"]) or {}
+                part[m["id"]] = {"eid": ev["id"], "ko": m["ko"], "t": vecchia.get("t") or ora.isoformat(timespec="minutes"),
+                                 "h": f[0] or vecchia.get("h"), "a": f[1] or vecchia.get("a")}
+                nuove += 1
+    limite = (ora - timedelta(days=2)).isoformat()
+    part = {i: x for i, x in part.items() if str(x.get("ko", "")) >= limite[:10]}
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({"agg": ora.isoformat(timespec="minutes"), "partite": part}, f, ensure_ascii=False, separators=(",", ":"))
+    print(f"Formazioni ufficiali: {nuove} nuove, {len(part)} in archivio, {sum(len(v) for v in vicine.values())} partite cercate")
+    return nuove
 
 
 PESO_SPINTA = {"shot-on-target": 1.0, "shot-hit-woodwork": 1.0, "shot-off-target": 0.5, "shot-blocked": 0.4, "corner-awarded": 0.3}
@@ -283,6 +386,12 @@ def giro_voti(base="data", giorni=4, massimo=350):
         dir_ = {}
     ora = datetime.now(timezone.utc)
     inizio = datetime(ora.year if ora.month >= 7 else ora.year - 1, 8, 1, tzinfo=timezone.utc)
+    tpath = os.path.join(base, "espn", "tabellini.json")
+    try:
+        with open(tpath, encoding="utf-8") as f:
+            tab = json.load(f)
+    except (OSError, ValueError):
+        tab = {}
     nuove, errori, ultimo_err = 0, 0, ""
     scans = set(arch.get("giorni", []))  # "lega|giorno" gia controllati (solo giorni chiusi da almeno 3 giorni)
     giorno_ev = {}
@@ -319,6 +428,10 @@ def giro_voti(base="data", giorni=4, massimo=350):
                 continue
             fatte.add(ev["id"])
             nuove += 1
+            try:
+                tab[ev["id"]] = {**tabellino(summ, righe, k), "t": ev["date"]}
+            except (KeyError, IndexError, TypeError):
+                pass
             for r in ([] if gia_votata else righe):
                 if not r["id"]:
                     continue
@@ -329,11 +442,20 @@ def giro_voti(base="data", giorni=4, massimo=350):
                 x["min"] += r["min"]
                 x["g"] += r["g"]
                 x["a"] += r["a"]
+                # per gli specialisti dei giocatori: cartellini, rigori tirati e le ultime 5 partite [minuti, gol, assist, cartellini]
+                x["gi"] = x.get("gi", 0) + r.get("gi", 0)
+                x["ro"] = x.get("ro", 0) + r.get("ro", 0)
+                x["rig"] = x.get("rig", 0) + r.get("rig", 0)
+                x["u5"] = (x.get("u5") or [])[-4:] + [[r["min"], r["g"], r["a"], r.get("gi", 0) + r.get("ro", 0)]]
                 if r["v"] is not None:
                     x["sv"] = round(x["sv"] + r["v"], 1)
                     x["nv"] += 1
     with open(dpath, "w", encoding="utf-8") as f:
         json.dump(dir_, f, separators=(",", ":"))
+    lim_t = (ora - timedelta(days=21)).isoformat()
+    tab = {i: x for i, x in tab.items() if str(x.get("t") or "") >= lim_t}
+    with open(tpath, "w", encoding="utf-8") as f:
+        json.dump(tab, f, ensure_ascii=False, separators=(",", ":"))
     # un giorno e chiuso quando tutte le sue partite finite sono nell'archivio (altrimenti si riprende al prossimo giro)
     for chiave, ids in giorno_ev.items():
         if all(i in fatte and i in dir_ for i in ids):

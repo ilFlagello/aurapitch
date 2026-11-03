@@ -26,6 +26,9 @@ SPECIALISTI = [
     ("stanchezza", "Stanchezza: partite giocate negli ultimi 14 giorni", "1x2"),
     ("classifica", "Posizione in classifica", "1x2"),
     ("motivazioni", "Motivazioni: lotta per titolo, coppe o salvezza a fine stagione", "1x2"),
+    # community: i pronostici dei tipster AuraPitch (verificati dal servizio), pesati per bravura. Vale solo per le partite dell'app
+    # (nell'archivio storico non c'e): resta in ombra finche non ha abbastanza partite, poi l'integratore decide se pesa
+    ("consenso", "Consenso della community AuraPitch (tipster pesati per bravura)", "1x2"),
 ]
 N_MOTORE = 9
 # campionati che si giocano nell'anno solare (la stagione e l'anno); gli altri vanno da luglio a giugno
@@ -60,7 +63,16 @@ def _giorni(a, b):
     return d.days if hasattr(d, "days") else None
 
 
-def segnali(storia_h, storia_a, t0, diretti=None, motore=None):
+def consenso(c, mk, minimo=5):
+    """Specialista "consenso": quanto la community (quote dei voti 1/X/2 pesati per bravura) si sposta dal mercato verso la
+    squadra di casa. c = [peso 1, peso X, peso 2, numero di voti]; mk = probabilita 1X2 delle quote. None con meno di 'minimo' voti."""
+    if not c or len(c) < 4 or c[3] < minimo or not mk:
+        return None
+    tot = (c[0] + c[1] + c[2]) or 1
+    return round(((c[0] - c[2]) / tot - (mk[0] - mk[2])), 4)
+
+
+def segnali(storia_h, storia_a, t0, diretti=None, motore=None, comunita=None):
     """Lista di valori (uno per specialista, None se mancano i dati) per la partita casa-trasferta che inizia a t0.
     diretti = precedenti tra le due squadre visti dalla squadra di casa di oggi: [{"t", "gf", "gs"}, ...] (in casa e fuori)."""
     h, a = [z for z in storia_h if z["t"] < t0], [z for z in storia_a if z["t"] < t0]
@@ -84,6 +96,7 @@ def segnali(storia_h, storia_a, t0, diretti=None, motore=None):
     d6 = [z for z in (diretti or []) if z["t"] < t0 and _giorni(t0, z["t"]) is not None and _giorni(t0, z["t"]) <= 6 * 366][-6:]
     out.append((_media([_punti(z) for z in d6]) - 1.35) / 3 if len(d6) >= 3 else None)
     out += list(motore) if motore else [None] * N_MOTORE
+    out.append(comunita)  # consenso della community (genera_app.aggiorna_consenso lo aggiorna durante il giorno)
     return [None if v is None else round(v, 4) for v in out]
 
 

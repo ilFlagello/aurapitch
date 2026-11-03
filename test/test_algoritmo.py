@@ -231,5 +231,102 @@ class MotoreStatistico(unittest.TestCase):
         self.assertEqual(len(SP.segnali([], [], None, None, f)), len(SP.NOMI))
 
 
+class FormazioniUfficiali(unittest.TestCase):
+    def test_formazione_dentro_i_fattori(self):
+        import fattori as FT
+        from datetime import datetime, timezone
+        rosa = [{"n": "Mario Rossi", "g": 8, "a": 2, "pres": 10, "tit": 10, "pos": "F"},
+                {"n": "Luca Bianchi", "g": 4, "a": 3, "pres": 10, "tit": 9, "pos": "M"},
+                {"n": "Paolo Verdi", "g": 1, "a": 0, "pres": 9, "tit": 8, "pos": "D"},
+                {"n": "Gino Neri", "g": 1, "a": 0, "pres": 6, "tit": 1, "pos": "F"}]
+        notizia = [{"titolo": "Mario Rossi in dubbio per la partita", "fonte": "x", "link": "", "t": "2026-11-01T10:00:00+00:00"}]
+        ko = datetime(2026, 11, 3, 20, tzinfo=timezone.utc)
+        xi = ["Mario Rossi"] + [f"Titolare {i}" for i in range(10)]
+        lista, tot, _ = FT.fattori_squadra("Casa", 0, notizia, rosa, 20, None, ko, formazione={"xi": xi, "pan": ["Luca Bianchi", "Gino Neri"], "t": "2026-11-03T19:00+00:00"})
+        tipi = {f["chi"]: f["tipo"] for f in lista}
+        self.assertNotIn("Mario Rossi", tipi)  # titolare: la notizia "in dubbio" non conta piu
+        self.assertEqual(tipi.get("Luca Bianchi"), "panchina")  # titolare abituale in panchina
+        self.assertEqual(tipi.get("Paolo Verdi"), "assente")  # non convocato
+        self.assertNotIn("Gino Neri", tipi)  # riserva che resta riserva
+        self.assertLess(tot, 0)
+        senza, tot0, _ = FT.fattori_squadra("Casa", 0, notizia, rosa, 20, None, ko)
+        self.assertEqual([f["chi"] for f in senza], ["Mario Rossi"])  # senza formazione vale la notizia
+
+    def test_presenza_ufficiale_nei_marcatori(self):
+        rosa = [{"n": f"G{i}", "g": 3, "a": 1, "pres": 10, "tit": 5, "pos": "F", "gialli": 2} for i in range(4)]
+        base = {x["n"]: x["p"] for x in M.marcatori(rosa, 1.5)}
+        uff = {x["n"]: x["p"] for x in M.marcatori(rosa, 1.5, presenza={"G0": "titolare", "G1": "panchina"})}
+        self.assertGreater(uff["G0"], base["G0"])
+        self.assertLess(uff["G1"], base["G1"])
+        self.assertAlmostEqual(uff["G2"], base["G2"])
+
+
+class AgentiGiocatori(unittest.TestCase):
+    def test_specialisti_giocatore(self):
+        import giocatori as GC
+        x = {"n": "A", "g": 5, "a": 1, "pres": 10, "tit": 8, "rig": 3, "gialli": 2, "min_v": 800, "u5": [[90, 1, 0, 0], [90, 1, 0, 1], [80, 0, 1, 0], [90, 1, 0, 0], [70, 0, 0, 0]]}
+        sg = GC.segnali("MARC", x, {"stato": "titolare", "lam": 1.8, "rig_max": 3})
+        self.assertEqual(len(sg), len(GC.NOMI))
+        self.assertEqual(sg[0], 1.0)  # titolare nella formazione ufficiale
+        self.assertEqual(sg[1], 1.0)  # rigorista della squadra
+        self.assertGreater(sg[2], 0)  # in forma: segna piu della sua media
+        self.assertIsNone(sg[4])  # l'arbitro conta solo per gli ammoniti
+        self.assertIsNotNone(GC.segnali("AMM", x, {"k": 2.2, "k_lega": 1.7, "arb": 1.2})[4])
+
+    def test_taratura_in_ombra_e_accesa(self):
+        import random
+        import giocatori as GC
+        self.assertEqual(GC.applica("MARC", 0.3, [1, None, None, None, None], {}), 0.3)  # senza taratura nulla cambia
+        rnd = random.Random(1)
+        righe = []
+        for k in range(3000):  # la probabilita di base sottovaluta i titolari e sopravvaluta chi parte dalla panchina
+            tit = rnd.random() < 0.6
+            p0 = 0.25
+            vero = 0.33 if tit else 0.12
+            righe.append([f"2026-{1 + k // 300:02d}-01", "MARC", f"m{k}", "X", p0, p0, 1 if rnd.random() < vero else 0, 1, 1.0 if tit else -1.0, None, None, None, None])
+        tar = GC.tara(righe)
+        t = tar["tipi"]["MARC"]
+        self.assertTrue(t["attivo"], t)
+        self.assertIn("minuti", t["w"])
+        self.assertGreater(GC.applica("MARC", 0.25, [1.0, None, None, None, None], tar), 0.29)
+        self.assertLess(GC.applica("MARC", 0.25, [-1.0, None, None, None, None], tar), 0.18)
+        self.assertFalse(tar["tipi"]["ASS"]["attivo"])  # nessun controllo: in ombra
+
+    def test_verificatore(self):
+        import tempfile
+        import giocatori as GC
+        from datetime import date
+        with tempfile.TemporaryDirectory() as d:
+            oggi = date.today().isoformat()
+            os.makedirs(os.path.join(d, "diario"))
+            with open(os.path.join(d, "diario", oggi + ".json"), "w") as f:
+                json.dump({"p1": {"lg": "I1", "h": "Inter", "a": "Milan", "date": oggi, "ko": oggi + "T19:45:00+00:00", "st": "FT", "g": [2, 1],
+                                  "pg": {"MARC:Lautaro Martinez": [0.4, 0.42, 1.0, 1.0, 0.1, 0.2, None], "AMM:Theo Hernandez": [0.3, 0.3, 1.0, None, None, 0.1, 0.05],
+                                         "ASS:Nicolo Barella": [0.2, 0.2, None, None, None, 0.2, None]}}}, f)
+            with open(os.path.join(d, "tab.json"), "w") as f:
+                json.dump({"e1": {"lg": "I1", "t": oggi + "T19:45Z", "h": "Internazionale", "a": "AC Milan", "in": ["Lautaro Martínez", "Theo Hernández", "Nicolò Barella"],
+                                  "marc": ["Lautaro Martínez"], "ass": [], "amm": ["Theo Hernández"]}}, f)
+            vecchi = (GC.DIARIO, GC.TABELLINI, GC.VERIFICA)
+            GC.DIARIO, GC.TABELLINI, GC.VERIFICA = os.path.join(d, "diario"), os.path.join(d, "tab.json"), os.path.join(d, "ver.json")
+            try:
+                righe = GC.verifica()
+                self.assertEqual(len(righe), 3)
+                esito = {z[1]: z[6] for z in righe}
+                self.assertEqual(esito, {"MARC": 1, "AMM": 1, "ASS": 0})
+                self.assertEqual(len(GC.verifica()), 3)  # una partita si controlla una volta sola
+            finally:
+                GC.DIARIO, GC.TABELLINI, GC.VERIFICA = vecchi
+
+
+class ConsensoCommunity(unittest.TestCase):
+    def test_consenso(self):
+        import specialisti as SP
+        self.assertIn("consenso", SP.NOMI)
+        self.assertIsNone(SP.consenso([3, 0, 0, 3], [0.5, 0.3, 0.2]))  # troppo pochi pronostici
+        self.assertGreater(SP.consenso([8, 1, 1, 10], [0.5, 0.3, 0.2]), 0)  # la community crede alla casa piu del mercato
+        self.assertLess(SP.consenso([1, 1, 8, 10], [0.5, 0.3, 0.2]), 0)
+        self.assertEqual(len(SP.segnali([], [], None)), len(SP.NOMI))
+
+
 if __name__ == "__main__":
     unittest.main()

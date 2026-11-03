@@ -66,6 +66,7 @@ import { Guida } from "./guida.js";
     const [err, setErr] = useState("");
     const [theme, setTheme] = useState(store.get("theme", "system"));
     const [tab, setTab] = useState("partite");
+    const [slipKey, setSlipKey] = useState(0); // cambia quando il banner "Schedina in corso" chiede una sezione precisa
     const [open, setOpen] = useState(null);
     const [mt, setMt] = useState(0);
     const [day, setDay] = useState("all");
@@ -425,7 +426,7 @@ import { Guida } from "./guida.js";
 
     const open_m = open && byId[open];
     const sosp = (x) => html`<${React.Suspense} fallback=${html`<${Attesa} />`}>${x}<//>`;
-    const views = { partite: home, campionati: sosp(html`<${LeaguesView} />`), schedina: sosp(html`<${SlipView} />`), club: sosp(html`<${ClubView} />`) };
+    const views = { partite: home, campionati: sosp(html`<${LeaguesView} />`), schedina: sosp(html`<${SlipView} key=${slipKey} />`), club: sosp(html`<${ClubView} />`) };
     const DOCK = [["partite", "Partite", Ic.Calendar], ["campionati", "Campionati", Ic.Trophy], ["schedina", "Schedina IA", Ic.Sparkles], ["club", "Il Mio Club", Ic.Shield]];
 
     const ctx = { invita, gratisOggi, usaGratis, apriSquadra, apriGiocatore, apriLega, A, setRecensione, setLegale, caricaDettagli, caricaMercati, syncOn, setSyncOn, setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen: (v) => (v == null ? indietro() : goMatch(v)), mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
@@ -470,7 +471,7 @@ import { Guida } from "./guida.js";
       ${!onb && html`<${PrimoAvvio} onFine=${() => { setOnb(true); store.set("onb", true); store.set("guideSeen", true);
         // primo utilizzo: 7 giorni di PRO completo, per vedere subito tutto quello che l'app sa fare (una volta sola per telefono)
         if (!store.get("prova7", 0) && !sub && until < Date.now()) { const u = Date.now() + 7 * 86400e3; store.set("prova7", Date.now()); store.set("until", u); setUntil(u); flash("Benvenuto: 7 giorni di PRO completo, gratis"); } }} />`}
-      ${!open && !team && html`<${BarraSchedina} vaiSchedina=${() => { setTab("schedina"); window.scrollTo(0, 0); }} />`}
+      ${!open && !team && html`<${BarraSchedina} vaiSchedina=${(sez) => { store.set("sch:schedina", sez); setSlipKey((k) => k + 1); setTab("schedina"); window.scrollTo(0, 0); }} />`}
       ${askPush && html`<${Sheet} title="Notifiche della partita" onClose=${() => setAskPush(false)}>
         <p className=${"text-[15px] " + C.tx}>Vuoi ricevere un avviso anche con il telefono bloccato per <b>inizio partita, gol, espulsioni, fine primo tempo e finale</b> delle tue preferite?</p>
         ${/iPhone|iPad/.test(navigator.userAgent) && !navigator.standalone && html`<div className=${"text-[13px] rounded-xl p-3 " + TONE.warn + " border"}>Su iPhone le notifiche funzionano solo aprendo AuraPitch dall'icona sulla schermata Home (Safari, Condividi, Aggiungi alla schermata Home).</div>`}

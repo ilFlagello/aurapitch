@@ -654,6 +654,7 @@ def genera():
         if not q:
             continue
         m_fd = abbina(r, [m for m in fdp.values() if m["_code"] == code and m["id"] not in usate]) if code else None
+        g1_es = None  # primo tempo dal calendario ESPN (campionati senza football-data)
         if m_fd:
             usate.add(m_fd["id"])
             h, a = nome_fd(m_fd.get("homeTeam")), nome_fd(m_fd.get("awayTeam"))
@@ -670,17 +671,12 @@ def genera():
                     st, g = "FT", [int(sc[0]), int(sc[1])]
                 except (TypeError, ValueError):
                     pass
-            for e in ((esd.get("risultati_lega") or {}).get(k) or []):  # Serie B: risultati da ESPN
-                try:
-                    vicino = abs((utc(e["t"].replace("Z", "+00:00")) - r["_t"]).total_seconds()) < 6 * 3600
-                except ValueError:
-                    vicino = False
-                if vicino and ES.sim(h, [e["h"]]) + ES.sim(a, [e["a"]]) >= 1.3:
-                    if e["st"] == "post" and e["fine"]:
-                        st, g = "FT", e["g"]
-                    elif e["st"] == "in":
-                        st, g = "LIVE", e["g"]
-                    break
+            e = ES.evento_vicino((esd.get("risultati_lega") or {}).get(k), h, a, r["_t"])  # campionati e coppe solo ESPN: risultati da ESPN
+            if e:
+                st_e, g_e, _ = ES.stato_evento(e)
+                if st_e != "NS":
+                    st, g = st_e, g_e
+                    g1_es = e.get("g1") if st_e == "FT" else None
         t0 = r["_t"]
         l5 = [ultime5(per_team, hid, t0), ultime5(per_team, aid, t0)] if (code or hid or aid) else [[], []]
         prec, h2h = precedenti(m_fd["id"], hid, aid) if m_fd else ({"tone": "ok", "text": "Precedenti non disponibili per questo campionato nei dati gratuiti."}, [])
@@ -739,7 +735,7 @@ def genera():
             eh = ea = None
         out["matches"].append({
             "id": mid, "fd": m_fd["id"] if m_fd else None, "lg": k, **({"eh": eh, "ea": ea} if eh else {}), "date": loc.strftime("%Y-%m-%d"), "time": loc.strftime("%H:%M"), "ko": t0.isoformat(),
-            "h": h, "a": a, "st": st, "g": g, "g1": primo_tempo(m_fd) if m_fd and st in ("FT", "LIVE") else None, "res": (None if g is None else (0 if g[0] > g[1] else 1 if g[0] == g[1] else 2)), "free": False,
+            "h": h, "a": a, "st": st, "g": g, "g1": primo_tempo(m_fd) if m_fd and st in ("FT", "LIVE") else g1_es, "res": (None if g is None else (0 if g[0] > g[1] else 1 if g[0] == g[1] else 2)), "free": False,
             "p": [pc["1"], pc["X"], pc["2"]] if CB.attivo() and all(c in pc for c in "1X2") else q["mk"], "_p0": q["mk"], "mk": q["mk"],
             "po": pc.get("O2.5", q["mo"]) if CB.attivo() and q["mo"] is not None else (q["mo"] if q["mo"] is not None else 0.5), "mo": q["mo"] if q["mo"] is not None else 0.5,
             "odds": q["odds"], "max": q["max"], "nb": q["nb"], "xg": [lh, la], "elo": [None, None],
@@ -1281,6 +1277,10 @@ def aggiorna_live():
         if (st, g, g1) != (m.get("st"), m.get("g"), m.get("g1")):
             m["st"], m["g"], m["res"], m["g1"] = st, g, res, g1
             cambi += 1
+    try:
+        cambi += risultati_espn(d)
+    except Exception as e:  # noqa: BLE001 - i risultati ESPN non devono fermare il giro
+        print(f"Risultati ESPN: non aggiornati ({type(e).__name__}: {e})")
     d["generato"] = datetime.now(timezone.utc).astimezone(ROME).strftime("%d/%m/%Y %H:%M")
     d["label"] = f"aggiornati il {d['generato'][:5]} alle {d['generato'][-5:]}"
     print(f"Partite aggiornate: {cambi}")
@@ -1289,6 +1289,123 @@ def aggiorna_live():
     na = aggiorna_arbitri(d)
     print(f"Quote pre-partita applicate: {npre}; partite ricalcolate: {nf}; arbitri aggiunti: {na}")
     return d if (cambi or nf or npre or na) else None
+
+
+def senza_fd():
+    """Campionati e coppe senza football-data (risultati solo dal calendario ESPN), nazionali escluse (nomi in italiano)."""
+    return {k for k, _, _, _, code, _ in LEAGUES if code is None and k in ES.ESPN_LG and k not in ES.NAZIONALI}
+
+
+def scrivi_diario(path, dd):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:  # una partita per riga: git conserva solo le righe cambiate
+        f.write("{\n" + ",\n".join(json.dumps(k) + ":" + json.dumps(dd[k], ensure_ascii=False, separators=(",", ":")) for k in sorted(dd)) + "\n}\n")
+
+
+def risultati_espn(d, eventi=None, get=None, massimo=14, ora=None):
+    """Campionati e coppe senza football-data: il risultato arriva solo dal calendario ESPN.
+    1) partite dell'app iniziate e non ancora finite: stato e risultato aggiornati anche durante il giorno (prima arrivavano
+       solo al giro del mattino: le partite asiatiche restavano "da giocare" fino al giorno dopo);
+    2) diario e storico dei consigli degli ultimi 7 giorni: risultati mancanti aggiunti; con 'eventi' (giro del mattino)
+       anche i risultati gia registrati vengono ricontrollati e corretti (fino al 3/11 "Al Ittihad - Al Ain" poteva prendere
+       il risultato di "Al Sadd - Al Ahli").
+    eventi: {lega: [partite compatte]} gia scaricate; le leghe mancanti si scaricano per giorno, al massimo 'massimo' richieste.
+    Restituisce il numero di partite dell'app cambiate."""
+    get = get or ES.get
+    ora = ora or datetime.now(timezone.utc)
+    ricontrolla = eventi is not None
+    eventi = dict(eventi or {})
+    leghe = senza_fd()
+    obiettivi = []  # (tipo, oggetto, lega, casa, ospite, calcio d'inizio)
+    for m in d.get("matches", []):
+        if m.get("fd") is not None or m.get("lg") not in leghe:
+            continue
+        try:
+            t0 = datetime.fromisoformat(m["ko"])
+        except (KeyError, ValueError):
+            continue
+        if ora - timedelta(hours=36) <= t0 <= ora - timedelta(minutes=5) and (m.get("st") in ("NS", "LIVE") or (ricontrolla and m.get("st") == "FT")):
+            obiettivi.append(("app", m, m["lg"], m["h"], m["a"], t0))
+    oggi = ora.astimezone(ROME).date()
+    diari, ko_di = {}, {}
+    for dd_ in range(-7, 1):
+        giorno = (oggi + timedelta(days=dd_)).isoformat()
+        path = os.path.join(DIARIO, giorno + ".json")
+        voci = jload(path, None)
+        if not voci:
+            continue
+        diari[path] = voci
+        for mid, v in voci.items():
+            try:
+                t0 = datetime.fromisoformat(v["ko"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            ko_di[mid] = t0
+            if v.get("lg") not in leghe or not (ora - timedelta(days=7) <= t0 <= ora - timedelta(hours=2, minutes=30)):
+                continue
+            if v.get("st") not in ("FT", "RINV") or (ricontrolla and v.get("st") == "FT"):
+                obiettivi.append(("diario", (path, mid), v["lg"], v.get("h"), v.get("a"), t0))
+    consigli = jload(STORICO_IN, {}) or {}
+    for mid, v in consigli.items():
+        t0 = ko_di.get(mid)
+        if not t0 or v.get("lg") not in leghe or not (ora - timedelta(days=7) <= t0 <= ora - timedelta(hours=2, minutes=30)):
+            continue
+        if v.get("st") not in ("FT", "RINV") or (ricontrolla and v.get("st") == "FT"):
+            obiettivi.append(("consigli", mid, v["lg"], v.get("h"), v.get("a"), t0))
+    # giorni del calendario ESPN da leggere: giorno UTC del fischio e quello di 6 ore prima (ESPN ragiona con l'ora americana)
+    richieste, scaricati = 0, {}
+    coperti = ora - timedelta(days=3, hours=18)  # il giro del mattino scarica 4 giorni indietro: prima di allora si legge il giorno
+    for tipo, _, lg, _, _, t0 in sorted(obiettivi, key=lambda o: (o[0] != "app", -o[5].timestamp())):
+        if lg in eventi and t0 >= coperti:
+            continue
+        for g in sorted({t0.strftime("%Y%m%d"), (t0 - timedelta(hours=6)).strftime("%Y%m%d")}):
+            if (lg, g) in scaricati or richieste >= massimo:
+                continue
+            richieste += 1
+            try:
+                scaricati[(lg, g)] = [ES.evento(ev) for ev in get(f"{ES.SITE}{ES.ESPN_LG[lg]}/scoreboard?dates={g}").get("events", [])]
+            except Exception as e:  # noqa: BLE001 - rete o formato: si riprova al prossimo giro
+                scaricati[(lg, g)] = []
+                print(f"Risultati ESPN {lg} {g}: {str(e)[:120]}")
+    for (lg, _), evs in scaricati.items():
+        eventi.setdefault("~" + lg, []).extend(evs)
+    cambi, diario_cambi, cons_cambi, corretti = 0, set(), 0, []
+    for tipo, obj, lg, h, a, t0 in obiettivi:
+        e = ES.evento_vicino((eventi.get(lg) or []) + (eventi.get("~" + lg) or []), h, a, t0, ore=3)
+        if not e:
+            continue
+        st, g, g1 = ES.stato_evento(e)
+        if tipo == "app":
+            if st != "NS" and (st, g) != (obj.get("st"), obj.get("g")):
+                obj["st"], obj["g"], obj["g1"] = st, g, g1
+                obj["res"] = None if g is None else (0 if g[0] > g[1] else 1 if g[0] == g[1] else 2)
+                cambi += 1
+            continue
+        if st not in ("FT", "RINV"):
+            continue
+        v = diari[obj[0]][obj[1]] if tipo == "diario" else consigli[obj]
+        if (st, g) == (v.get("st"), v.get("g")):
+            continue
+        if v.get("st") == "FT":
+            corretti.append(f"{lg} {h}-{a} {v.get('g')} -> {g}")
+        v["st"], v["g"], v["g1"] = st, g, g1
+        if tipo == "diario":
+            diario_cambi.add(obj[0])
+            continue
+        cons_cambi += 1
+        if st == "FT" and not v.get("tardivo"):
+            es = {k: esito_sicuro(x["c"], g, g1) for k, x in (v.get("tips") or {}).items()}
+            v["esiti"] = {k: x for k, x in es.items() if x is not None}
+        else:
+            v.pop("esiti", None)
+    for path in diario_cambi:
+        scrivi_diario(path, diari[path])
+    if cons_cambi:
+        with open(STORICO_IN, "w", encoding="utf-8") as f:
+            json.dump(consigli, f, ensure_ascii=False, separators=(",", ":"))
+    print(f"Risultati ESPN: {cambi} partite dell'app, {sum(1 for o in obiettivi if o[0] == 'diario')} voci del diario controllate "
+          f"({len(diario_cambi)} file aggiornati), {cons_cambi} consigli aggiornati, {richieste} richieste" + (f"; corretti: {corretti[:8]}" if corretti else ""))
+    return cambi
 
 
 STORICO_IN = os.path.join(DATA, "consigli.json")
@@ -1535,9 +1652,7 @@ def aggiorna_diario(d):
             elif r is not None and m.get("st") in ("FT", "LIVE", "RINV"):
                 r["st"], r["g"], r["g1"] = m["st"], m.get("g"), m.get("g1")
         if dd != vecchio:
-            os.makedirs(DIARIO, exist_ok=True)
-            with open(path, "w", encoding="utf-8") as f:  # una partita per riga: git conserva solo le righe cambiate
-                f.write("{\n" + ",\n".join(json.dumps(k) + ":" + json.dumps(dd[k], ensure_ascii=False, separators=(",", ":")) for k in sorted(dd)) + "\n}\n")
+            scrivi_diario(path, dd)
     print(f"Diario: {nuove} nuove previsioni")
 
 
@@ -1624,6 +1739,10 @@ def main():
             print("Nessuna partita con quote nei prossimi giorni: il file dell'app non viene toccato.")
             return
         print(f"Partite: {len(d['matches'])}; campionati: {[l['name'] for l in d['leagues']]}; FREE: {[m['h'] + '-' + m['a'] for m in d['matches'] if m['free']]}")
+        try:  # mattino: ricontrollo dei risultati del diario e dei consigli con il calendario ESPN appena scaricato
+            risultati_espn(d, eventi=(jload(ESPN, {}) or {}).get("risultati_lega") or {}, massimo=60)
+        except Exception as e:  # noqa: BLE001
+            print(f"Risultati ESPN: non ricontrollati ({type(e).__name__}: {e})")
     aggiorna_consenso(d)
     aggiorna_specialisti_giorno(d)
     blocca_consigli(d)

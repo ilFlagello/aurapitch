@@ -554,7 +554,7 @@ def indice_scontri():
             uniche.append(r)
     mot = SP.Motore()  # modello statistico indipendente: stato aggiornato a oggi
     for r in uniche:
-        mot.aggiorna(r["h"], r["a"], r["lg"], r["gh"], r["ga"], r["sh"], r["sa"])
+        mot.aggiorna(r["h"], r["a"], r["lg"], r["gh"], r["ga"], r["sh"], r["sa"], r["t"])
     return SP.indice_diretti(uniche), mot
 
 
@@ -697,7 +697,7 @@ def genera():
         # specialisti (forma, riposo, casa/trasferta, tendenza gol) pesati dall'integratore imparato ogni mattina: corregge le quote
         # prima dei gol attesi; se l'integratore e spento per questo gruppo di campionati non cambia nulla
         dir_ = SP.diretti_di(scontri, h, a)
-        mot_f = motore.caratteristiche(SP.risolvi(h, scontri), SP.risolvi(a, scontri), k)
+        mot_f = motore.caratteristiche(SP.risolvi(h, scontri), SP.risolvi(a, scontri), k, t0)
         sp = SP.segnali(per_team.get(hid, []), per_team.get(aid, []), t0, dir_, mot_f) if (hid or aid or dir_ or any(v is not None for v in mot_f)) else None
         mkc, moc = SP.correggi(q["mk"], q["mo"], sp, k, (CB.modello() or {}).get("integratore"))
         if mkc is not q["mk"]:

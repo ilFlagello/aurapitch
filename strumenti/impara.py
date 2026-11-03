@@ -320,9 +320,9 @@ def segnali_archivio(R):
         kh, ka = (r["lg"], r["h"]), (r["lg"], r["a"])
         ph, pa = SP.piega(r["h"]), SP.piega(r["a"])
         dir_ = [{"t": t1, "gf": x, "gs": y} for t1, x, y in coppie.get((ph, pa), [])] + [{"t": t1, "gf": y, "gs": x} for t1, x, y in coppie.get((pa, ph), [])]
-        v = SP.segnali(storia.get(kh, []), storia.get(ka, []), t, sorted(dir_, key=lambda z: z["t"]), mot.caratteristiche(r["h"], r["a"], r["lg"]))
+        v = SP.segnali(storia.get(kh, []), storia.get(ka, []), t, sorted(dir_, key=lambda z: z["t"]), mot.caratteristiche(r["h"], r["a"], r["lg"], t))
         tp = r.get("tp") or [None, None]
-        mot.aggiorna(r["h"], r["a"], r["lg"], r["g"][0], r["g"][1], tp[0], tp[1])
+        mot.aggiorna(r["h"], r["a"], r["lg"], r["g"][0], r["g"][1], tp[0], tp[1], t)
         coppie.setdefault((ph, pa), []).append((t, r["g"][0], r["g"][1]))
         X[i] = [np.nan if x is None else x for x in v]
         storia.setdefault(kh, []).append({"t": t, "casa": True, "gf": r["g"][0], "gs": r["g"][1]})

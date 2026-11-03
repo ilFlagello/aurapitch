@@ -404,6 +404,35 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     }
     return sel.map((s) => ({ m: s.x.m, ...s.x.c[s.i] }));
   }
+  /* schedina dei giocatori: marcatori, assist, ammoniti (o un mix). Un giocatore per partita (due della stessa partita
+     dipendono l'uno dall'altro), quota minima QUOTA_MIN, scelti per punteggio IA e probabilità; con quota obiettivo si avvicina il totale */
+  const TIPI_GIOCATORI = [["MARC", "Marcatori"], ["ASS", "Assist"], ["AMM", "Ammoniti"], ["MIX", "Mix"]];
+  function buildGiocatori(matches, tipo, T, v, nP) {
+    const pref = tipo === "MIX" ? ["MARC", "ASS", "AMM"] : [tipo];
+    const pool = [];
+    for (const m of matches) {
+      const c = options(m).filter((o) => pref.some((p) => o.k.startsWith(p + ":")) && o.q >= QUOTA_MIN && o.q <= 8 && o.p >= 0.12)
+        .map((o) => ({ ...o, sc: (o.s != null ? o.s : 50) / 100 + 0.8 * o.p + 0.06 * rumore(m.id + o.k, v) })).sort((a, b) => b.sc - a.sc);
+      if (c.length) pool.push({ m, c });
+    }
+    pool.sort((a, b) => b.c[0].sc - a.c[0].sc);
+    const n = Math.min(pool.length, nP || (T ? Math.max(2, Math.min(8, Math.round(Math.log(T) / Math.log(2.4)))) : 3));
+    let sel = pool.slice(0, n).map((x) => ({ x, i: 0 }));
+    if (T) { // si cambia giocatore nella stessa partita per avvicinare la quota obiettivo
+      const LT = Math.log(T);
+      for (let it = 0; it < 40; it++) {
+        const d = sel.reduce((a, s) => a + Math.log(s.x.c[s.i].q), 0) - LT;
+        if (Math.abs(d) < 0.08) break;
+        let best = null;
+        sel.forEach((s, si) => s.x.c.slice(0, 6).forEach((o, oi) => { if (oi === s.i) return;
+          const nd = d - Math.log(s.x.c[s.i].q) + Math.log(o.q), g = Math.abs(d) - Math.abs(nd);
+          if (g > 0.03 && (!best || g - 0.5 * (s.x.c[s.i].sc - o.sc) > best.v)) best = { si, oi, v: g - 0.5 * (s.x.c[s.i].sc - o.sc) }; }));
+        if (!best) break;
+        sel[best.si].i = best.oi;
+      }
+    }
+    return sel.map((s) => ({ m: s.x.m, ...s.x.c[s.i] }));
+  }
   /* schedina con un esito scelto dall'utente (tutte in casa, tutti pareggi, tutti Goal, tutti Over 2,5...): l'IA sceglie
      le partite dove quell'esito è più probabile e più d'accordo con i dati, e se c'è una quota obiettivo la avvicina */
   const ESITI_SCHEDINA = [["", "Scelta IA"], ["1", "Tutte in casa (1)"], ["X", "Tutti pareggi (X)"], ["2", "Tutte fuori casa (2)"], ["FAV", "Vince la favorita"],
@@ -678,4 +707,4 @@ function classificaViva(S, partite) {
   return { ...S, generale, casa: applica(S.casa, 0), trasferta: applica(S.trasferta, 1), viva: { live: nuove.filter((m) => m.st === "LIVE").length, finite: nuove.filter((m) => m.st === "FT").length } };
 }
 
-export { QUOTA_MIN, classificaViva, registraColori, iniziali, matriceRis, probVera, NomeSquadra, NomeGiocatore, NomeLega, Ricarica, vibra, esitoGamba, statoGiocata, html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };
+export { TIPI_GIOCATORI, buildGiocatori, QUOTA_MIN, classificaViva, registraColori, iniziali, matriceRis, probVera, NomeSquadra, NomeGiocatore, NomeLega, Ricarica, vibra, esitoGamba, statoGiocata, html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };

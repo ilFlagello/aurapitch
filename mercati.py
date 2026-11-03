@@ -452,7 +452,7 @@ def marcatori(rosa, lam, assenti=(), quanti=6):
         tit = x.get("tit", 0) / max(1, N)
         sub = max(0, x.get("pres", 0) - x.get("tit", 0)) / max(1, N)
         att = min(1.0, tit * 1.0 + sub * 0.35) / max(0.35, min(1.0, x.get("pres", 0) / max(1, N)))
-        p = 1 - math.exp(-lam * quota * min(1.15, att))
+        p = min(0.6, 1 - math.exp(-lam * quota * min(1.15, att)))  # tetto: nemmeno i bomber migliori segnano piu di 6 volte su 10
         if p >= 0.06:
             out.append({"n": x["n"], "p": round(p, 4), "g": x.get("g", 0), "pres": x.get("pres", 0), "tit": x.get("tit", 0)})
     out.sort(key=lambda z: -z["p"])

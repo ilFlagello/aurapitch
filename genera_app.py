@@ -528,7 +528,8 @@ def indice_scontri():
     def aggiungi(r):
         try:
             d = datetime.strptime(r["Date"], "%d/%m/%Y" if len(r["Date"]) > 8 else "%d/%m/%y").replace(tzinfo=timezone.utc)
-            righe.append({"t": d, "h": r["HomeTeam"], "a": r["AwayTeam"], "gh": int(r["FTHG"]), "ga": int(r["FTAG"])})
+            st = [int(r["HST"]), int(r["AST"])] if r.get("HST") not in (None, "") and r.get("AST") not in (None, "") else [None, None]
+            righe.append({"t": d, "h": r["HomeTeam"], "a": r["AwayTeam"], "gh": int(r["FTHG"]), "ga": int(r["FTAG"]), "lg": r.get("Div"), "sh": st[0], "sa": st[1]})
         except (ValueError, KeyError, TypeError):
             pass
     try:
@@ -545,7 +546,16 @@ def indice_scontri():
                     aggiungi(r)
         except OSError:
             pass
-    return SP.indice_diretti(righe)
+    vista, uniche = set(), []
+    for r in sorted(righe, key=lambda r: r["t"]):  # archivio e stagione in corso possono avere la stessa partita
+        k = (r["t"].date(), SP.piega(r["h"]), SP.piega(r["a"]))
+        if k not in vista:
+            vista.add(k)
+            uniche.append(r)
+    mot = SP.Motore()  # modello statistico indipendente: stato aggiornato a oggi
+    for r in uniche:
+        mot.aggiorna(r["h"], r["a"], r["lg"], r["gh"], r["ga"], r["sh"], r["sa"])
+    return SP.indice_diretti(uniche), mot
 
 
 def nota_scontri(dir_, tip, h, a):
@@ -571,7 +581,7 @@ def genera():
     quote = carica_quote()
     fdp, classifiche = carica_fd()
     per_team = storico(fdp)
-    scontri = indice_scontri()
+    scontri, motore = indice_scontri()
     # Serie B (non coperta da football-data): risultati e classifica da ESPN, con id "es:<nome>"
     esd = jload(ESPN, {}) or {}
     for nome, es in (esd.get("squadre") or {}).items():
@@ -687,7 +697,8 @@ def genera():
         # specialisti (forma, riposo, casa/trasferta, tendenza gol) pesati dall'integratore imparato ogni mattina: corregge le quote
         # prima dei gol attesi; se l'integratore e spento per questo gruppo di campionati non cambia nulla
         dir_ = SP.diretti_di(scontri, h, a)
-        sp = SP.segnali(per_team.get(hid, []), per_team.get(aid, []), t0, dir_) if (hid or aid or dir_) else None
+        mot_f = motore.caratteristiche(SP.risolvi(h, scontri), SP.risolvi(a, scontri), k)
+        sp = SP.segnali(per_team.get(hid, []), per_team.get(aid, []), t0, dir_, mot_f) if (hid or aid or dir_ or any(v is not None for v in mot_f)) else None
         mkc, moc = SP.correggi(q["mk"], q["mo"], sp, k, (CB.modello() or {}).get("integratore"))
         if mkc is not q["mk"]:
             lh, la = M.gol_attesi(mkc, moc)

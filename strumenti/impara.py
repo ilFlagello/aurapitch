@@ -311,7 +311,7 @@ MIN_GRUPPO = 3000
 
 def segnali_archivio(R):
     """Valori degli specialisti per ogni partita dell'archivio, con le sole partite giocate prima (stesso codice dell'app)."""
-    storia, coppie = {}, {}
+    storia, coppie, mot = {}, {}, SP.Motore()
     X = np.full((len(R), len(SP.NOMI)), np.nan, dtype=np.float32)
     for i, r in enumerate(R):
         if not r.get("h") or not r.get("a"):
@@ -320,7 +320,9 @@ def segnali_archivio(R):
         kh, ka = (r["lg"], r["h"]), (r["lg"], r["a"])
         ph, pa = SP.piega(r["h"]), SP.piega(r["a"])
         dir_ = [{"t": t1, "gf": x, "gs": y} for t1, x, y in coppie.get((ph, pa), [])] + [{"t": t1, "gf": y, "gs": x} for t1, x, y in coppie.get((pa, ph), [])]
-        v = SP.segnali(storia.get(kh, []), storia.get(ka, []), t, sorted(dir_, key=lambda z: z["t"]))
+        v = SP.segnali(storia.get(kh, []), storia.get(ka, []), t, sorted(dir_, key=lambda z: z["t"]), mot.caratteristiche(r["h"], r["a"], r["lg"]))
+        tp = r.get("tp") or [None, None]
+        mot.aggiorna(r["h"], r["a"], r["lg"], r["g"][0], r["g"][1], tp[0], tp[1])
         coppie.setdefault((ph, pa), []).append((t, r["g"][0], r["g"][1]))
         X[i] = [np.nan if x is None else x for x in v]
         storia.setdefault(kh, []).append({"t": t, "casa": True, "gf": r["g"][0], "gs": r["g"][1]})
@@ -373,12 +375,36 @@ def integratore(R, codici, P, Y):
         Dg = D[ok]
         cut = np.sort(Dg)[int(len(Dg) * 0.8)]
         tr, te = Dg < cut, Dg >= cut
+        # scelta degli specialisti utili su una validazione interna (l'ultimo 25% dell'allenamento): via chi peggiora
+        cut2 = np.sort(Dg[tr])[int(tr.sum() * 0.75)]
+        fi, va = tr & (Dg < cut2), tr & (Dg >= cut2)
+        usa = list(range(Z.shape[1]))
+
+        def val(cols):
+            Zc = np.zeros_like(Z)
+            Zc[:, cols] = Z[:, cols]
+            return _ll_multi_B(L[va], Y3[va], Zc[va], _fit_multi(L[fi], Y3[fi], Zc[fi], passi=250)), Zc
+        migliore, _ = val(usa)
+        cambiato = True
+        while cambiato and usa:
+            cambiato = False
+            prove = [(val([c for c in usa if c != i])[0], i) for i in usa]
+            v, i = min(prove)
+            if v < migliore:
+                migliore, cambiato = v, True
+                usa.remove(i)
+        Zou = Z  # Over/Under: tutti gli specialisti (la scelta qui sopra vale per l'esito 1X2)
+        Z = val(usa)[1]  # gli specialisti esclusi restano a zero (peso nullo)
+        scelti = [SP.NOMI[i] for i in usa]
         B = _fit_multi(L[tr], Y3[tr], Z[tr])
         base = _ll_multi_B(L[te], Y3[te], Z[te], np.zeros_like(B))
         nuovo = _ll_multi_B(L[te], Y3[te], Z[te], B)
         guad = (base - nuovo) / base
         contributi = {}
         for i, n in enumerate(SP.NOMI):
+            if n not in scelti:
+                contributi[n] = None
+                continue
             Zs = Z.copy()
             Zs[:, i] = 0
             Bi = _fit_multi(L[tr], Y3[tr], Zs[tr])
@@ -392,9 +418,9 @@ def integratore(R, codici, P, Y):
             lo = np.log(np.clip(po, 1e-6, 1 - 1e-6) / np.clip(1 - po, 1e-6, 1))
             L2 = np.stack([lo, np.zeros_like(lo)], 1)
             Y2 = np.stack([yo, 1 - yo], 1)
-            Bo = _fit_multi(L2[tr & oko], Y2[tr & oko], Z[tr & oko])
-            b0 = _ll_multi_B(L2[te & oko], Y2[te & oko], Z[te & oko], np.zeros_like(Bo))
-            b1 = _ll_multi_B(L2[te & oko], Y2[te & oko], Z[te & oko], Bo)
+            Bo = _fit_multi(L2[tr & oko], Y2[tr & oko], Zou[tr & oko])
+            b0 = _ll_multi_B(L2[te & oko], Y2[te & oko], Zou[te & oko], np.zeros_like(Bo))
+            b1 = _ll_multi_B(L2[te & oko], Y2[te & oko], Zou[te & oko], Bo)
             guad_ou = (b0 - b1) / b0
             b_ou = (Bo[:, 0] - Bo[:, 1]) if guad_ou >= MARGINE_PROMO else None
         attivo = guad >= MARGINE_PROMO
@@ -403,7 +429,7 @@ def integratore(R, codici, P, Y):
                                  "B": [[round(float(x), 5) for x in row] for row in (Bf if attivo else np.zeros_like(B))],
                                  "b_ou": [round(float(v), 5) for v in b_ou] if b_ou is not None else None}
         rapporto[gr] = {"partite": int(ok.sum()), "verifica": int(te.sum()), "guadagno_1x2": round(100 * guad, 4),
-                        "guadagno_ou": None if guad_ou is None else round(100 * guad_ou, 4), "attivo": bool(attivo), "contributi": contributi}
+                        "guadagno_ou": None if guad_ou is None else round(100 * guad_ou, 4), "attivo": bool(attivo), "contributi": contributi, "scelti_1x2": scelti}
         print(f"  integratore {gr}: 1X2 {100 * guad:+.3f}%, O/U {'-' if guad_ou is None else f'{100 * guad_ou:+.3f}%'} su {int(te.sum())} partite mai viste; contributi {contributi}")
     return modello, rapporto
 

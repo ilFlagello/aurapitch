@@ -16,14 +16,16 @@ import { Anteprima, partitaSettimana } from "./extra.js";
     const live = m.st === "LIVE";
     const left = m.st === "NS" ? html`<span className=${"num text-[19px] font-bold leading-none " + C.tx}>${m.time || "-"}</span>`
       : m.st === "RINV" ? html`<span className=${"text-[11px] font-semibold " + C.mu}>Rinviata</span>`
-      : live ? html`<span className="flex items-center gap-1 text-[#FF3D5A]"><i className="pulse block w-1.5 h-1.5 rounded-full bg-[#FF3D5A]"></i><span className="num text-[18px] font-bold leading-none">${m.clock && /\d/.test(m.clock) ? m.clock.replace(/'.*/, "'") : m.clock || "Live"}</span></span>`
+      : live ? html`<span className="flex items-center gap-1 text-[#FF3D5A] whitespace-nowrap" aria-label=${m.clock || "In diretta"}><i className="pulse block w-1.5 h-1.5 rounded-full bg-[#FF3D5A] shrink-0"></i>${m.clock && /\d/.test(m.clock)
+        ? html`<span className="num text-[18px] font-bold leading-none">${m.clock.replace(/'.*/, "'")}</span>`
+        : html`<span className="text-[12px] font-extrabold tracking-[0.06em] leading-none">${/Intervallo/.test(m.clock || "") ? "INT" : "LIVE"}</span>`}</span>`
       : html`<span className=${"text-[12px] font-semibold " + C.mu}>Finale</span>`;
     const team = (j) => html`<span className="flex items-center gap-2 min-w-0"><${Crest} t=${j ? m.a : m.h} size=${18} />
       <span className=${"text-[15px] truncate " + (fin && !vince(j) ? C.mu : C.tx) + (vince(j) ? " font-semibold" : "")}>${j ? m.a : m.h}</span></span>`;
     const gol = (j) => html`<span className=${"num text-[20px] font-bold leading-[22px] text-right " + (live ? "text-[#FF3D5A]" : fin && !vince(j) ? C.mu : C.tx)}>${m.g ? m.g[j] : ""}</span>`;
     return html`<button onPointerDown=${() => caricaDettagli && caricaDettagli(m.id)} onClick=${() => goMatch(m.id)} className=${"w-full text-left px-4 pt-3 pb-2.5 " + (i ? "border-t " + C.bd : "")}>
       <span className="grid items-center gap-x-3 gap-y-1.5" style=${{ gridTemplateColumns: "50px minmax(0,1fr) 22px 62px" }}>
-        <span className="row-span-2 flex items-center">${left}</span>
+        <span className="row-span-2 flex items-center min-w-0 overflow-hidden">${left}</span>
         ${team(0)}${gol(0)}
         <span className="row-span-2 flex flex-col items-end justify-center gap-1">${m.free && html`<span className=${"text-[10px] font-bold " + C.acc}>Gratis</span>`}<${FavPill} m=${m} unlocked=${unlocked(m)} /></span>
         ${team(1)}${gol(1)}

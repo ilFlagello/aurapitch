@@ -95,8 +95,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <i className="block rounded-full" style=${{ width: pct(P[0]) + "%", background: ch }}></i>
         <i className="block rounded-full bg-[#17152B]/[0.14] dark:bg-white/[0.18]" style=${{ width: pct(P[1]) + "%" }}></i>
         <i className="block rounded-full" style=${{ width: pct(P[2]) + "%", background: ca }}></i></div>
-      ${labels && html`<div className=${"flex justify-between mt-1.5 text-[12px] " + C.mu}>
-        <span>${m.h} <b className=${"num text-[17px] font-bold " + C.tx}>${pct(P[0])}%</b></span><span>Pari <b className=${"num text-[17px] font-bold " + C.tx}>${pct(P[1])}%</b></span><span><b className=${"num text-[17px] font-bold " + C.tx}>${pct(P[2])}%</b> ${m.a}</span></div>`}</div>`;
+      ${labels && html`<div className=${"grid grid-cols-[1fr_auto_1fr] gap-3 mt-2 text-[12px] leading-tight " + C.mu}>
+        ${[[m.h, P[0], "text-left items-start"], ["Pareggio", P[1], "text-center items-center"], [m.a, P[2], "text-right items-end"]].map(([n, v, al]) => html`<span key=${n} className=${"flex flex-col gap-0.5 min-w-0 " + al}>
+          <span className="truncate max-w-full">${n}</span><b className=${"num text-[18px] font-bold leading-none " + C.tx}>${pct(v)}%</b></span>`)}</div>`}</div>`;
   }
   /* stemmi AuraPitch: nessun logo ufficiale (sono marchi dei club), ma i colori veri di maglia (da ESPN) e, quando lo
      stemma è abbastanza grande, le iniziali della squadra. Riconoscibili a colpo d'occhio, senza problemi di diritti. */

@@ -9,7 +9,7 @@ const PASSI = [
   { i: Ic.CircleDot, t: "Ogni partita, a colpo d'occhio", s: "Tocca una partita: probabilità, forma, quote e diretta minuto per minuto.",
     p: ["Scorri con il dito tra Partita, Formazioni, IA, Statistiche e Cronaca", "Formazione probabile prima di quella ufficiale", "“E se…?”: togli un giocatore e guarda come cambia la partita"] },
   { i: Ic.Sparkles, t: "L'IA ti spiega le sue scelte", s: "Per ogni partita un consiglio con i motivi a favore e quelli da tenere d'occhio.",
-    p: ["Il consiglio si blocca 2 ore prima del fischio d'inizio: da lì non cambia più", "Ogni giorno un'analisi PRO gratis su una partita a tua scelta", "“Come sta andando l'IA”: errori e successi, tutto alla luce del sole", "L'algoritmo si allena ogni mattina sui risultati veri"] },
+    p: ["Gli specialisti dell'IA lavorano fino a 45 minuti dal fischio, poi il consiglio si blocca e non cambia più", "Ogni giorno un'analisi PRO gratis su una partita a tua scelta", "“Come sta andando l'IA”: errori e successi, tutto alla luce del sole", "L'algoritmo si allena ogni mattina sui risultati veri"] },
   { i: Ic.Zap, t: "Schedina IA in un tocco", s: "Scegli il rischio, la quota e anche l'esito (tutte in casa, pareggi, Goal, Over…): la compone l'IA.",
     p: ["“Schedina onesta”: ti avvisa se due giocate dipendono l'una dall'altra", "Diario delle giocate con l'allenatore personale", "Limite di spesa mensile per giocare con la testa"] },
   { i: Ic.TrendingUp, t: "Radar e notifiche", s: "Ti avvisiamo quando succede qualcosa che conta, con simboli diversi per ogni avviso.",

@@ -699,6 +699,10 @@ def giro_espn(base="data", ore=48):
             except Exception as e:  # noqa: BLE001
                 print(f"ESPN risultati {k} {giorno}: {e}")
         out["risultati_lega"][k] = evs
+    try:
+        out["senza_quote"] = giro_senza_quote(ora)
+    except Exception as e:  # noqa: BLE001 - i campionati senza quote non devono fermare il giro
+        print(f"ESPN senza quote: errore {e}")
     for k in SOLO_ESPN:
         try:
             out["classifiche"][k] = classifica_espn(ESPN_LG[k])
@@ -716,6 +720,70 @@ def giro_espn(base="data", ore=48):
     with open(os.path.join(base, "espn", "squadre.json"), "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
     print(f"ESPN: {len(out['squadre'])} squadre con rosa e risultati, classifiche: {list(out['classifiche'])}")
+
+
+# campionati e coppe SENZA quote dei bookmaker (scelti da Andrea il 3/11): calendario, risultati, classifica e diretta da ESPN,
+# senza consiglio IA e fuori dalla schedina. Codice dell'app -> (codice ESPN, nome, paese, bandiera). Le quote DraftKings, se ESPN
+# le ha, si mostrano solo come informazione. Non entrano in ESPN_LG: niente voti, rose e formazioni (richieste in piu ogni giorno).
+SENZA_QUOTE = {
+    "RU1": ("rus.1", "Premier League russa", "Russia", "ru"), "IL1": ("isr.1", "Ligat ha'Al", "Israele", "il"), "CY1": ("cyp.1", "First Division", "Cipro", "cy"),
+    "CH1": ("sui.1", "Super League svizzera", "Svizzera", "ch"), "RO1": ("rou.1", "Liga 1", "Romania", "ro"),
+    "ZA1": ("rsa.1", "Premiership", "Sudafrica", "za"), "IN1": ("ind.1", "Indian Super League", "India", "in"), "IN2": ("ind.2", "I-League", "India", "in"),
+    "BO1": ("bol.1", "División Profesional", "Bolivia", "bo"), "VE1": ("ven.1", "Primera División", "Venezuela", "ve"), "UY2": ("uru.2", "Segunda División", "Uruguay", "uy"),
+    "HN1": ("hon.1", "Liga Nacional", "Honduras", "hn"), "GT1": ("gua.1", "Liga Nacional", "Guatemala", "gt"), "SV1": ("slv.1", "Primera División", "El Salvador", "sv"),
+    "USL1": ("usa.usl.l1", "USL League One", "Stati Uniti", "us"),
+    "TPO": ("por.taca.portugal", "Taça de Portugal", "Portogallo", "pt"), "EFT": ("eng.trophy", "EFL Trophy", "Inghilterra", "en"),
+    "SCC": ("sco.tennents", "Scottish Cup", "Scozia", "sc"), "SLC": ("sco.cis", "Scottish League Cup", "Scozia", "sc"), "SCH": ("sco.challenge", "Challenge Cup", "Scozia", "sc"),
+    "CCH": ("chi.copa_chi", "Copa Chile", "Cile", "cl"), "CAR": ("arg.copa", "Copa Argentina", "Argentina", "ar"), "CCO": ("col.copa", "Copa Colombia", "Colombia", "co"),
+    "KSC": ("ksa.kings.cup", "King's Cup", "Arabia Saudita", "sa"), "CBO": ("bol.copa", "Copa Bolivia", "Bolivia", "bo"), "USO": ("usa.open", "US Open Cup", "Stati Uniti", "us"),
+}
+COPPE_SQ = ("TPO", "EFT", "SCC", "SLC", "SCH", "CCH", "CAR", "CCO", "KSC", "CBO", "USO")
+
+
+def quote_1x2(c):
+    """Quote DraftKings 1X2 (decimali) di una partita del calendario ESPN, se ci sono."""
+    o = next((x for x in (c.get("odds") or []) if x and x.get("moneyline")), None)
+    if not o:
+        return None
+    ml = o["moneyline"]
+    q = [_decimale(((ml.get(x) or {}).get("close") or {}).get("odds")) for x in ("home", "draw", "away")]
+    return q if all(q) else None
+
+
+def giro_senza_quote(ora=None, giorni=(-2, -1, 0, 1, 2, 3, 4, 5)):
+    """Calendario (con id ESPN e quote se presenti) e classifica dei campionati senza quote. Una richiesta per giorno e campionato."""
+    ora = ora or datetime.now(timezone.utc)
+    out = {}
+    for k, (lg, *_rest) in SENZA_QUOTE.items():
+        evs, err = [], 0
+        for dd in giorni:
+            try:
+                for ev in get(f"{SITE}{lg}/scoreboard?dates={(ora + timedelta(days=dd)).strftime('%Y%m%d')}").get("events", []):
+                    try:
+                        e = evento(ev)
+                        e["eid"] = ev["id"]
+                        q = quote_1x2(ev["competitions"][0])
+                        if q:
+                            e["q"] = q
+                        evs.append(e)
+                    except (KeyError, StopIteration, TypeError, ValueError):
+                        continue
+            except Exception as e:  # noqa: BLE001 - rete o formato: si salta il giorno
+                err += 1
+                print(f"ESPN senza quote {k} {dd}: {str(e)[:100]}")
+        visti = {}
+        for e in evs:
+            visti[e["eid"]] = e
+        cl = []
+        if k not in COPPE_SQ:
+            try:
+                cl = classifica_espn(lg)
+            except Exception as e:  # noqa: BLE001
+                print(f"ESPN senza quote classifica {k}: {str(e)[:100]}")
+        out[k] = {"ev": sorted(visti.values(), key=lambda e: e["t"]), "cl": cl}
+    n = sum(len(v["ev"]) for v in out.values())
+    print(f"ESPN senza quote: {n} partite in {sum(1 for v in out.values() if v['ev'])} campionati e coppe, classifiche {sum(1 for v in out.values() if v['cl'])}")
+    return out
 
 
 def evento(ev):

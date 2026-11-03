@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { immagineSchedina, mercatoBookmaker } from "./condividi.js";
 import { Citazione, citazioneSchedina, citazioneDiario } from "./citazioni.js";
-import { QUOTA_MIN, probVera, esitoGamba, statoGiocata, C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, buildForzata, ESITI_SCHEDINA, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
+import { TIPI_GIOCATORI, buildGiocatori, QUOTA_MIN, probVera, esitoGamba, statoGiocata, C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, buildForzata, ESITI_SCHEDINA, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
 import { GiocoResponsabile } from "./extra.js";
 import { StoricoCard } from "./partita.js";
 import { IACard } from "./ia.js";
@@ -23,9 +23,10 @@ import { Allenatore } from "./allenatore.js";
       const [esito, setEsito0] = useState(() => { const e = store.get("slipEsito", ""); return ESITI_SCHEDINA.some(([k]) => k === e) ? e : ""; });
       const setEsito = setEsito0;
       const [nP, setNP] = useState(store.get("slipN", 0)); // numero di partite: 0 = lo decide l'IA
+      const [tipoG, setTipoG] = useState(store.get("slipGioc", "")); // "" = schedina di partite; MARC/ASS/AMM/MIX = schedina di giocatori
       const today = D.today || new Date().toISOString().slice(0, 10);
       const pool = D.matches.filter((m) => !off.includes(m.lg) && (D.demo || m.st === "NS") && (D.demo || inPeriodo(m.date, per, today)));
-      let legs = esito ? buildForzata(pool, esito, prof, qo, vr, nP) : qo ? buildTarget(pool, prof, qo, vr, nP) : buildSlip(pool, prof, nP);
+      let legs = tipoG ? buildGiocatori(pool, tipoG, qo, vr, nP) : esito ? buildForzata(pool, esito, prof, qo, vr, nP) : qo ? buildTarget(pool, prof, qo, vr, nP) : buildSlip(pool, prof, nP);
       const weak = legs.length ? legs.reduce((a, b) => (a.p < b.p ? a : b)) : null;
       const alt = weak && !esito ? candidati(weak.m, Math.max(0, prof - 1), weak.q, 0)
         .filter((o) => o.k !== weak.k && o.p >= weak.p + 0.1 && o.q >= QUOTA_MIN && evalCode(o.k, 1, 0, 0, 0) !== null)
@@ -55,23 +56,29 @@ import { Allenatore } from "./allenatore.js";
         <div className=${"text-[14px] font-semibold " + C.tx}>Quota totale che vuoi giocare</div>
         <div className="flex gap-1.5 overflow-x-auto noscroll -mx-4 px-4">${[0, 2, 3, 5, 10, 20, 50, 100, 200].map((q) => html`<button key=${q} onClick=${() => { setQo(q); store.set("slipQ", q); setVr(0); setShield(false); }}
           className=${"shrink-0 min-w-[52px] px-3 py-[6px] rounded-full font-semibold " + (qo === q ? C.on : "bg-white dark:bg-[#191626] " + C.tx)}>${q ? html`<span className="num text-[18px] font-bold">×${q}</span>` : html`<span className="text-[14px]">Libera</span>`}</button>`)}</div>
-        <div className=${"text-[14px] font-semibold " + C.tx}>Quante partite</div>
+        <div className=${"text-[14px] font-semibold " + C.tx}>Cosa giocare</div>
+        <div className="flex gap-1.5 overflow-x-auto noscroll -mx-4 px-4">${[["", "Partite"], ...TIPI_GIOCATORI].map(([k, l]) => html`<button key=${k || "partite"} onClick=${() => { setTipoG(k); store.set("slipGioc", k); setVr(0); setShield(false); }}
+          className=${"shrink-0 px-3.5 py-[7px] rounded-full text-[14px] font-semibold " + (tipoG === k ? C.seg : "bg-white dark:bg-[#191626] " + C.tx)}>${l}</button>`)}</div>
+        ${tipoG && html`<p className=${"text-[12px] -mt-1 " + C.mu}>${{ MARC: "Giocatori che segnano almeno un gol", ASS: "Giocatori che fanno almeno un assist", AMM: "Giocatori che prendono almeno un cartellino", MIX: "Marcatori, assist e ammoniti insieme" }[tipoG]}: un giocatore per partita, scelto in base a gol, assist o cartellini in stagione, minuti giocati e gol attesi della sua squadra. Quote stimate dall'IA, sempre sopra 1,30.</p>`}
+        <div className=${"text-[14px] font-semibold " + C.tx}>${tipoG ? "Quanti giocatori" : "Quante partite"}</div>
         <div className="flex gap-1.5 overflow-x-auto noscroll -mx-4 px-4">${[0, 2, 3, 4, 5, 6, 8, 10].map((n) => html`<button key=${n} onClick=${() => { setNP(n); store.set("slipN", n); setVr(0); setShield(false); }}
           className=${"shrink-0 min-w-[46px] px-3 py-[6px] rounded-full font-semibold " + (nP === n ? C.on : "bg-white dark:bg-[#191626] " + C.tx)}>${n ? html`<span className="num text-[18px] font-bold">${n}</span>` : html`<span className="text-[14px]">Decide l'IA</span>`}</button>`)}</div>
-        <div className=${"text-[14px] font-semibold " + C.tx}>Esito</div>
+        ${!tipoG && html`<${React.Fragment}><div className=${"text-[14px] font-semibold " + C.tx}>Esito</div>
         <div className="flex gap-1.5 overflow-x-auto noscroll -mx-4 px-4">${ESITI_SCHEDINA.map(([k, l]) => html`<button key=${k || "ia"} onClick=${() => { setEsito(k); store.set("slipEsito", k); setVr(0); setShield(false); }}
           className=${"shrink-0 px-3.5 py-[7px] rounded-full text-[14px] font-semibold " + (esito === k ? C.seg : "bg-white dark:bg-[#191626] " + C.tx)}>${l}</button>`)}</div>
-        ${esito && html`<p className=${"text-[12px] -mt-1 " + C.mu}>Tutte le partite con lo stesso esito: l'IA sceglie quelle dove è più probabile e più d'accordo con i dati delle squadre${qo ? ", fino alla quota che hai chiesto" : ""}.</p>`}
-        <div className=${"text-[14px] font-semibold " + C.tx}>Stile</div>
+        <//>`}
+        ${!tipoG && esito && html`<p className=${"text-[12px] -mt-1 " + C.mu}>Tutte le partite con lo stesso esito: l'IA sceglie quelle dove è più probabile e più d'accordo con i dati delle squadre${qo ? ", fino alla quota che hai chiesto" : ""}.</p>`}
+        ${!tipoG && html`<${React.Fragment}><div className=${"text-[14px] font-semibold " + C.tx}>Stile</div>
         <div className="grid grid-cols-3 gap-2">${["Zero Tachicardia", "Classica del Sabato", "Colpaccio da Bar"].map((p, i) => { const lk = i === 2 && !pro; return html`<button key=${p} onClick=${() => (lk ? setUnlock(true) : (setProf(i), setShield(false), setVr(0)))}
           className=${C.card + " p-3 text-xs font-semibold text-center " + C.tx + (prof === i ? " ring-2 ring-[#5B2EE6] dark:ring-[#A58BFF]" : "")}>${p}${lk && html`<div className="text-[10px] mt-1 text-amber-600 dark:text-amber-300 flex items-center justify-center gap-1"><${Ic.Lock} size=${10} />PRO</div>`}</button>`; })}</div>
         <p className=${"text-[12px] " + C.mu}>${["Giocate molto probabili (quota 1,30-1,65 ciascuna).", "Giocate equilibrate (quota 1,30-2,30 ciascuna).", "Poche partite con giocate più rischiose, anche tempi, marcatori e handicap."][prof]} ${qo ? `L'IA sceglie in ogni partita, tra tutte le scommesse possibili, quella con il punteggio migliore vicina alla quota che serve.` : ""}</p>
+        <//>`}
         <div className=${C.card + " px-4 py-2"}>${legs.length ? legs.map((l) => html`<${LegRow} key=${l.m.id} l=${l} />`) : html`<div className=${"py-3 text-sm " + C.mu}>${pool.length && D.leggera && !pool.some((m) => m.markets) ? "Carico le quote di tutte le partite..." : pool.length ? "Nessuna partita adatta a questo stile: prova un altro periodo o un altro stile." : "Nessuna partita in questo periodo nei campionati scelti."}</div>`}</div>
         ${legs.length > 0 && html`<div className=${C.card + " p-4 space-y-2"}>
           <div className="flex justify-between items-baseline text-sm"><span className=${C.mu}>${D.demo ? "Quota totale (Bet365)" : "Quota totale"}${qo ? ", obiettivo ×" + qo : ""}</span><b className=${"num text-[24px] " + C.tx}>${odd(tot)}</b></div>
           ${qo > 0 && !shield && tot < qo * 0.8 && html`<div className=${"text-[13px] rounded-xl p-3 border " + TONE.warn}>Con le partite di questo periodo si arriva al massimo a ${odd(tot)}: scegli un periodo più lungo o uno stile più rischioso.</div>`}
           ${legs.some((l) => l.stima) && html`<div className=${"text-[12px] " + C.mu}>Di cui ${legs.filter((l) => l.stima).length} ${legs.filter((l) => l.stima).length === 1 ? "quota stimata" : "quote stimate"} dall'IA: dal bookmaker la quota reale può essere un po' più bassa.</div>`}
-          <div className="flex justify-between text-sm"><span className=${C.mu}>Partite</span><b className=${"tabular-nums " + C.tx}>${legs.length}</b></div>
+          <div className="flex justify-between text-sm"><span className=${C.mu}>${tipoG ? "Giocatori" : "Partite"}</span><b className=${"tabular-nums " + C.tx}>${legs.length}</b></div>
           <div className="flex justify-between text-sm"><span className=${C.mu}>Probabilità che passi, secondo l'IA</span><b className=${"tabular-nums " + C.tx}>${(prob * 100).toFixed(1).replace(".", ",")}%</b></div>
           ${done.length > 0 && html`<div className=${"text-xs font-semibold " + (won.length === done.length ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>Verifica sulla giornata: ${won.length} su ${done.length} esiti corretti${won.length === done.length ? ", schedina vinta" : ""}.</div>`}
           ${weak && html`<div className=${"rounded-xl border p-3 text-sm " + TONE.bad}><div className="font-semibold flex items-center gap-1.5"><${Ic.AlertTriangle} size=${14} />Anello debole</div>

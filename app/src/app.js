@@ -84,7 +84,7 @@ import { Guida } from "./guida.js";
     const [aff, setAff] = useState(null);
     const [favM, setFavM] = useState(store.get("favM", []));
     const [avvisi, setAvvisi] = useState(store.get("avvisi", true));
-    const prev = useRef(null);
+    const prev = useRef(null), prevT = useRef(0);
     const [pushUrl, setPushUrl] = useState(null);
     const [pushOn, setPushOn] = useState(store.get("push", false));
     const [pushMsg, setPushMsg] = useState("");
@@ -233,9 +233,10 @@ import { Guida } from "./guida.js";
       if (!D) return;
       const now = {};
       for (const m of D.matches) now[m.id] = { st: m.st, g: m.g ? m.g.join("-") : null };
-      const old = prev.current;
-      prev.current = now;
-      if (!old || !avvisi) return;
+      const old = prev.current, quando = prevT.current;
+      prev.current = now; prevT.current = Date.now();
+      // solo con l'app davanti agli occhi e con dati di pochi minuti fa: riaprendo l'app non si rivivono gol e finali gia avvenuti
+      if (!old || !avvisi || document.visibilityState !== "visible" || Date.now() - quando > 4 * 60000) return;
       for (const m of D.matches) {
         if (!mia(m)) continue;
         const o = old[m.id], n = now[m.id];
@@ -245,12 +246,9 @@ import { Guida } from "./guida.js";
         else if (n.g && o.g !== n.g && n.st === "LIVE") msg = `Gol! ${m.h} ${m.g[0]} - ${m.g[1]} ${m.a}${m.clock ? " (" + m.clock + ")" : ""}`;
         else if (o.st === "LIVE" && n.st === "FT") msg = `Finale: ${m.h} ${m.g[0]} - ${m.g[1]} ${m.a}`;
         if (!msg) continue;
+        // solo un avviso dentro l'app: le notifiche sul telefono le manda il servizio, una volta sola e al momento giusto
         setToast(msg);
         try { if (navigator.vibrate) navigator.vibrate([120, 60, 120]); } catch (e) { /* non supportato */ }
-        try {
-          if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker)
-            navigator.serviceWorker.ready.then((r) => r.showNotification("AuraPitch", { body: msg, icon: "icon-192.png", tag: m.id }));
-        } catch (e) { /* notifiche non disponibili */ }
       }
     }, [D]);
 

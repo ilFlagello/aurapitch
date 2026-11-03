@@ -131,27 +131,87 @@ def _pmf(k, mu, r):
     return math.exp(math.lgamma(k + r) - math.lgamma(r) - math.lgamma(k + 1) + r * math.log(r / (r + mu)) + k * math.log(mu / (r + mu)))
 
 
-def _righe(codice, linee_, mu, r):
+def p_over(L, mu, r):
+    """Probabilita che la statistica superi la linea L (binomiale negativa con media mu e dispersione r)."""
+    return 1 - sum(_pmf(i, mu, r) for i in range(int(L) + 1))
+
+
+# ---------- agenti delle statistiche della partita (verificati da statistiche_ia.py, in ombra finche non servono) ----------
+TARATURA_STAT = "data/taratura_statistiche.json"
+NOMI_STAT = ["linea", "intensita", "arbitro", "squadra", "equilibrio"]
+_TAR_STAT = None
+
+
+def taratura_stat():
+    global _TAR_STAT
+    if _TAR_STAT is None:
+        try:
+            import json
+            with open(TARATURA_STAT, encoding="utf-8") as f:
+                _TAR_STAT = json.load(f)
+        except (OSError, ValueError):
+            _TAR_STAT = {}
+    return _TAR_STAT
+
+
+def segnali_stat(k, L, mu, r, ctx=None, squadra=False):
+    """Specialisti di una linea Over/Under di cartellini (K), angoli (C) o falli (F), un numero ciascuno (None se manca il dato):
+    linea      distanza della linea dalla media attesa, in deviazioni standard (le code della distribuzione sono oneste?)
+    intensita  partita piu "calda" o piu tranquilla del normale (media attesa rispetto alla media del campionato)
+    arbitro    arbitro severo o permissivo (solo cartellini e falli)
+    squadra    1 = linea di una sola squadra, 0 = totale della partita
+    equilibrio 1 - |p1 - p2|: partite tirate, piu contrasti"""
+    ctx = ctx or {}
+    sd = math.sqrt(max(0.05, mu + mu * mu / r))
+    lega = ctx.get("lega")
+    if lega and squadra:
+        lega = lega / 2
+    arb = (ctx.get("arb") or {}).get(k) if k in ARBITRO["beta"] else None
+    v = [(L - mu) / sd, math.log(max(0.1, mu) / lega) if lega else None, math.log(max(0.3, arb)) if arb else None,
+         1.0 if squadra else 0.0, ctx.get("eq")]
+    return [None if x is None else round(x, 4) for x in v]
+
+
+def applica_stat(k, p, sg, tar=None):
+    """Probabilita Over dopo la taratura del verificatore delle statistiche; spenta o assente = p invariata."""
+    t = ((tar if tar is not None else taratura_stat()).get("tipi") or {}).get(k) or {}
+    if not t.get("attivo"):
+        return p
+    q = min(1 - 1e-4, max(1e-4, p))
+    z = t["a"] + t["b"] * math.log(q / (1 - q))
+    for i, n in enumerate(NOMI_STAT):
+        w = (t.get("w") or {}).get(n)
+        if w and sg and sg[i] is not None:
+            z += w * (sg[i] - t["mu"][i]) / (t["sd"][i] or 1)
+    nuova = 1 / (1 + math.exp(-max(-30, min(30, z))))
+    return round(min(p + 0.12, max(p - 0.12, min(0.97, max(0.03, nuova)))), 4)  # prudenza: mai piu di 12 punti
+
+
+def _righe(codice, linee_, mu, r, ctx=None):
     out = []
+    k, squadra = codice[0], len(codice) > 1
     for L in linee_:
-        po = 1 - sum(_pmf(i, mu, r) for i in range(int(L) + 1))
+        po = p_over(L, mu, r)
+        if ctx is not None:
+            po = applica_stat(k, po, segnali_stat(k, L, mu, r, ctx, squadra))
         for c, p in ((f"{codice}O{L}", po), (f"{codice}U{L}", 1 - po)):
             if 0.03 < p < 0.97:
                 out.append([c, round(p, 3), 0, 0])
     return out
 
 
-def linee(k, mu):
-    """Righe Over/Under [codice, prob, quota equa, 0] per la statistica k (totale della partita) con media attesa mu."""
-    return _righe(k, MODELLI[k]["linee"], mu, MODELLI[k]["r"])
+def linee(k, mu, ctx=None):
+    """Righe Over/Under [codice, prob, quota equa, 0] per la statistica k (totale della partita) con media attesa mu.
+    ctx = {"lega": media del campionato, "arb": rapporti dell'arbitro, "eq": equilibrio}: serve alla taratura del verificatore."""
+    return _righe(k, MODELLI[k]["linee"], mu, MODELLI[k]["r"], ctx)
 
 
 LINEE_SQUADRA = {"K": (0.5, 1.5, 2.5, 3.5), "C": (2.5, 3.5, 4.5, 5.5, 6.5), "F": (9.5, 10.5, 11.5, 12.5, 13.5, 14.5)}
 
 
-def linee_squadra(k, lato, mu):
+def linee_squadra(k, lato, mu, ctx=None):
     """Over/Under di una sola squadra: codici KHO1.5 (cartellini casa oltre 1,5), CAU4.5, FHO11.5..."""
-    return _righe(f"{k}{lato}", LINEE_SQUADRA[k], mu, MODELLI[k]["r_squadra"])
+    return _righe(f"{k}{lato}", LINEE_SQUADRA[k], mu, MODELLI[k]["r_squadra"], ctx)
 
 
 def con_arbitro(m, arb):
@@ -165,11 +225,12 @@ def con_arbitro(m, arb):
             mu = cart[k]["senza_arbitro"] * arb["ratio"][k] ** beta
             f = mu / max(0.01, cart[k]["attesi"])
             cart[k]["attesi"] = round(mu, 2)
-            nuove[k] = linee(k, mu)
+            ctx = {"lega": cart[k].get("media_lega"), "arb": arb["ratio"], "eq": cart.get("eq")}
+            nuove[k] = linee(k, mu, ctx)
             if cart[k].get("squadre"):
                 sq = [x * f for x in cart[k]["squadre"]]
                 cart[k]["squadre"] = [round(x, 2) for x in sq]
-                nuove[k] += linee_squadra(k, "H", sq[0]) + linee_squadra(k, "A", sq[1])
+                nuove[k] += linee_squadra(k, "H", sq[0], ctx) + linee_squadra(k, "A", sq[1], ctx)
     if not nuove:
         return False
     tieni = lambda x: not (isinstance(x, list) and str(x[0])[:1] in nuove and (str(x[0])[1:2] in ("O", "U") or (str(x[0])[1:2] in ("H", "A") and str(x[0])[2:3] in ("O", "U"))))
@@ -219,6 +280,9 @@ def mercati(med, casa, ospite, p1, p2, arb=None):
         info[k] = {"attesi": round(mu, 2), "senza_arbitro": round(senza, 2), "media_lega": round(lg[k], 2),
                    "casa": [round(h[k + "f"], 2), round(h[k + "s"], 2)], "ospite": [round(a[k + "f"], 2), round(a[k + "s"], 2)],
                    "squadre": [round(sh * f, 2), round(sa * f, 2)]}
-        out += linee(k, mu)
-        out += linee_squadra(k, "H", sh * f) + linee_squadra(k, "A", sa * f)
+        ctx = {"lega": lg[k], "arb": (arb or {}).get("ratio"), "eq": round(1 - abs(p1 - p2), 4)}
+        out += linee(k, mu, ctx)
+        out += linee_squadra(k, "H", sh * f, ctx) + linee_squadra(k, "A", sa * f, ctx)
+    if info:
+        info["eq"] = round(1 - abs(p1 - p2), 4)  # per il verificatore delle statistiche (diario)
     return out, info

@@ -56,6 +56,7 @@ jobs:
           python raccoglitore.py --notizie --forza
           python raccoglitore.py --espn
           python giocatori.py || echo "::warning::Verificatore dei giocatori non riuscito"
+          python statistiche_ia.py || echo "::warning::Verificatore delle statistiche non riuscito"
           python genera_app.py
 
       - name: Aggiornamento durante il giorno (risultati e formazioni)
@@ -69,6 +70,10 @@ jobs:
           python raccoglitore.py --arbitri
           python genera_app.py --live
 
+      - name: Coerenza dei dati (probabilità, quote, doppioni, consigli bloccati)
+        if: inputs.modo != 'archivio'
+        run: python3 strumenti/coerenza.py || echo "::warning::Controllo di coerenza non riuscito"
+
       - name: Chiudi la cassaforte
         if: inputs.modo != 'archivio'
         run: python3 strumenti/cassaforte.py chiudi || echo "::warning::Cassaforte non chiusa"
@@ -77,6 +82,8 @@ jobs:
         run: |
           git config user.name "aurapitch-raccolta"
           git config user.email "aurapitch-raccolta@users.noreply.github.com"
+          # i segni della cassaforte (impronte, "aperta") restano solo sul computer del giro: mai nel repository
+          git rm --cached -q --ignore-unmatch data/.cassaforte.json data/.cassaforte_aperta
           git add data app/data 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "Nessun dato nuovo"

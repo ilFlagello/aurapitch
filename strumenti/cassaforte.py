@@ -21,7 +21,8 @@ RADICE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(RADICE, "data")
 IMPRONTE = os.path.join(DATA, ".cassaforte.json")  # impronte dei file scaricati: si rimanda solo cio che cambia
 APERTA = os.path.join(DATA, ".cassaforte_aperta")  # senza un'apertura riuscita non si rimanda nulla (niente storico sovrascritto)
-FISSI = ["modello.json", "consigli.json", "giocatori_verifica.json", "taratura_giocatori.json"]  # + agenti sui giocatori (giocatori.py)
+FISSI = ["modello.json", "consigli.json", "giocatori_verifica.json", "taratura_giocatori.json",  # + agenti sui giocatori (giocatori.py)
+         "statistiche_verifica.json", "taratura_statistiche.json"]  # + verificatore di cartellini, angoli e falli (statistiche_ia.py)
 
 
 def _b64u(b):
@@ -66,6 +67,8 @@ def _impronta(p):
 
 def apri(tutto=False):
     """Scarica i file: il modello, lo storico dei consigli e il diario (ultimi 10 giorni, o tutto per l'apprendimento)."""
+    if os.path.exists(APERTA):  # un segno rimasto da prima non deve far credere a "chiudi" che questa apertura sia riuscita
+        os.remove(APERTA)
     nomi = chiama("/cassaforte/elenco", {}).get("nomi", [])
     limite = (datetime.now(timezone.utc).date() - timedelta(days=10)).isoformat()
     scelti = [n for n in nomi if n in FISSI or n == "taratura_fattori.json" or (n.startswith("diario/") and (tutto or n[7:17] >= limite))]

@@ -1,0 +1,26 @@
+# AuraPitch - riepilogo settimanale (lunedi mattina): stato di tutto in un solo avviso su GitHub (una mail),
+# solo se c'e qualcosa da sistemare. Se tutto va bene non arriva niente.
+name: Riepilogo settimanale
+on:
+  schedule:
+    - cron: "40 7 * * 1"
+  workflow_dispatch: {}
+permissions:
+  contents: read
+  issues: write
+  actions: read
+  security-events: read
+jobs:
+  riepilogo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Guardiano (per i punti da tenere d'occhio)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 strumenti/guardiano.py || true
+      - name: Riepilogo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 strumenti/riepilogo.py

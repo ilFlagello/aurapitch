@@ -1137,6 +1137,8 @@ def applica_fattori(d):
         m["fattori"] = [{k: f.get(k) for k in ("tipo", "chi", "lato", "quota", "affidabilita", "prezzo", "delta", "delta_avv", "titolo", "fonte", "link", "t", "tetto")} for f in tutti][:10]
         lh, la = nuovo
         m["xg"] = nuovo
+        prima_p = m.get("p")  # probabilita e consiglio prima di questo ricalcolo (per l'effetto delle formazioni ufficiali)
+        prima_tip = ((m.get("tip") or {}).get("consiglio") or {}) if isinstance(m.get("tip"), dict) else {}
         mercati = M.calcola_mercati(lh, la, m["h"], m["a"], c.get("raccolte") or {})
         corretta = any(f["delta"] or f.get("delta_avv") for f in tutti)
         pm = {x["c"]: x["p"] for x in mercati}
@@ -1151,6 +1153,20 @@ def applica_fattori(d):
         else:
             m["p"], m["po"] = m["mk"], m["mo"]
         tip = M.scegli(mercati, m["h"], m["a"], c.get("sh"), c.get("sa"), {"pos_h": c.get("pos_h"), "pos_a": c.get("pos_a")}, m.get("nb"))
+        # "perche e cambiato": chi manca (formazioni ufficiali, notizie) e di quanto si spostano le probabilita rispetto alle sole quote
+        cambio = perche_cambiato(m, tutti, sole_quote or (M.calcola_mercati(lh0, la0, m["h"], m["a"], c.get("raccolte") or {}) if corretta else None), m["_p0"], any(uff))
+        if cambio:
+            m["cambio"] = cambio
+        else:
+            m.pop("cambio", None)
+        # effetto delle formazioni ufficiali sul consiglio (per la notifica "Formazioni ufficiali"): prima e dopo la loro uscita
+        if any(uff):
+            eff = m.get("uff_eff") or {"da": prima_p, "tip_da": prima_tip.get("l")}
+            cons = tip.get("consiglio") if isinstance(tip.get("consiglio"), dict) else {}
+            eff.update({"a": m["p"], "tip_a": cons.get("l"), "pa": cons.get("p")})
+            m["uff_eff"] = eff
+        else:
+            m.pop("uff_eff", None)
         righe = []
         for f in tutti:
             if not f["delta"] and not f.get("delta_avv"):
@@ -1222,6 +1238,29 @@ def applica_fattori(d):
         ia = M.valutazioni(mercati, m["h"], m["a"], c.get("sh"), c.get("sa"), {"pos_h": c.get("pos_h"), "pos_a": c.get("pos_a")}, m.get("cart"), extra, marc_l, marc_info)
         m["ia"] = compatta_ia(ia, m["markets"])
     return cambi
+
+
+PAROLA_ASSENZA = {"squalifica": "squalificato", "infortunio": "indisponibile", "dubbio": "in dubbio", "panchina": "in panchina", "assente": "fuori dai convocati"}
+
+
+def perche_cambiato(m, fattori, sole_quote, dopo, ufficiali):
+    """Riga "Perche e cambiato" della partita: le assenze che spostano davvero i gol attesi (formazioni ufficiali o notizie)
+    e le probabilita 1X2 prima (sole quote) e dopo. None se lo spostamento e sotto un punto."""
+    if not sole_quote or not dopo:
+        return None
+    pq = {x["c"]: x["p"] for x in sole_quote}
+    da = [round(pq.get(c, 0), 4) for c in ("1", "X", "2")]
+    if max(abs(a - b) for a, b in zip(da, dopo)) < 0.01:
+        return None
+    chi = []
+    for f in sorted(fattori, key=lambda f: f.get("delta") or 0):  # prima chi pesa di piu
+        if not (f.get("delta") or f.get("delta_avv")) or not f.get("chi"):
+            continue
+        sq = m["h"] if f["lato"] == 0 else m["a"]
+        chi.append(f"{f['chi']} ({sq}) {PAROLA_ASSENZA.get(f.get('tipo'), 'assente')}")
+    if not chi:
+        return None
+    return {"da": da, "a": [round(x, 4) for x in dopo], "chi": chi[:4], "uff": bool(ufficiali)}
 
 
 def aggiorna_live():
@@ -1428,7 +1467,9 @@ def aggiorna_diario(d):
                      "ver": ver, "pc": {c: pr[c] for c in CHIAVI_DIARIO if c in pr}, "q": q, "tips": tips, "st": "NS",
                      "lv": (m.get("dati") or {}).get("lv"), "bl": 1 if (m.get("blocco") or {}).get("st") == "bloccato" else 0, "sp": m.get("sp"),
                      # giocatori: [probabilita di base, probabilita mostrata, specialisti...] (le controlla giocatori.py a partita finita)
-                     "pg": m.get("_pg") or (r or {}).get("pg"), "uff": m.get("uff") or (r or {}).get("uff")}
+                     "pg": m.get("_pg") or (r or {}).get("pg"), "uff": m.get("uff") or (r or {}).get("uff"),
+                     # cartellini, angoli e falli attesi (partita e squadre), media del campionato, arbitro: li controlla statistiche_ia.py
+                     "ck": diario_statistiche(m) or (r or {}).get("ck")}
                 if r is None:
                     n.update({"t0": ora, "mk0": n["mk"], "mo0": n["mo"], "xm0": n["xm"], "pc0": n["pc"], "q0": q, "tips0": tips})
                     nuove += 1
@@ -1442,6 +1483,48 @@ def aggiorna_diario(d):
             with open(path, "w", encoding="utf-8") as f:  # una partita per riga: git conserva solo le righe cambiate
                 f.write("{\n" + ",\n".join(json.dumps(k) + ":" + json.dumps(dd[k], ensure_ascii=False, separators=(",", ":")) for k in sorted(dd)) + "\n}\n")
     print(f"Diario: {nuove} nuove previsioni")
+
+
+def diario_statistiche(m):
+    """Per il verificatore delle statistiche: {"K": [attesi, casa, ospite, media lega], "C": [...], "F": [...], "arb": {...}, "eq": x}."""
+    cart = m.get("cart") or {}
+    out = {k: [cart[k].get("attesi")] + list(cart[k].get("squadre") or [None, None]) + [cart[k].get("media_lega")]
+           for k in ("K", "C", "F") if isinstance(cart.get(k), dict) and cart[k].get("attesi")}
+    if not out:
+        return None
+    ratio = (m.get("arbitro") or {}).get("ratio")
+    if ratio:
+        out["arb"] = ratio
+    if cart.get("eq") is not None:
+        out["eq"] = cart["eq"]
+    return out
+
+
+def aggiorna_specialisti_giorno(d):
+    """Specialisti che cambiano durante il giorno, fino al fischio: turnover e coppe (partita di coppa pochi giorni prima o dopo)
+    e movimento delle quote (prima lettura del mattino, dal diario, contro l'ultima). Come il consenso, pesano solo quando
+    l'integratore (strumenti/impara.py) li trova utili su partite mai viste."""
+    ic, im = SP.NOMI.index("coppe"), SP.NOMI.index("movimento")
+    giorni, n = {}, 0
+    for m in d.get("matches", []):
+        if m.get("st") != "NS":
+            continue
+        if m["date"] not in giorni:
+            giorni[m["date"]] = jload(os.path.join(DIARIO, m["date"] + ".json"), {}) or {}
+        r = giorni[m["date"]].get(m["id"]) or {}
+        coppa = (m.get("_ctx") or {}).get("coppa")
+        vals = {ic: SP.coppe(coppa) if coppa is not None else None, im: SP.movimento(m.get("mk"), r.get("mk0"))}
+        if m.get("sp") is None and all(v is None for v in vals.values()):
+            continue
+        sp = list(m.get("sp") or [])
+        sp += [None] * (len(SP.NOMI) - len(sp))  # file scritti prima dei nuovi specialisti: valori mancanti = nessun dato
+        for i, v in vals.items():
+            if sp[i] != v:
+                sp[i] = v
+                n += 1
+        m["sp"] = sp
+    print(f"Specialisti del giorno (coppe, movimento delle quote): {n} valori aggiornati")
+    return n
 
 
 def aggiorna_consenso(d):
@@ -1486,6 +1569,7 @@ def main():
             return
         print(f"Partite: {len(d['matches'])}; campionati: {[l['name'] for l in d['leagues']]}; FREE: {[m['h'] + '-' + m['a'] for m in d['matches'] if m['free']]}")
     aggiorna_consenso(d)
+    aggiorna_specialisti_giorno(d)
     blocca_consigli(d)
     aggiungi_movimenti(d)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
@@ -1496,14 +1580,19 @@ def main():
     scrivi_lista(d)
     aggiorna_storico(d)
     aggiorna_diario(d)
+    try:
+        import schedine_ia as SI
+        SI.aggiorna(d)
+    except Exception as e:  # noqa: BLE001 - lo storico delle schedine non deve mai fermare il giro dei dati
+        print(f"Schedine IA per stile: non aggiornate ({type(e).__name__}: {e})")
 
 
 STATO_OUT = os.path.join("app", "data", "stato.json")
 # l'app scarica prima una lista leggera; i dettagli di una partita arrivano quando la apri, i mercati quando apri la Schedina
 DETTAGLI = ("markets", "ia", "cart", "curiosita", "xgf", "segnali", "attese", "prec", "forma", "ctx", "h2h", "last5", "odds", "max", "elo", "foto",
-            "arbitro", "xg_mercato", "fattori", "formazione")
+            "arbitro", "xg_mercato", "fattori", "formazione", "cambio")
 FATTORI_LISTA = ("chi", "lato", "tipo", "fonte", "delta")  # nella lista resta un riassunto delle assenze (pagina squadra)
-NON_SERVONO = ("_ctx", "_firma", "_p0", "sp", "xg_base", "_pg")
+NON_SERVONO = ("_ctx", "_firma", "_p0", "sp", "xg_base", "_pg", "uff_eff")
 
 
 def scrivi_lista(d):
@@ -1549,7 +1638,8 @@ def scrivi_stato(d):
     for m in d.get("matches", []):
         t = (m.get("tip") or {}).get("consiglio")
         righe.append({"id": m["id"], "st": m.get("st"), "ko": m.get("ko"), "date": m.get("date"), "g": m.get("g"), "h": m["h"], "a": m["a"],
-                      "p": m.get("p"), "mk": m.get("mk"), "mov": m.get("mov"),
+                      "p": m.get("p"), "mk": m.get("mk"), "mov": m.get("mov"), "uff": m.get("uff"), "eff": m.get("uff_eff"),
+                      "bl": (m.get("blocco") or {}).get("st"), "cambio": {"chi": m["cambio"]["chi"][:2]} if m.get("cambio") and m.get("uff") else None,  # solo per l'avviso delle formazioni
                       "tip": {"consiglio": {"l": t.get("l"), "p": t.get("p")}} if t else None,
                       "marcatori": {k: {"lato": v["lato"], "g": v["g"]} for k, v in (m.get("marcatori") or {}).items() if k.startswith("MARC:") and v.get("g", 0) >= 2}})
     with open(STATO_OUT, "w", encoding="utf-8") as f:

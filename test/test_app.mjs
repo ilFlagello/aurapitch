@@ -139,6 +139,33 @@ ok(B.inPeriodo("2026-10-29", "domani", "2026-10-28"), "periodo domani");
   ok(A.chiuse.length === 5 && A.rincorse === 1, "allenatore: una rincorsa delle perdite (" + A.rincorse + ")");
   ok(A.G.length === 1 && A.G[0].n === 5 && A.G[0].prese === 2, "allenatore: conteggio per mercato");
 }
+// storico delle schedine IA: la copia in Python (schedine_ia.py, sul server) sceglie le stesse giocate dell'app, stile per stile
+{
+  const giorni = [...new Set(D.matches.map((m) => m.date))];
+  const script = `import json,sys
+sys.path.insert(0, ${JSON.stringify(RADICE)})
+import schedine_ia as SI
+d = json.load(open(${JSON.stringify(path.join(APP, "data/giornata.json"))}, encoding="utf-8"))
+out = {"profili": SI.PROFILI_SLIP, "q_min": SI.QUOTA_MIN, "giorni": {}}
+for g in json.loads(sys.argv[1]):
+    pool = [m for m in d["matches"] if m.get("date") == g and m.get("markets")]
+    out["giorni"][g] = [[[x["m"]["id"], x["k"]] for x in SI.schedina(pool, p)] for p in range(3)]
+print(json.dumps(out))`;
+  const py2 = JSON.parse(execFileSync("python3", ["-c", script, JSON.stringify(giorni)], { maxBuffer: 1 << 26 }).toString());
+  const campi = ["nome", "n", "lo", "hi", "mid", "pmin", "pmax", "wp", "ws", "wv", "wm"];
+  ok(py2.profili.length === B.PROFILI_SLIP.length && py2.profili.every((P, i) => campi.every((c) => P[c] === B.PROFILI_SLIP[i][c])), "schedine_ia.py: PROFILI_SLIP diversi da base.js");
+  ok(py2.q_min === B.QUOTA_MIN, "schedine_ia.py: quota minima diversa da base.js");
+  let confronti = 0;
+  for (const g of giorni) {
+    const pool = D.matches.filter((m) => m.date === g && m.markets);
+    for (let p = 0; p < 3; p++) {
+      const js = B.buildSlip(pool, p, 0, 0, null).map((l) => [l.m.id, l.k]);
+      confronti++;
+      ok(JSON.stringify(js) === JSON.stringify(py2.giorni[g][p]), `schedine_ia.py diversa dall'app (${g}, stile ${p}): ${JSON.stringify(py2.giorni[g][p])} contro ${JSON.stringify(js)}`);
+    }
+  }
+  console.log("schedine IA confrontate con l'app:", confronti);
+}
 console.log(`${prove} controlli, ${errori} errori`);
 fs.rmSync(tmp, { recursive: true, force: true });
 process.exit(errori ? 1 : 0);

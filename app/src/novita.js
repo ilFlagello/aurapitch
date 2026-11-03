@@ -1,6 +1,13 @@
 /* AuraPitch - versione dell'app e novità. A ogni pubblicazione con cambi visibili si aggiunge una voce IN CIMA:
    il numero cresce (1.1, 1.2, ...) e l'app lo mostra nel profilo e nel riquadro "Novità" dopo l'aggiornamento. */
 export const NOVITA = [
+  { v: "2.0", data: "3 novembre 2026", punti: [
+    "Schedina IA > Storico IA: ogni giorno si salva la schedina di base di ogni stile e si verifica sui risultati. Vedi quante sono passate questo mese, con quota e rendimento in punti",
+    "\"Perché è cambiato\": nella partita, chi manca e di quanto si sposta la probabilità prima e dopo formazioni e notizie",
+    "Notifica delle formazioni ufficiali (solo partite seguite) con l'effetto sul consiglio IA, prima che si blocchi",
+    "Probabilità in diretta: 1, X e 2 ricalcolate a ogni gol ed espulsione, con minuto, risultato e gol attesi rimasti",
+    "Cartellini, angoli e falli controllati dopo ogni partita sul tabellino vero (pagina dell'IA)",
+  ] },
   { v: "1.9", data: "3 novembre 2026", punti: [
     "Schedina IA: i tre stili sono tre gradini della stessa scala. Zero Tachicardia (3 partite, quote 1,30-1,60, giocate molto probabili), La Classica (nuovo nome: 4 partite, quote 1,50-2,05), Colpaccio da Bar (3 partite, quote 2,00-3,60, le più papabili tra le difficili). Sotto ogni stile vedi quota e probabilità della sua schedina",
     "Voci insieme (partite, marcatori, assist, ammoniti): nessuna è obbligatoria, entra la giocata più convincente per lo stile",

@@ -1,6 +1,10 @@
 /* AuraPitch - versione dell'app e novità. A ogni pubblicazione con cambi visibili si aggiunge una voce IN CIMA:
    il numero cresce (1.1, 1.2, ...) e l'app lo mostra nel profilo e nel riquadro "Novità" dopo l'aggiornamento. */
 export const NOVITA = [
+  { v: "1.3", data: "3 novembre 2026", punti: [
+    "L'algoritmo ora studia 94.000 partite di 30 campionati e si allena ogni mattina con nuovi specialisti",
+    "Scontri diretti: se i precedenti dicono il contrario del consiglio, lo trovi nella motivazione",
+  ] },
   { v: "1.2", data: "3 novembre 2026", punti: [
     "Più partite in una schermata: righe più compatte",
     "Accanto a ogni partita, l'affidabilità dei dati da 0 a 100%: quanto l'algoritmo conosce quella partita",

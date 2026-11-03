@@ -9,6 +9,7 @@ risultati di Serie B da The Odds API). Usa solo la libreria standard di Python.
 """
 import csv
 import glob
+import gzip
 import math
 import json
 import os
@@ -520,6 +521,49 @@ def riposo(per_team, tid, prima):
 
 # ---------- costruzione ----------
 
+def indice_scontri():
+    """Precedenti tra squadre dall'archivio storico (30 campionati) e dalla stagione in corso (CSV di Football-Data)."""
+    righe = []
+
+    def aggiungi(r):
+        try:
+            d = datetime.strptime(r["Date"], "%d/%m/%Y" if len(r["Date"]) > 8 else "%d/%m/%y").replace(tzinfo=timezone.utc)
+            righe.append({"t": d, "h": r["HomeTeam"], "a": r["AwayTeam"], "gh": int(r["FTHG"]), "ga": int(r["FTAG"])})
+        except (ValueError, KeyError, TypeError):
+            pass
+    try:
+        with gzip.open(os.path.join("storico", "fd_partite.csv.gz"), "rt", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                if r.get("Season", "") >= "1920":
+                    aggiungi(r)
+    except OSError:
+        pass
+    for p in glob.glob(os.path.join(FD, "stagione_*.csv")):
+        try:
+            with open(p, encoding="utf-8-sig", errors="replace") as f:
+                for r in csv.DictReader(f):
+                    aggiungi(r)
+        except OSError:
+            pass
+    return SP.indice_diretti(righe)
+
+
+def nota_scontri(dir_, tip, h, a):
+    """Riga "da tenere d'occhio" quando i precedenti dicono il contrario del consiglio (solo informazione: il peso lo decide l'integratore)."""
+    d6 = dir_[-6:]
+    if len(d6) < 3 or not tip:
+        return None
+    v = sum(1 for z in d6 if z["gf"] > z["gs"]); n = sum(1 for z in d6 if z["gf"] == z["gs"]); p = len(d6) - v - n
+    c = str(tip.get("c", ""))
+    casa = c in ("1", "1X") or c.startswith("1+") or c.startswith("1 ")
+    ospite = c in ("2", "X2") or c.startswith("2+") or c.startswith("2 ")
+    if casa and v <= 1 and p >= 2:
+        return f"Negli ultimi {len(d6)} scontri diretti {h} ha vinto {v} volt{'a' if v == 1 else 'e'}, {a} {p} ({n} pareggi)."
+    if ospite and p <= 1 and v >= 2:
+        return f"Negli ultimi {len(d6)} scontri diretti {a} ha vinto {p} volt{'a' if p == 1 else 'e'}, {h} {v} ({n} pareggi)."
+    return None
+
+
 def genera():
     now = datetime.now(timezone.utc)
     oggi = now.astimezone(ROME).date()
@@ -527,6 +571,7 @@ def genera():
     quote = carica_quote()
     fdp, classifiche = carica_fd()
     per_team = storico(fdp)
+    scontri = indice_scontri()
     # Serie B (non coperta da football-data): risultati e classifica da ESPN, con id "es:<nome>"
     esd = jload(ESPN, {}) or {}
     for nome, es in (esd.get("squadre") or {}).items():
@@ -641,7 +686,8 @@ def genera():
         xg_quote = [lh, la]
         # specialisti (forma, riposo, casa/trasferta, tendenza gol) pesati dall'integratore imparato ogni mattina: corregge le quote
         # prima dei gol attesi; se l'integratore e spento per questo gruppo di campionati non cambia nulla
-        sp = SP.segnali(per_team.get(hid, []), per_team.get(aid, []), t0) if (hid or aid) else None
+        dir_ = SP.diretti_di(scontri, h, a)
+        sp = SP.segnali(per_team.get(hid, []), per_team.get(aid, []), t0, dir_) if (hid or aid or dir_) else None
         mkc, moc = SP.correggi(q["mk"], q["mo"], sp, k, (CB.modello() or {}).get("integratore"))
         if mkc is not q["mk"]:
             lh, la = M.gol_attesi(mkc, moc)
@@ -661,6 +707,10 @@ def genera():
         for i, rr in enumerate((tabs or {}).get("TOTAL", [])):
             pos[(rr.get("team") or {}).get("id")] = rr.get("position", i + 1)
         tip = M.scegli(mercati, h, a, sh, sa, {"pos_h": pos.get(hid), "pos_a": pos.get(aid)}, q["nb"])
+        for v in tip.values():  # precedenti contrari al consiglio: lo diciamo
+            nota = nota_scontri(dir_, v, h, a)
+            if nota and isinstance(v, dict):
+                v.setdefault("contro", []).append(nota)
         if not (sh and sa):
             for v in tip.values():
                 v["perche"].append("Statistiche delle squadre non disponibili per questo campionato: il consiglio si basa solo sulle quote.")

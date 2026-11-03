@@ -2,11 +2,44 @@
 import React, { useState, useEffect } from "react";
 import { immagineSchedina, mercatoBookmaker } from "./condividi.js";
 import { Citazione, citazioneSchedina, citazioneDiario } from "./citazioni.js";
-import { TIPI_GIOCATORI, QUOTA_MIN, probVera, esitoGamba, statoGiocata, C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, buildForzata, PROFILI_SLIP, ESITI_SCHEDINA, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
+import { Sheet, TIPI_GIOCATORI, QUOTA_MIN, probVera, esitoGamba, statoGiocata, C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, buildForzata, PROFILI_SLIP, ESITI_SCHEDINA, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
 import { GiocoResponsabile } from "./extra.js";
 import { StoricoCard } from "./partita.js";
 import { IACard } from "./ia.js";
 import { Allenatore } from "./allenatore.js";
+import { META, principali, slipOffPredefinito } from "./ordine.js";
+
+    /* ---- campionati della schedina: foglio con gruppi (i tuoi, principali, altri per paese), interruttore per gruppo,
+       ricerca; le voci vanno a capo, così si vedono quasi tutte senza scorrere una per una ---- */
+    function SceltaLeghe({ leghe, off, setOff, fav, onClose }) {
+      const [q, setQ] = useState("");
+      const tutte = leghe.map((l) => l.k), byK = Object.fromEntries(leghe.map((l) => [l.k, l]));
+      const paese = (k) => (META[k] || [])[0] || (byK[k] || {}).country || "Altro";
+      const t = norm(q.trim());
+      const vede = (k) => !t || norm(byK[k].name).includes(t) || norm(paese(k)).includes(t);
+      const miei = (fav || []).filter((k) => byK[k]);
+      const pr = principali().filter((k) => byK[k] && !miei.includes(k));
+      const altri = tutte.filter((k) => !miei.includes(k) && !pr.includes(k));
+      // minori in un gruppo solo, per paese e poi per livello (prima divisione, seconda, coppe)
+      altri.sort((a, b) => paese(a).localeCompare(paese(b), "it") || ((META[a] || [])[1] || 99) - ((META[b] || [])[1] || 99));
+      const gruppi = [["I tuoi campionati", miei], ["Principali: quote di molti bookmaker e più dati", pr], ["Altri campionati e coppe", altri]].map(([n, ks]) => [n, ks.filter(vede)]).filter(([, ks]) => ks.length);
+      const accesi = (ks) => ks.filter((k) => !off.includes(k)).length;
+      const gruppo = (ks, on) => setOff(on ? off.filter((k) => !ks.includes(k)) : [...new Set([...off, ...ks])]);
+      const una = (k) => setOff(off.includes(k) ? off.filter((x) => x !== k) : [...off, k]);
+      const cons = slipOffPredefinito(tutte, fav);
+      const preset = [["Consigliati", cons], ["Tutti", []], ["Nessuno", tutte]];
+      const stesso = (a) => a.length === off.length && a.every((k) => off.includes(k));
+      return html`<${Sheet} title=${"Campionati della schedina: " + (tutte.length - off.length) + " su " + tutte.length} onClose=${onClose}>
+        <div className="flex gap-1.5 flex-wrap">${preset.map(([n, o]) => html`<${Chip} key=${n} on=${stesso(o)} onClick=${() => setOff(o)}>${n}<//>`)}</div>
+        <p className=${"text-[12px] leading-snug " + C.mu}>Consigliati = quelli che segui + i principali. I minori danno più scelta ma hanno meno informazioni: lo vedi dalla % dati di ogni partita.</p>
+        <input value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Cerca campionato o paese" className=${"w-full rounded-xl px-3.5 py-2.5 text-[16px] outline-none " + C.ch + " " + C.tx} />
+        ${gruppi.map(([n, ks]) => { const a = accesi(ks), tutti = a === ks.length; return html`<div key=${n} className="space-y-2 pt-1">
+          <div className="flex items-center gap-2"><div className=${"text-[13px] font-semibold flex-1 " + C.tx}>${n} <span className=${C.mu}>${a}/${ks.length}</span></div>
+            ${ks.length > 1 && html`<button onClick=${() => gruppo(ks, !tutti)} className=${"text-[13px] font-semibold " + C.acc}>${tutti ? "Togli tutti" : "Scegli tutti"}</button>`}</div>
+          <div className="flex flex-wrap gap-1.5">${ks.map((k) => html`<${Chip} key=${k} on=${!off.includes(k)} onClick=${() => una(k)}><${Flag} k=${byK[k].flag} w=${16} />${byK[k].name}<//>`)}</div></div>`; })}
+        ${!gruppi.length && html`<div className=${"text-sm " + C.mu}>Nessun campionato trovato.</div>`}
+        <button onClick=${onClose} className=${"w-full py-3 rounded-xl text-[15px] font-semibold " + C.on}>Fatto</button><//>`;
+    }
 
     /* ---- schedina ---- */
     function SlipView() {
@@ -14,10 +47,10 @@ import { Allenatore } from "./allenatore.js";
       const [prof, setProf0] = useState(() => { const v = store.get("slipProf", 0); return [0, 1, 2].includes(v) ? v : 0; });
       const setProf = (v) => { setProf0(v); store.set("slipProf", v); };
       useEffect(() => { if (prof === 2 && !pro) setProf0(0); }, [pro]); // Colpaccio da Bar è PRO: finito il PRO si torna allo stile base
-      // campionati della schedina: se non li hai mai scelti qui, quelli che segui
-      const [off, setOff0] = useState(() => store.get("slipOff", null) || (favLeagues && favLeagues.length ? D.leagues.map((l) => l.k).filter((k) => !favLeagues.includes(k)) : []));
+      // campionati della schedina: se non li hai mai scelti qui, quelli che segui + i principali
+      const [off, setOff0] = useState(() => store.get("slipOff", null) || slipOffPredefinito(D.leagues.map((l) => l.k), favLeagues));
+      const [scegliLeghe, setScegliLeghe] = useState(false);
       const setOff = (nx) => { setOff0(nx); store.set("slipOff", nx); if (caricaMercati) caricaMercati(D.leagues.map((l) => l.k).filter((k) => !nx.includes(k))); };
-      const miei = favLeagues && favLeagues.length ? D.leagues.map((l) => l.k).filter((k) => !favLeagues.includes(k)) : null;
       const [shield, setShield] = useState(false);
       const [per, setPer] = useState(store.get("slipPer", "3g"));
       const [qo, setQo] = useState(store.get("slipQ", 0));
@@ -56,10 +89,11 @@ import { Allenatore } from "./allenatore.js";
         ${h === null ? null : h ? html`<${Ic.CheckCircle2} size=${17} className="text-emerald-500" />` : html`<${Ic.XCircle} size=${17} className="text-rose-500" />`}
         ${onDel && html`<button aria-label="Rimuovi" onClick=${onDel} className=${C.mu}><${Ic.Trash2} size=${15} /></button>`}</div>`; };
       return html`<div className="px-4 space-y-3"><${Schede} id="schedina" items=${["Crea con l'IA", "La mia schedina", "Diario", "Storico IA"]}>${[html`<${React.Fragment}>
-        <div className="flex gap-2 overflow-x-auto noscroll -mx-4 px-4">
-          ${miei && html`<${Chip} on=${off.length === miei.length && miei.every((k) => off.includes(k))} onClick=${() => setOff(miei)}><${Ic.Star} size=${14} />Solo i miei<//>`}
-          <${Chip} on=${off.length === 0} onClick=${() => setOff([])}>Tutti<//>
-          ${D.leagues.map((l) => html`<${Chip} key=${l.k} on=${!off.includes(l.k)} onClick=${() => { const nx = off.includes(l.k) ? off.filter((q) => q !== l.k) : [...off, l.k]; setOff(nx); }}><${Flag} k=${l.flag} w=${16} />${l.name}<//>`)}</div>
+        <button onClick=${() => setScegliLeghe(true)} className=${C.card + " w-full px-4 py-3 flex items-center gap-3 text-left"}>
+          <div className="flex-1 min-w-0"><div className=${"text-[14px] font-semibold " + C.tx}>Campionati: ${D.leagues.length - off.length} su ${D.leagues.length}</div>
+            <div className="flex items-center gap-1 mt-1 overflow-hidden">${D.leagues.filter((l) => !off.includes(l.k)).slice(0, 9).map((l) => html`<${Flag} key=${l.k} k=${l.flag} w=${18} />`)}${D.leagues.length - off.length > 9 && html`<span className=${"text-[12px] " + C.mu}>+${D.leagues.length - off.length - 9}</span>`}</div></div>
+          <span className=${"text-[14px] font-semibold " + C.acc}>Cambia</span></button>
+        ${scegliLeghe && html`<${SceltaLeghe} leghe=${D.leagues} off=${off} setOff=${setOff} fav=${favLeagues} onClose=${() => setScegliLeghe(false)} />`}
         <div className=${"text-[14px] font-semibold " + C.tx}>Partite di</div>
         <div className="flex gap-1.5 overflow-x-auto noscroll -mx-4 px-4">${PERIODI.map(([k, l]) => html`<button key=${k} onClick=${() => { setPer(k); store.set("slipPer", k); setVr(0); }}
           className=${"shrink-0 px-3.5 py-[7px] rounded-full text-[14px] font-semibold " + (per === k ? C.seg : "bg-white dark:bg-[#191626] " + C.tx)}>${l}</button>`)}</div>

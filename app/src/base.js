@@ -344,23 +344,31 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     if (m.st !== "FT" || !m.g) return null;
     return evalCode(norm(k), m.g[0], m.g[1], m.g1 ? m.g1[0] : null, m.g1 ? m.g1[1] : null);
   }
-  /* ---- i tre stili della schedina IA: ognuno ha una fascia di quota per giocata, una fascia di probabilità e un numero
-     di partite proprio (se l'utente non ne sceglie un altro). Le fasce quasi non si sovrappongono: la differenza si sente.
-     - Zero Tachicardia: poche partite, quote "giuste" (né regalate né alte), probabilità medio-alta di ogni giocata;
-     - La Classica: più partite, quote standard o un po' sopra, probabilità media (o medio-alta se le partite lo permettono);
-     - Colpaccio da Bar: poche partite, quote alte e probabilità più basse, ma tra le difficili l'IA sceglie le più papabili.
-     Il punteggio di ogni giocata mescola probabilità IA, punteggio IA (accordo dei dati), valore (probabilità IA x quota - 1)
-     e vicinanza alla quota tipica dello stile (mid): ogni stile li pesa in modo diverso. */
+  /* ---- i tre stili della schedina IA ----
+     Ogni stile è un gradino della stessa scala: probabilità di ogni giocata, quota di ogni giocata e numero di partite salgono
+     o scendono insieme, così la differenza tra uno stile e il vicino si sente ma non è un salto nel vuoto.
+       Zero Tachicardia   3 partite, quota 1,30-1,60, giocate al 62% o più   -> di solito quota totale ~x3, passa ~1 volta su 3
+       La Classica        4 partite, quota 1,50-2,05, giocate al 48-68%      -> di solito ~x8, passa ~1 volta su 8
+       Colpaccio da Bar   3 partite, quota 2,00-3,60, giocate al 28-52%      -> di solito ~x15, passa ~1 volta su 15
+     Le fasce dei vicini si toccano appena. Il numero di partite conta: ogni stile ha una quota totale tipica (quota tipica
+     della giocata ^ partite di base); se l'utente sceglie più partite, ogni giocata scende verso la parte prudente della fascia,
+     se ne sceglie meno sale verso quella coraggiosa, sempre dentro la fascia dello stile.
+     Punteggio di ogni giocata: probabilità IA, punteggio IA (accordo dei dati), valore (probabilità IA x quota - 1) e vicinanza
+     alla quota ideale; ogni stile li pesa a modo suo. Tutte le voci scelte (partite, marcatori, assist, ammoniti) seguono le
+     stesse regole: nessuna quota fissa per voce, entra solo ciò che ha senso per lo stile. */
   const QUOTA_MIN = 1.3; // sotto questa quota l'IA non mette una giocata in schedina: il rischio non vale il guadagno (l'utente può farlo a mano)
   const PROFILI_SLIP = [
-    { nome: "Zero Tachicardia", n: 3, lo: 1.3, hi: 1.7, mid: 1.45, pmin: 0.6, pmax: 1, wp: 1.6, ws: 0.6, wv: 0.5, wm: 2.5, testo: "Poche partite, quote giuste (1,30-1,70) e giocate molto probabili (almeno 60% ciascuna)." },
-    { nome: "La Classica", n: 5, lo: 1.5, hi: 2.25, mid: 1.72, pmin: 0.45, pmax: 0.7, wp: 1.0, ws: 0.6, wv: 0.8, wm: 2.5, testo: "Più partite, quote standard o un po' sopra (1,50-2,25) e probabilità media (45-70% ciascuna)." },
-    { nome: "Colpaccio da Bar", n: 3, lo: 2.4, hi: 6.5, mid: 3.0, pmin: 0.17, pmax: 0.47, wp: 2.0, ws: 0.5, wv: 1.0, wm: 1.2, testo: "Poche partite a quota alta (2,40-6,50): tra le giocate difficili, l'IA sceglie le più papabili." },
+    { nome: "Zero Tachicardia", n: 3, lo: 1.3, hi: 1.6, mid: 1.42, pmin: 0.62, pmax: 1, wp: 1.3, ws: 0.6, wv: 0.5, wm: 3.5, testo: "Poche partite, quote giuste (1,30-1,60) e giocate molto probabili (almeno 62% ciascuna)." },
+    { nome: "La Classica", n: 4, lo: 1.5, hi: 2.05, mid: 1.72, pmin: 0.48, pmax: 0.68, wp: 1.2, ws: 0.6, wv: 0.7, wm: 2.5, testo: "Una partita in più, quote standard (1,50-2,05) e giocate a probabilità media (48-68% ciascuna)." },
+    { nome: "Colpaccio da Bar", n: 3, lo: 2.0, hi: 3.6, mid: 2.55, pmin: 0.28, pmax: 0.52, wp: 1.8, ws: 0.5, wv: 1.0, wm: 1.5, testo: "Poche partite a quota alta (2,00-3,60): tra le giocate difficili, l'IA sceglie le più papabili." },
   ];
   const PROF_T = PROFILI_SLIP; // nome vecchio, per compatibilità
   const ESCLUSI_SLIP = ["Pari/Dispari", "Risultato esatto"];
-  // mercati che uno stile non usa: Zero Tachicardia e La Classica restano sugli esiti principali (niente tempi, giocatori, statistiche)
-  const MERCATI_ESCLUSI = [/Marcatori|Assist|Ammoniti|Cartellini|Falli|angolo|Parziale|Gol esatti|Margine|Tempo|tempo|Combo|Handicap/, /Marcatori|Assist|Ammoniti|Cartellini|Falli|angolo|Parziale|Gol esatti|Margine|Tempo|tempo/, null];
+  // esiti delle partite che uno stile non usa: Zero Tachicardia e La Classica restano sugli esiti principali (niente tempi e statistiche)
+  const MERCATI_ESCLUSI = [/Cartellini|Falli|angolo|Parziale|Gol esatti|Margine|Tempo|tempo|Combo|Handicap/, /Cartellini|Falli|angolo|Parziale|Gol esatti|Margine|Tempo|tempo/, null];
+  // voci selezionabili insieme: P = esiti delle partite, poi i giocatori
+  const TIPI_GIOCATORI = [["P", "Partite"], ["MARC", "Marcatori"], ["ASS", "Assist"], ["AMM", "Ammoniti"]];
+  const vociDi = (voci) => (Array.isArray(voci) && voci.length ? voci : voci === "MIX" ? ["MARC", "ASS", "AMM"] : typeof voci === "string" && voci ? [voci] : ["P"]);
   function rumore(id, v) { // numero pseudo-casuale in [-0,5, 0,5): diverso per ogni combinazione richiesta
     if (!v) return 0; let h = hs(v + "|" + id) ^ Math.imul(v, 0x9E3779B1);
     h = Math.imul(h ^ (h >>> 16), 0x85EBCA6B); h = Math.imul(h ^ (h >>> 13), 0xC2B2AE35); h ^= h >>> 16;
@@ -368,45 +376,64 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   // punteggio di una giocata per uno stile: probabilità, punteggio IA e valore pesati dallo stile; bonus se coincide con il consiglio IA dello stesso stile
   function punteggioStile(o, R, tip) {
     const s = (o.s != null ? o.s : 50) / 100, valore = o.stima ? 0 : Math.max(-0.3, Math.min(0.4, o.p * o.q - 1));
-    return R.ws * s + R.wp * o.p + R.wv * valore + (o.stima ? 0 : 0.08) + (tip && tip.c === o.k ? 0.12 : 0);
+    // piccola preferenza per le quote vere dei bookmaker rispetto a quelle stimate dall'IA (giocatori): dal bookmaker potrebbero essere più basse
+    return R.ws * s + R.wp * o.p + R.wv * valore + (o.stima ? 0 : 0.03) + (tip && tip.c === o.k ? 0.12 : 0);
   }
-  /* giocate candidate di una partita per uno stile. allarga = 0 fasce esatte, 1-2 fasce un po' più larghe (quando le partite
-     adatte sono poche); qt = quota per partita cercata (schedina con quota obiettivo: la fascia si allarga verso l'alto) */
-  function candidati(m, prof, qt, v, allarga = 0) {
+  // quota ideale di ogni giocata con n partite: la quota totale tipica dello stile divisa sulle partite, dentro la fascia
+  function quotaIdeale(prof, n) {
+    const R = PROFILI_SLIP[prof];
+    return !n || n === R.n ? R.mid : Math.min(R.hi, Math.max(R.lo, Math.exp((R.n * Math.log(R.mid)) / n)));
+  }
+  /* giocate candidate di una partita per uno stile. qt = quota per partita richiesta da una quota totale obiettivo (0 = nessuna);
+     allarga = 0 fasce esatte, 1-4 fasce un po' più larghe quando le giocate adatte sono poche; voci = cosa si può giocare;
+     ideale = quota ideale della giocata (dal numero di partite) */
+  function candidati(m, prof, qt, v, allarga = 0, voci = null, ideale = 0) {
     const R = PROFILI_SLIP[prof], ex = MERCATI_ESCLUSI[prof], tip = (m.tip || {})[["prudente", "consiglio", "coraggiosa"][prof]];
+    const V = vociDi(voci), giocatori = V.filter((x) => x !== "P"), esiti = V.includes("P");
     // con una quota obiettivo che chiede giocate fuori fascia, la fascia si sposta un po' in quella direzione (e la probabilità segue la quota)
-    const sotto = qt && qt < R.lo, sopra = qt && qt > R.hi;
-    const lo = Math.max(QUOTA_MIN, sotto ? qt * 0.85 : R.lo * (1 - 0.06 * allarga)), hi = R.hi * (1 + 0.12 * allarga) * (sopra ? Math.min(1.6, qt / R.hi) : 1);
-    const pmin = (sopra ? R.pmin * R.hi / qt : R.pmin) - 0.04 * allarga, pmax = sotto ? 1 : R.pmax + 0.04 * allarga;
-    return options(m).filter((o) => { const g = mGroup(o.k); if (ESCLUSI_SLIP.includes(g)) return false;
-        if (ex && ex.test(g)) return false;
+    const sotto = qt && qt < R.lo, sopra = qt && qt > R.hi, libera = allarga >= 9; // libera: ultima risorsa, le giocate più vicine allo stile
+    const lo = libera ? QUOTA_MIN : Math.max(QUOTA_MIN, sotto ? qt * 0.85 : R.lo * (1 - 0.06 * allarga)), hi = libera ? 8 : R.hi * (1 + 0.12 * allarga) * (sopra ? Math.min(1.6, qt / R.hi) : 1);
+    const pmin = libera ? 0.1 : (sopra ? R.pmin * R.hi / qt : R.pmin) - 0.04 * allarga, pmax = sotto || libera ? 1 : R.pmax + 0.04 * allarga;
+    const qi = qt || ideale || R.mid;
+    return options(m).filter((o) => { const g = mGroup(o.k), gioc = /^(MARC|ASS|AMM):/.test(o.k);
+        if (gioc ? !giocatori.includes(o.k.split(":")[0]) : !esiti) return false;
+        if (ESCLUSI_SLIP.includes(g)) return false;
+        if (!gioc && ex && ex.test(g)) return false;
         if (prof < 2 && /^EH[MP]2/.test(o.k)) return false;
         return o.q >= lo && o.q <= hi && o.p >= pmin && o.p <= pmax; })
-      .map((o) => ({ ...o, sc: punteggioStile(o, R, tip) - (qt ? 0.35 * Math.abs(Math.log(o.q / qt)) : R.wm * Math.abs(Math.log(o.q / R.mid))) + 0.12 * rumore(m.id + o.k, v) }))
+      .map((o) => ({ ...o, sc: punteggioStile(o, R, tip) - (qt ? 0.35 : R.wm) * Math.abs(Math.log(o.q / qi)) + 0.12 * rumore(m.id + o.k, v) }))
       .sort((a, b) => b.sc - a.sc);
   }
-  /* schedina senza quota obiettivo: in ogni partita la giocata migliore per lo stile, poi le partite migliori.
-     Se le partite adatte sono meno di quelle richieste, le fasce si allargano un poco (al massimo due volte). */
-  function buildSlip(matches, prof, nP, v = 0) {
-    const R = PROFILI_SLIP[prof], n = nP || R.n;
-    let pool = [];
-    for (let allarga = 0; allarga <= 2; allarga++) {
-      pool = matches.map((m) => ({ m, c: candidati(m, prof, 0, v, allarga) })).filter((x) => x.c.length);
-      if (pool.length >= n) break;
+  // partite con almeno una giocata adatta allo stile: fasce allargate un poco alla volta finché le partite bastano
+  function poolStile(matches, prof, qt, v, voci, ideale, serve) {
+    const maxAll = vociDi(voci).includes("P") ? 2 : 4; // con i soli giocatori le giocate adatte sono meno: si allarga di più
+    let pool = [], usata = 0;
+    for (const allarga of [...Array(maxAll + 1).keys(), 9]) { // 9 = ultima risorsa: senza fasce, le giocate più vicine allo stile
+      pool = matches.map((m) => ({ m, c: candidati(m, prof, qt, v, allarga, voci, ideale) })).filter((x) => x.c.length);
+      usata = allarga;
+      if (pool.length >= serve) break;
     }
-    return pool.sort((a, b) => b.c[0].sc - a.c[0].sc).slice(0, n).map((x) => ({ m: x.m, ...x.c[0] }));
+    pool.allargata = usata > 0;
+    pool.libera = usata === 9;
+    return pool;
+  }
+  /* schedina senza quota obiettivo: in ogni partita la giocata migliore per lo stile (tra tutte le voci scelte), poi le partite
+     migliori. Una giocata per partita: due della stessa partita dipendono l'una dall'altra. */
+  function buildSlip(matches, prof, nP, v = 0, voci = null) {
+    const n = nP || PROFILI_SLIP[prof].n;
+    const pool = poolStile(matches, prof, 0, v, voci, quotaIdeale(prof, n), n);
+    const legs = pool.sort((a, b) => b.c[0].sc - a.c[0].sc).slice(0, n).map((x) => ({ m: x.m, ...x.c[0] }));
+    legs.allargata = pool.allargata;
+    legs.libera = pool.libera;
+    return legs;
   }
   /* schedina con quota obiettivo: numero di partite dalla quota tipica dello stile (se l'utente non lo sceglie), poi si sceglie
      in ogni partita la giocata con il miglior punteggio vicina alla quota per partita e si ritocca finché il totale è vicino all'obiettivo */
-  function buildTarget(matches, prof, T, v, nP) {
+  function buildTarget(matches, prof, T, v, nP, voci = null) {
     const R = PROFILI_SLIP[prof], LT = Math.log(T);
     let n = nP || Math.max(1, Math.min(14, Math.round(LT / Math.log(R.mid))));
     const qt = Math.max(QUOTA_MIN, Math.exp(LT / n));
-    let pool = [];
-    for (let allarga = 0; allarga <= 2; allarga++) {
-      pool = matches.map((m) => ({ m, c: candidati(m, prof, qt, v, allarga) })).filter((x) => x.c.length);
-      if (pool.length >= n + 2) break;
-    }
+    const pool = poolStile(matches, prof, qt, v, voci, 0, n + 2);
     pool.sort((a, b) => b.c[0].sc + 0.15 * rumore(b.m.id, v) - (a.c[0].sc + 0.15 * rumore(a.m.id, v)));
     if (!pool.length) return [];
     n = Math.min(n, pool.length);
@@ -425,40 +452,14 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       if (d > Math.log(1.25) && sel.length > 1) { sel.sort((a, b) => b.x.c[b.i].sc - a.x.c[a.i].sc); sel.pop(); continue; }
       break;
     }
-    return sel.map((s) => ({ m: s.x.m, ...s.x.c[s.i] }));
+    const legs = sel.map((s) => ({ m: s.x.m, ...s.x.c[s.i] }));
+    legs.allargata = pool.allargata;
+    legs.libera = pool.libera;
+    return legs;
   }
-  /* schedina dei giocatori: marcatori, assist, ammoniti (o un mix). Un giocatore per partita (due della stessa partita
-     dipendono l'uno dall'altro), quota minima QUOTA_MIN, scelti per punteggio IA e probabilità; con quota obiettivo si avvicina il totale */
-  // voci della schedina, selezionabili insieme: P = esiti delle partite, poi giocatori
-  const TIPI_GIOCATORI = [["P", "Partite"], ["MARC", "Marcatori"], ["ASS", "Assist"], ["AMM", "Ammoniti"]];
+  // compatibilità: la schedina con giocatori è la stessa schedina dello stile, con le voci scelte
   function buildGiocatori(matches, tipi, T, v, nP, prof = 1) {
-    const sel0 = Array.isArray(tipi) ? tipi : tipi === "MIX" ? ["MARC", "ASS", "AMM"] : [tipi];
-    const pref = sel0.filter((t) => t !== "P"), partite = sel0.includes("P");
-    const pool = [];
-    for (const m of matches) {
-      const gioc = options(m).filter((o) => pref.some((p) => o.k.startsWith(p + ":")) && o.q >= QUOTA_MIN && o.q <= 8 && o.p >= 0.12)
-        .map((o) => ({ ...o, sc: (o.s != null ? o.s : 50) / 100 + 0.8 * o.p + 0.06 * rumore(m.id + o.k, v) }));
-      const esiti = partite ? candidati(m, prof, T ? Math.max(QUOTA_MIN, 1.7) : 0, v).filter((o) => !/^(MARC|ASS|AMM):/.test(o.k)) : [];
-      const c = [...gioc, ...esiti].sort((a, b) => b.sc - a.sc);
-      if (c.length) pool.push({ m, c });
-    }
-    pool.sort((a, b) => b.c[0].sc - a.c[0].sc);
-    const n = Math.min(pool.length, nP || (T ? Math.max(2, Math.min(8, Math.round(Math.log(T) / Math.log(2.4)))) : 3));
-    let sel = pool.slice(0, n).map((x) => ({ x, i: 0 }));
-    if (T) { // si cambia giocatore nella stessa partita per avvicinare la quota obiettivo
-      const LT = Math.log(T);
-      for (let it = 0; it < 40; it++) {
-        const d = sel.reduce((a, s) => a + Math.log(s.x.c[s.i].q), 0) - LT;
-        if (Math.abs(d) < 0.08) break;
-        let best = null;
-        sel.forEach((s, si) => s.x.c.slice(0, 6).forEach((o, oi) => { if (oi === s.i) return;
-          const nd = d - Math.log(s.x.c[s.i].q) + Math.log(o.q), g = Math.abs(d) - Math.abs(nd);
-          if (g > 0.03 && (!best || g - 0.5 * (s.x.c[s.i].sc - o.sc) > best.v)) best = { si, oi, v: g - 0.5 * (s.x.c[s.i].sc - o.sc) }; }));
-        if (!best) break;
-        sel[best.si].i = best.oi;
-      }
-    }
-    return sel.map((s) => ({ m: s.x.m, ...s.x.c[s.i] }));
+    return T ? buildTarget(matches, prof, T, v, nP, vociDi(tipi)) : buildSlip(matches, prof, nP, v, vociDi(tipi));
   }
   /* schedina con un esito scelto dall'utente (tutte in casa, tutti pareggi, tutti Goal, tutti Over 2,5...): l'IA sceglie
      le partite dove quell'esito è più probabile e più d'accordo con i dati, e se c'è una quota obiettivo la avvicina */
@@ -734,4 +735,4 @@ function classificaViva(S, partite) {
   return { ...S, generale, casa: applica(S.casa, 0), trasferta: applica(S.trasferta, 1), viva: { live: nuove.filter((m) => m.st === "LIVE").length, finite: nuove.filter((m) => m.st === "FT").length } };
 }
 
-export { TIPI_GIOCATORI, buildGiocatori, QUOTA_MIN, classificaViva, registraColori, iniziali, matriceRis, probVera, NomeSquadra, NomeGiocatore, NomeLega, Ricarica, vibra, esitoGamba, statoGiocata, html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, PROFILI_SLIP, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };
+export { TIPI_GIOCATORI, buildGiocatori, QUOTA_MIN, classificaViva, registraColori, iniziali, matriceRis, probVera, NomeSquadra, NomeGiocatore, NomeLega, Ricarica, vibra, esitoGamba, statoGiocata, html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, PROFILI_SLIP, quotaIdeale, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };

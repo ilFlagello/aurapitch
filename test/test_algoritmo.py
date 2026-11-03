@@ -328,5 +328,43 @@ class ConsensoCommunity(unittest.TestCase):
         self.assertEqual(len(SP.segnali([], [], None)), len(SP.NOMI))
 
 
+class Salvadanaio(unittest.TestCase):
+    def test_crediti_fino_a_fine_mese(self):
+        import tempfile
+        from datetime import date, datetime, timedelta, timezone
+        import salvadanaio as SV
+        vecchi = (SV.PATH, SV._ora)
+        with tempfile.TemporaryDirectory() as d:
+            SV.PATH = os.path.join(d, "budget.json")
+            try:
+                rim, g, spesi = 400, date(2026, 11, 3), {}
+                while g.month == 11:  # ogni giorno si chiede molto piu del possibile: i crediti devono comunque durare
+                    SV._ora = lambda g=g: datetime(g.year, g.month, g.day, 6, tzinfo=timezone.utc)
+                    spesi[g] = 0
+                    for cat, volte in (("mattino", 9), ("prepartita", 12)):
+                        for _ in range(volte):
+                            if SV.odds_puo(cat, 2, rim):
+                                rim -= 2
+                                SV.odds_spesa(cat, 2, rim)
+                                spesi[g] += 2
+                        if cat == "mattino":
+                            SV.odds_mattino_fatto()
+                    g += timedelta(days=1)
+                self.assertGreaterEqual(rim, SV.ODDS_RISERVA)
+                self.assertTrue(all(v > 0 for v in spesi.values()))  # nessun giorno a secco, nemmeno l'ultimo
+                self.assertGreater(spesi[date(2026, 11, 7)], spesi[date(2026, 11, 4)])  # il sabato riceve di piu
+                SV._ora = lambda: datetime(2026, 11, 4, 20, tzinfo=timezone.utc)
+                usate = {"infortuni": 0, "formazioni": 0}
+                for _ in range(200):
+                    for c in usate:
+                        if SV.af_puo(c):
+                            SV.af_spesa(c)
+                            usate[c] += 1
+                self.assertLessEqual(sum(usate.values()), SV.AF_GIORNO - SV.AF_RISERVA)
+                self.assertGreater(usate["formazioni"], 20)  # gli infortuni non lasciano a secco le formazioni
+            finally:
+                SV.PATH, SV._ora = vecchi
+
+
 if __name__ == "__main__":
     unittest.main()

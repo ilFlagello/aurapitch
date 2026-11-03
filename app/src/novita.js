@@ -1,6 +1,9 @@
 /* AuraPitch - versione dell'app e novità. A ogni pubblicazione con cambi visibili si aggiunge una voce IN CIMA:
    il numero cresce (1.1, 1.2, ...) e l'app lo mostra nel profilo e nel riquadro "Novità" dopo l'aggiornamento. */
 export const NOVITA = [
+  { v: "1.8", data: "3 novembre 2026", punti: [
+    "Schedina IA: scegli insieme partite, marcatori, assist e ammoniti, e l'IA li mescola in una sola schedina",
+  ] },
   { v: "1.7", data: "3 novembre 2026", punti: [
     "L'analisi resta aperta fino a 45 minuti dal fischio: infortuni, notizie e quote del pomeriggio entrano nel consiglio",
     "Infortunati e squalificati da una nuova fonte, aggiornati ogni 2 ore",

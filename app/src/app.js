@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { ESPN_LG, useLiveScores, usaPonte } from "./live.js";
-import { registraColori, Ricarica, vibra, AuraLine, C, Crest, Ctx, Flag, Giorni, Ic, Marchio, Seg, Sheet, TONE, auraCol, hs, html, mmss, store } from "./base.js";
+import { classificaViva, registraColori, Ricarica, vibra, AuraLine, C, Crest, Ctx, Flag, Giorni, Ic, Marchio, Seg, Sheet, TONE, auraCol, hs, html, mmss, store } from "./base.js";
 import { BarraSchedina, Cerca, Glossario, PrimoAvvio, partitaSettimana } from "./extra.js";
 import { MatchView, Movimento, PlayerSheet, Row, TeamView } from "./partita.js";
 // schermate secondarie caricate solo quando servono (avvio piu leggero); poi scaricate in silenzio per l'uso offline
@@ -45,7 +45,7 @@ import { Guida } from "./guida.js";
     };
     const live = useLiveScores(Draw ? Draw.matches : null);
     if (Draw) registraColori(Draw);
-    const D = React.useMemo(() => Draw && { ...Draw, matches: Draw.matches.map((m0) => {
+    const D0 = React.useMemo(() => Draw && { ...Draw, matches: Draw.matches.map((m0) => {
       const x = extra[m0.id];
       const m = !Draw.leggera ? m0 : { ...m0, ...(x && !x.mancano ? x : {}), markets: (x && x.markets) || (merc && merc[m0.id]) || m0.markets, dett: !!(x && !x.mancano) };
       const l = live[m.id];
@@ -54,6 +54,13 @@ import { Guida } from "./guida.js";
       const g = ok && l.g ? l.g : m.g;
       return { ...m, eid: l.eid, lgE: l.lgE, clock: l.clock, hid: l.hid, aid: l.aid, ...(ok ? { st: l.st, g, res: g ? (g[0] > g[1] ? 0 : g[0] === g[1] ? 1 : 2) : m.res } : {}) };
     }) }, [Draw, live, extra, merc]);
+    // classifiche aggiornate con i risultati del giorno (finali e in diretta), per tutta l'app
+    const D = React.useMemo(() => {
+      if (!D0 || !D0.standings) return D0;
+      const st = {};
+      for (const [k, S] of Object.entries(D0.standings)) st[k] = classificaViva(S, D0.matches.filter((m) => m.lg === k));
+      return { ...D0, standings: st };
+    }, [D0]);
     const [err, setErr] = useState("");
     const [theme, setTheme] = useState(store.get("theme", "system"));
     const [tab, setTab] = useState("partite");

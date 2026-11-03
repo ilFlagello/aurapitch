@@ -717,6 +717,9 @@ def genera():
     for rows in (out.get("scorers") or {}).values():
         for r in rows:
             r["t"] = nomi.get(piega(r["t"]), r["t"])
+    # partite gia contate nella classifica scaricata ora: l'app aggiunge da sola solo i risultati arrivati dopo (in diretta e finali)
+    for k, tabs in out["standings"].items():
+        tabs["inclusi"] = [m["id"] for m in out["matches"] if m["lg"] == k and m.get("st") == "FT"]
     etich = {-1: "Ieri", 0: "Oggi", 1: "Domani"}
     for d in giorni:
         if any(m["date"] == d.isoformat() for m in out["matches"]):

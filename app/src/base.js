@@ -643,4 +643,37 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     return e.includes(false) ? "persa" : e.every((v) => v === true) ? "vinta" : "aperta";
   }
 
-export { registraColori, iniziali, matriceRis, probVera, NomeSquadra, NomeGiocatore, NomeLega, Ricarica, vibra, esitoGamba, statoGiocata, html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };
+/* classifica in diretta: alla classifica del mattino si aggiungono i risultati arrivati dopo (partite finite e in corso).
+   "inclusi" = partite gia contate quando la classifica e stata scaricata, cosi nessun risultato viene contato due volte.
+   Le squadre in campo hanno "live" (risultato provvisorio) e "mossa" (posizioni guadagnate o perse rispetto a prima). */
+function classificaViva(S, partite) {
+  if (!S || !S.generale || !S.generale.length) return S;
+  const inclusi = new Set(S.inclusi || []), conIncl = Array.isArray(S.inclusi);
+  const nuove = partite.filter((m) => m.g && (m.st === "LIVE" || (m.st === "FT" && conIncl && !inclusi.has(m.id))));
+  if (!nuove.length) return S;
+  const piega = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  const prima = {};
+  S.generale.forEach((r, i) => { prima[r.team] = i; });
+  const applica = (righe, lato) => {
+    if (!righe || !righe.length) return righe;
+    const out = righe.map((r) => ({ ...r })), idx = {};
+    out.forEach((r, i) => { idx[piega(r.team)] = i; });
+    for (const m of nuove) {
+      for (const j of [0, 1]) {
+        if (lato != null && lato !== j) continue;
+        const r = out[idx[piega(j ? m.a : m.h)]];
+        if (!r) continue;
+        const f = m.g[j], c = m.g[1 - j];
+        r.pg += 1; r.gf += f; r.gs += c;
+        if (f > c) { r.v += 1; r.pt += 3; } else if (f === c) { r.n += 1; r.pt += 1; } else r.p += 1;
+        if (m.st === "LIVE") r.live = f > c ? "V" : f === c ? "N" : "P";
+      }
+    }
+    return out.sort((a, b) => b.pt - a.pt || (b.gf - b.gs) - (a.gf - a.gs) || b.gf - a.gf || a.team.localeCompare(b.team));
+  };
+  const generale = applica(S.generale, null);
+  generale.forEach((r, i) => { if (prima[r.team] != null && prima[r.team] !== i) r.mossa = prima[r.team] - i; });
+  return { ...S, generale, casa: applica(S.casa, 0), trasferta: applica(S.trasferta, 1), viva: { live: nuove.filter((m) => m.st === "LIVE").length, finite: nuove.filter((m) => m.st === "FT").length } };
+}
+
+export { classificaViva, registraColori, iniziali, matriceRis, probVera, NomeSquadra, NomeGiocatore, NomeLega, Ricarica, vibra, esitoGamba, statoGiocata, html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };

@@ -532,7 +532,7 @@ def confronto_bookmaker(diario):
     return {k: {"n": len(v[0]), "ia": round(float(np.mean(v[0])), 4) if v[0] else None, "quote": round(float(np.mean(v[1])), 4) if v[1] else None} for k, v in a.items()}
 
 
-def andamento_consigli():
+def andamento_consigli(tutte=False):
     """Consigli IA settimana per settimana (dal registro dei consigli): vinti contro attesi."""
     try:
         with open(os.path.join(RADICE, "data", "consigli.json"), encoding="utf-8") as f:
@@ -551,9 +551,43 @@ def andamento_consigli():
         s["n"] += 1
         s["vinti"] += 1 if es else 0
         s["attesi"] += v["tips"]["consiglio"]["p"]
-    out = sorted(sett.values(), key=lambda s: s["sett"])[-10:]
+    out = sorted(sett.values(), key=lambda s: s["sett"])
+    out = out if tutte else out[-10:]
     for s in out:
         s["attesi"] = round(s["attesi"], 1)
+    return out
+
+
+def riepilogo_semplice(fin, Yd, codici):
+    """Numeri che chiunque capisce, solo dalle previsioni vere dell'app (salvate prima del calcio d'inizio):
+    quante volte l'esito piu probabile e uscito (IA e quote a confronto) e, per fasce di sicurezza,
+    quante volte e successo cio che l'IA dava per probabile."""
+    idx = {c: k for k, c in enumerate(codici)}
+    fav = {"n": 0, "ia": 0, "quote": 0}
+    fasce = {f: [0, 0] for f in ("50-60", "60-70", "70-80", "80-100")}
+    for k, v in enumerate(fin):
+        pc = v.get("pc0") or v.get("pc") or {}
+        y = [Yd[k, idx[c]] if c in idx else np.nan for c in ("1", "X", "2")]
+        if all(c in pc for c in ("1", "X", "2")) and not any(np.isnan(y)):
+            fav["n"] += 1
+            fav["ia"] += int(y[int(np.argmax([pc["1"], pc["X"], pc["2"]]))] == 1)
+            mk = v.get("mk0") or v.get("mk")
+            if mk and len(mk) == 3:
+                fav["quote"] += int(y[int(np.argmax(mk))] == 1)
+        for c in CHIAVI_DIARIO:
+            if c not in pc or c not in idx or np.isnan(Yd[k, idx[c]]):
+                continue
+            p, esce = float(pc[c]), Yd[k, idx[c]] == 1
+            if p < 0.5:  # "30% che succeda" = "70% che non succeda"
+                p, esce = 1 - p, not esce
+            f = "50-60" if p < 0.6 else "60-70" if p < 0.7 else "70-80" if p < 0.8 else "80-100"
+            fasce[f][0] += 1
+            fasce[f][1] += int(esce)
+    out = {"partite": len(fin), "favorito": fav,
+           "fasce": [{"fascia": f, "n": n, "successo": round(100 * ok / n, 1) if n else None} for f, (n, ok) in fasce.items()]}
+    cons = andamento_consigli(tutte=True)
+    if cons:
+        out["consigli"] = {"n": sum(x["n"] for x in cons), "vinti": sum(x["vinti"] for x in cons), "attesi": round(sum(x["attesi"] for x in cons), 1)}
     return out
 
 
@@ -682,6 +716,8 @@ def main():
         "peso_ia": {"minimo": MIN_PESO_IA, "famiglie": pesi}, "controllo": controllo,
         "consigli": andamento_consigli(), "cronologia": cron[-10:],
         "laboratorio": lab,
+        "semplice": riepilogo_semplice(fin, Yd, codici),
+        "allenato": oggi,
     }
     with open(PAGINA, "w", encoding="utf-8") as f:
         json.dump(pagina, f, ensure_ascii=False, separators=(",", ":"))

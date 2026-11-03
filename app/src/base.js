@@ -344,25 +344,26 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     if (m.st !== "FT" || !m.g) return null;
     return evalCode(norm(k), m.g[0], m.g[1], m.g1 ? m.g1[0] : null, m.g1 ? m.g1[1] : null);
   }
-  function buildSlip(matches, prof) {
+  function buildSlip(matches, prof, nP) {
     const legs = [];
     for (const m of matches) {
-      const opts = options(m).filter((o) => !/^CS|PARI|DISPARI/.test(o.k));
+      const opts = options(m).filter((o) => !/^CS|PARI|DISPARI/.test(o.k) && o.q >= QUOTA_MIN);
       const tip = m.tip || {};
       let best = null;
       const fromTip = (t) => t && opts.find((o) => o.k === t.c);
-      if (prof === 0) best = fromTip(tip.prudente) || opts.filter((o) => ["1X", "X2", "12", "U2.5", "O2.5", "O1.5", "U3.5"].includes(o.k) && o.p >= 0.7 && o.q >= 1.2).sort((a, b) => b.p - a.p)[0];
+      if (prof === 0) best = fromTip(tip.prudente) || fromTip(tip.consiglio) || opts.filter((o) => ["1", "2", "U2.5", "O2.5", "O1.5", "U3.5", "GG", "NG"].includes(o.k) && o.p >= 0.6).sort((a, b) => b.p - a.p)[0];
       if (prof === 1) best = fromTip(tip.consiglio) || opts.filter((o) => ["1", "2"].includes(o.k) && o.p >= 0.5).sort((a, b) => b.p - a.p)[0];
       if (prof === 2) best = fromTip(tip.coraggiosa) || opts.filter((o) => o.q >= 2 && o.q <= 4).sort((a, b) => b.p * b.q - a.p * a.q)[0];
       if (best) legs.push({ m, ...best });
     }
-    const n = [4, 5, 4][prof];
+    const n = nP || [4, 5, 4][prof];
     return legs.sort((a, b) => (prof === 2 ? b.p * b.q - a.p * a.q : b.p - a.p)).slice(0, n);
   }
 
   /* schedina con quota obiettivo: numero di partite deciso dal profilo (quota tipica per partita), poi si sceglie in ogni
      partita la giocata con il miglior punteggio IA vicina alla quota per partita e si ritocca finché il totale è vicino all'obiettivo */
-  const PROF_T = [{ lo: 1.12, hi: 1.55, mid: 1.3, pmin: 0.6 }, { lo: 1.3, hi: 2.3, mid: 1.7, pmin: 0.4 }, { lo: 1.7, hi: 4.5, mid: 2.4, pmin: 0.2 }];
+  const QUOTA_MIN = 1.3; // sotto questa quota l'IA non mette una giocata in schedina: il rischio non vale il guadagno (l'utente può farlo a mano)
+  const PROF_T = [{ lo: 1.3, hi: 1.65, mid: 1.42, pmin: 0.55 }, { lo: 1.3, hi: 2.3, mid: 1.7, pmin: 0.4 }, { lo: 1.7, hi: 4.5, mid: 2.4, pmin: 0.2 }];
   const ESCLUSI_SLIP = ["Pari/Dispari", "Risultato esatto"];
   function rumore(id, v) { // numero pseudo-casuale in [-0,5, 0,5): diverso per ogni combinazione richiesta
     if (!v) return 0; let h = hs(v + "|" + id) ^ Math.imul(v, 0x9E3779B1);
@@ -374,14 +375,14 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         if (prof === 0 && /Marcatori|Assist|Ammoniti|Cartellini|Falli|angolo|Parziale|Gol esatti|Margine|Tempo con/.test(g)) return false;
         if (prof === 1 && /Marcatori|Assist|Ammoniti|Parziale|Gol esatti/.test(g)) return false;
         if (prof < 2 && /^EH[MP]2/.test(o.k)) return false;
-        return o.p >= R.pmin && o.q >= Math.max(1.08, R.lo * 0.92) && o.q <= R.hi * 1.8; })
+        return o.p >= R.pmin && o.q >= Math.max(QUOTA_MIN, R.lo * 0.92) && o.q <= R.hi * 1.8; })
       .map((o) => ({ ...o, sc: (o.s != null ? o.s : 50) / 100 + 0.5 * o.p - 0.35 * Math.abs(Math.log(o.q / qt)) + (o.stima ? 0 : 0.1) + 0.12 * rumore(m.id + o.k, v) }))
       .sort((a, b) => b.sc - a.sc);
   }
-  function buildTarget(matches, prof, T, v) {
+  function buildTarget(matches, prof, T, v, nP) {
     const R = PROF_T[prof], LT = Math.log(T);
-    let n = Math.max(1, Math.min(14, Math.round(LT / Math.log(R.mid))));
-    const qt = Math.exp(LT / n);
+    let n = nP || Math.max(1, Math.min(14, Math.round(LT / Math.log(R.mid))));
+    const qt = Math.max(QUOTA_MIN, Math.exp(LT / n));
     const pool = matches.map((m) => ({ m, c: candidati(m, prof, qt, v) })).filter((x) => x.c.length)
       .sort((a, b) => b.c[0].sc + 0.15 * rumore(b.m.id, v) - (a.c[0].sc + 0.15 * rumore(a.m.id, v)));
     if (!pool.length) return [];
@@ -396,6 +397,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         const nd = d - Math.log(s.x.c[s.i].q) + Math.log(o.q); const gain = Math.abs(d) - Math.abs(nd); const loss = s.x.c[s.i].sc - o.sc;
         if (gain > 0.02 && (!best || gain - 0.6 * loss > best.v)) best = { si, oi, v: gain - 0.6 * loss }; }));
       if (best) { sel[best.si].i = best.oi; continue; }
+      if (nP) break; // numero di partite scelto dall'utente: si cambiano solo le giocate, non quante sono
       if (d < -Math.log(R.lo) && sel.length < pool.length) { sel.push({ x: pool[sel.length], i: 0 }); continue; }
       if (d > Math.log(1.25) && sel.length > 1) { sel.sort((a, b) => b.x.c[b.i].sc - a.x.c[a.i].sc); sel.pop(); continue; }
       break;
@@ -405,20 +407,20 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   /* schedina con un esito scelto dall'utente (tutte in casa, tutti pareggi, tutti Goal, tutti Over 2,5...): l'IA sceglie
      le partite dove quell'esito è più probabile e più d'accordo con i dati, e se c'è una quota obiettivo la avvicina */
   const ESITI_SCHEDINA = [["", "Scelta IA"], ["1", "Tutte in casa (1)"], ["X", "Tutti pareggi (X)"], ["2", "Tutte fuori casa (2)"], ["FAV", "Vince la favorita"],
-    ["GG", "Goal"], ["NG", "No Goal"], ["O2.5", "Over 2,5"], ["U2.5", "Under 2,5"], ["O1.5", "Over 1,5"], ["U3.5", "Under 3,5"], ["1X", "Doppia 1X"], ["X2", "Doppia X2"]];
-  function buildForzata(matches, esito, prof, T, v) {
+    ["GG", "Goal"], ["NG", "No Goal"], ["O2.5", "Over 2,5"], ["U2.5", "Under 2,5"]];
+  function buildForzata(matches, esito, prof, T, v, nP) {
     const pool = [];
     for (const m of matches) {
       const ops = options(m);
       let o = null;
       if (esito === "FAV") { const a = ops.find((x) => x.k === "1"), b = ops.find((x) => x.k === "2"); o = a && b ? (a.p >= b.p ? a : b) : a || b; }
       else o = ops.find((x) => x.k === esito);
-      if (!o || !o.q || o.q < 1.02) continue;
+      if (!o || !o.q || o.q < QUOTA_MIN) continue;
       pool.push({ m, o, sc: (o.s != null ? o.s : 50) / 100 + 0.6 * o.p + (o.stima ? 0 : 0.05) + 0.08 * rumore(m.id + esito, v) });
     }
     pool.sort((a, b) => b.sc - a.sc);
     if (!pool.length) return [];
-    if (!T) return pool.slice(0, Math.min(pool.length, [3, 4, 6][prof] || 4)).map((x) => ({ m: x.m, ...x.o }));
+    if (!T || nP) return pool.slice(0, Math.min(pool.length, nP || [3, 4, 6][prof] || 4)).map((x) => ({ m: x.m, ...x.o }));
     // quota obiettivo: quante partite servono con la quota tipica di questo esito, poi si preferiscono le giocate
     // vicine a quella quota (niente pareggio a quota 7 per arrivare prima all'obiettivo)
     const LT = Math.log(T);
@@ -676,4 +678,4 @@ function classificaViva(S, partite) {
   return { ...S, generale, casa: applica(S.casa, 0), trasferta: applica(S.trasferta, 1), viva: { live: nuove.filter((m) => m.st === "LIVE").length, finite: nuove.filter((m) => m.st === "FT").length } };
 }
 
-export { classificaViva, registraColori, iniziali, matriceRis, probVera, NomeSquadra, NomeGiocatore, NomeLega, Ricarica, vibra, esitoGamba, statoGiocata, html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };
+export { QUOTA_MIN, classificaViva, registraColori, iniziali, matriceRis, probVera, NomeSquadra, NomeGiocatore, NomeLega, Ricarica, vibra, esitoGamba, statoGiocata, html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };

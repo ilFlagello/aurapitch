@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { ESPN_LG, useLiveScores, usaPonte } from "./live.js";
 import { NOVITA, VERSIONE } from "./novita.js";
-import { classificaViva, registraColori, Ricarica, vibra, AuraLine, C, Crest, Ctx, Flag, Giorni, Ic, Marchio, Seg, Sheet, TONE, auraCol, hs, html, mmss, store } from "./base.js";
+import { QUOTA_MIN, options, mLabel, odd, pct, classificaViva, registraColori, Ricarica, vibra, AuraLine, C, Crest, Ctx, Flag, Giorni, Ic, Marchio, Seg, Sheet, TONE, auraCol, hs, html, mmss, store } from "./base.js";
 import { BarraSchedina, Cerca, Glossario, PrimoAvvio, partitaSettimana } from "./extra.js";
 import { MatchView, Movimento, PlayerSheet, Row, TeamView } from "./partita.js";
 // schermate secondarie caricate solo quando servono (avvio piu leggero); poi scaricate in silenzio per l'uso offline
@@ -163,6 +163,7 @@ import { Guida } from "./guida.js";
     useEffect(() => store.set("slip", mySlip), [mySlip]);
     useEffect(() => { if (toast) { const id = setTimeout(() => setToast(""), 1800); return () => clearTimeout(id); } }, [toast]);
     const [nuova, setNuova] = useState(false);
+    const [quotaBassa, setQuotaBassa] = useState(null); // giocata a quota troppo bassa: l'IA propone un'alternativa
     // dopo un aggiornamento: una volta sola il riquadro con le novità (chi installa per la prima volta non lo vede)
     const [novitaVis, setNovitaVis] = useState(() => { const vista = store.get("versioneVista", null); if (!vista) { store.set("versioneVista", store.get("onb", false) ? "1.0" : VERSIONE); } return !!store.get("onb", false) && (vista || "1.0") !== VERSIONE; });
     const chiudiNovita = () => { store.set("versioneVista", VERSIONE); setNovitaVis(false); };
@@ -332,7 +333,14 @@ import { Guida } from "./guida.js";
     const apriSquadra = (t, lgK, lgE0) => { const k = lgK || lgDi(t); const lgE = ESPN_LG[k] || lgE0; if (lgE) openTeam({ lgE, name: t }); };
     const apriGiocatore = (g) => { if (g && g.id) { vibra(); setGiocatore(g); } };
     const apriLega = (k) => { if (!D || !D.leagues.some((l) => l.k === k)) return; vibra(); store.set("lgSel", k); pila.current = []; transizione(() => { setOpen(null); setTeam(null); setTab("campionati"); }); window.scrollTo(0, 0); };
-    const addLeg = (m, k) => {
+    const addLeg = (m, k, forza) => {
+      const ops = options(m), o = ops.find((x) => x.k === k);
+      if (!forza && o && o.q && o.q < QUOTA_MIN) {
+        const alt = ops.filter((x) => x.q >= QUOTA_MIN && x.q <= 2.2 && x.p >= 0.5 && !/^CS|PARI|DISPARI/.test(x.k))
+          .sort((a, b) => ((b.s != null ? b.s : 50) / 100 + b.p) - ((a.s != null ? a.s : 50) / 100 + a.p))[0];
+        setQuotaBassa({ m, k, q: o.q, alt });
+        return;
+      }
       if (mySlip.some((x) => x.id === m.id)) { setMySlip(mySlip.map((x) => (x.id === m.id ? { id: m.id, k } : x))); flash("Esito aggiornato in schedina"); }
       else { setMySlip([...mySlip, { id: m.id, k }]); flash("Aggiunta alla schedina"); }
     };
@@ -515,6 +523,13 @@ import { Guida } from "./guida.js";
         style=${{ top: "calc(10px + env(safe-area-inset-top, 0px))" }}><span className="w-9 h-9 rounded-full flex items-center justify-center bg-white/20 shrink-0"><${Ic.Sparkles} size=${18} /></span>
         <span className="flex-1 min-w-0"><span className="block text-[15px] font-bold leading-tight">AuraPitch è stata migliorata</span>
           <span className="block text-[13px] opacity-90 leading-snug">Tira giù la pagina (o tocca qui) per aggiornare l'app</span></span><${Ic.ChevronDown} size=${18} className="shrink-0 opacity-80" /></button>`}
+      ${quotaBassa && html`<${Sheet} title="Quota troppo bassa" onClose=${() => setQuotaBassa(null)}>
+        <p className=${"text-[14px] leading-snug " + C.tx}><b>${mLabel(quotaBassa.m, quotaBassa.k, true)}</b> in ${quotaBassa.m.h} - ${quotaBassa.m.a} si gioca a <b>${odd(quotaBassa.q)}</b>: sotto ${odd(QUOTA_MIN)} il guadagno è minimo e basta un imprevisto per perdere tutta la schedina. Il rischio non vale.</p>
+        ${quotaBassa.alt && html`<div className=${"rounded-2xl p-3 " + C.ch}><div className=${"text-[12px] font-semibold " + C.mu}>Alternativa dell'IA nella stessa partita</div>
+          <div className=${"text-[16px] font-bold " + C.tx}>${mLabel(quotaBassa.m, quotaBassa.alt.k, true)}</div><div className=${"text-[13px] " + C.mu}>Probabilità ${pct(quotaBassa.alt.p)}% · quota ${odd(quotaBassa.alt.q)}</div></div>`}
+        <div className="grid gap-2">
+          ${quotaBassa.alt && html`<button onClick=${() => { addLeg(quotaBassa.m, quotaBassa.alt.k, true); setQuotaBassa(null); }} className=${"w-full py-3 rounded-2xl text-[15px] font-bold " + C.on}>Usa l'alternativa</button>`}
+          <button onClick=${() => { addLeg(quotaBassa.m, quotaBassa.k, true); setQuotaBassa(null); }} className=${"w-full py-3 rounded-2xl text-[15px] font-semibold " + C.ch + " " + C.tx}>Aggiungi comunque la mia</button></div><//>`}
       ${novitaVis && html`<${Sheet} title=${"Novità della versione " + VERSIONE} onClose=${chiudiNovita}>
         <p className=${"text-[13px] " + C.mu}>Aggiornata il ${NOVITA[0].data}. Ecco cosa è cambiato:</p>
         <div className="space-y-2">${NOVITA[0].punti.map((x) => html`<div key=${x} className="flex gap-2.5"><span className=${"mt-[7px] w-1.5 h-1.5 rounded-full shrink-0 bg-[#5B2EE6] dark:bg-[#A58BFF]"}></span><span className=${"text-[14px] leading-snug " + C.tx}>${x}</span></div>`)}</div>

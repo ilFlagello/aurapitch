@@ -1,6 +1,13 @@
 /* AuraPitch - versione dell'app e novità. A ogni pubblicazione con cambi visibili si aggiunge una voce IN CIMA:
    il numero cresce (1.1, 1.2, ...) e l'app lo mostra nel profilo e nel riquadro "Novità" dopo l'aggiornamento. */
 export const NOVITA = [
+  { v: "1.4", data: "3 novembre 2026", punti: [
+    "Schedina IA più sensata: niente più giocate sotto quota 1,30 scelte dall'IA",
+    "Scegli quante partite mettere in schedina (da 2 a 10) o lascia decidere all'IA",
+    "Esiti principali da scegliere: 1, X, 2, favorita, Goal, No Goal, Over e Under 2,5",
+    "Se aggiungi a mano una quota troppo bassa, l'IA ti avvisa e propone un'alternativa",
+    "L'algoritmo ora ha 15 specialisti, tra cui un modello statistico indipendente dalle quote",
+  ] },
   { v: "1.3", data: "3 novembre 2026", punti: [
     "L'algoritmo ora studia 94.000 partite di 30 campionati e si allena ogni mattina con nuovi specialisti",
     "Scontri diretti: se i precedenti dicono il contrario del consiglio, lo trovi nella motivazione",

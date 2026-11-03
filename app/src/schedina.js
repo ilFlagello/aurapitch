@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { immagineSchedina, mercatoBookmaker } from "./condividi.js";
 import { Citazione, citazioneSchedina, citazioneDiario } from "./citazioni.js";
-import { probVera, esitoGamba, statoGiocata, C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, buildForzata, ESITI_SCHEDINA, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
+import { QUOTA_MIN, probVera, esitoGamba, statoGiocata, C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, buildForzata, ESITI_SCHEDINA, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
 import { GiocoResponsabile } from "./extra.js";
 import { StoricoCard } from "./partita.js";
 import { IACard } from "./ia.js";
@@ -20,13 +20,15 @@ import { Allenatore } from "./allenatore.js";
       const [per, setPer] = useState(store.get("slipPer", "3g"));
       const [qo, setQo] = useState(store.get("slipQ", 0));
       const [vr, setVr] = useState(0);
-      const [esito, setEsito] = useState(store.get("slipEsito", ""));
+      const [esito, setEsito0] = useState(() => { const e = store.get("slipEsito", ""); return ESITI_SCHEDINA.some(([k]) => k === e) ? e : ""; });
+      const setEsito = setEsito0;
+      const [nP, setNP] = useState(store.get("slipN", 0)); // numero di partite: 0 = lo decide l'IA
       const today = D.today || new Date().toISOString().slice(0, 10);
       const pool = D.matches.filter((m) => !off.includes(m.lg) && (D.demo || m.st === "NS") && (D.demo || inPeriodo(m.date, per, today)));
-      let legs = esito ? buildForzata(pool, esito, prof, qo, vr) : qo ? buildTarget(pool, prof, qo, vr) : buildSlip(pool, prof);
+      let legs = esito ? buildForzata(pool, esito, prof, qo, vr, nP) : qo ? buildTarget(pool, prof, qo, vr, nP) : buildSlip(pool, prof, nP);
       const weak = legs.length ? legs.reduce((a, b) => (a.p < b.p ? a : b)) : null;
       const alt = weak && !esito ? candidati(weak.m, Math.max(0, prof - 1), weak.q, 0)
-        .filter((o) => o.k !== weak.k && o.p >= weak.p + 0.1 && o.q >= 1.15 && evalCode(o.k, 1, 0, 0, 0) !== null)
+        .filter((o) => o.k !== weak.k && o.p >= weak.p + 0.1 && o.q >= QUOTA_MIN && evalCode(o.k, 1, 0, 0, 0) !== null)
         .sort((a, b) => b.sc - a.sc)[0] : null;
       if (shield && weak && alt) legs = legs.map((l) => (l === weak ? { m: l.m, ...alt, shielded: true } : l));
       const tot = legs.reduce((a, l) => a * l.q, 1), prob = probVera(legs).p;
@@ -53,6 +55,9 @@ import { Allenatore } from "./allenatore.js";
         <div className=${"text-[14px] font-semibold " + C.tx}>Quota totale che vuoi giocare</div>
         <div className="flex gap-1.5 overflow-x-auto noscroll -mx-4 px-4">${[0, 2, 3, 5, 10, 20, 50, 100, 200].map((q) => html`<button key=${q} onClick=${() => { setQo(q); store.set("slipQ", q); setVr(0); setShield(false); }}
           className=${"shrink-0 min-w-[52px] px-3 py-[6px] rounded-full font-semibold " + (qo === q ? C.on : "bg-white dark:bg-[#191626] " + C.tx)}>${q ? html`<span className="num text-[18px] font-bold">×${q}</span>` : html`<span className="text-[14px]">Libera</span>`}</button>`)}</div>
+        <div className=${"text-[14px] font-semibold " + C.tx}>Quante partite</div>
+        <div className="flex gap-1.5 overflow-x-auto noscroll -mx-4 px-4">${[0, 2, 3, 4, 5, 6, 8, 10].map((n) => html`<button key=${n} onClick=${() => { setNP(n); store.set("slipN", n); setVr(0); setShield(false); }}
+          className=${"shrink-0 min-w-[46px] px-3 py-[6px] rounded-full font-semibold " + (nP === n ? C.on : "bg-white dark:bg-[#191626] " + C.tx)}>${n ? html`<span className="num text-[18px] font-bold">${n}</span>` : html`<span className="text-[14px]">Decide l'IA</span>`}</button>`)}</div>
         <div className=${"text-[14px] font-semibold " + C.tx}>Esito</div>
         <div className="flex gap-1.5 overflow-x-auto noscroll -mx-4 px-4">${ESITI_SCHEDINA.map(([k, l]) => html`<button key=${k || "ia"} onClick=${() => { setEsito(k); store.set("slipEsito", k); setVr(0); setShield(false); }}
           className=${"shrink-0 px-3.5 py-[7px] rounded-full text-[14px] font-semibold " + (esito === k ? C.seg : "bg-white dark:bg-[#191626] " + C.tx)}>${l}</button>`)}</div>
@@ -60,7 +65,7 @@ import { Allenatore } from "./allenatore.js";
         <div className=${"text-[14px] font-semibold " + C.tx}>Stile</div>
         <div className="grid grid-cols-3 gap-2">${["Zero Tachicardia", "Classica del Sabato", "Colpaccio da Bar"].map((p, i) => { const lk = i === 2 && !pro; return html`<button key=${p} onClick=${() => (lk ? setUnlock(true) : (setProf(i), setShield(false), setVr(0)))}
           className=${C.card + " p-3 text-xs font-semibold text-center " + C.tx + (prof === i ? " ring-2 ring-[#5B2EE6] dark:ring-[#A58BFF]" : "")}>${p}${lk && html`<div className="text-[10px] mt-1 text-amber-600 dark:text-amber-300 flex items-center justify-center gap-1"><${Ic.Lock} size=${10} />PRO</div>`}</button>`; })}</div>
-        <p className=${"text-[12px] " + C.mu}>${["Molte partite con giocate molto probabili (quota 1,10-1,50 ciascuna).", "Giocate equilibrate (quota 1,30-2,30 ciascuna).", "Poche partite con giocate più rischiose, anche tempi, marcatori e handicap."][prof]} ${qo ? `L'IA sceglie in ogni partita, tra tutte le scommesse possibili, quella con il punteggio migliore vicina alla quota che serve.` : ""}</p>
+        <p className=${"text-[12px] " + C.mu}>${["Giocate molto probabili (quota 1,30-1,65 ciascuna).", "Giocate equilibrate (quota 1,30-2,30 ciascuna).", "Poche partite con giocate più rischiose, anche tempi, marcatori e handicap."][prof]} ${qo ? `L'IA sceglie in ogni partita, tra tutte le scommesse possibili, quella con il punteggio migliore vicina alla quota che serve.` : ""}</p>
         <div className=${C.card + " px-4 py-2"}>${legs.length ? legs.map((l) => html`<${LegRow} key=${l.m.id} l=${l} />`) : html`<div className=${"py-3 text-sm " + C.mu}>${pool.length && D.leggera && !pool.some((m) => m.markets) ? "Carico le quote di tutte le partite..." : pool.length ? "Nessuna partita adatta a questo stile: prova un altro periodo o un altro stile." : "Nessuna partita in questo periodo nei campionati scelti."}</div>`}</div>
         ${legs.length > 0 && html`<div className=${C.card + " p-4 space-y-2"}>
           <div className="flex justify-between items-baseline text-sm"><span className=${C.mu}>${D.demo ? "Quota totale (Bet365)" : "Quota totale"}${qo ? ", obiettivo ×" + qo : ""}</span><b className=${"num text-[24px] " + C.tx}>${odd(tot)}</b></div>

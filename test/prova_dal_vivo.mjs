@@ -26,7 +26,10 @@ p.on("console", (m) => { const t = m.text(); if (m.type() !== "error" || /Failed
   const c = /site\.api\.espn\.com\/apis\/site\/v2\/sports\/soccer\/([^/]+)\/.*CORS/.exec(t);
   if (c) corsEspn.add(c[1]); else avvisi.push(`console: ${t.slice(0, 200)}`); });
 const falliti = [];
-p.on("response", (r) => { const u = r.url(); if (u.startsWith(SITO) && r.status() >= 400 && !/favicon/.test(u)) falliti.push(`${r.status()} ${u.slice(SITO.length)}`); });
+// ponte del servizio verso ESPN (/x): quante richieste e quante respinte (es. 429 = troppe richieste), per capire i blocchi CORS
+const ponte = { tot: 0, ko: {} };
+p.on("response", (r) => { const u = r.url(); if (u.startsWith(SITO) && r.status() >= 400 && !/favicon/.test(u)) falliti.push(`${r.status()} ${u.slice(SITO.length)}`);
+  if (/\/x\?u=/.test(u)) { ponte.tot++; if (r.status() >= 400) ponte.ko[r.status()] = (ponte.ko[r.status()] || 0) + 1; } });
 const foto = (n) => p.screenshot({ path: path.join(OUT, `${n}.png`) }).catch(() => {});
 const passo = async (nome, fn) => { try { await fn(); } catch (e) { errori.push(`${nome}: ${e.message.split("\n")[0]}`); await foto("errore-" + nome.replace(/\W+/g, "-")); } };
 const tab = async (n) => { await p.getByRole("tab", { name: n, exact: true }).first().click({ timeout: 8000 }); await p.waitForTimeout(400); };
@@ -54,7 +57,7 @@ await passo("prima apertura", async () => {
 await passo("home", async () => {
   const t0 = Date.now();
   await p.reload({ waitUntil: "domcontentloaded" });
-  await p.getByRole("button", { name: /In diretta/ }).waitFor({ timeout: 15000 });
+  await p.getByRole("button", { name: /In diretta/ }).first().waitFor({ timeout: 15000 });
   tempi.riapertura = Date.now() - t0;
   await chiudiFinestre();
   const righe = await p.locator("main button").filter({ hasText: /\d\d:\d\d/ }).count();
@@ -94,6 +97,7 @@ const mancanti = [...new Set(falliti)];
 const facoltativi = mancanti.filter((x) => FACOLTATIVI.test(x)), veri = mancanti.filter((x) => !FACOLTATIVI.test(x));
 if (veri.length) errori.push(`file del sito non trovati: ${veri.slice(0, 5).join(", ")}`);
 if (facoltativi.length) avvisi.unshift(`riassunti non ancora pubblicati (compaiono dopo il giro del mattino): ${facoltativi.join(", ")}`);
+tempi.ponte = ponte;
 if (corsEspn.size) avvisi.push(`diretta ESPN bloccata dal browser (CORS) per: ${[...corsEspn].join(", ")}`);
 await b.close();
 const esito = { quando: new Date().toISOString(), sito: SITO, ok: errori.length === 0, errori, avvisi: avvisi.slice(0, 10), tempi };

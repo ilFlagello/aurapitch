@@ -16,14 +16,16 @@ import { Anteprima, partitaSettimana } from "./extra.js";
     const live = m.st === "LIVE";
     const left = m.st === "NS" ? html`<span className=${"num text-[19px] font-bold leading-none " + C.tx}>${m.time || "-"}</span>`
       : m.st === "RINV" ? html`<span className=${"text-[11px] font-semibold " + C.mu}>Rinviata</span>`
-      : live ? html`<span className="flex items-center gap-1 text-[#FF3D5A]"><i className="pulse block w-1.5 h-1.5 rounded-full bg-[#FF3D5A]"></i><span className="num text-[18px] font-bold leading-none">${m.clock && /\d/.test(m.clock) ? m.clock.replace(/'.*/, "'") : m.clock || "Live"}</span></span>`
+      : live ? html`<span className="flex items-center gap-1 text-[#FF3D5A] whitespace-nowrap" aria-label=${m.clock || "In diretta"}><i className="pulse block w-1.5 h-1.5 rounded-full bg-[#FF3D5A] shrink-0"></i>${m.clock && /\d/.test(m.clock)
+        ? html`<span className="num text-[18px] font-bold leading-none">${m.clock.replace(/'.*/, "'")}</span>`
+        : html`<span className="text-[12px] font-extrabold tracking-[0.06em] leading-none">${/Intervallo/.test(m.clock || "") ? "INT" : "LIVE"}</span>`}</span>`
       : html`<span className=${"text-[12px] font-semibold " + C.mu}>Finale</span>`;
     const team = (j) => html`<span className="flex items-center gap-2 min-w-0"><${Crest} t=${j ? m.a : m.h} size=${18} />
       <span className=${"text-[15px] truncate " + (fin && !vince(j) ? C.mu : C.tx) + (vince(j) ? " font-semibold" : "")}>${j ? m.a : m.h}</span></span>`;
     const gol = (j) => html`<span className=${"num text-[20px] font-bold leading-[22px] text-right " + (live ? "text-[#FF3D5A]" : fin && !vince(j) ? C.mu : C.tx)}>${m.g ? m.g[j] : ""}</span>`;
     return html`<button onPointerDown=${() => caricaDettagli && caricaDettagli(m.id)} onClick=${() => goMatch(m.id)} className=${"w-full text-left px-4 pt-3 pb-2.5 " + (i ? "border-t " + C.bd : "")}>
       <span className="grid items-center gap-x-3 gap-y-1.5" style=${{ gridTemplateColumns: "50px minmax(0,1fr) 22px 62px" }}>
-        <span className="row-span-2 flex items-center">${left}</span>
+        <span className="row-span-2 flex items-center min-w-0 overflow-hidden">${left}</span>
         ${team(0)}${gol(0)}
         <span className="row-span-2 flex flex-col items-end justify-center gap-1">${m.free && html`<span className=${"text-[10px] font-bold " + C.acc}>Gratis</span>`}<${FavPill} m=${m} unlocked=${unlocked(m)} /></span>
         ${team(1)}${gol(1)}
@@ -308,7 +310,22 @@ import { Anteprima, partitaSettimana } from "./extra.js";
             <span className=${"flex-1 text-[15px] leading-[1.55] " + C.tx}>${tit && html`<b className="block mb-0.5">${tit}</b>`}<span className=${k ? "" : C.mu}>${corpo}</span></span></div>`;
         }) : html`<div className=${"py-4 text-[15px] " + C.mu}>Nessun commento ancora.</div>`}</div>
         ${list.length > n && html`<button onClick=${() => setN(n + 60)} className=${"w-full py-3 rounded-[14px] text-[14px] font-semibold " + C.ch + " " + C.tx}>Mostra altri commenti</button>`}
-        <p className=${"text-[12px] " + C.mu}>Cronaca minuto per minuto tradotta automaticamente in italiano${sm.st === "LIVE" ? ", aggiornata ogni 20 secondi" : ""}.</p><//>`;
+        <p className=${"text-[12px] " + C.mu}>${sm.leggera ? "Per questo campionato la fonte fornisce solo i momenti chiave (gol, cartellini, cambi): li raccontiamo in italiano con il punteggio aggiornato" : "Cronaca minuto per minuto tradotta automaticamente in italiano"}${sm.st === "LIVE" ? ", aggiornata ogni 20 secondi" : ""}.</p><//>`;
+    }
+    /* garanzie del consiglio: (1) si blocca 2 ore prima del calcio d'inizio e non cambia più; (2) con quali dati è stato fatto */
+    function Garanzie({ m }) {
+      const b = m.blocco, d = m.dati;
+      const ora = (iso) => new Date(iso).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+      const giorno = (iso) => { const x = new Date(iso), oggi = new Date(); return x.toDateString() === oggi.toDateString() ? "" : x.toLocaleDateString("it-IT", { day: "numeric", month: "short" }) + " "; };
+      const bloccato = b && (b.st === "bloccato" || Date.parse(b.t) <= Date.now() || m.st !== "NS");
+      const LV = { completa: ["Elaborazione AuraPitch completa", "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300"], parziale: ["Elaborazione parziale", "bg-amber-500/12 text-amber-700 dark:text-amber-300"],
+        quote: ["Solo quote dei bookmaker", "bg-black/[0.06] dark:bg-white/10 " + C.mu] };
+      const lv = d && LV[d.lv];
+      if (!b && !lv) return null;
+      return html`<div className="flex flex-wrap gap-1.5 mt-2">
+        ${b && html`<span className=${"inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-[3px] rounded-full " + (bloccato ? "bg-[#5B2EE6]/10 text-[#5B2EE6] dark:bg-[#A58BFF]/15 dark:text-[#A58BFF]" : "bg-black/[0.06] dark:bg-white/10 " + C.mu)}>
+          <${bloccato ? Ic.Lock : Ic.Clock} size=${11} />${bloccato ? `Bloccato ${b.st === "bloccato" ? "il " + giorno(b.t) + "alle " + ora(b.t) : ""}`.replace("il alle", "alle").trim() : `Provvisorio: si blocca alle ${ora(b.t)}`}</span>`}
+        ${lv && html`<span className=${"inline-flex items-center text-[11px] font-semibold px-2 py-[3px] rounded-full " + lv[1]}>${lv[0]}</span>`}</div>`;
     }
     /* informazioni partita (come FotMob): data, competizione, stadio, arbitro */
     function InfoCard({ m, sm, L }) {
@@ -774,12 +791,14 @@ import { Anteprima, partitaSettimana } from "./extra.js";
             <div className="flex-1 min-w-0"><div className=${C.lab}>${t.titolo}</div>
               <div className=${(main ? "text-base " : "text-sm ") + "font-semibold leading-tight " + C.tx}>${mLabel(m, t.c)}</div>
               <div className=${"text-[13px] leading-snug mt-0.5 " + C.mu}>${spiega(m, t.c)}</div>
-              <div className=${"text-xs tabular-nums " + C.mu}>Probabilità ${pct(t.p)}% - quota ${t.qm ? "media" : "stimata"} ${odd(t.q)}</div></div>
+              <div className=${"text-xs tabular-nums " + C.mu}>Probabilità ${pct(t.p)}% - quota ${t.qm ? "media" : "stimata"} ${odd(t.q)}</div>
+              ${main && html`<${Garanzie} m=${m} />`}</div>
             <${AddBtn} c=${t.c} /></div>
           <button onClick=${() => setWhy(o ? null : k)} className="mt-2 text-xs font-semibold text-[#5B2EE6] dark:text-[#A58BFF] flex items-center gap-1">${o ? "Nascondi motivazione" : "Perché questo consiglio?"}<${o ? Ic.ChevronUp : Ic.ChevronDown} size=${13} /></button>
           ${o && html`<div className="mt-2 space-y-1.5 text-sm leading-relaxed">
             ${t.perche.map((x) => html`<div key=${x} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-2 shrink-0 " + DOT.good}></span><span className=${C.tx}>${x}</span></div>`)}
             ${(t.contro || []).map((x) => html`<div key=${x} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-2 shrink-0 " + DOT.warn}></span><span className=${C.tx}><b>Da tenere d'occhio:</b> ${x}</span></div>`)}
+            ${main && m.dati && m.dati.fonti && m.dati.fonti.length > 0 && html`<div className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-2 shrink-0 " + DOT.info}></span><span className=${C.tx}><b>Dati usati:</b> ${m.dati.fonti.join(", ")}.</span></div>`}
             ${affid(t.c, t.p) && html`<div className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-2 shrink-0 " + DOT.info}></span><span className=${C.tx}>${affid(t.c, t.p)}</span></div>`}
             ${(() => { const al = assenze(m, sm, D); return al.length > 0 && al.map((x) => html`<div key=${x.n} className="flex gap-2"><span className=${"w-1.5 h-1.5 rounded-full mt-2 shrink-0 " + DOT.warn}></span><span className=${C.tx}><b>Formazione:</b> ${x.testo}</span></div>`); })()}</div>`}</div>`; };
       const opts = options(m);
@@ -1024,11 +1043,12 @@ import { Anteprima, partitaSettimana } from "./extra.js";
           <div className="mt-2"><${Citazione} q=${cit.q} /></div></div>`}
         ${grande && html`<${Anteprima} m=${m} />`}
         ${st === "NS" && tip && html`<div className=${C.card + " p-4"}>
-          <div className="flex items-center gap-2 mb-2"><${Ic.Sparkles} size=${17} className=${C.acc} /><span className=${C.lab + " flex-1"}>Il consiglio dell'IA</span>
+          <div className="flex items-center gap-2 mb-2"><${Ic.Sparkles} size=${17} className=${C.acc} /><span className=${C.lab + " flex-1"}>${tip.titolo === "Indicazione dalle quote" ? "Indicazione dalle quote" : "Il consiglio dell'IA"}</span>
             ${unlocked(m) && html`<button aria-label="Aggiungi alla schedina" onClick=${() => addLeg(m, tip.c)} className=${"w-9 h-9 rounded-full flex items-center justify-center " + (inSlip && norm(inSlip.k) === tip.c ? C.on : C.ch + " " + C.tx)}>${inSlip && norm(inSlip.k) === tip.c ? html`<${Ic.Check} size=${16} />` : html`<${Ic.Plus} size=${16} />`}</button>`}</div>
           ${unlocked(m) ? html`<div className=${"text-[20px] font-bold leading-tight " + C.tx}>${mLabel(m, tip.c)}</div>
             <div className=${"text-[14px] mt-1 " + C.tx}>${spiega(m, tip.c)}</div>
-            <div className="flex gap-4 mt-2.5"><span className=${"text-[13px] " + C.mu}>Probabilità <b className=${"num text-[19px] " + C.tx}>${pct(tip.p)}%</b></span><span className=${"text-[13px] " + C.mu}>Quota ${tip.qm ? "" : "stimata "}<b className=${"num text-[19px] " + C.tx}>${odd(tip.q)}</b></span></div>`
+            <div className="flex gap-4 mt-2.5"><span className=${"text-[13px] " + C.mu}>Probabilità <b className=${"num text-[19px] " + C.tx}>${pct(tip.p)}%</b></span><span className=${"text-[13px] " + C.mu}>Quota ${tip.qm ? "" : "stimata "}<b className=${"num text-[19px] " + C.tx}>${odd(tip.q)}</b></span></div>
+            <${Garanzie} m=${m} />`
           : html`<button onClick=${() => setUnlock(true)} className=${"w-full text-left text-[14px] rounded-xl p-3 " + C.ch + " " + C.tx}><${Ic.Lock} size=${13} className="inline mr-1" />Sblocca con PRO o con l'analisi gratis del giorno per vedere il consiglio.</button>`}
           <${Vai} onClick=${() => vai(3)}>Perché, e tutte le altre giocate<//></div>`}
         ${st !== "NS" && html`<${LiveTips} m=${m} sm=${sm} />`}

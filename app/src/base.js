@@ -95,8 +95,9 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
         <i className="block rounded-full" style=${{ width: pct(P[0]) + "%", background: ch }}></i>
         <i className="block rounded-full bg-[#17152B]/[0.14] dark:bg-white/[0.18]" style=${{ width: pct(P[1]) + "%" }}></i>
         <i className="block rounded-full" style=${{ width: pct(P[2]) + "%", background: ca }}></i></div>
-      ${labels && html`<div className=${"flex justify-between mt-1.5 text-[12px] " + C.mu}>
-        <span>${m.h} <b className=${"num text-[17px] font-bold " + C.tx}>${pct(P[0])}%</b></span><span>Pari <b className=${"num text-[17px] font-bold " + C.tx}>${pct(P[1])}%</b></span><span><b className=${"num text-[17px] font-bold " + C.tx}>${pct(P[2])}%</b> ${m.a}</span></div>`}</div>`;
+      ${labels && html`<div className=${"grid grid-cols-[1fr_auto_1fr] gap-3 mt-2 text-[12px] leading-tight " + C.mu}>
+        ${[[m.h, P[0], "text-left items-start"], ["Pareggio", P[1], "text-center items-center"], [m.a, P[2], "text-right items-end"]].map(([n, v, al]) => html`<span key=${n} className=${"flex flex-col gap-0.5 min-w-0 " + al}>
+          <span className="truncate max-w-full">${n}</span><b className=${"num text-[18px] font-bold leading-none " + C.tx}>${pct(v)}%</b></span>`)}</div>`}</div>`;
   }
   /* stemmi AuraPitch: nessun logo ufficiale (sono marchi dei club), ma i colori veri di maglia (da ESPN) e, quando lo
      stemma è abbastanza grande, le iniziali della squadra. Riconoscibili a colpo d'occhio, senza problemi di diritti. */
@@ -157,6 +158,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       ${k === "se" && html`<rect width="24" height="16" fill="#1d4ed8" /><rect x="7" width="2.6" height="16" fill="#facc15" /><rect y="6.7" width="24" height="2.6" fill="#facc15" />`}
       ${k === "sa" && html`<rect width="24" height="16" fill="#15803d" /><rect x="6" y="9.5" width="12" height="1.2" rx="0.6" fill="#f8fafc" />`}
       ${k === "cl" && html`<rect width="24" height="16" fill="#f8fafc" /><rect y="8" width="24" height="8" fill="#dc2626" /><rect width="8" height="8" fill="#1d4ed8" /><circle cx="4" cy="4" r="1.4" fill="#f8fafc" />`}
+      ${k === "cn" && html`<rect width="24" height="16" fill="#dc2626" /><circle cx="5" cy="5" r="2.2" fill="#facc15" />${[[9,2],[11,4],[11,7],[9,9]].map(([x, y]) => html`<circle key=${x + "-" + y} cx=${x} cy=${y} r="0.8" fill="#facc15" />`)}`}
+      ${k === "cr" && html`<rect width="24" height="16" fill="#1d4ed8" /><rect y="2.67" width="24" height="10.66" fill="#f8fafc" /><rect y="5.33" width="24" height="5.34" fill="#dc2626" />`}
       ${k === "co" && html`<rect width="24" height="16" fill="#facc15" /><rect y="8" width="24" height="4" fill="#1d4ed8" /><rect y="12" width="24" height="4" fill="#dc2626" />`}
       ${k === "ec" && html`<rect width="24" height="16" fill="#facc15" /><rect y="8" width="24" height="4" fill="#1d4ed8" /><rect y="12" width="24" height="4" fill="#dc2626" /><circle cx="12" cy="8" r="1.8" fill="#a16207" />`}
       ${k === "au" && html`<rect width="24" height="16" fill="#1e3a8a" /><path d="M0 0L10 6M10 0L0 6" stroke="#f8fafc" stroke-width="1.4" /><circle cx="17" cy="11" r="1" fill="#f8fafc" /><circle cx="20" cy="6" r="0.8" fill="#f8fafc" /><circle cx="5" cy="12" r="1.3" fill="#f8fafc" />`}
@@ -640,4 +643,37 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     return e.includes(false) ? "persa" : e.every((v) => v === true) ? "vinta" : "aperta";
   }
 
-export { registraColori, iniziali, matriceRis, probVera, NomeSquadra, NomeGiocatore, NomeLega, Ricarica, vibra, esitoGamba, statoGiocata, html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };
+/* classifica in diretta: alla classifica del mattino si aggiungono i risultati arrivati dopo (partite finite e in corso).
+   "inclusi" = partite gia contate quando la classifica e stata scaricata, cosi nessun risultato viene contato due volte.
+   Le squadre in campo hanno "live" (risultato provvisorio) e "mossa" (posizioni guadagnate o perse rispetto a prima). */
+function classificaViva(S, partite) {
+  if (!S || !S.generale || !S.generale.length) return S;
+  const inclusi = new Set(S.inclusi || []), conIncl = Array.isArray(S.inclusi);
+  const nuove = partite.filter((m) => m.g && (m.st === "LIVE" || (m.st === "FT" && conIncl && !inclusi.has(m.id))));
+  if (!nuove.length) return S;
+  const piega = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  const prima = {};
+  S.generale.forEach((r, i) => { prima[r.team] = i; });
+  const applica = (righe, lato) => {
+    if (!righe || !righe.length) return righe;
+    const out = righe.map((r) => ({ ...r })), idx = {};
+    out.forEach((r, i) => { idx[piega(r.team)] = i; });
+    for (const m of nuove) {
+      for (const j of [0, 1]) {
+        if (lato != null && lato !== j) continue;
+        const r = out[idx[piega(j ? m.a : m.h)]];
+        if (!r) continue;
+        const f = m.g[j], c = m.g[1 - j];
+        r.pg += 1; r.gf += f; r.gs += c;
+        if (f > c) { r.v += 1; r.pt += 3; } else if (f === c) { r.n += 1; r.pt += 1; } else r.p += 1;
+        if (m.st === "LIVE") r.live = f > c ? "V" : f === c ? "N" : "P";
+      }
+    }
+    return out.sort((a, b) => b.pt - a.pt || (b.gf - b.gs) - (a.gf - a.gs) || b.gf - a.gf || a.team.localeCompare(b.team));
+  };
+  const generale = applica(S.generale, null);
+  generale.forEach((r, i) => { if (prima[r.team] != null && prima[r.team] !== i) r.mossa = prima[r.team] - i; });
+  return { ...S, generale, casa: applica(S.casa, 0), trasferta: applica(S.trasferta, 1), viva: { live: nuove.filter((m) => m.st === "LIVE").length, finite: nuove.filter((m) => m.st === "FT").length } };
+}
+
+export { classificaViva, registraColori, iniziali, matriceRis, probVera, NomeSquadra, NomeGiocatore, NomeLega, Ricarica, vibra, esitoGamba, statoGiocata, html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };

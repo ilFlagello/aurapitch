@@ -1,11 +1,11 @@
-# AuraPitch - cerca ogni mese (e a richiesta) le competizioni con quote gratuite non ancora nell'app. Salva storico/scansione_leghe.json
+# AuraPitch - cerca ogni settimana (e a richiesta) le competizioni con quote gratuite non ancora nell'app. Salva storico/scansione_leghe.json
 name: Scansione campionati
 on:
   workflow_dispatch:
     inputs:
       giorni: { description: "Giorni da guardare", default: "10" }
   schedule:
-    - cron: "0 4 2 * *"
+    - cron: "0 4 * * 1"  # ogni lunedì: nuovi campionati con quote vere
 permissions: { contents: write }
 jobs:
   scansione:
@@ -19,4 +19,4 @@ jobs:
         env: { GIORNI: "${{ inputs.giorni || '10' }}" }
       - run: |
           git config user.name "aurapitch-raccolta"; git config user.email "aurapitch-raccolta@users.noreply.github.com"
-          git add storico/scansione_leghe.json && git commit -m "Scansione campionati" && for i in 1 2 3; do git pull --rebase -q origin main && git push && break; sleep 5; done || true
+          git add storico/scansione_leghe.json && git commit -m "Scansione campionati" && for i in 1 2 3; do git pull --rebase --autostash -q origin main && git push && break; sleep 5; done || true

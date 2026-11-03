@@ -80,5 +80,5 @@ jobs:
             echo "Nessun dato nuovo"
           else
             git commit -m "Dati $(date -u +%Y-%m-%d_%H%M)"
-            for i in 1 2 3 4; do git pull --rebase -X theirs -q origin main && git push && break; sleep 5; done
+            for i in 1 2 3 4; do git pull --rebase --autostash -X theirs -q origin main && git push && break; sleep 5; done
           fi

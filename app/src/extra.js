@@ -7,7 +7,7 @@ import { ESPN_LG } from "./live.js";
 import { statoGiocata, C, Crest, Ctx, Flag, Ic, Marchio, Sheet, evalCode, hit, html, norm, pct, store } from "./base.js";
 
   /* ---- partita della settimana: la sfida più importante dei prossimi 7 giorni (competizione, classifica delle due squadre, equilibrio) ---- */
-  const PESO_LEGA = { E2: 0.4, E3: 0.3, EC: 0.2, SC1: 0.2, N2: 0.3, KNV: 0.4, BR2: 0.3, CDB: 0.5, AR2: 0.2, MX2: 0.2, USL: 0.2, ACL2: 0.3, WSL: 0.4, AUW: 0.2, UWCL: 0.6, NL: 2.6, LIB: 1.2, SA1: 0.6, F2: 0.4, NO1: 0.3, SE1: 0.3, COL1: 0.3, CHI1: 0.3, AU1: 0.3, UY1: 0.2, PY1: 0.2, EC1: 0.2, PE1: 0.2, SUD: 0.6, ACL: 0.5, AMI: 0.8, EQ: 1.5, WCQ: 1.8, CL: 3, I1: 2.4, E0: 2.4, SP1: 2.1, D1: 2, F1: 1.7, EL: 1.6, CI: 1.4, SCI: 1.6, FAC: 1.2, CDR: 1.2, DFB: 1.1, ECL: 1.1, P1: 1, N1: 1, ELC: 0.8, CDF: 0.7, E1: 0.6, I2: 0.6, T1: 0.7, B1: 0.6, SC0: 0.6, BR1: 0.7, AR1: 0.6, MLS: 0.5, MX1: 0.5, D2: 0.5, SP2: 0.5, A1: 0.4, G1: 0.4, DK1: 0.4, J1: 0.4 };
+  const PESO_LEGA = { E2: 0.4, E3: 0.3, EC: 0.2, SC1: 0.2, N2: 0.3, KNV: 0.4, BR2: 0.3, CDB: 0.5, AR2: 0.2, MX2: 0.2, USL: 0.2, ACL2: 0.3, WSL: 0.4, AUW: 0.2, UWCL: 0.6, CN1: 0.3, AR3: 0.1, CR1: 0.2, NL: 2.6, LIB: 1.2, SA1: 0.6, F2: 0.4, NO1: 0.3, SE1: 0.3, COL1: 0.3, CHI1: 0.3, AU1: 0.3, UY1: 0.2, PY1: 0.2, EC1: 0.2, PE1: 0.2, SUD: 0.6, ACL: 0.5, AMI: 0.8, EQ: 1.5, WCQ: 1.8, CL: 3, I1: 2.4, E0: 2.4, SP1: 2.1, D1: 2, F1: 1.7, EL: 1.6, CI: 1.4, SCI: 1.6, FAC: 1.2, CDR: 1.2, DFB: 1.1, ECL: 1.1, P1: 1, N1: 1, ELC: 0.8, CDF: 0.7, E1: 0.6, I2: 0.6, T1: 0.7, B1: 0.6, SC0: 0.6, BR1: 0.7, AR1: 0.6, MLS: 0.5, MX1: 0.5, D2: 0.5, SP2: 0.5, A1: 0.4, G1: 0.4, DK1: 0.4, J1: 0.4 };
   function partitaSettimana(D) {
     const pos = (k, t) => { const S = D.standings[k]; const i = S ? S.generale.findIndex((r) => r.team === t) : -1; return i < 0 ? 12 : i + 1; };
     let best = null;
@@ -88,7 +88,7 @@ import { statoGiocata, C, Crest, Ctx, Flag, Ic, Marchio, Sheet, evalCode, hit, h
     ["AU1", "A-League", "au"], ["UY1", "Primera Uruguay", "uy"], ["PY1", "Primera Paraguay", "py"], ["EC1", "LigaPro Ecuador", "ec"], ["PE1", "Liga 1 Perù", "pe"],
     ["LIB", "Copa Libertadores", "sam"], ["SUD", "Copa Sudamericana", "sam"], ["ACL", "AFC Champions League", "as"],
     ["NL", "Nations League", "eu"], ["AMI", "Amichevoli nazionali", "wo"], ["EQ", "Qualificazioni Europei", "eu"], ["WCQ", "Qualificazioni Mondiali", "wo"],
-    ["E2", "League One", "en"], ["E3", "League Two", "en"], ["EC", "National League", "en"], ["SC1", "Scottish Championship", "sc"], ["N2", "Eerste Divisie", "nl"], ["KNV", "KNVB Beker", "nl"], ["BR2", "Série B Brasile", "br"], ["CDB", "Copa do Brasil", "br"], ["AR2", "Primera Nacional", "ar"], ["MX2", "Liga de Expansión", "mx"], ["USL", "USL Championship", "us"], ["ACL2", "AFC Champions League Two", "as"], ["WSL", "Women's Super League", "en"], ["AUW", "A-League Women", "au"], ["UWCL", "Champions League femminile", "eu"]];
+    ["E2", "League One", "en"], ["E3", "League Two", "en"], ["EC", "National League", "en"], ["SC1", "Scottish Championship", "sc"], ["N2", "Eerste Divisie", "nl"], ["KNV", "KNVB Beker", "nl"], ["BR2", "Série B Brasile", "br"], ["CDB", "Copa do Brasil", "br"], ["AR2", "Primera Nacional", "ar"], ["MX2", "Liga de Expansión", "mx"], ["USL", "USL Championship", "us"], ["ACL2", "AFC Champions League Two", "as"], ["WSL", "Women's Super League", "en"], ["AUW", "A-League Women", "au"], ["UWCL", "Champions League femminile", "eu"], ["CN1", "Chinese Super League", "cn"], ["AR3", "Primera B Metropolitana", "ar"], ["CR1", "Primera Costa Rica", "cr"]];
   // gruppi per il primo avvio: prima le competizioni più seguite, il resto a scomparsa
   // gruppi per il primo avvio e la scelta delle squadre: stesso ordine di tutta l'app (principali del tuo paese, poi gli altri dalla A alla Z)
   const GRUPPI_LEGHE = sezioniLeghe(TUTTE_LEGHE.map((x) => x[0])).map((sz) => [sz.titolo, sz.leghe]);
@@ -153,20 +153,27 @@ import { statoGiocata, C, Crest, Ctx, Flag, Ic, Marchio, Sheet, evalCode, hit, h
           <button disabled=${passo === 0 && !lg.length} onClick=${() => (passo ? fine() : setPasso(1))} className=${"flex-1 py-3 rounded-2xl text-[16px] font-bold disabled:opacity-50 " + C.on}>${passo ? (sq.length ? "Inizia" : "Inizia senza squadre") : "Avanti"}</button></div></div></div>`;
   }
 
-  /* ---- schedina in diretta: barra sopra il menu quando una tua giocata è in campo ---- */
+  /* ---- schedina in diretta: barra sopra il menu quando una partita della tua schedina (o del diario) è in campo.
+     Dice a parole come sta andando: vinte, perse, in corso (se ora sta andando bene o no) e ancora da giocare. ---- */
   function BarraSchedina({ vaiSchedina }) {
     const { mySlip, diario, byId } = React.useContext(Ctx);
     const legs = [...mySlip.map((x) => ({ id: x.id, k: x.k })), ...diario.filter((x) => statoGiocata(x, byId) === "aperta").flatMap((x) => x.legs.filter((g) => g.ok == null).map((g) => ({ id: g.id, k: g.k })))];
-    const vis = [...new Map(legs.map((l) => [l.id + l.k, l])).values()].map((l) => ({ ...l, m: byId[l.id] })).filter((l) => l.m && (l.m.st === "LIVE" || l.m.st === "FT"));
-    if (!vis.some((l) => l.m.st === "LIVE")) return null;
-    const ora = vis.map((l) => { const g = l.m.g || [0, 0]; const v = evalCode(norm(l.k), g[0], g[1]); return l.m.st === "FT" ? (hit(l.m, l.k) ?? null) : v; });
-    const si = ora.filter((v) => v === true).length, no = ora.filter((v) => v === false).length;
-    return html`<button onClick=${vaiSchedina} className="fixed inset-x-0 z-40 px-3" style=${{ bottom: "calc(88px + env(safe-area-inset-bottom, 0px))" }}>
-      <div className=${"dock max-w-[456px] mx-auto rounded-[18px] px-4 py-2.5 flex items-center gap-2.5 text-left"}>
+    const tutte = [...new Map(legs.map((l) => [l.id + l.k, l])).values()].map((l) => ({ ...l, m: byId[l.id] })).filter((l) => l.m);
+    if (!tutte.some((l) => l.m.st === "LIVE")) return null;
+    let vinte = 0, perse = 0, bene = 0, male = 0, dopo = 0;
+    for (const l of tutte) {
+      if (l.m.st === "FT") { const h = hit(l.m, l.k); if (h === true) vinte++; else if (h === false) perse++; }
+      else if (l.m.st === "LIVE") { const g = l.m.g || [0, 0]; if (evalCode(norm(l.k), g[0], g[1])) bene++; else male++; }
+      else dopo++;
+    }
+    const pezzi = [vinte && [vinte + (vinte === 1 ? " vinta" : " vinte"), "text-[#0F9D84]"], perse && [perse + (perse === 1 ? " persa" : " perse"), "text-[#FF3D5A]"],
+      bene && [bene + " in corso, ora ok", "text-[#0F9D84]"], male && [male + " in corso, ora no", "text-amber-600 dark:text-amber-300"], dopo && [dopo + " da giocare", C.mu]].filter(Boolean);
+    return html`<button onClick=${vaiSchedina} aria-label="Apri la schedina" className="fixed inset-x-0 z-40 px-3" style=${{ bottom: "calc(88px + env(safe-area-inset-bottom, 0px))" }}>
+      <div className=${"dock max-w-[456px] mx-auto rounded-[18px] px-4 py-2 flex items-center gap-2.5 text-left"}>
         <i className="pulse block w-2 h-2 rounded-full bg-[#FF3D5A] shrink-0"></i>
-        <span className=${"flex-1 text-[14px] font-semibold " + C.tx}>Le tue giocate in campo</span>
-        <span className="num text-[18px] font-bold text-[#0F9D84]">${si} ✓</span><span className="num text-[18px] font-bold text-[#FF3D5A]">${no} ✗</span>
-        <span className=${"text-[12px] " + C.mu}>su ${vis.length}</span></div></button>`;
+        <span className="flex-1 min-w-0"><span className=${"block text-[13px] font-semibold " + C.tx}>Schedina in corso · ${tutte.length} ${tutte.length === 1 ? "partita" : "partite"}</span>
+          <span className="block text-[12px] font-semibold truncate">${pezzi.map(([t, c], i) => html`<span key=${t} className=${c}>${i ? html`<span className=${C.mu}> · </span>` : null}${t}</span>`)}</span></span>
+        <${Ic.ChevronRight} size=${16} className=${C.mu + " shrink-0"} /></div></button>`;
   }
 
   /* ---- ricerca: squadre, partite e giocatori (marcatori delle partite in programma) ---- */

@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react";
 export const ESPN_LG = { I1: "ita.1", I2: "ita.2", CL: "uefa.champions", EL: "uefa.europa", ECL: "uefa.europa.conf", CI: "ita.coppa_italia", E0: "eng.1", SP1: "esp.1", D1: "ger.1",
   F1: "fra.1", N1: "ned.1", P1: "por.1", E1: "eng.2", FAC: "eng.fa", ELC: "eng.league_cup", CDR: "esp.copa_del_rey", DFB: "ger.dfb_pokal", CDF: "fra.coupe_de_france", SCI: "ita.super_cup",
   D2: "ger.2", SP2: "esp.2", B1: "bel.1", T1: "tur.1", SC0: "sco.1", A1: "aut.1", G1: "gre.1", DK1: "den.1", MLS: "usa.1", BR1: "bra.1", AR1: "arg.1", MX1: "mex.1", J1: "jpn.1",
-  E2: "eng.3", E3: "eng.4", EC: "eng.5", SC1: "sco.2", N2: "ned.2", KNV: "ned.cup", BR2: "bra.2", CDB: "bra.copa_do_brazil", AR2: "arg.2", MX2: "mex.2", USL: "usa.usl.1", ACL2: "afc.cup", WSL: "eng.w.1", AUW: "aus.w.1", UWCL: "uefa.wchampions",
+  E2: "eng.3", E3: "eng.4", EC: "eng.5", SC1: "sco.2", N2: "ned.2", KNV: "ned.cup", BR2: "bra.2", CDB: "bra.copa_do_brazil", AR2: "arg.2", MX2: "mex.2", USL: "usa.usl.1", ACL2: "afc.cup", WSL: "eng.w.1", AUW: "aus.w.1", UWCL: "uefa.wchampions", CN1: "chn.1", AR3: "arg.3", CR1: "crc.1",
   F2: "fra.2", NO1: "nor.1", SE1: "swe.1", SA1: "ksa.1", CHI1: "chi.1", COL1: "col.1", AU1: "aus.1", UY1: "uru.1", PY1: "par.1", EC1: "ecu.1", PE1: "per.1",
   LIB: "conmebol.libertadores", SUD: "conmebol.sudamericana", ACL: "afc.champions", NL: "uefa.nations", AMI: "fifa.friendly", EQ: "uefa.euroq", WCQ: "fifa.worldq.uefa" };
 const SITE = "https://site.api.espn.com/apis/site/v2/sports/soccer/";
@@ -132,7 +132,10 @@ const CORNER = { "top left corner": "all'incrocio sinistro", "top right corner":
 const RULES = [
   [/^Lineups are announced and players are warming up\.?/, "Formazioni ufficiali annunciate, squadre in riscaldamento."],
   [/^First Half begins\.?/, "Inizia il primo tempo."],
-  [/^Second Half begins (.+?)\.?$/, "Inizia il secondo tempo: $1."],
+  [/^Second Half begins (.+?)\.?$/, "Inizia il secondo tempo: $1."], [/^Second Half begins\.?$/, "Inizia il secondo tempo."],
+  [/^Second Half Extra Time begins (.+?)\.?$/, "Inizia il secondo tempo supplementare: $1."], [/^First Half Extra Time ends, (.+?)\.?$/, "Fine primo tempo supplementare: $1."],
+  [/^Second Half Extra Time ends, (.+?)\.?$/, "Fine dei supplementari: $1."], [/^Penalty Shootout begins\.?/, "Iniziano i calci di rigore."], [/^Penalty Shootout ends, (.+?)\.?$/, "Fine dei rigori: $1."],
+  [/^Goal Kick (.+?)\.?$/, "Rimessa dal fondo: $1."], [/^Kick Off\.?$/, "Calcio d'inizio."],
   [/^First Half Extra Time begins (.+?)\.?$/, "Iniziano i supplementari: $1."],
   [/^First Half ends, (.+?)\.?$/, "Fine primo tempo: $1."],
   [/^Second Half ends, (.+?)\.?$/, "Fine secondo tempo: $1."],
@@ -243,6 +246,52 @@ function linee(starters, formation) {
   return out;
 }
 
+/* cronaca "leggera": per molti campionati la fonte da solo righe come "Simone Verdi (Benevento) Substitution at 63'".
+   Le trasformiamo in frasi italiane con il punteggio aggiornato, chi entra e chi esce, e i separatori dei tempi. */
+const LITE = /^(.+?) \((.+?)\) ([A-Za-z][A-Za-z -]*?) at (\d+'(?:\s?\+\s?\d+')?)\.?$/;
+const LITE_TIPO = { goal: "goal", "goal - header": "goal---header", "goal - free-kick": "goal---free-kick", "goal - volley": "goal", "penalty - scored": "penalty---scored", "own goal": "own-goal",
+  "yellow card": "yellow-card", "red card": "red-card", "yellow red card": "yellow-red-card", "second yellow card": "yellow-red-card", substitution: "substitution", "penalty - missed": "penalty---missed", "penalty - saved": "penalty---missed" };
+export function cronacaLeggera(righe, nomiSquadre, cambi, finita) {
+  const pn = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const lato = (t) => { const k = pn(t); const i = nomiSquadre.findIndex((n) => n.some((x) => pn(x) === k || pn(x).includes(k) || k.includes(pn(x)))); return i < 0 ? null : i; };
+  const g = [0, 0], out = [];
+  const nome = (j) => nomiSquadre[j][0];
+  const ris = () => `${nome(0)} ${g[0]}-${g[1]} ${nome(1)}`;
+  let intervallo = false;
+  out.push({ min: "", text: "Inizia il primo tempo.", type: "" });
+  for (const r of righe) {
+    const m = LITE.exec(r.txt);
+    if (!m) { out.push({ min: r.min, text: itText(r.txt), type: r.type || "" }); continue; }
+    const [, chi, sq, ev, al] = m;
+    const tipo = LITE_TIPO[ev.toLowerCase()] || "", j = lato(sq), squadra = j == null ? sq : nome(j), min = r.min || al;
+    // i cambi al 45' sono quasi sempre fatti all'intervallo: vanno dopo il separatore
+    if (!intervallo && (parseInt(min, 10) > 45 || (tipo === "substitution" && /^45'$/.test(min))) && !/^45'\s?\+/.test(min)) {
+      intervallo = true;
+      out.push({ min: "", text: `Fine primo tempo, ${nome(0)} ${g[0]}, ${nome(1)} ${g[1]}.`, type: "" });
+    }
+    let text;
+    if (/^goal|penalty---scored/.test(tipo)) {
+      if (j != null) g[j]++;
+      const come = tipo === "goal---header" ? " di testa" : tipo === "goal---free-kick" ? " su punizione" : tipo === "penalty---scored" ? " su rigore" : "";
+      text = `Gol! ${ris()}. Segna ${chi}${come} (${squadra}).`;
+    } else if (tipo === "own-goal") {
+      if (j != null) g[1 - j]++;
+      text = `Gol! ${ris()}. Autogol di ${chi} (${squadra}).`;
+    } else if (tipo === "yellow-card") text = `Ammonito ${chi} (${squadra}).`;
+    else if (tipo === "red-card") text = `Espulso ${chi} (${squadra}): ${squadra} in dieci.`;
+    else if (tipo === "yellow-red-card") text = `Secondo giallo per ${chi}: ${squadra} in inferiorità numerica.`;
+    else if (tipo === "substitution") {
+      const c = cambi.find((x) => x.side === j && (x.a === chi || x.b === chi) && !x.usato);
+      if (c) { c.usato = true; text = `Sostituzione ${squadra}. Entra ${c.a}, esce ${c.b}.`; }
+      else text = `Sostituzione ${squadra}. Cambio che coinvolge ${chi}.`;
+    } else if (tipo === "penalty---missed") text = `Rigore sbagliato! ${chi} (${squadra}) non segna.`;
+    else text = `${chi} (${squadra}): ${itText(ev)}.`;
+    out.push({ min, text, type: tipo, side: j });
+  }
+  if (finita) out.push({ min: "", text: `Fine partita, ${nome(0)} ${g[0]}, ${nome(1)} ${g[1]}.`, type: "" });
+  return out;
+}
+
 export function parseSummary(s) {
   const comp = s.header.competitions[0];
   const side = {};
@@ -272,6 +321,17 @@ export function parseSummary(s) {
     const sc = /(\d+),\s[^,]+?\s(\d+)\./.exec(e.text || ""); // punteggio scritto nel testo ("... Inter Milan 0, Fiorentina 1.")
     return { k, min: (e.clock && e.clock.displayValue) || "", side: e.team ? side[e.team.id] : null, a: ps[0] || "", b: ps[1] || "", text: itText(e.text || ""), score: sc ? [Number(sc[1]), Number(sc[2])] : null };
   }).filter(Boolean);
+  // cronaca leggera (solo momenti chiave, in inglese): diventa una cronaca italiana con punteggio, cambi e tempi
+  let leggera = false;
+  if (commentary.length && commentary.filter((c) => LITE.test((s.commentary[c.i] || {}).text || "")).length >= commentary.length * 0.6) {
+    leggera = true;
+    const nomiSq = teams.map((c) => [c.team.shortDisplayName || c.team.displayName, c.team.displayName, c.team.name, c.team.abbreviation].filter(Boolean));
+    const cambi = eventi.filter((e) => e.k === "cambio" && e.a && e.b).map((e) => ({ side: e.side, a: e.a, b: e.b }));
+    const righe = commentary.map((c) => ({ txt: (s.commentary[c.i] || {}).text || "", min: c.min, type: c.type }));
+    const nuove = cronacaLeggera(righe, nomiSq, cambi, t.state === "post");
+    commentary.length = 0;
+    nuove.forEach((c, i) => commentary.push({ i, min: c.min, text: c.text, type: c.type, side: c.side == null ? null : c.side }));
+  }
   const stats = (s.boxscore && s.boxscore.teams) || [];
   const sv = (j, n) => { const tm = stats.find((x) => side[x.team.id] === j); const z = tm && tm.statistics.find((q) => q.name === n); return z ? Number(z.displayValue) : null; };
   const STATS = [["possessionPct", "Possesso palla", "%"], ["totalShots", "Tiri"], ["shotsOnTarget", "Tiri in porta"], ["wonCorners", "Calci d'angolo"], ["foulsCommitted", "Falli"], ["offsides", "Fuorigioco"], ["yellowCards", "Ammonizioni"], ["redCards", "Espulsioni"], ["saves", "Parate"], ["accuratePasses", "Passaggi riusciti"], ["totalPasses", "Passaggi"], ["totalCrosses", "Cross"], ["effectiveTackles", "Contrasti vinti"], ["interceptions", "Intercetti"], ["effectiveClearance", "Respinte"]];
@@ -303,7 +363,7 @@ export function parseSummary(s) {
     st: t.state === "in" ? "LIVE" : t.state === "post" ? "FT" : "NS", clock, detail: t.shortDetail || "",
     g: teams.map((c) => (c.score != null ? Number(c.score) : null)), colors: teams.map((c) => "#" + (c.team.color || "8E8E93")),
     nomi: teams.map((c) => c.team.shortDisplayName || c.team.displayName),
-    eventi, statistiche, formazioni, cronaca: commentary.filter((c, i, a) => !(i && a[i - 1].text === c.text && a[i - 1].min === c.min)).reverse(), recupero,
+    eventi, statistiche, formazioni, cronaca: commentary.filter((c, i, a) => !(i && a[i - 1].text === c.text && a[i - 1].min === c.min)).reverse(), leggera, recupero,
     stadio: s.gameInfo && s.gameInfo.venue ? [s.gameInfo.venue.fullName, s.gameInfo.venue.address && s.gameInfo.venue.address.city].filter(Boolean).join(", ") : "",
   };
 }

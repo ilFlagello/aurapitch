@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { ESPN_LG, useLiveScores, usaPonte } from "./live.js";
-import { registraColori, Ricarica, vibra, AuraLine, C, Crest, Ctx, Flag, Giorni, Ic, Marchio, Seg, Sheet, TONE, auraCol, hs, html, mmss, store } from "./base.js";
+import { classificaViva, registraColori, Ricarica, vibra, AuraLine, C, Crest, Ctx, Flag, Giorni, Ic, Marchio, Seg, Sheet, TONE, auraCol, hs, html, mmss, store } from "./base.js";
 import { BarraSchedina, Cerca, Glossario, PrimoAvvio, partitaSettimana } from "./extra.js";
 import { MatchView, Movimento, PlayerSheet, Row, TeamView } from "./partita.js";
 // schermate secondarie caricate solo quando servono (avvio piu leggero); poi scaricate in silenzio per l'uso offline
@@ -45,7 +45,7 @@ import { Guida } from "./guida.js";
     };
     const live = useLiveScores(Draw ? Draw.matches : null);
     if (Draw) registraColori(Draw);
-    const D = React.useMemo(() => Draw && { ...Draw, matches: Draw.matches.map((m0) => {
+    const D0 = React.useMemo(() => Draw && { ...Draw, matches: Draw.matches.map((m0) => {
       const x = extra[m0.id];
       const m = !Draw.leggera ? m0 : { ...m0, ...(x && !x.mancano ? x : {}), markets: (x && x.markets) || (merc && merc[m0.id]) || m0.markets, dett: !!(x && !x.mancano) };
       const l = live[m.id];
@@ -54,6 +54,13 @@ import { Guida } from "./guida.js";
       const g = ok && l.g ? l.g : m.g;
       return { ...m, eid: l.eid, lgE: l.lgE, clock: l.clock, hid: l.hid, aid: l.aid, ...(ok ? { st: l.st, g, res: g ? (g[0] > g[1] ? 0 : g[0] === g[1] ? 1 : 2) : m.res } : {}) };
     }) }, [Draw, live, extra, merc]);
+    // classifiche aggiornate con i risultati del giorno (finali e in diretta), per tutta l'app
+    const D = React.useMemo(() => {
+      if (!D0 || !D0.standings) return D0;
+      const st = {};
+      for (const [k, S] of Object.entries(D0.standings)) st[k] = classificaViva(S, D0.matches.filter((m) => m.lg === k));
+      return { ...D0, standings: st };
+    }, [D0]);
     const [err, setErr] = useState("");
     const [theme, setTheme] = useState(store.get("theme", "system"));
     const [tab, setTab] = useState("partite");
@@ -84,7 +91,7 @@ import { Guida } from "./guida.js";
     const [aff, setAff] = useState(null);
     const [favM, setFavM] = useState(store.get("favM", []));
     const [avvisi, setAvvisi] = useState(store.get("avvisi", true));
-    const prev = useRef(null);
+    const prev = useRef(null), prevT = useRef(0);
     const [pushUrl, setPushUrl] = useState(null);
     const [pushOn, setPushOn] = useState(store.get("push", false));
     const [pushMsg, setPushMsg] = useState("");
@@ -233,9 +240,10 @@ import { Guida } from "./guida.js";
       if (!D) return;
       const now = {};
       for (const m of D.matches) now[m.id] = { st: m.st, g: m.g ? m.g.join("-") : null };
-      const old = prev.current;
-      prev.current = now;
-      if (!old || !avvisi) return;
+      const old = prev.current, quando = prevT.current;
+      prev.current = now; prevT.current = Date.now();
+      // solo con l'app davanti agli occhi e con dati di pochi minuti fa: riaprendo l'app non si rivivono gol e finali gia avvenuti
+      if (!old || !avvisi || document.visibilityState !== "visible" || Date.now() - quando > 4 * 60000) return;
       for (const m of D.matches) {
         if (!mia(m)) continue;
         const o = old[m.id], n = now[m.id];
@@ -245,12 +253,9 @@ import { Guida } from "./guida.js";
         else if (n.g && o.g !== n.g && n.st === "LIVE") msg = `Gol! ${m.h} ${m.g[0]} - ${m.g[1]} ${m.a}${m.clock ? " (" + m.clock + ")" : ""}`;
         else if (o.st === "LIVE" && n.st === "FT") msg = `Finale: ${m.h} ${m.g[0]} - ${m.g[1]} ${m.a}`;
         if (!msg) continue;
+        // solo un avviso dentro l'app: le notifiche sul telefono le manda il servizio, una volta sola e al momento giusto
         setToast(msg);
         try { if (navigator.vibrate) navigator.vibrate([120, 60, 120]); } catch (e) { /* non supportato */ }
-        try {
-          if ("Notification" in window && Notification.permission === "granted" && navigator.serviceWorker)
-            navigator.serviceWorker.ready.then((r) => r.showNotification("AuraPitch", { body: msg, icon: "icon-192.png", tag: m.id }));
-        } catch (e) { /* notifiche non disponibili */ }
       }
     }, [D]);
 

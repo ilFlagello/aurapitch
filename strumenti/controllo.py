@@ -153,4 +153,6 @@ if TOKEN:
                 get(a["url"], gh=True, metodo="PATCH", corpo={"state": "closed"})
     except Exception as e:
         print("Avviso su GitHub non riuscito:", type(e).__name__)
-sys.exit(1 if problemi else 0)
+# il controllo stesso finisce sempre "riuscito": l'avviso arriva una volta sola con l'issue "avviso" (una mail),
+# invece di una mail di "Run failed" ogni ora finché il problema resta aperto
+sys.exit(0)

@@ -195,7 +195,7 @@ def carica_storico():
             pass
     ok = []
     for r in righe:
-        q = [_primo(r, "Avg" + e, "BbAv" + e, "B365" + e) for e in "HDA"]
+        q = [_primo(r, "Avg" + e, "BbAv" + e, "B365" + e, "AvgC" + e, "PSC" + e) for e in "HDA"]  # campionati "nuovi": solo quote di chiusura
         o = [_primo(r, "Avg" + e, "BbAv" + e, "B365" + e) for e in (">2.5", "<2.5")]
         g = [_f(r.get("FTHG")), _f(r.get("FTAG"))]
         if any(math.isnan(x) or x <= 1 for x in q) or any(math.isnan(x) for x in g):
@@ -205,7 +205,9 @@ def carica_storico():
         except ValueError:
             continue
         h1 = [_f(r.get("HTHG")), _f(r.get("HTAG"))]
-        ok.append({"d": d.isoformat(), "lg": r["Div"], "q": q, "o": o if all(x > 1 for x in o) else None, "g": g, "g1": None if any(math.isnan(x) for x in h1) else h1})
+        tiri = [_f(r.get("HST")), _f(r.get("AST"))]
+        ok.append({"d": d.isoformat(), "lg": r["Div"], "q": q, "o": o if all(x > 1 for x in o) else None, "g": g, "g1": None if any(math.isnan(x) for x in h1) else h1,
+                   "h": r.get("HomeTeam"), "a": r.get("AwayTeam"), "tp": None if any(math.isnan(x) for x in tiri) else tiri})
     ok.sort(key=lambda x: x["d"])
     return ok
 
@@ -216,7 +218,90 @@ def prepara_storico(righe):
     lam = gol_attesi(mk, mo)
     codici, P = probabilita(lam[:, 0], lam[:, 1])
     Y = esiti(codici, [r["g"] for r in righe], [r["g1"] for r in righe])
-    return codici, P, Y
+    return codici, P.astype(np.float32), Y.astype(np.float32)  # meta memoria: l'archivio ora ha ~80.000 partite
+
+
+# ---------- laboratorio: segnali nuovi provati ogni giorno, in ombra, su partite mai viste ----------
+GOL_PER_TIRO = 0.31  # gol per tiro in porta nel calcio europeo: serve a dire se una squadra segna "piu del dovuto"
+MIN_LAB = 2000
+
+
+def segnali_lab(R):
+    """Per ogni partita dell'archivio (in ordine di data), con i soli dati disponibili PRIMA del calcio d'inizio:
+    riposo = differenza di giorni di riposo (casa - trasferta, tetto 7 giorni);
+    fortuna = differenza tra gol segnati e gol "meritati" dai tiri in porta nelle ultime 5 partite (casa - trasferta);
+    fortuna_somma = la stessa misura sommata per le due squadre (per Over/Under)."""
+    ultima, storia = {}, {}
+    X = np.full((len(R), 3), np.nan)
+    for i, r in enumerate(R):
+        h, a = (r.get("lg"), r.get("h")), (r.get("lg"), r.get("a"))
+        if not r.get("h") or not r.get("a"):
+            continue
+        d = datetime.fromisoformat(r["d"]).date()
+        rh = min(7, (d - ultima[h]).days) if h in ultima else None
+        ra = min(7, (d - ultima[a]).days) if a in ultima else None
+        if rh is not None and ra is not None and rh > 0 and ra > 0:
+            X[i, 0] = (rh - ra) / 7
+        sh, sa = storia.get(h, []), storia.get(a, [])
+        if len(sh) >= 3 and len(sa) >= 3:
+            fh, fa = float(np.mean(sh[-5:])), float(np.mean(sa[-5:]))
+            X[i, 1], X[i, 2] = fh - fa, fh + fa
+        ultima[h] = ultima[a] = d
+        if r.get("tp"):
+            storia.setdefault(h, []).append(r["g"][0] - GOL_PER_TIRO * r["tp"][0])
+            storia.setdefault(a, []).append(r["g"][1] - GOL_PER_TIRO * r["tp"][1])
+    return X
+
+
+def _adatta(L, Y, x, passi=300, lr=0.5, l2=0.01):
+    """Piccola correzione lineare sui logit delle quote: logit' = logit + b*x (b imparato, con freno l2)."""
+    b = np.zeros(L.shape[1])
+    for _ in range(passi):
+        Z = L + np.outer(x, b)
+        Z = Z - Z.max(axis=1, keepdims=True)
+        P = np.exp(Z) / np.exp(Z).sum(axis=1, keepdims=True)
+        g = ((P - Y) * x[:, None]).mean(axis=0) + l2 * b
+        b -= lr * g
+    return b
+
+
+def _ll_multi(L, Y, b, x):
+    Z = L + np.outer(x, b)
+    Z = Z - Z.max(axis=1, keepdims=True)
+    P = np.exp(Z) / np.exp(Z).sum(axis=1, keepdims=True)
+    return float(-np.mean(np.log(np.clip((P * Y).sum(axis=1), 1e-9, 1))))
+
+
+def laboratorio(R, codici, P, Y):
+    """Prova ogni segnale sull'80% piu vecchio e lo misura sul 20% piu recente: guadagno = errore in meno rispetto alle sole quote.
+    Un segnale e "utile" solo se migliora di almeno MARGINE_PROMO; altrimenti resta in prova (il mercato lo sa gia)."""
+    X = segnali_lab(R)
+    idx = {c: k for k, c in enumerate(codici)}
+    D = np.array([r["d"] for r in R])
+    prove = [("riposo", "Giorni di riposo", 0, ("1", "X", "2")), ("fortuna", "Fortuna recente (gol contro tiri in porta)", 1, ("1", "X", "2")),
+             ("fortuna_gol", "Fortuna recente su Over/Under", 2, ("O2.5", "U2.5"))]
+    out = []
+    for k, nome, col, esiti in prove:
+        if any(e not in idx for e in esiti):
+            continue
+        cols = [idx[e] for e in esiti]
+        ok = ~np.isnan(X[:, col]) & ~np.isnan(Y[:, cols]).any(axis=1)
+        if ok.sum() < MIN_LAB:
+            out.append({"k": k, "nome": nome, "partite": int(ok.sum()), "stato": "dati insufficienti"})
+            continue
+        Pk, Yk, xk, Dk = P[ok][:, cols], Y[ok][:, cols], X[ok, col], D[ok]
+        Pk = Pk / Pk.sum(axis=1, keepdims=True)
+        L = np.log(np.clip(Pk, 1e-6, 1))
+        cut = np.sort(Dk)[int(len(Dk) * 0.8)]
+        tr, te = Dk < cut, Dk >= cut
+        b = _adatta(L[tr], Yk[tr], xk[tr])
+        base, nuovo = _ll_multi(L[te], Yk[te], np.zeros_like(b), xk[te]), _ll_multi(L[te], Yk[te], b, xk[te])
+        g = (base - nuovo) / base
+        out.append({"k": k, "nome": nome, "partite": int(ok.sum()), "verifica": int(te.sum()), "guadagno": round(100 * g, 3),
+                    "pesi": {e: round(float(v), 3) for e, v in zip(esiti, b)},
+                    "stato": "utile" if g >= MARGINE_PROMO else "in prova"})
+        print(f"  laboratorio {k}: {100 * g:+.3f}% su {int(te.sum())} partite mai viste")
+    return out
 
 
 # ---------- diario dell'app ----------
@@ -447,7 +532,7 @@ def confronto_bookmaker(diario):
     return {k: {"n": len(v[0]), "ia": round(float(np.mean(v[0])), 4) if v[0] else None, "quote": round(float(np.mean(v[1])), 4) if v[1] else None} for k, v in a.items()}
 
 
-def andamento_consigli():
+def andamento_consigli(tutte=False):
     """Consigli IA settimana per settimana (dal registro dei consigli): vinti contro attesi."""
     try:
         with open(os.path.join(RADICE, "data", "consigli.json"), encoding="utf-8") as f:
@@ -466,9 +551,43 @@ def andamento_consigli():
         s["n"] += 1
         s["vinti"] += 1 if es else 0
         s["attesi"] += v["tips"]["consiglio"]["p"]
-    out = sorted(sett.values(), key=lambda s: s["sett"])[-10:]
+    out = sorted(sett.values(), key=lambda s: s["sett"])
+    out = out if tutte else out[-10:]
     for s in out:
         s["attesi"] = round(s["attesi"], 1)
+    return out
+
+
+def riepilogo_semplice(fin, Yd, codici):
+    """Numeri che chiunque capisce, solo dalle previsioni vere dell'app (salvate prima del calcio d'inizio):
+    quante volte l'esito piu probabile e uscito (IA e quote a confronto) e, per fasce di sicurezza,
+    quante volte e successo cio che l'IA dava per probabile."""
+    idx = {c: k for k, c in enumerate(codici)}
+    fav = {"n": 0, "ia": 0, "quote": 0}
+    fasce = {f: [0, 0] for f in ("50-60", "60-70", "70-80", "80-100")}
+    for k, v in enumerate(fin):
+        pc = v.get("pc0") or v.get("pc") or {}
+        y = [Yd[k, idx[c]] if c in idx else np.nan for c in ("1", "X", "2")]
+        if all(c in pc for c in ("1", "X", "2")) and not any(np.isnan(y)):
+            fav["n"] += 1
+            fav["ia"] += int(y[int(np.argmax([pc["1"], pc["X"], pc["2"]]))] == 1)
+            mk = v.get("mk0") or v.get("mk")
+            if mk and len(mk) == 3:
+                fav["quote"] += int(y[int(np.argmax(mk))] == 1)
+        for c in CHIAVI_DIARIO:
+            if c not in pc or c not in idx or np.isnan(Yd[k, idx[c]]):
+                continue
+            p, esce = float(pc[c]), Yd[k, idx[c]] == 1
+            if p < 0.5:  # "30% che succeda" = "70% che non succeda"
+                p, esce = 1 - p, not esce
+            f = "50-60" if p < 0.6 else "60-70" if p < 0.7 else "70-80" if p < 0.8 else "80-100"
+            fasce[f][0] += 1
+            fasce[f][1] += int(esce)
+    out = {"partite": len(fin), "favorito": fav,
+           "fasce": [{"fascia": f, "n": n, "successo": round(100 * ok / n, 1) if n else None} for f, (n, ok) in fasce.items()]}
+    cons = andamento_consigli(tutte=True)
+    if cons:
+        out["consigli"] = {"n": sum(x["n"] for x in cons), "vinti": sum(x["vinti"] for x in cons), "attesi": round(sum(x["attesi"] for x in cons), 1)}
     return out
 
 
@@ -503,7 +622,7 @@ def main():
         Yd = esiti(codici, [v["g"] for v in fin], [v.get("g1") for v in fin])
     else:
         Pd = Pm = Yd = np.zeros((0, len(codici)))
-    P, Y = np.vstack([Ph, Pd]), np.vstack([Yh, Yd])
+    P, Y = np.vstack([Ph, Pd.astype(np.float32)]), np.vstack([Yh, Yd.astype(np.float32)])
     W = np.concatenate([np.ones(len(Ph)), np.full(len(Pd), PESO_DIARIO)])
     LG = np.concatenate([LGh, np.array([v["lg"] for v in fin], dtype=LGh.dtype if len(LGh) else object)])
     D = np.concatenate([Dh, np.array([v["date"] for v in fin], dtype=Dh.dtype if len(Dh) else object)])
@@ -565,7 +684,14 @@ def main():
         json.dump({"attivo": attivo, "prova": {"data": oggi, "da": str(cut), "partite": int(te.sum()), "punteggi": {k: round(v, 5) for k, v in prove.items()}, "motivo": motivo},
                    "controllo": controllo, "pause": pause, "cronologia": cron[-30:]}, f, ensure_ascii=False, indent=1)
 
-    # 4) pagina "Come sta andando l'IA"
+    # 4) laboratorio: segnali nuovi provati ogni giorno in ombra (riposo, fortuna); entrano nel modello solo se utili
+    try:
+        lab = laboratorio(R, codici, Ph, Yh)
+    except Exception as e:  # noqa: BLE001 - il laboratorio non deve mai fermare l'apprendimento
+        print("Laboratorio: errore", e)
+        lab = []
+
+    # 5) pagina "Come sta andando l'IA"
     base = per_codice["nessuna"]
     fam = []
     for f in FAMIGLIE:
@@ -589,6 +715,9 @@ def main():
         "bookmaker": confronto_bookmaker(diario), "valore": valore_anticipato(diario, codici),
         "peso_ia": {"minimo": MIN_PESO_IA, "famiglie": pesi}, "controllo": controllo,
         "consigli": andamento_consigli(), "cronologia": cron[-10:],
+        "laboratorio": lab,
+        "semplice": riepilogo_semplice(fin, Yd, codici),
+        "allenato": oggi,
     }
     with open(PAGINA, "w", encoding="utf-8") as f:
         json.dump(pagina, f, ensure_ascii=False, separators=(",", ":"))

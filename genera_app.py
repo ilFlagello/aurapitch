@@ -1141,13 +1141,19 @@ def livello_dati(m):
         fonti.append("notizie su assenze e squalifiche")
     if m.get("formazione"):
         fonti.append("formazione probabile")
+    # affidabilita dei dati (0-100): quanta informazione ha l'algoritmo su questa partita, oltre alle quote
+    pf = m.get("fattori") or []
+    punti = {"quote": 30 if nb >= 10 else 25 if nb >= 5 else 15 if nb >= 2 else 10, "archivio": 20 if m["lg"] in cal_lg else 0,
+             "forma": 10 if (m.get("last5") or m.get("forma")) else 0, "classifica": 5 if m.get("_classifica") else 0, "xg": 10 if m.get("xgf") else 0,
+             "arbitro": 5 if m.get("arbitro") else 0, "notizie": 10 if pf else 0, "formazione": 10 if m.get("formazione") else 0}
+    score = min(100, sum(punti.values()))
     if nb < 5 and m["lg"] not in cal_lg:
         lv = "quote"
     elif nb >= 5 and m["lg"] in cal_lg and len(fonti) >= 3:
         lv = "completa"
     else:
         lv = "parziale"
-    return {"lv": lv, "fonti": fonti, "nb": nb}
+    return {"lv": lv, "fonti": fonti, "nb": nb, "score": score}
 
 
 def blocca_consigli(d):
@@ -1158,10 +1164,13 @@ def blocca_consigli(d):
     prossimo = ora.replace(hour=10, minute=0, second=0, microsecond=0) if ora.hour < 10 else ora + timedelta(minutes=10)  # prossimo giro di raccolta
     nuovi = 0
     for m in d.get("matches", []):
+        m["_classifica"] = m["lg"] in (d.get("standings") or {})
+        info = livello_dati(m)
+        m.pop("_classifica", None)
+        m["dati"] = info
         tip = m.get("tip")
         if not isinstance(tip, dict) or not tip:
             continue
-        info = livello_dati(m)
         r = st.get(m["id"])
         if r and r.get("tipB"):
             m["tip"], m["dati"] = r["tipB"], r.get("datiB", info)

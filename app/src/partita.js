@@ -9,27 +9,35 @@ import { Anteprima, partitaSettimana } from "./extra.js";
 
     /* ---- riga partita: orario a sinistra, squadre una sopra l'altra, punteggi in colonna, aura delle probabilita sotto ---- */
     function usaVoti() { const [V, setV] = useState(null); useEffect(() => { caricaVoti().then(setV); }, []); return V; }
+    /* affidabilita dei dati (0-100): quanta informazione ha l'algoritmo su questa partita oltre alle quote. Colore: verde alta, ambra media, rossa bassa */
+    const tonoAff = (v) => (v >= 70 ? "text-emerald-700 dark:text-emerald-300 bg-emerald-500/12 ring-emerald-500/30" : v >= 40 ? "text-amber-700 dark:text-amber-300 bg-amber-500/12 ring-amber-500/30" : "text-[#E0314B] dark:text-[#FF7085] bg-[#FF3D5A]/10 ring-[#FF3D5A]/25");
+    function AffPill({ m }) {
+      const v = m.dati && m.dati.score;
+      if (v == null) return null;
+      return html`<span className=${"flex flex-col items-center justify-center w-[46px] h-[38px] rounded-[12px] ring-1 " + tonoAff(v)} aria-label=${"Affidabilità dei dati " + v + "%"}>
+        <span className="num text-[16px] font-bold leading-none">${v}<span className="text-[10px]">%</span></span><span className="text-[8.5px] font-bold uppercase tracking-[0.06em] leading-none mt-[3px] opacity-80">dati</span></span>`;
+    }
     function Row({ m, i }) {
-    const { goMatch, unlocked, caricaDettagli } = React.useContext(Ctx);
+    const { goMatch, caricaDettagli } = React.useContext(Ctx);
     const fin = m.st === "FT" && m.g;
     const vince = (j) => m.g && m.g[j] > m.g[1 - j];
     const live = m.st === "LIVE";
-    const left = m.st === "NS" ? html`<span className=${"num text-[19px] font-bold leading-none " + C.tx}>${m.time || "-"}</span>`
-      : m.st === "RINV" ? html`<span className=${"text-[11px] font-semibold " + C.mu}>Rinviata</span>`
+    const left = m.st === "NS" ? html`<span className=${"num text-[17px] font-bold leading-none " + C.tx}>${m.time || "-"}</span>`
+      : m.st === "RINV" ? html`<span className=${"text-[10px] font-semibold " + C.mu}>Rinviata</span>`
       : live ? html`<span className="flex items-center gap-1 text-[#FF3D5A] whitespace-nowrap" aria-label=${m.clock || "In diretta"}><i className="pulse block w-1.5 h-1.5 rounded-full bg-[#FF3D5A] shrink-0"></i>${m.clock && /\d/.test(m.clock)
-        ? html`<span className="num text-[18px] font-bold leading-none">${m.clock.replace(/'.*/, "'")}</span>`
-        : html`<span className="text-[12px] font-extrabold tracking-[0.06em] leading-none">${/Intervallo/.test(m.clock || "") ? "INT" : "LIVE"}</span>`}</span>`
-      : html`<span className=${"text-[12px] font-semibold " + C.mu}>Finale</span>`;
-    const team = (j) => html`<span className="flex items-center gap-2 min-w-0"><${Crest} t=${j ? m.a : m.h} size=${18} />
-      <span className=${"text-[15px] truncate " + (fin && !vince(j) ? C.mu : C.tx) + (vince(j) ? " font-semibold" : "")}>${j ? m.a : m.h}</span></span>`;
-    const gol = (j) => html`<span className=${"num text-[20px] font-bold leading-[22px] text-right " + (live ? "text-[#FF3D5A]" : fin && !vince(j) ? C.mu : C.tx)}>${m.g ? m.g[j] : ""}</span>`;
-    return html`<button onPointerDown=${() => caricaDettagli && caricaDettagli(m.id)} onClick=${() => goMatch(m.id)} className=${"w-full text-left px-4 pt-3 pb-2.5 " + (i ? "border-t " + C.bd : "")}>
-      <span className="grid items-center gap-x-3 gap-y-1.5" style=${{ gridTemplateColumns: "50px minmax(0,1fr) 22px 62px" }}>
+        ? html`<span className="num text-[16px] font-bold leading-none">${m.clock.replace(/'.*/, "'")}</span>`
+        : html`<span className="text-[11px] font-extrabold tracking-[0.06em] leading-none">${/Intervallo/.test(m.clock || "") ? "INT" : "LIVE"}</span>`}</span>`
+      : html`<span className=${"text-[11px] font-semibold " + C.mu}>Finale</span>`;
+    const team = (j) => html`<span className="flex items-center gap-2 min-w-0"><${Crest} t=${j ? m.a : m.h} size=${16} />
+      <span className=${"text-[14px] leading-[18px] truncate " + (fin && !vince(j) ? C.mu : C.tx) + (vince(j) ? " font-semibold" : "")}>${j ? m.a : m.h}</span></span>`;
+    const gol = (j) => html`<span className=${"num text-[17px] font-bold leading-[18px] text-right " + (live ? "text-[#FF3D5A]" : fin && !vince(j) ? C.mu : C.tx)}>${m.g ? m.g[j] : ""}</span>`;
+    return html`<button onPointerDown=${() => caricaDettagli && caricaDettagli(m.id)} onClick=${() => goMatch(m.id)} className=${"w-full text-left px-4 pt-2 pb-1.5 " + (i ? "border-t " + C.bd : "")}>
+      <span className="grid items-center gap-x-3 gap-y-1" style=${{ gridTemplateColumns: "44px minmax(0,1fr) 20px 46px" }}>
         <span className="row-span-2 flex items-center min-w-0 overflow-hidden">${left}</span>
         ${team(0)}${gol(0)}
-        <span className="row-span-2 flex flex-col items-end justify-center gap-1">${m.free && html`<span className=${"text-[10px] font-bold " + C.acc}>Gratis</span>`}<${FavPill} m=${m} unlocked=${unlocked(m)} /></span>
+        <span className="row-span-2 flex flex-col items-end justify-center gap-0.5">${m.free && html`<span className=${"text-[9px] font-bold " + C.acc}>Gratis</span>`}<${AffPill} m=${m} /></span>
         ${team(1)}${gol(1)}
-        <span></span><span className="col-span-2 pt-1"><${AuraLine} m=${m} /></span></span></button>`;
+        <span></span><span className="col-span-2 pt-0.5"><${AuraLine} m=${m} h=${2} /></span></span></button>`;
   }
 
     /* ---- gate PRO ---- */
@@ -919,7 +927,9 @@ import { Anteprima, partitaSettimana } from "./extra.js";
           <div className="mt-5"><${AuraLine} m=${m} p=${pLive || m.mk} h=${6} labels=${true} /></div>
           <div className="flex items-center justify-center flex-wrap gap-2 mt-3"><span className=${"text-[12px] " + C.mu}>${pLive ? "Probabilità in diretta" : "Barra: probabilità dalle quote"} · favorito IA</span><${FavPill} m=${m} unlocked=${unlocked(m)} pp=${pLive} />
             ${m.free && html`<span className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + TONE.good}>Gratis oggi</span>`}
-            ${m.st === "FT" && unlocked(m) && html`<span className=${"text-xs " + (m.res === fav ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>${m.res === fav ? "Favorito rispettato" : "Sorpresa"}</span>`}</div></div></div>
+            ${m.st === "FT" && unlocked(m) && html`<span className=${"text-xs " + (m.res === fav ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>${m.res === fav ? "Favorito rispettato" : "Sorpresa"}</span>`}</div>
+          ${m.dati && m.dati.score != null && html`<div className=${"mt-3 flex items-center gap-3 rounded-2xl p-2.5 " + C.ch}><${AffPill} m=${m} />
+            <span className="flex-1 min-w-0 text-[12px] leading-snug"><b className=${C.tx}>Affidabilità dei dati</b><span className=${"block " + C.mu}>${m.dati.lv === "quote" ? "Solo quote dei bookmaker: per questa partita l'algoritmo ha pochi dati propri." : "Dati usati: " + (m.dati.fonti || []).join(", ") + "."}</span></span></div>`}</div></div>
         <div data-schede="1" className="h-0"></div>
         <${Tabs} items=${TABS} val=${mt} set=${vai} sticky=${true} />
         ${!store.get("swipeOk", false) && mt === 0 && html`<div className=${"text-[12px] text-center -mt-1 " + C.mu}>Scorri con il dito a sinistra per approfondire: Partita, Formazioni, IA, Statistiche, Cronaca.</div>`}

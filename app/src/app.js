@@ -406,8 +406,8 @@ import { Guida } from "./guida.js";
         const o = lgOpen.includes(l.k);
         const toggle = () => { const nx = o ? lgOpen.filter((q) => q !== l.k) : [...lgOpen, l.k]; setOpenL(nx); store.set("openL", nx); };
         return html`<div key=${l.k} className=${C.card + " overflow-hidden"}>
-          <button onClick=${toggle} aria-expanded=${o} className="w-full flex items-center gap-3 px-4 pt-3.5 pb-2.5"><${Flag} k=${l.flag} w=${22} />
-            <span className="flex-1 text-left leading-tight"><span className=${"block text-[16px] font-semibold tracking-[-0.01em] " + C.tx}>${l.name}</span><span className=${"block text-[12px] " + C.mu}>${l.country}${ms.some((m) => m.st === "LIVE") ? html`<span className="text-[#FF3D5A] font-semibold">, ${ms.filter((m) => m.st === "LIVE").length} in diretta</span>` : ""}</span></span><span className=${"num text-[17px] font-bold " + C.mu}>${ms.length}</span>
+          <button onClick=${toggle} aria-expanded=${o} className="w-full flex items-center gap-2.5 px-4 pt-2.5 pb-1.5"><${Flag} k=${l.flag} w=${20} />
+            <span className="flex-1 text-left leading-tight min-w-0"><span className=${"block text-[15px] font-semibold tracking-[-0.01em] truncate " + C.tx}>${l.name}</span><span className=${"block text-[11px] " + C.mu}>${l.country}${ms.some((m) => m.st === "LIVE") ? html`<span className="text-[#FF3D5A] font-semibold">, ${ms.filter((m) => m.st === "LIVE").length} in diretta</span>` : ""}</span></span><span className=${"num text-[15px] font-bold " + C.mu}>${ms.length}</span>
             <${Ic.ChevronDown} size=${16} className=${C.mu + " transition-transform " + (o ? "rotate-180" : "")} /></button>
           ${o && html`<div>${ms.map((m, i) => html`<${Row} key=${m.id} m=${m} i=${i} />`)}</div>`}</div>`;
       })}<//>`)}

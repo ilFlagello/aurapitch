@@ -5,7 +5,7 @@ import { C, Ic, Marchio, html, inizioSwipe, fineSwipe, store, vibra } from "./ba
 
 const PASSI = [
   { i: null, t: "Benvenuto in AuraPitch", s: "Le partite di calcio lette in 10 secondi, con l'IA che spiega il perché. Ti mostro in un minuto cosa puoi fare.",
-    p: ["In cima trovi le tue partite (stella e squadre preferite)", "Poi i campionati: prima quelli che segui, poi i principali, poi tutti gli altri dalla A alla Z", "Tira giù lo schermo per aggiornare"] },
+    p: ["In cima trovi le tue partite (stella e squadre preferite)", "Accanto a ogni partita, la % \"dati\": quanto l'algoritmo conosce quella partita (verde alta, ambra media, rossa bassa)", "Poi i campionati: prima quelli che segui, poi i principali, poi tutti gli altri dalla A alla Z", "Tira giù lo schermo per aggiornare"] },
   { i: Ic.CircleDot, t: "Ogni partita, a colpo d'occhio", s: "Tocca una partita: probabilità, forma, quote e diretta minuto per minuto.",
     p: ["Scorri con il dito tra Partita, Formazioni, IA, Statistiche e Cronaca", "Formazione probabile prima di quella ufficiale", "“E se…?”: togli un giocatore e guarda come cambia la partita"] },
   { i: Ic.Sparkles, t: "L'IA ti spiega le sue scelte", s: "Per ogni partita un consiglio con i motivi a favore e quelli da tenere d'occhio.",

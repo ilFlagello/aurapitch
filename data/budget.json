@@ -1,0 +1,12 @@
+{
+ "odds": {
+  "giorno": "2026-11-03",
+  "inizio": 400,
+  "quota": 12,
+  "spesi": {
+   "prepartita": 2
+  },
+  "mattino_fatto": false,
+  "rimasti": 398
+ }
+}

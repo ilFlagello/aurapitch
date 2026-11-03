@@ -21,7 +21,10 @@ const b = await pw.chromium.launch();
 const ctx = await b.newContext({ ...pw.devices["iPhone 13"], locale: "it-IT", timezoneId: "Europe/Rome" });
 const p = await ctx.newPage();
 p.on("pageerror", (e) => errori.push(`errore della pagina: ${e.message}`));
-p.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource|net::|favicon/.test(m.text())) avvisi.push(`console: ${m.text().slice(0, 200)}`); });
+const corsEspn = new Set();
+p.on("console", (m) => { const t = m.text(); if (m.type() !== "error" || /Failed to load resource|net::|favicon/.test(t)) return;
+  const c = /site\.api\.espn\.com\/apis\/site\/v2\/sports\/soccer\/([^/]+)\/.*CORS/.exec(t);
+  if (c) corsEspn.add(c[1]); else avvisi.push(`console: ${t.slice(0, 200)}`); });
 const falliti = [];
 p.on("response", (r) => { const u = r.url(); if (u.startsWith(SITO) && r.status() >= 400 && !/favicon/.test(u)) falliti.push(`${r.status()} ${u.slice(SITO.length)}`); });
 const foto = (n) => p.screenshot({ path: path.join(OUT, `${n}.png`) }).catch(() => {});
@@ -85,7 +88,13 @@ await passo("Il Mio Club", async () => {
   await foto("club"); await testoPulito("Il Mio Club");
 });
 for (const [k, lim] of Object.entries(LIMITI)) if (tempi[k] != null && tempi[k] > lim) errori.push(`apertura lenta (${k}): ${tempi[k]} ms, limite ${lim} ms`);
-if (falliti.length) errori.push(`file del sito non trovati: ${[...new Set(falliti)].slice(0, 5).join(", ")}`);
+// riassunti scritti dai processi del mattino (verificatori, storico schedine): finche non esistono l'app li salta senza errori
+const FACOLTATIVI = /data\/(giocatori_ia|statistiche_ia|schedine_ia|ia|storico)\.json$/;
+const mancanti = [...new Set(falliti)];
+const facoltativi = mancanti.filter((x) => FACOLTATIVI.test(x)), veri = mancanti.filter((x) => !FACOLTATIVI.test(x));
+if (veri.length) errori.push(`file del sito non trovati: ${veri.slice(0, 5).join(", ")}`);
+if (facoltativi.length) avvisi.unshift(`riassunti non ancora pubblicati (compaiono dopo il giro del mattino): ${facoltativi.join(", ")}`);
+if (corsEspn.size) avvisi.push(`diretta ESPN bloccata dal browser (CORS) per: ${[...corsEspn].join(", ")}`);
 await b.close();
 const esito = { quando: new Date().toISOString(), sito: SITO, ok: errori.length === 0, errori, avvisi: avvisi.slice(0, 10), tempi };
 fs.writeFileSync(path.join(OUT, "esito.json"), JSON.stringify(esito, null, 1));

@@ -110,4 +110,9 @@ jobs:
           git config user.name "aurapitch-raccolta"; git config user.email "aurapitch-raccolta@users.noreply.github.com"
           git add worker/stato.txt app/data/push.json 2>/dev/null || git add worker/stato.txt
           git commit -m "Notifiche: esito pubblicazione" || true
-          git pull --rebase --autostash && git push
+          # la raccolta salva ogni 10 minuti: se arriva prima di noi si riprova (fino a 5 volte), come per l'apprendimento
+          for i in 1 2 3 4 5; do
+            if git pull --rebase --autostash -q origin main && git push; then echo "Salvato"; exit 0; fi
+            sleep 7
+          done
+          echo "::warning::Esito della pubblicazione non salvato (il servizio è stato pubblicato comunque)"

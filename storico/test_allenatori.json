@@ -1,86 +1,86 @@
 {
- "partite": 38731,
- "partite_con_allenatori": 19081,
- "allenamento": 5816,
- "verifica": 13265,
- "quote": 0.98956,
+ "partite": 70732,
+ "partite_con_allenatori": 36804,
+ "allenamento": 7608,
+ "verifica": 29196,
+ "quote": 0.99396,
  "modello": {
   "l2": 0.1,
-  "errore": 0.99021,
-  "miglioramento_pct": -0.065,
+  "errore": 0.99423,
+  "miglioramento_pct": -0.027,
   "ic95_differenza": [
-   0.00011,
-   0.00125
+   -0.0001,
+   0.00063
   ],
   "pesi_casa": {
-   "nuovo allenatore casa": 0.0315,
-   "nuovo allenatore ospite": -0.003,
-   "durata in carica (diff.)": 0.0135,
-   "rendimento in carriera vs quote (diff.)": -0.0251,
-   "esperienza (diff.)": -0.0091
+   "nuovo allenatore casa": 0.0207,
+   "nuovo allenatore ospite": 0.0019,
+   "durata in carica (diff.)": 0.0227,
+   "rendimento in carriera vs quote (diff.)": -0.0369,
+   "esperienza (diff.)": -0.0103
   },
   "pesi_ospite": {
-   "nuovo allenatore casa": -0.011,
-   "nuovo allenatore ospite": 0.0235,
-   "durata in carica (diff.)": 0.0218,
-   "rendimento in carriera vs quote (diff.)": 0.0433,
-   "esperienza (diff.)": -0.0149
+   "nuovo allenatore casa": -0.0225,
+   "nuovo allenatore ospite": 0.011,
+   "durata in carica (diff.)": 0.0215,
+   "rendimento in carriera vs quote (diff.)": 0.0366,
+   "esperienza (diff.)": -0.0177
   }
  },
  "singole": {
-  "nuovo allenatore casa": -0.01,
-  "nuovo allenatore ospite": -0.028,
-  "durata in carica (diff.)": -0.013,
-  "rendimento in carriera vs quote (diff.)": -0.025,
-  "esperienza (diff.)": -0.003
+  "nuovo allenatore casa": -0.012,
+  "nuovo allenatore ospite": -0.006,
+  "durata in carica (diff.)": -0.012,
+  "rendimento in carriera vs quote (diff.)": 0.004,
+  "esperienza (diff.)": -0.001
  },
  "rimbalzo": {
-  "cambi": 721,
-  "punti_vs_attese_5_prima": -0.518,
-  "5_dopo": 0.028,
-  "10_dopo": 0.029,
+  "cambi": 1502,
+  "punti_vs_attese_5_prima": -0.496,
+  "5_dopo": 0.022,
+  "10_dopo": 0.031,
   "nota": "Valori per partita: punti fatti meno punti attesi dalle quote. Se 'dopo' è vicino a zero, il nuovo allenatore fa quanto previsto dal mercato."
  },
  "termometro": {
-  "campioni": 44413,
-  "uscite": 2640,
-  "frequenza_base": 0.0458,
+  "campioni": 84627,
+  "uscite": 5201,
+  "frequenza_base": 0.0467,
   "verifica": {
-   "n": 26823,
-   "errore_base": 0.2545,
-   "errore_modello": 0.23084,
-   "auc": 0.735,
-   "uscite_nel_10pct_piu_caldo": 0.311,
+   "n": 63176,
+   "errore_base": 0.24829,
+   "errore_modello": 0.22777,
+   "auc": 0.721,
+   "uscite_nel_10pct_piu_caldo": 0.291,
    "calibrazione": [
     {
      "fascia": "0%-2%",
-     "n": 4747,
-     "stimata": 0.0143,
-     "reale": 0.0152
+     "n": 12271,
+     "stimata": 0.0138,
+     "reale": 0.0184
     },
     {
      "fascia": "2%-5%",
-     "n": 12069,
+     "n": 27399,
      "stimata": 0.0335,
-     "reale": 0.0399
+     "reale": 0.0406
     },
     {
      "fascia": "5%-10%",
-     "n": 7598,
-     "stimata": 0.0691,
-     "reale": 0.1008
+     "n": 17308,
+     "stimata": 0.0696,
+     "reale": 0.0953
     },
     {
      "fascia": "10%-20%",
-     "n": 2279,
-     "stimata": 0.1291,
-     "reale": 0.2097
+     "n": 5677,
+     "stimata": 0.1308,
+     "reale": 0.1917
     },
     {
      "fascia": "20%-100%",
-     "n": 130,
-     "stimata": 0.233,
-     "reale": 0.2769
+     "n": 521,
+     "stimata": 0.2395,
+     "reale": 0.2361
     }
    ]
   },
@@ -94,29 +94,29 @@
     "rendimento in carriera"
    ],
    "pesi": [
-    -0.3798,
-    -0.3353,
-    -0.0821,
-    0.0229,
-    -0.0733,
-    -0.2157
+    -0.3857,
+    -0.3471,
+    -0.0977,
+    0.0377,
+    -0.0636,
+    -0.2306
    ],
-   "intercetta": -3.284,
+   "intercetta": -3.2914,
    "media": [
-    0.0435,
-    0.0407,
-    5.947,
-    0.9133,
-    0.8246,
-    0.5534
+    0.0413,
+    0.0374,
+    5.9067,
+    0.8397,
+    0.8291,
+    0.488
    ],
    "scarto": [
-    0.5187,
-    0.3566,
-    1.0975,
-    0.8945,
-    0.8297,
-    1.0812
+    0.5191,
+    0.3537,
+    1.1046,
+    0.885,
+    0.8332,
+    1.085
    ]
   },
   "modello_finale": {
@@ -129,29 +129,29 @@
     "rendimento in carriera"
    ],
    "pesi": [
-    -0.4848,
-    -0.2799,
-    -0.0321,
-    0.1695,
-    -0.0731,
-    -0.2183
+    -0.4529,
+    -0.3043,
+    -0.083,
+    0.1156,
+    -0.0344,
+    -0.1423
    ],
-   "intercetta": -3.037,
+   "intercetta": -2.9769,
    "media": [
-    0.0292,
-    0.0272,
-    5.8983,
-    1.416,
-    0.8297,
-    0.4839
+    0.0306,
+    0.0284,
+    5.8443,
+    1.5714,
+    0.8494,
+    0.442
    ],
    "scarto": [
-    0.5228,
-    0.3618,
-    1.1153,
-    1.3568,
-    0.8402,
-    0.9866
+    0.526,
+    0.3648,
+    1.1058,
+    1.4505,
+    0.8502,
+    0.9871
    ]
   }
  }

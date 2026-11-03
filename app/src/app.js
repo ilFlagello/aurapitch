@@ -15,7 +15,7 @@ const Attesa = () => html`<div className="px-4 space-y-3" aria-busy="true">${[0,
 import { AccountCard, Benvenuto, InvitoRecensione, Legale, PannelloBeta, Recensione, useAccount } from "./fiducia.js";
 import { avviaStatistiche, conta, statAttive } from "./statistiche.js";
 import { VERSIONE as VERS_LEGALE } from "./legale.js";
-import { sezioniLeghe } from "./ordine.js";
+import { sezioniLeghe, slipOffPredefinito } from "./ordine.js";
 import { Guida } from "./guida.js";
 
   /* ---------- app ---------- */
@@ -294,7 +294,7 @@ import { Guida } from "./guida.js";
       return () => { if (sw) sw.removeEventListener("message", fn); };
     }, []);
     useEffect(() => { if (open) caricaDettagli(open); }, [open, Draw, extra]);
-    const legheSchedina = () => { const off = store.get("slipOff", null); return Draw ? [...new Set(Draw.matches.map((m) => m.lg))].filter((k) => (off ? !off.includes(k) : !favLeagues.length || favLeagues.includes(k))) : []; };
+    const legheSchedina = () => { const off = store.get("slipOff", null); return Draw ? [...new Set(Draw.matches.map((m) => m.lg))].filter((k, _i, tutte) => !(off || slipOffPredefinito(tutte, favLeagues)).includes(k)) : []; };
     useEffect(() => { if (tab === "schedina") caricaMercati([...legheSchedina(), ...mySlip.map((x) => (Draw && Draw.matches.find((m) => m.id === x.id) || {}).lg).filter(Boolean)]); }, [tab, Draw, mySlip.length]);
     useEffect(() => { if (!daAprire || !D) return; setOpen(daAprire); setMt(0); setTeam(null); window.scrollTo(0, 0); setDaAprire(null); if (location.hash) history.replaceState(null, "", location.pathname); }, [daAprire, D]);
     if (err) return html`<div className="p-6 text-center text-sm ${C.mu}">${err}</div>`;

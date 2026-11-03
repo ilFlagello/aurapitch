@@ -98,6 +98,17 @@ async function giro(tema) {
   await passo("campionati", async () => { await dock("Campionati"); for (const n of ["Classifica", "Marcatori", "Assist", "Voti", "Confronta", "Panchine"]) { await tab(n); } await foto("campionati"); });
   await passo("schedina", async () => {
     await dock("Schedina IA"); await tab("Crea con l'IA"); await p.waitForTimeout(800);
+    // scelta dei campionati: foglio con gruppi, "Scegli/Togli tutti", ricerca, "Fatto"
+    await p.getByRole("button", { name: /^Campionati: \d+ su \d+/ }).click(); await p.waitForTimeout(300); await foto("schedina-campionati");
+    const tit0 = await p.getByText(/^Campionati della schedina: \d+ su \d+$/).textContent();
+    await p.getByRole("button", { name: "Tutti", exact: true }).last().click();
+    const tit1 = await p.getByText(/^Campionati della schedina: \d+ su \d+$/).textContent();
+    const [n1, m1] = tit1.match(/\d+/g).map(Number); if (n1 !== m1) errori.push(`[${tema}] campionati: "Tutti" non li sceglie tutti (${tit1})`);
+    await p.getByRole("button", { name: "Togli tutti" }).first().click();
+    if ((await p.getByText(/^Campionati della schedina: \d+ su \d+$/).textContent()) === tit1) errori.push(`[${tema}] campionati: "Togli tutti" non cambia nulla`);
+    await p.getByPlaceholder("Cerca campionato o paese").fill("zzzz"); if (!(await p.getByText("Nessun campionato trovato.").count())) errori.push(`[${tema}] campionati: la ricerca non filtra`);
+    await p.getByRole("button", { name: "Consigliati" }).click(); await p.getByRole("button", { name: "Fatto" }).click(); await p.waitForTimeout(300);
+    if (!tit0) errori.push(`[${tema}] campionati: titolo del foglio mancante`);
     await p.locator("button", { hasText: /^×10$/ }).click(); await p.waitForTimeout(300); await foto("schedina-x10");
     const altra = p.getByRole("button", { name: "Un'altra combinazione" }); if (await altra.count()) await altra.click();
     // scorrere i moltiplicatori col dito non deve cambiare scheda; un gesto su una zona libera sì

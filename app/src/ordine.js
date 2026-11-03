@@ -45,3 +45,9 @@ export function sezioniLeghe(codici, seguiti = [], paese = paeseUtente()) {
 }
 function rango(k, P) { const i = P.indexOf(k); return i >= 0 ? i : 100 + (((META[k] || [])[1]) || 99); }
 export function ordinaLeghe(codici, seguiti = [], paese) { return sezioniLeghe(codici, seguiti, paese).flatMap((s) => s.leghe); }
+/* campionati della Schedina IA quando non li hai mai scelti: quelli che segui + i principali (quote di molti bookmaker e più
+   informazioni). Restituisce i campionati ESCLUSI (come si salvano in "slipOff"). */
+export function slipOffPredefinito(codici, seguiti = [], paese) {
+  const si = new Set([...(seguiti || []), ...principali(paese)]);
+  return codici.filter((k) => !si.has(k));
+}

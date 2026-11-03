@@ -28,6 +28,13 @@ const foto = (n) => p.screenshot({ path: path.join(OUT, `${n}.png`) }).catch(() 
 const passo = async (nome, fn) => { try { await fn(); } catch (e) { errori.push(`${nome}: ${e.message.split("\n")[0]}`); await foto("errore-" + nome.replace(/\W+/g, "-")); } };
 const tab = async (n) => { await p.getByRole("tab", { name: n, exact: true }).first().click({ timeout: 8000 }); await p.waitForTimeout(400); };
 const dock = async (n) => { await p.getByRole("button", { name: n, exact: true }).click({ timeout: 8000 }); await p.waitForTimeout(900); };
+// guida o "Novita" aperte sopra la pagina: si chiudono come farebbe l'utente, e si segnala (non dovrebbero ricomparire)
+const chiudiFinestre = async () => {
+  for (const nome of ["Salta", "Chiudi"]) {
+    const b = p.getByRole("button", { name: nome, exact: true });
+    if (await b.count() && await b.first().isVisible()) { avvisi.push(`finestra aperta sopra la pagina, chiusa con "${nome}"`); await b.first().click(); await p.waitForTimeout(400); }
+  }
+};
 const testoPulito = async (dove) => { const t = await p.evaluate(() => document.body.innerText); if (/undefined|NaN/.test(t)) errori.push(`${dove}: testo con "undefined" o "NaN"`); };
 
 await passo("prima apertura", async () => {
@@ -38,13 +45,15 @@ await passo("prima apertura", async () => {
   tempi.prima = Date.now() - t0;
   await p.locator("#eta").check(); await p.locator("#acc").check();
   await p.getByRole("button", { name: "Entra", exact: true }).click();
-  await p.evaluate(() => { localStorage.setItem("ap:onb", "true"); localStorage.setItem("ap:guideSeen", "true"); localStorage.setItem("ap:swipeOk", "true"); });
+  // come un utente che ha gia visto la guida delle funzionalita (chiave "guida2"): altrimenti la guida copre la pagina
+  await p.evaluate(() => { for (const k of ["onb", "guideSeen", "guida2", "swipeOk"]) localStorage.setItem("ap:" + k, "true"); });
 });
 await passo("home", async () => {
   const t0 = Date.now();
   await p.reload({ waitUntil: "domcontentloaded" });
   await p.getByRole("button", { name: /In diretta/ }).waitFor({ timeout: 15000 });
   tempi.riapertura = Date.now() - t0;
+  await chiudiFinestre();
   const righe = await p.locator("main button").filter({ hasText: /\d\d:\d\d/ }).count();
   if (!righe) errori.push("home: nessuna partita in lista");
   tempi.partite_in_lista = righe;

@@ -1637,6 +1637,11 @@ def main():
     aggiorna_storico(d)
     aggiorna_diario(d)
     try:
+        import ia_mercato as IM
+        IM.aggiorna()
+    except Exception as e:  # noqa: BLE001 - "IA contro mercato" non deve mai fermare il giro dei dati
+        print(f"IA contro mercato: non aggiornata ({type(e).__name__}: {e})")
+    try:
         import schedine_ia as SI
         SI.aggiorna(d)
     except Exception as e:  # noqa: BLE001 - lo storico delle schedine non deve mai fermare il giro dei dati

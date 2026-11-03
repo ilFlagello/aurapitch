@@ -18,6 +18,7 @@ import unicodedata
 import zlib
 
 import calibrazione as CB
+import specialisti as SP
 import cartellini as CK
 import espn_dati as ES
 import fattori as FT
@@ -637,6 +638,13 @@ def genera():
         tabs = classifiche.get(code) if code else classifiche.get("ES_" + k)
         # mercati e consiglio IA motivato
         lh, la = M.gol_attesi(q["mk"], q["mo"]) if q["mo"] is not None or not q.get("mo_l") else M.gol_attesi(q["mk"], q["mo_l"], q["linea"])
+        xg_quote = [lh, la]
+        # specialisti (forma, riposo, casa/trasferta, tendenza gol) pesati dall'integratore imparato ogni mattina: corregge le quote
+        # prima dei gol attesi; se l'integratore e spento per questo gruppo di campionati non cambia nulla
+        sp = SP.segnali(per_team.get(hid, []), per_team.get(aid, []), t0) if (hid or aid) else None
+        mkc, moc = SP.correggi(q["mk"], q["mo"], sp, k, (CB.modello() or {}).get("integratore"))
+        if mkc is not q["mk"]:
+            lh, la = M.gol_attesi(mkc, moc)
         raccolte = {c: v for c, v in (("1", q["odds"]["1"]), ("X", q["odds"]["X"]), ("2", q["odds"]["2"]), ("O2.5", q["odds"]["O"]), ("U2.5", q["odds"]["U"])) if v}
         if q.get("mo_l") and q.get("linea"):  # quote raccolte sulla linea ESPN (es. Over/Under 3,5)
             L = ("%g" % q["linea"])
@@ -677,7 +685,7 @@ def genera():
             "attese": [testo_classifica(tabs, hid), testo_classifica(tabs, aid)] if tabs else [{"tone": "ok", "text": "Classifica non disponibile nei dati gratuiti."}] * 2,
             "prec": prec, "ctx": ctx, "flags": [], "last5": l5, "h2h": h2h, "stats": [],
             "markets": righe_mercati(mercati) + extra, "tip": tip,
-            "xg_mercato": [lh, la], "fattori": [], "foto": r["_foto"], "cart": cart, "arbitro": arbitro,
+            "xg_mercato": xg_quote, "xg_base": [lh, la], "sp": sp, "fattori": [], "foto": r["_foto"], "cart": cart, "arbitro": arbitro,
             "xgf": [lettura_xg(k, h, t0), lettura_xg(k, a, t0)] if k in xg_lega else None,
             "curiosita": curiosita_partita(per_team, hid, aid, h, a, t0) if (hid or aid) else [],
             "col": colori_partita(colori_es.get(k), h, a),
@@ -891,6 +899,8 @@ def aggiorna_prepartita(d):
         m["mk"], m["mo"] = q["mk"], (q["mo"] if q["mo"] is not None else m["mo"])
         m["odds"], m["max"], m["nb"] = q["odds"], q["max"], q["nb"] or m.get("nb")
         m["xg_mercato"] = list(M.gol_attesi(m["mk"], m["mo"]))
+        mkc, moc = SP.correggi(m["mk"], m["mo"], m.get("sp"), m["lg"], (CB.modello() or {}).get("integratore"))
+        m["xg_base"] = list(M.gol_attesi(mkc, moc)) if mkc is not m["mk"] else m["xg_mercato"]
         c = m.get("_ctx") or {}
         c["raccolte"] = {cc: v for cc, v in (("1", q["odds"]["1"]), ("X", q["odds"]["X"]), ("2", q["odds"]["2"]), ("O2.5", q["odds"]["O"]), ("U2.5", q["odds"]["U"])) if v}
         m["foto"] = r["t"]
@@ -974,7 +984,7 @@ def applica_fattori(d):
         if m.get("st") != "NS" or "_ctx" not in m:
             continue
         c = m["_ctx"]
-        lh0, la0 = m.get("xg_mercato") or m["xg"]
+        lh0, la0 = m.get("xg_base") or m.get("xg_mercato") or m["xg"]  # base = quote corrette dall'integratore (se acceso)
         try:
             f0 = m.get("foto", "2000-01-01")
             foto = datetime.fromisoformat(f0 if "T" in f0 else f0 + "T06:00:00+00:00")
@@ -1329,7 +1339,7 @@ STATO_OUT = os.path.join("app", "data", "stato.json")
 DETTAGLI = ("markets", "ia", "cart", "curiosita", "xgf", "segnali", "attese", "prec", "forma", "ctx", "h2h", "last5", "odds", "max", "elo", "foto",
             "arbitro", "xg_mercato", "fattori", "formazione")
 FATTORI_LISTA = ("chi", "lato", "tipo", "fonte", "delta")  # nella lista resta un riassunto delle assenze (pagina squadra)
-NON_SERVONO = ("_ctx", "_firma", "_p0")
+NON_SERVONO = ("_ctx", "_firma", "_p0", "sp", "xg_base")
 
 
 def scrivi_lista(d):

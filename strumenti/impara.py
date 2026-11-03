@@ -29,6 +29,7 @@ import numpy as np
 RADICE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, RADICE)
 import calibrazione as CB  # noqa: E402
+import specialisti as SP  # noqa: E402
 import mercati as M  # noqa: E402
 
 MODELLO = os.path.join(RADICE, "data", "modello.json")
@@ -302,6 +303,106 @@ def laboratorio(R, codici, P, Y):
                     "stato": "utile" if g >= MARGINE_PROMO else "in prova"})
         print(f"  laboratorio {k}: {100 * g:+.3f}% su {int(te.sum())} partite mai viste")
     return out
+
+
+# ---------- integratore degli specialisti (specialisti.py): ogni mattina impara quanto pesa ciascuno ----------
+MIN_GRUPPO = 3000
+
+
+def segnali_archivio(R):
+    """Valori degli specialisti per ogni partita dell'archivio, con le sole partite giocate prima (stesso codice dell'app)."""
+    storia = {}
+    X = np.full((len(R), len(SP.NOMI)), np.nan, dtype=np.float32)
+    for i, r in enumerate(R):
+        if not r.get("h") or not r.get("a"):
+            continue
+        t = datetime.fromisoformat(r["d"]).date()
+        kh, ka = (r["lg"], r["h"]), (r["lg"], r["a"])
+        v = SP.segnali(storia.get(kh, []), storia.get(ka, []), t)
+        X[i] = [np.nan if x is None else x for x in v]
+        storia.setdefault(kh, []).append({"t": t, "casa": True, "gf": r["g"][0], "gs": r["g"][1]})
+        storia.setdefault(ka, []).append({"t": t, "casa": False, "gf": r["g"][1], "gs": r["g"][0]})
+        if len(storia[kh]) > 20:
+            del storia[kh][:-20]
+        if len(storia[ka]) > 20:
+            del storia[ka][:-20]
+    return X
+
+
+def _fit_multi(L, Y, Z, passi=400, lr=0.5, l2=0.02):
+    """logit' = logit + Z @ B (B: specialisti x esiti), con freno l2. Restituisce B."""
+    B = np.zeros((Z.shape[1], L.shape[1]))
+    for _ in range(passi):
+        E = L + Z @ B
+        E = E - E.max(axis=1, keepdims=True)
+        Q = np.exp(E) / np.exp(E).sum(axis=1, keepdims=True)
+        B -= lr * (Z.T @ (Q - Y) / len(Z) + l2 * B)
+    return B
+
+
+def _ll_multi_B(L, Y, Z, B):
+    E = L + Z @ B
+    E = E - E.max(axis=1, keepdims=True)
+    Q = np.exp(E) / np.exp(E).sum(axis=1, keepdims=True)
+    return float(-np.mean(np.log(np.clip((Q * Y).sum(axis=1), 1e-9, 1))))
+
+
+def integratore(R, codici, P, Y):
+    """Per gruppo di campionati: allenamento sull'80% piu vecchio, prova sul 20% piu recente. Si accende solo se l'insieme degli
+    specialisti riduce l'errore di almeno MARGINE_PROMO; il contributo di ognuno = errore in piu quando lo si toglie."""
+    X = segnali_archivio(R)
+    idx = {c: k for k, c in enumerate(codici)}
+    c3, co = [idx["1"], idx["X"], idx["2"]], [idx["O2.5"], idx["U2.5"]]
+    D = np.array([r["d"] for r in R])
+    G = np.array([SP.gruppo(r["lg"]) for r in R])
+    modello, rapporto = {"specialisti": SP.NOMI, "gruppi": {}}, {}
+    for gr in ("principali", "altri"):
+        ok = (G == gr) & ~np.isnan(Y[:, c3]).any(axis=1) & ~np.isnan(X).all(axis=1)
+        if ok.sum() < MIN_GRUPPO:
+            rapporto[gr] = {"partite": int(ok.sum()), "stato": "dati insufficienti"}
+            continue
+        Xg = X[ok]
+        mu, sd = np.nanmean(Xg, axis=0), np.nanstd(Xg, axis=0) + 1e-6
+        Z = np.nan_to_num((Xg - mu) / sd)
+        P3 = P[ok][:, c3].astype(np.float64)
+        L = np.log(np.clip(P3 / P3.sum(axis=1, keepdims=True), 1e-6, 1))
+        Y3 = Y[ok][:, c3].astype(np.float64)
+        Dg = D[ok]
+        cut = np.sort(Dg)[int(len(Dg) * 0.8)]
+        tr, te = Dg < cut, Dg >= cut
+        B = _fit_multi(L[tr], Y3[tr], Z[tr])
+        base = _ll_multi_B(L[te], Y3[te], Z[te], np.zeros_like(B))
+        nuovo = _ll_multi_B(L[te], Y3[te], Z[te], B)
+        guad = (base - nuovo) / base
+        contributi = {}
+        for i, n in enumerate(SP.NOMI):
+            Zs = Z.copy()
+            Zs[:, i] = 0
+            Bi = _fit_multi(L[tr], Y3[tr], Zs[tr])
+            contributi[n] = round(100 * (_ll_multi_B(L[te], Y3[te], Zs[te], Bi) - nuovo) / base, 4)
+        # Over/Under 2,5 (solo dove c'e la quota)
+        po = P[ok][:, co[0]].astype(np.float64)
+        yo = Y[ok][:, co[0]].astype(np.float64)
+        oko = ~np.isnan(yo)
+        b_ou, guad_ou = None, None
+        if oko.sum() > MIN_GRUPPO:
+            lo = np.log(np.clip(po, 1e-6, 1 - 1e-6) / np.clip(1 - po, 1e-6, 1))
+            L2 = np.stack([lo, np.zeros_like(lo)], 1)
+            Y2 = np.stack([yo, 1 - yo], 1)
+            Bo = _fit_multi(L2[tr & oko], Y2[tr & oko], Z[tr & oko])
+            b0 = _ll_multi_B(L2[te & oko], Y2[te & oko], Z[te & oko], np.zeros_like(Bo))
+            b1 = _ll_multi_B(L2[te & oko], Y2[te & oko], Z[te & oko], Bo)
+            guad_ou = (b0 - b1) / b0
+            b_ou = (Bo[:, 0] - Bo[:, 1]) if guad_ou >= MARGINE_PROMO else None
+        attivo = guad >= MARGINE_PROMO
+        Bf = _fit_multi(L, Y3, Z) if attivo else B  # modello definitivo su tutte le partite del gruppo
+        modello["gruppi"][gr] = {"attivo": bool(attivo or b_ou is not None), "mu": [round(float(v), 5) for v in mu], "sd": [round(float(v), 5) for v in sd],
+                                 "B": [[round(float(x), 5) for x in row] for row in (Bf if attivo else np.zeros_like(B))],
+                                 "b_ou": [round(float(v), 5) for v in b_ou] if b_ou is not None else None}
+        rapporto[gr] = {"partite": int(ok.sum()), "verifica": int(te.sum()), "guadagno_1x2": round(100 * guad, 4),
+                        "guadagno_ou": None if guad_ou is None else round(100 * guad_ou, 4), "attivo": bool(attivo), "contributi": contributi}
+        print(f"  integratore {gr}: 1X2 {100 * guad:+.3f}%, O/U {'-' if guad_ou is None else f'{100 * guad_ou:+.3f}%'} su {int(te.sum())} partite mai viste; contributi {contributi}")
+    return modello, rapporto
 
 
 # ---------- diario dell'app ----------
@@ -684,6 +785,17 @@ def main():
         json.dump({"attivo": attivo, "prova": {"data": oggi, "da": str(cut), "partite": int(te.sum()), "punteggi": {k: round(v, 5) for k, v in prove.items()}, "motivo": motivo},
                    "controllo": controllo, "pause": pause, "cronologia": cron[-30:]}, f, ensure_ascii=False, indent=1)
 
+    # 3b) integratore degli specialisti: entra nel modello attivo (genera_app lo applica alle quote prima dei gol attesi)
+    try:
+        integ, integ_rap = integratore(R, codici, Ph, Yh)
+        attivo["integratore"] = integ
+        with open(MODELLO, "w", encoding="utf-8") as f:
+            json.dump({"attivo": attivo, "prova": {"data": oggi, "da": str(cut), "partite": int(te.sum()), "punteggi": {k: round(v, 5) for k, v in prove.items()}, "motivo": motivo},
+                       "controllo": controllo, "pause": pause, "cronologia": cron[-30:]}, f, ensure_ascii=False, indent=1)
+    except Exception as e:  # noqa: BLE001 - l'integratore non deve mai fermare l'apprendimento
+        print("Integratore: errore", e)
+        integ_rap = {}
+
     # 4) laboratorio: segnali nuovi provati ogni giorno in ombra (riposo, fortuna); entrano nel modello solo se utili
     try:
         lab = laboratorio(R, codici, Ph, Yh)
@@ -716,6 +828,7 @@ def main():
         "peso_ia": {"minimo": MIN_PESO_IA, "famiglie": pesi}, "controllo": controllo,
         "consigli": andamento_consigli(), "cronologia": cron[-10:],
         "laboratorio": lab,
+        "integratore": integ_rap,
         "semplice": riepilogo_semplice(fin, Yd, codici),
         "allenato": oggi,
     }

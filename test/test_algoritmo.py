@@ -196,5 +196,25 @@ class NuoveFunzioni(unittest.TestCase):
         self.assertNotIn("mov", m2)  # spostamento sotto i 3 punti: niente Radar
 
 
+class Specialisti(unittest.TestCase):
+    def test_solo_passato_e_integratore_spento(self):
+        import specialisti as SP
+        from datetime import date, timedelta
+        t0 = date(2026, 11, 3)
+        h = [{"t": t0 - timedelta(days=3 * i + 3), "casa": i % 2 == 0, "gf": 2, "gs": 0} for i in range(8)]
+        a = [{"t": t0 - timedelta(days=3 * i + 3), "casa": i % 2 == 1, "gf": 0, "gs": 1} for i in range(8)]
+        futura = [{"t": t0 + timedelta(days=1), "casa": True, "gf": 9, "gs": 0}]
+        self.assertEqual(SP.segnali(h, a, t0), SP.segnali(h + futura, a, t0))  # le partite future non contano mai
+        self.assertGreater(SP.segnali(h, a, t0)[0], 0)
+        mk = [0.45, 0.28, 0.27]
+        self.assertEqual(SP.correggi(mk, 0.5, SP.segnali(h, a, t0), "P1", None), (mk, 0.5))  # senza integratore nulla cambia
+        integ = {"gruppi": {"altri": {"attivo": True, "mu": [0] * 5, "sd": [1] * 5, "B": [[0.1, 0, -0.1]] * 5, "b_ou": None}}}
+        mk2, mo2 = SP.correggi(mk, 0.5, SP.segnali(h, a, t0), "P1", integ)
+        self.assertAlmostEqual(sum(mk2), 1.0, places=6)
+        self.assertGreater(mk2[0], mk[0])
+        self.assertEqual(mo2, 0.5)
+        self.assertEqual(SP.correggi(mk, 0.5, SP.segnali(h, a, t0), "I1", integ), (mk, 0.5))  # gruppo diverso: spento
+
+
 if __name__ == "__main__":
     unittest.main()

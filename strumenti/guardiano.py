@@ -128,6 +128,14 @@ def controlla_github():
             except ValueError:
                 n = 0
             (problemi if n and tipo == "segreti" else attenzione if n else note).append(f"Avvisi di sicurezza GitHub, {tipo}: {n} aperti")
+            if n and tipo.startswith("codice"):
+                # quali regole e dove (nessun valore segreto: solo nome della regola, file e riga), per poterli correggere
+                try:
+                    for a in json.loads(corpo)[:15]:
+                        loc = (a.get("most_recent_instance") or {}).get("location") or {}
+                        note.append(f"  CodeQL #{a.get('number')}: {(a.get('rule') or {}).get('id')} in {loc.get('path')}:{loc.get('start_line')}")
+                except (ValueError, AttributeError, TypeError):
+                    pass
         else:
             note.append(f"Avvisi di sicurezza GitHub, {tipo}: non leggibili (risposta {st}: permesso o funzione non attivi)")
 

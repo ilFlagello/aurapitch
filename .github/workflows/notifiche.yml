@@ -78,11 +78,21 @@ jobs:
           meta = {"main_module": "index.js", "compatibility_date": "2024-11-01", "bindings": b}
           if os.environ.get("TAG") != "v1":
               meta["migrations"] = {"new_tag": "v1", "new_sqlite_classes": ["Archivio"]}
+          json.dump(meta, open("/tmp/meta_base.json", "w"))
+          # limite di richieste condiviso tra tutte le copie del servizio (Cloudflare Rate Limiting): se l'account non lo accetta
+          # si ripubblica senza (meta_base) e il servizio usa solo il limite in memoria
+          for nome, ns, lim in (("LIMITE_ALTO", "4201", 240), ("LIMITE_MEDIO", "4202", 30), ("LIMITE_BASSO", "4203", 20)):
+              b.append({"type": "ratelimit", "name": nome, "namespace_id": ns, "simple": {"limit": lim, "period": 60}})
           json.dump(meta, open("/tmp/meta.json", "w"))
           print("orologio:", "attivo" if os.environ.get("GH_DISPATCH") else "manca il secret GH_DISPATCH_TOKEN")
           PY
           R=$(curl -s -X PUT "${H[@]}" -F "metadata=@/tmp/meta.json;type=application/json" -F "index.js=@worker/index.js;type=application/javascript+module" -F "accesso.js=@worker/accesso.js;type=application/javascript+module" $API/workers/scripts/$NOME)
-          log "Carico il servizio: $(echo "$R" | ok)"
+          E=$(echo "$R" | ok)
+          if [ "$E" = "ok" ]; then log "Carico il servizio (con limite condiviso): ok"; else
+            log "Limite condiviso non accettato ($E): pubblico senza"
+            R=$(curl -s -X PUT "${H[@]}" -F "metadata=@/tmp/meta_base.json;type=application/json" -F "index.js=@worker/index.js;type=application/javascript+module" -F "accesso.js=@worker/accesso.js;type=application/javascript+module" $API/workers/scripts/$NOME)
+            log "Carico il servizio: $(echo "$R" | ok)"
+          fi
           R=$(curl -s -X POST "${H[@]}" -H "Content-Type: application/json" -d '{"enabled":true}' $API/workers/scripts/$NOME/subdomain)
           log "Attivo indirizzo workers.dev: $(echo "$R" | ok)"
           R=$(curl -s -X PUT "${H[@]}" -H "Content-Type: application/json" -d '[{"cron":"* * * * *"}]' $API/workers/scripts/$NOME/schedules)

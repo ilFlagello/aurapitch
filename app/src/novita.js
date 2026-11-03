@@ -1,6 +1,12 @@
 /* AuraPitch - versione dell'app e novità. A ogni pubblicazione con cambi visibili si aggiunge una voce IN CIMA:
    il numero cresce (1.1, 1.2, ...) e l'app lo mostra nel profilo e nel riquadro "Novità" dopo l'aggiornamento. */
 export const NOVITA = [
+  { v: "2.1", data: "3 novembre 2026", punti: [
+    "Storico dei consigli più onesto: se i dati di una partita arrivano dopo il fischio, il consiglio si vede ma non conta nel rendimento (etichetta \"Dati arrivati dopo il fischio\")",
+    "Partite in Asia, Oceania e Sudamerica: il consiglio si blocca all'ultimo aggiornamento utile prima della notte, non più dopo l'inizio",
+    "Un revisore controlla ogni mattina l'algoritmo: probabilità oneste, IA contro quote, consigli vinti contro attesi, risultati che non arrivano",
+    "Sicurezza: limite di richieste condiviso dal servizio e correzioni segnalate dall'analisi automatica del codice",
+  ] },
   { v: "2.0", data: "3 novembre 2026", punti: [
     "Schedina IA > Storico IA: ogni giorno si salva la schedina di base di ogni stile e si verifica sui risultati. Vedi quante sono passate questo mese, con quota e rendimento in punti",
     "\"Perché è cambiato\": nella partita, chi manca e di quanto si sposta la probabilità prima e dopo formazioni e notizie",

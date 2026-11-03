@@ -336,6 +336,37 @@ async function controlla(env) {
 
 /* ---------- orologio: avvia la raccolta dati su GitHub (gli avvii programmati di GitHub non partono) ----------
    05:20 UTC apprendimento dell'IA; 06:00 UTC giro completo; dalle 10:00 alle 23:50 UTC aggiornamento ogni 10 minuti. Serve il secret GH_TOKEN (permesso Actions: scrittura). */
+// controlli automatici avviati dall'orologio del servizio: gli avvii programmati di GitHub arrivano con ore di ritardo
+// (il controllo "orario" partiva 4 volte al giorno). Restano anche quelli di GitHub, come riserva.
+// [workflow, condizione su ora, minuto e giorno della settimana UTC (0 = domenica)]
+const CONTROLLI = [
+  ["controllo.yml", (h, mi) => mi >= 15 && mi < 25],                       // salute generale: ogni ora
+  ["guardiano.yml", (h, mi) => h === 5 && mi >= 50],                       // sicurezza: ogni mattina
+  ["revisore.yml", (h, mi) => h === 6 && mi >= 40 && mi < 50],             // revisore dell'algoritmo: dopo apprendimento e giro completo
+  ["vivo.yml", (h, mi) => h === 7 && mi >= 35 && mi < 45],                 // prova dal vivo del sito
+  ["riepilogo.yml", (h, mi, g) => g === 1 && h === 7 && mi >= 40 && mi < 50], // riepilogo del lunedi
+];
+async function controlliProgrammati(env) {
+  if (!env.GH_TOKEN || !env.ARCH) return null;
+  const DB = archivio(env), t = new Date(), h = t.getUTCHours(), mi = t.getUTCMinutes();
+  const daFare = CONTROLLI.filter(([, quando]) => quando(h, mi, t.getUTCDay()));
+  if (!daFare.length) return null;
+  const fatti = (await DB.get("orologio_controlli", "json")) || {}, slot = t.toISOString().slice(0, 13);
+  let cambiato = false;
+  for (const [wf] of daFare) {
+    if ((fatti[wf] || {}).slot === slot && (fatti[wf] || {}).esito === 204) continue; // gia avviato in quest'ora
+    const r = await fetch(`https://api.github.com/repos/ilFlagello/aurapitch/actions/workflows/${wf}/dispatches`, {
+      method: "POST",
+      headers: { Authorization: "Bearer " + env.GH_TOKEN, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "aurapitch-orologio", "Content-Type": "application/json" },
+      body: JSON.stringify({ ref: "main" }),
+    });
+    fatti[wf] = { slot, esito: r.status, t: t.toISOString() };
+    cambiato = true;
+  }
+  if (cambiato) await DB.put("orologio_controlli", JSON.stringify(fatti));
+  return fatti;
+}
+
 async function orologio(env) {
   const DB = archivio(env);
   if (!env.GH_TOKEN) return "senza token";
@@ -375,6 +406,17 @@ function troppi(req, max = 20) {
   const n = (conta.get(k) || 0) + 1; conta.set(k, n);
   if (conta.size > 5000) conta.clear();
   return n > max;
+}
+// limite condiviso tra tutte le copie del servizio (Cloudflare Rate Limiting, gratuito): quello in memoria qui sopra vale solo per
+// la copia che risponde, questo vale per tutte. Tre fasce per indirizzo e strada: ponte (240 al minuto), scritture e accesso (20),
+// tutto il resto (30). Se la fascia non è configurata o non risponde, resta il limite in memoria: il servizio non si ferma mai.
+const DELICATE = /^\/(auth\/|test$|voto$|gruppo$|subscribe$|unsubscribe$|sync$)/;
+async function limiteCondiviso(req, url, env) {
+  if (req.method === "OPTIONS" || url.pathname.startsWith("/cassaforte/")) return false; // la cassaforte ha già la firma
+  const p = url.pathname, ip = req.headers.get("CF-Connecting-IP") || "?";
+  const fascia = p === "/x" ? env.LIMITE_ALTO : DELICATE.test(p) || (p === "/profilo" && req.method === "POST") ? env.LIMITE_BASSO : env.LIMITE_MEDIO;
+  if (!fascia || typeof fascia.limit !== "function") return false;
+  try { return !(await fascia.limit({ key: ip + " " + p })).success; } catch (e) { return false; }
 }
 /* ---------- cassaforte: diario delle previsioni, modello imparato, storico dei consigli ----------
    Non stanno nel repository pubblico ma qui, nell'archivio privato del servizio. Ci accedono solo i processi automatici
@@ -476,6 +518,7 @@ export default {
     // allarmi di sicurezza: conteggi del giorno (richieste respinte, firme e codici sbagliati), letti dal controllo orario
     const segnala = (tipo) => { try { ctx && ctx.waitUntil(DB.stub ? DB.stub.incr("sic:" + new Date().toISOString().slice(0, 10), { [tipo]: 1 }, 30 * 86400).catch(() => {}) : Promise.resolve()); } catch (e) { /* niente */ } };
     const troppiS = (r, max) => { const t = troppi(r, max); if (t) segnala("limite"); return t; };
+    if (await limiteCondiviso(req, url, env)) { segnala("limite"); return json({ ok: false, err: "troppe richieste, riprova tra un minuto" }, 429); }
     if (url.pathname.startsWith("/cassaforte/")) return cassaforte(req, url, env, DB, segnala);
     const acc = await accesso(req, url, env, DB, json, troppiS, segnala);
     if (acc) return acc;
@@ -536,7 +579,7 @@ export default {
       return json({
         iscrizioni: Object.keys(subs).length, partite_seguite: new Set(Object.values(subs).flatMap((x) => (x.follow || []).map((f) => f.lgE + "/" + f.eid))).size,
         sicurezza: DB.stub ? (await DB.get("sic:" + new Date().toISOString().slice(0, 10), "json")) || {} : null,
-        stato_partite: Object.keys(state).length, archivio: DB.stub ? { tipo: "database", chiavi: await DB.stub.conta(), migrazione: (await DB.get("_migrato")) ? "fatta" : "in corso" } : "KV", orologio: (await DB.get("orologio", "json")) || null, avvisi: (await DB.get("registro_avvisi", "json")) || [], apprendimento: (await DB.get("orologio_impara", "json")) || null, vapid: !!(await env.KV.get("vapid")),
+        stato_partite: Object.keys(state).length, archivio: DB.stub ? { tipo: "database", chiavi: await DB.stub.conta(), migrazione: (await DB.get("_migrato")) ? "fatta" : "in corso" } : "KV", orologio: (await DB.get("orologio", "json")) || null, avvisi: (await DB.get("registro_avvisi", "json")) || [], apprendimento: (await DB.get("orologio_impara", "json")) || null, controlli: (await DB.get("orologio_controlli", "json")) || null, vapid: !!(await env.KV.get("vapid")),
       });
     }
     // sondaggio "chi vince?": un voto per dispositivo (impronta anonima dal browser), chiuso al calcio d'inizio dall'app
@@ -693,7 +736,7 @@ export default {
     return json({ ok: false }, 404);
   },
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(Promise.all([controlla(env), orologio(env), migraDaKV(env).catch(() => null),
+    ctx.waitUntil(Promise.all([controlla(env), orologio(env), controlliProgrammati(env).catch(() => null), migraDaKV(env).catch(() => null),
       env.ARCH && new Date().getUTCMinutes() === 7 ? aggiornaTipster(env).catch(() => null) : null,
       env.ARCH && new Date().getUTCMinutes() === 0 ? archivio(env).stub.pulisci() : null,
       env.ARCH && new Date().getUTCHours() === 3 && new Date().getUTCMinutes() === 0 ? pulisciInattivi(archivio(env)).catch(() => 0) : null]));

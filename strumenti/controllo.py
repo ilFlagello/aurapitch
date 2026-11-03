@@ -46,7 +46,7 @@ except Exception as e:
 
 # 2. ultime esecuzioni dei processi automatici
 for wf, nome in (("raccolta.yml", "Raccolta dati"), ("pubblica.yml", "Pubblicazione app"), ("notifiche.yml", "Servizio notifiche"), ("test.yml", "Test"), ("impara.yml", "Apprendimento"), ("ripristino.yml", "Prova della copia di sicurezza"), ("codeql.yml", "Analisi sicurezza"),
-                 ("vivo.yml", "Prova dal vivo del sito"), ("guardiano.yml", "Guardiano della sicurezza")):
+                 ("vivo.yml", "Prova dal vivo del sito"), ("guardiano.yml", "Guardiano della sicurezza"), ("revisore.yml", "Revisore dell'algoritmo")):
     try:
         _, j = get(f"https://api.github.com/repos/{REPO}/actions/workflows/{wf}/runs?per_page=5&status=completed", gh=True)
         runs = [r for r in j.get("workflow_runs", []) if r["conclusion"] != "cancelled"]

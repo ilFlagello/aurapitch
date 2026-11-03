@@ -697,7 +697,7 @@ def rendimento_consigli():
         n = vinti = 0
         prof = 0.0
         for v in sorted(st.values(), key=lambda v: v["date"]):
-            es = (v.get("esiti") or {}).get(k)
+            es = None if v.get("tardivo") else (v.get("esiti") or {}).get(k)  # registrato dopo il fischio: non conta
             t = (v.get("tips") or {}).get(k)
             if es is None or not t or not t.get("q"):
                 continue
@@ -726,7 +726,7 @@ def andamento_consigli(tutte=False):
         return []
     sett = {}
     for v in st.values():
-        es = (v.get("esiti") or {}).get("consiglio")
+        es = None if v.get("tardivo") else (v.get("esiti") or {}).get("consiglio")
         if es is None:
             continue
         d = datetime.strptime(v["date"], "%Y-%m-%d").date()

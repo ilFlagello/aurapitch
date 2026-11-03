@@ -131,7 +131,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
       const [sel, setSel] = useState(null);
       const [lato, setLato] = useState(2);
       const col = auraCol(m).map(suNotte);
-      const tiri = sm.cronaca.filter((c) => c.x != null && c.side != null && (TIRI[c.type] || (/^goal|penalty---scored/.test(c.type) && !/own/.test(c.type))))
+      const tiri = sm.cronaca.filter((c) => c.x != null && c.side != null && (TIRI[c.type] || (/^(goal|penalty---scored)/.test(c.type) && !/own/.test(c.type))))
         .map((c) => ({ ...c, k: TIRI[c.type] || "gol", pt: trasf(c.side, c.x, c.y) })).filter((c) => c.pt);
       if (tiri.length < 3) return null;
       const vis = tiri.filter((t) => lato === 2 || t.side === lato);
@@ -295,7 +295,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
     function Cronaca({ sm, m }) {
       const [f, setF] = useState(0);
       const [n, setN] = useState(40);
-      const list = sm.cronaca.filter((c) => c.text && (!f || KEY_T.test(c.type) || /^Gol!|Fine|Inizia|recupero/.test(c.text)));
+      const list = sm.cronaca.filter((c) => c.text && (!f || KEY_T.test(c.type) || /^Gol!/.test(c.text) || /Fine|Inizia|recupero/.test(c.text)));
       const tipo = (c) => (/goal|penalty---scored|own-goal/.test(c.type) || /^Gol!/.test(c.text) ? "gol" : /red-card/.test(c.type) ? "rosso" : /yellow-card/.test(c.type) ? "giallo"
         : /substitution/.test(c.type) ? "cambio" : /^(Fine|Inizia)/.test(c.text) ? "sep" : /shot-on-target|woodwork|penalty/.test(c.type) ? "tiro" : "");
       const barra = { gol: "bg-[#5B2EE6] dark:bg-[#A58BFF]", rosso: "bg-[#FF3D5A]", giallo: "bg-amber-400", cambio: "bg-[#6E6A85]/50", tiro: "bg-black/20 dark:bg-white/25" };
@@ -325,13 +325,15 @@ import { Anteprima, partitaSettimana } from "./extra.js";
       const b = m.blocco, d = m.dati;
       const ora = (iso) => new Date(iso).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
       const giorno = (iso) => { const x = new Date(iso), oggi = new Date(); return x.toDateString() === oggi.toDateString() ? "" : x.toLocaleDateString("it-IT", { day: "numeric", month: "short" }) + " "; };
-      const bloccato = b && (b.st === "bloccato" || Date.parse(b.t) <= Date.now() || m.st !== "NS");
+      const tardivo = b && b.st === "tardivo"; // partita arrivata dopo il fischio: consiglio mostrato ma fuori dallo storico
+      const bloccato = b && !tardivo && (b.st === "bloccato" || Date.parse(b.t) <= Date.now() || m.st !== "NS");
       const LV = { completa: ["Elaborazione AuraPitch completa", "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300"], parziale: ["Elaborazione parziale", "bg-amber-500/12 text-amber-700 dark:text-amber-300"],
         quote: ["Solo quote dei bookmaker", "bg-black/[0.06] dark:bg-white/10 " + C.mu] };
       const lv = d && LV[d.lv];
       if (!b && !lv) return null;
       return html`<div className="flex flex-wrap gap-1.5 mt-2">
-        ${b && html`<span className=${"inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-[3px] rounded-full " + (bloccato ? "bg-[#5B2EE6]/10 text-[#5B2EE6] dark:bg-[#A58BFF]/15 dark:text-[#A58BFF]" : "bg-black/[0.06] dark:bg-white/10 " + C.mu)}>
+        ${tardivo && html`<span className=${"inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-[3px] rounded-full bg-black/[0.06] dark:bg-white/10 " + C.mu}><${Ic.Clock} size=${11} />Dati arrivati dopo il fischio: non conta nello storico</span>`}
+        ${b && !tardivo && html`<span className=${"inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-[3px] rounded-full " + (bloccato ? "bg-[#5B2EE6]/10 text-[#5B2EE6] dark:bg-[#A58BFF]/15 dark:text-[#A58BFF]" : "bg-black/[0.06] dark:bg-white/10 " + C.mu)}>
           <${bloccato ? Ic.Lock : Ic.Clock} size=${11} />${bloccato ? `Bloccato ${b.st === "bloccato" ? "il " + giorno(b.t) + "alle " + ora(b.t) : ""}`.replace("il alle", "alle").trim() : `Provvisorio: si blocca alle ${ora(b.t)}`}</span>`}
         ${lv && html`<span className=${"inline-flex items-center text-[11px] font-semibold px-2 py-[3px] rounded-full " + lv[1]}>${lv[0]}</span>`}</div>`;
     }

@@ -270,7 +270,7 @@ export function cronacaLeggera(righe, nomiSquadre, cambi, finita) {
       out.push({ min: "", text: `Fine primo tempo, ${nome(0)} ${g[0]}, ${nome(1)} ${g[1]}.`, type: "" });
     }
     let text;
-    if (/^goal|penalty---scored/.test(tipo)) {
+    if (/^(goal|penalty---scored)/.test(tipo)) {
       if (j != null) g[j]++;
       const come = tipo === "goal---header" ? " di testa" : tipo === "goal---free-kick" ? " su punizione" : tipo === "penalty---scored" ? " su rigore" : "";
       text = `Gol! ${ris()}. Segna ${chi}${come} (${squadra}).`;
@@ -407,7 +407,7 @@ export function andamento(cronaca, finoA) {
     // fallo: punizione per la squadra che lo subisce
     const lato = c.type === "foul" ? 1 - c.side : c.side;
     raw[m] += lato === 0 ? w : -w;
-    if (/^goal|penalty---scored/.test(c.type) && !/own/.test(c.type)) gol.push({ m, side: c.side });
+    if (/^(goal|penalty---scored)/.test(c.type) && !/own/.test(c.type)) gol.push({ m, side: c.side });
   }
   const out = [];
   for (let i = 1; i <= fine; i++) {

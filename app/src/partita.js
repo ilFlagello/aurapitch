@@ -6,6 +6,7 @@ import { SchedaAllenatore, usaPanchine } from "./panchine.js";
 import { useSummary, loadPlayer, loadCareer, ruolo, findTeam, loadTeam, minuto, ESPN_LG, andamento, getJSON } from "./live.js";
 import { matriceRis, NomeSquadra, NomeGiocatore, NomeLega, inizioSwipe, fineSwipe, Voce, AuraLine, C, Crest, Ctx, DOT, FavPill, Flag, Form, GROUPS, Ic, Seg, Sheet, TONE, Tabs, auraCol, evalCode, html, leggiXg, lum, mGroup, mLabel, nf, norm, odd, options, pct, pctL, spiega, store } from "./base.js";
 import { Anteprima, partitaSettimana } from "./extra.js";
+import { difficolta } from "./difficolta.js";
 
     /* ---- riga partita: orario a sinistra, squadre una sopra l'altra, punteggi in colonna, aura delle probabilita sotto ---- */
     function usaVoti() { const [V, setV] = useState(null); useEffect(() => { caricaVoti().then(setV); }, []); return V; }
@@ -778,8 +779,40 @@ import { Anteprima, partitaSettimana } from "./extra.js";
     }
 
     /* ---- pagina squadra ---- */
+    /* forza Elo delle squadre (una volta per sessione): serve alla difficoltà delle partite oltre i 5 giorni dell'app */
+    let _forza = null;
+    function usaForza() {
+      const [F, setF] = useState(_forza);
+      useEffect(() => { if (!_forza) fetch("data/forza.json").then((r) => (r.ok ? r.json() : { t: {} })).catch(() => ({ t: {} })).then((x) => { _forza = x; setF(x); }); }, []);
+      return F;
+    }
+    const LIV = { Facile: "good", Media: "warn", Difficile: "bad" };
+    /* forma delle ultime 5 a colpo d'occhio (la più recente a destra) e difficoltà delle prossime 3 */
+    function FormaDifficolta({ d, team, D, onMatch }) {
+      const F = usaForza();
+      const ult = d.risultati.slice(0, 5).reverse();
+      const punti = ult.reduce((n, r) => n + (r.esito === "V" ? 3 : r.esito === "N" ? 1 : 0), 0);
+      const pross = difficolta(d.prossime, team.name, D.matches, F);
+      const breve = (t) => String(t || "").replace(/^(FC|AC|AS|SS|SSC|US|CF|SC|CD|UD|RCD|CA|SD) /, "").split(" ").slice(0, 2).join(" ");
+      const dt = (s) => new Date(s).toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" });
+      return html`<${React.Fragment}>
+        ${ult.length > 0 && html`<div className=${C.card + " p-4"}>
+          <div className="flex items-baseline mb-2.5"><span className=${C.lab + " flex-1"}>Forma, ultime ${ult.length}</span><span className=${"text-[12px] " + C.mu}><b className=${"num text-[15px] " + C.tx}>${punti}</b> punti su ${ult.length * 3}</span></div>
+          <div className="grid gap-1.5" style=${{ gridTemplateColumns: `repeat(${ult.length}, minmax(0,1fr))` }}>${ult.map((r) => html`<div key=${r.id} className="flex flex-col items-center gap-1 min-w-0">
+            <span className=${"w-full h-9 rounded-xl border flex items-center justify-center num text-[16px] font-bold " + TONE[r.esito === "V" ? "good" : r.esito === "N" ? "warn" : "bad"]}>${r.g[0]}-${r.g[1]}</span>
+            <span className=${"text-[11px] leading-tight text-center truncate max-w-full " + C.mu}>${r.casa ? "" : "@"}${breve(r.avv)}</span></div>`)}</div></div>`}
+        ${pross.length > 0 && html`<div className=${C.card + " p-4"}>
+          <div className=${C.lab + " mb-1"}>Prossime ${pross.length}: quanto sono difficili</div>
+          ${pross.map((r, i) => html`<button key=${r.id} disabled=${!r.mid} onClick=${() => r.mid && onMatch(r.mid)} className=${"w-full flex items-center gap-2.5 py-2 text-left " + (i ? "border-t " + C.bd : "")}>
+            <${Crest} t=${r.avv} size=${22} />
+            <span className="flex-1 min-w-0"><span className=${"block text-[14px] font-semibold truncate " + C.tx}>${r.casa ? "vs" : "@"} ${r.avv}</span>
+              <span className=${"block text-[12px] " + C.mu}>${dt(r.date)}${r.comp ? " · " + r.comp : ""}${r.prob ? ` · vince nel ${pct(r.prob[0])}%` : ""}</span></span>
+            ${r.livello ? html`<span className=${"shrink-0 text-[12px] font-bold px-2.5 py-1 rounded-full border " + TONE[LIV[r.livello]]}>${r.livello}</span>`
+              : html`<span className=${"shrink-0 text-[11px] " + C.mu}>Non stimabile</span>`}</button>`)}
+          <p className=${"text-[11px] mt-1.5 " + C.mu}>Dalle probabilità dell'IA della partita${pross.some((r) => r.fonte === "elo") ? " o, per le partite più lontane, dal punteggio Elo dell'algoritmo (stesso campionato)" : ""}: punti attesi su 3, facile da 1,85 in su, difficile sotto 1,25. "Non stimabile": coppa o avversario senza dati.</p></div>`}<//>`;
+    }
     function TeamView() {
-      const { team, setTeam, D } = React.useContext(Ctx);
+      const { team, setTeam, D, goMatch } = React.useContext(Ctx);
       const V = usaVoti();
       const notizie = [];
       for (const m of D.matches) for (const f of m.fattori || []) { const sq = f.lato ? m.a : m.h; if (sq === team.name && !notizie.some((x) => x.chi === f.chi)) notizie.push(f); }
@@ -813,6 +846,7 @@ import { Anteprima, partitaSettimana } from "./extra.js";
         <${Seg} items=${["Partite", "Rosa", "Indisponibili"]} val=${t} set=${setT} />
         ${!d ? html`<div className=${C.card + " p-4 text-sm " + C.mu}>${err || "Caricamento..."}</div>`
           : t === 0 ? html`<${React.Fragment}>
+            <${FormaDifficolta} d=${d} team=${team} D=${D} onMatch=${(id) => goMatch(id)} />
             <div className=${C.lab}>Prossime partite</div>
             <div className=${C.card + " px-4 py-1"}>${d.prossime.length ? d.prossime.map((r, i) => html`<div key=${r.id} className=${"flex items-center gap-2 py-2 text-sm " + (i ? "border-t " + C.bd : "") + " " + C.tx}>
               <span className=${"w-24 text-xs tabular-nums " + C.mu}>${dt(r.date)}</span><span className="flex-1 truncate">${r.casa ? "vs" : "@"} <${NomeSquadra} t=${r.avv} lgE=${team.lgE} /></span><span className=${"text-[11px] " + C.mu}>${r.comp}</span></div>`)

@@ -166,6 +166,29 @@ print(json.dumps(out))`;
   }
   console.log("schedine IA confrontate con l'app:", confronti);
 }
+// scheda squadra: difficoltà delle prossime 3 dalle probabilità dell'IA o dal punteggio Elo dell'algoritmo
+{
+  const outD = path.join(tmp, "difficolta.mjs");
+  await esbuild.build({ entryPoints: [path.join(APP, "src/difficolta.js")], bundle: true, platform: "node", format: "esm", outfile: outD, logLevel: "error" });
+  const DF = await import(pathToFileURL(outD).href);
+  const pe = DF.probElo(1600, 1600, true);
+  ok(Math.abs(pe[0] + pe[1] + pe[2] - 1) < 1e-9 && pe[0] > pe[2] && pe[1] > 0.2, `probElo pari in casa: ${pe}`);
+  const forte = DF.probElo(1800, 1450, false);
+  ok(forte[0] > 0.6 && forte[1] >= 0.15, `probElo favorita in trasferta: ${forte}`);
+  ok(DF.livello(2.1) === "Facile" && DF.livello(1.5) === "Media" && DF.livello(0.9) === "Difficile", "livelli di difficoltà");
+  ok(DF.simile("Inter Milan", "Inter") >= 0.8 && DF.simile("AC Milan", "Inter") === 0 && DF.simile("Al Ittihad", "Al Ain") === 0, "nomi delle squadre");
+  const ko = "2026-11-08T19:45:00+00:00";
+  const matches = [{ id: "SA-1", h: "Roma", a: "Inter", ko, p: [0.3, 0.27, 0.43] }];
+  const forza = { casa: 60, t: { Inter: [1720, "I1"], Lecce: [1450, "I1"], Bayern: [1800, "D1"] } };
+  const prossime = [{ id: "a", date: ko, avv: "AS Roma", casa: false, comp: "Serie A" }, { id: "b", date: "2026-11-22T17:00Z", avv: "Lecce", casa: true },
+    { id: "c", date: "2026-11-26T20:00Z", avv: "Bayern Munich", casa: true }, { id: "d", date: "2026-11-30T20:00Z", avv: "Napoli", casa: false }];
+  const r = DF.difficolta(prossime, "Inter Milan", matches, forza);
+  ok(r.length === 3, "difficoltà: solo le prossime 3");
+  ok(r[0].fonte === "ia" && r[0].mid === "SA-1" && Math.abs(r[0].prob[0] - 0.43) < 1e-9 && Math.abs(r[0].punti - (3 * 0.43 + 0.27)) < 1e-9, `difficoltà dall'IA, lato ospite: ${JSON.stringify(r[0])}`);
+  ok(r[1].fonte === "elo" && r[1].livello === "Facile", `difficoltà dall'Elo contro una squadra più debole in casa: ${JSON.stringify(r[1])}`);
+  ok(r[2].fonte === null && r[2].livello === null, "campionati diversi (coppa): non stimabile");
+  ok(DF.difficolta(prossime, "Inter", [], null)[1].livello === null, "senza forza.json: non stimabile");
+}
 console.log(`${prove} controlli, ${errori} errori`);
 fs.rmSync(tmp, { recursive: true, force: true });
 process.exit(errori ? 1 : 0);

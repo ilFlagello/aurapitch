@@ -14,7 +14,7 @@ REPO = os.environ.get("GITHUB_REPOSITORY", "ilFlagello/aurapitch")
 TOKEN = os.environ.get("GITHUB_TOKEN", "")
 ORA = datetime.now(timezone.utc)
 PROCESSI = (("raccolta.yml", "Raccolta dati"), ("pubblica.yml", "Pubblicazione app"), ("impara.yml", "Apprendimento"), ("test.yml", "Test"),
-            ("notifiche.yml", "Servizio notifiche"), ("vivo.yml", "Prova dal vivo del sito"), ("guardiano.yml", "Guardiano della sicurezza"),
+            ("notifiche.yml", "Servizio notifiche"), ("vivo.yml", "Prova dal vivo del sito"), ("guardiano.yml", "Guardiano della sicurezza"), ("revisore.yml", "Revisore dell'algoritmo"),
             ("controllo.yml", "Controllo orario"), ("codeql.yml", "Analisi sicurezza"), ("ripristino.yml", "Prova della copia di sicurezza"))
 
 
@@ -88,6 +88,11 @@ def raccogli():
     if g:
         sistemare += [f"Sicurezza: {x}" for x in g.get("problemi", [])] + [f"Sicurezza, da tenere d'occhio: {x}" for x in g.get("attenzione", [])]
         stato += [f"Sicurezza: {x}" for x in g.get("note", [])]
+    # 5b. revisore dell'algoritmo (eseguito appena prima dal workflow)
+    rv = _jload("data/revisore.json")
+    if rv:
+        sistemare += [f"Algoritmo: {x}" for x in rv.get("problemi", [])] + [f"Algoritmo, da tenere d'occhio: {x}" for x in rv.get("attenzione", [])]
+        stato += [f"Algoritmo: {x}" for x in rv.get("note", [])]
     # 6. apprendimento dell'IA
     ia = _jload("app/data/ia.json")
     try:

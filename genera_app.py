@@ -1339,12 +1339,26 @@ def livello_dati(m):
     return {"lv": lv, "fonti": fonti, "nb": nb, "score": score}
 
 
+def prossimo_giro(ora):
+    """Quando ripasserà la raccolta (orologio del servizio): giro completo alle 6:00 UTC, giri brevi ogni 10 minuti dalle 10:00
+    alle 23:50 UTC. Tra mezzanotte e le 6 e tra le 6:10 e le 10 non passa nessuno: le partite asiatiche e australiane che
+    iniziano in quelle ore vanno bloccate all'ultimo giro utile, prima del fischio."""
+    h = ora.replace(minute=0, second=0, microsecond=0)
+    if 10 <= ora.hour <= 23 and not (ora.hour == 23 and ora.minute >= 50):
+        return ora + timedelta(minutes=10)
+    if ora.hour >= 23:
+        return (h + timedelta(days=1)).replace(hour=6)
+    if ora.hour < 6:
+        return h.replace(hour=6)
+    return h.replace(hour=10)
+
+
 def blocca_consigli(d):
     """Ogni consiglio si blocca BLOCCO_MIN minuti prima del calcio d'inizio (o al giro del mattino, se fino ad allora non ci sono altri giri)
     e resta quello fino a fine partita, giusto o sbagliato. Il consiglio bloccato vive nel registro privato dei consigli (cassaforte)."""
     st = jload(STORICO_IN, {}) or {}
     ora = datetime.now(timezone.utc)
-    prossimo = ora.replace(hour=10, minute=0, second=0, microsecond=0) if ora.hour < 10 else ora + timedelta(minutes=10)  # prossimo giro di raccolta
+    prossimo = prossimo_giro(ora)
     nuovi = 0
     for m in d.get("matches", []):
         m["_classifica"] = m["lg"] in (d.get("standings") or {})
@@ -1356,8 +1370,13 @@ def blocca_consigli(d):
             continue
         r = st.get(m["id"])
         if r and r.get("tipB"):
+            try:  # registrato dopo il fischio (anche prima che esistesse questa regola): resta fuori dallo storico
+                if not r.get("tardivo") and datetime.fromisoformat(r["tB"]) > datetime.fromisoformat(m["ko"]):
+                    r["tardivo"] = True
+            except (KeyError, TypeError, ValueError):
+                pass
             m["tip"], m["dati"] = r["tipB"], r.get("datiB", info)
-            m["blocco"] = {"st": "bloccato", "t": r["tB"]}
+            m["blocco"] = {"st": "tardivo" if r.get("tardivo") else "bloccato", "t": r["tB"]}
             continue
         if info["lv"] == "quote" and (tip.get("consiglio") or {}).get("titolo") != TITOLI_QUOTE["consiglio"]:  # niente elaborazione propria: lo diciamo chiaramente
             tip = {k: dict(v, titolo=TITOLI_QUOTE.get(k, v.get("titolo")), perche=[f"Per questa partita AuraPitch ha solo le quote di {info['nb'] or 1} bookmaker e nessun archivio del campionato: l'indicazione viene dalle quote, senza un'elaborazione propria."] + list(v.get("perche") or []))
@@ -1374,8 +1393,12 @@ def blocca_consigli(d):
                                     "nf": sum(1 for f in m.get("fattori", []) if f.get("delta")), "sc": SCALA_FATTORI(), "ver": FT.VERSIONE, "segnali": [x["tipo"] for x in m.get("segnali", [])]}
             r["tips"] = {k: {x: v[x] for x in ("c", "l", "p", "q", "qm")} for k, v in tip.items() if isinstance(v, dict)}
             r["tipB"], r["tB"], r["datiB"] = tip, ora.isoformat(timespec="minutes"), info
+            # partita vista per la prima volta dopo il fischio (dati arrivati tardi): il consiglio si mostra ma non conta
+            # nello storico, perche non e stato fissato prima della partita (credibilita del rendimento)
+            if ora >= ko:
+                r["tardivo"] = True
             st[m["id"]] = r
-            m["blocco"] = {"st": "bloccato", "t": r["tB"]}
+            m["blocco"] = {"st": "tardivo" if r.get("tardivo") else "bloccato", "t": r["tB"]}
             nuovi += 1
         else:
             m["blocco"] = {"st": "provvisorio", "t": limite.isoformat(timespec="minutes")}
@@ -1401,9 +1424,19 @@ def aggiorna_storico(d):
             st[m["id"]] = r
         if m["st"] in ("FT", "LIVE", "RINV"):
             r["st"], r["g"], r["g1"] = m["st"], m.get("g"), m.get("g1")
+        # registrato dopo il fischio (anche prima di questa regola): fuori dallo storico
+        if not r.get("tardivo") and (r.get("tB") or "") and m.get("ko"):
+            try:
+                if datetime.fromisoformat(r["tB"]) > datetime.fromisoformat(m["ko"]):
+                    r["tardivo"] = True
+            except (TypeError, ValueError):
+                pass
         if r["st"] == "FT":  # a partita finita il consiglio completo non serve piu: resta la versione corta (registro leggero)
             r.pop("tipB", None)
             r.pop("datiB", None)
+        if r.get("tardivo"):
+            r.pop("esiti", None)
+            continue
         if r["st"] == "FT" and r.get("g"):
             es = {k: esito_sicuro(v["c"], r["g"], r.get("g1")) for k, v in r["tips"].items()}
             r["esiti"] = {k: v for k, v in es.items() if v is not None}

@@ -1,0 +1,23 @@
+# AuraPitch - revisore dell'algoritmo ogni mattina (avviato dall'orologio del servizio alle 6:40 UTC, dopo apprendimento e giro
+# completo; l'avvio programmato di GitHub resta come riserva). Legge la cassaforte senza mai modificarla e controlla:
+# apprendimento, IA contro quote, onestà delle probabilità, consigli vinti contro attesi, blocco prima del fischio, dati.
+# Se trova un problema l'esecuzione fallisce e il controllo orario apre l'avviso su GitHub (una mail).
+name: Revisore dell'algoritmo
+on:
+  schedule:
+    - cron: "45 6 * * *"
+  workflow_dispatch: {}
+permissions:
+  contents: read
+concurrency: { group: revisore, cancel-in-progress: true }
+jobs:
+  revisione:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Apri la cassaforte in sola lettura (diario, modello, consigli)
+        env: { GH_DISPATCH_TOKEN: "${{ secrets.GH_DISPATCH_TOKEN }}" }
+        run: python3 strumenti/cassaforte.py apri --tutto
+      - name: Revisione
+        run: python3 strumenti/revisore.py

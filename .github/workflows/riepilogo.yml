@@ -20,6 +20,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 strumenti/guardiano.py || true
+      - name: Revisore dell'algoritmo (per i punti da tenere d'occhio)
+        env: { GH_DISPATCH_TOKEN: "${{ secrets.GH_DISPATCH_TOKEN }}" }
+        run: |
+          python3 strumenti/cassaforte.py apri --tutto || true
+          python3 strumenti/revisore.py || true
       - name: Riepilogo
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -22,32 +22,32 @@ import { Guida } from "./guida.js";
   function App() {
     const [Draw, setD] = useState(null);
     // dati a strati: lista leggera all'avvio, dettagli di una partita quando la apri, mercati di tutte quando apri la Schedina
-    const [extra, setExtra] = useState({});
+    const [extra, setExtra] = useState(() => new Map()); // Map: gli id arrivano dalla rete, mai usati come nomi di proprietà
     const [merc, setMerc] = useState(null);
-    const inCarico = useRef({});
+    const inCarico = useRef(new Map());
     const caricaDettagli = (id) => {
-      if (!Draw || !Draw.leggera || extra[id] || inCarico.current[id]) return;
-      inCarico.current[id] = true;
-      fetch("data/m/" + String(id).replace(/[^A-Za-z0-9_-]/g, "_") + ".json").then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-        .then((x) => setExtra((e) => ({ ...e, [id]: x })))
+      if (!Draw || !Draw.leggera || extra.has(id) || inCarico.current.get(id)) return;
+      inCarico.current.set(id, true);
+      fetch("data/m/" + encodeURIComponent(String(id).replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80)) + ".json") // solo file della stessa app.then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+        .then((x) => setExtra((e) => new Map(e).set(id, x)))
         .catch(() => fetch("data/giornata.json").then((r) => (r.ok ? r.json() : null)).then((d) => d && setD(d)).catch(() => {})) // ripiego: il file completo
-        .finally(() => { inCarico.current[id] = false; });
+        .finally(() => { inCarico.current.set(id, false); });
     };
     // mercati per campionato: si scaricano solo quelli dei campionati scelti nella Schedina
     const caricaMercati = (leghe) => {
       if (!Draw || !Draw.leggera) return;
       for (const k of leghe) {
         const c = "merc:" + k;
-        if (inCarico.current[c]) continue;
-        inCarico.current[c] = true;
+        if (inCarico.current.get(c)) continue;
+        inCarico.current.set(c, true);
         fetch("data/mercati/" + k + ".json").then((r) => (r.ok ? r.json() : fetch("data/mercati.json").then((r2) => r2.json())))
-          .then((x) => setMerc((m) => ({ ...(m || {}), ...x }))).catch(() => { inCarico.current[c] = false; });
+          .then((x) => setMerc((m) => ({ ...(m || {}), ...x }))).catch(() => { inCarico.current.set(c, false); });
       }
     };
     const live = useLiveScores(Draw ? Draw.matches : null);
     if (Draw) registraColori(Draw);
     const D0 = React.useMemo(() => Draw && { ...Draw, matches: Draw.matches.map((m0) => {
-      const x = extra[m0.id];
+      const x = extra.get(m0.id);
       const m = !Draw.leggera ? m0 : { ...m0, ...(x && !x.mancano ? x : {}), markets: (x && x.markets) || (merc && merc[m0.id]) || m0.markets, dett: !!(x && !x.mancano) };
       const l = live[m.id];
       if (!l) return m;
@@ -243,15 +243,15 @@ import { Guida } from "./guida.js";
     // avvisi: gol e fine partita delle partite preferite e della squadra del cuore (con l'app aperta)
     useEffect(() => {
       if (!D) return;
-      const now = {};
-      for (const m of D.matches) now[m.id] = { st: m.st, g: m.g ? m.g.join("-") : null };
+      const now = new Map();
+      for (const m of D.matches) now.set(m.id, { st: m.st, g: m.g ? m.g.join("-") : null });
       const old = prev.current, quando = prevT.current;
       prev.current = now; prevT.current = Date.now();
       // solo con l'app davanti agli occhi e con dati di pochi minuti fa: riaprendo l'app non si rivivono gol e finali gia avvenuti
       if (!old || !avvisi || document.visibilityState !== "visible" || Date.now() - quando > 4 * 60000) return;
       for (const m of D.matches) {
         if (!mia(m)) continue;
-        const o = old[m.id], n = now[m.id];
+        const o = old.get(m.id), n = now.get(m.id);
         if (!o) continue;
         let msg = null;
         if (o.st !== "LIVE" && n.st === "LIVE") msg = `Calcio d'inizio: ${m.h} - ${m.a}`;
@@ -336,7 +336,7 @@ import { Guida } from "./guida.js";
     const addLeg = (m, k, forza) => {
       const ops = options(m), o = ops.find((x) => x.k === k);
       if (!forza && o && o.q && o.q < QUOTA_MIN) {
-        const alt = ops.filter((x) => x.q >= QUOTA_MIN && x.q <= 2.2 && x.p >= 0.5 && !/^CS|PARI|DISPARI/.test(x.k))
+        const alt = ops.filter((x) => x.q >= QUOTA_MIN && x.q <= 2.2 && x.p >= 0.5 && !/^(CS|PARI|DISPARI)/.test(x.k))
           .sort((a, b) => ((b.s != null ? b.s : 50) / 100 + b.p) - ((a.s != null ? a.s : 50) / 100 + a.p))[0];
         setQuotaBassa({ m, k, q: o.q, alt });
         return;

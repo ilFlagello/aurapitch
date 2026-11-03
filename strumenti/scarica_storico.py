@@ -10,7 +10,7 @@ UA = {"User-Agent": "Mozilla/5.0 (AuraPitch beta; ricerca)"}
 
 
 def get(url):
-    with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=40) as r:
+    with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=20) as r:
         return r.read()
 
 
@@ -37,13 +37,24 @@ def divisioni_presenti(p):
 
 
 ARCHIVIO = os.path.join(OUT, "fd_partite.csv.gz")
-SALTA_FD = os.environ.get("RIFAI_FD") != "1" and divisioni_presenti(ARCHIVIO) >= set(PRINCIPALI + ALTRI) | set(NUOVI.values())
-with (open(os.devnull, "w") if SALTA_FD else gzip.open(ARCHIVIO, "wt", encoding="utf-8", newline="")) as f:
+TUTTE = set(PRINCIPALI + ALTRI) | set(NUOVI.values())
+gia = set() if os.environ.get("RIFAI_FD") == "1" else divisioni_presenti(ARCHIVIO)
+SALTA_FD = gia >= TUTTE
+# si tengono le righe dei campionati gia scaricati e si scarica solo cio che manca (ogni file ha un tetto di tempo breve)
+vecchie = []
+if gia and not SALTA_FD:
+    with gzip.open(ARCHIVIO, "rt", encoding="utf-8") as f0:
+        vecchie = [r for r in csv.reader(f0)][1:]
+    print("Archivio esistente:", len(vecchie), "righe di", sorted(gia), flush=True)
+with (open(os.devnull, "w") if SALTA_FD else gzip.open(ARCHIVIO + ".nuovo", "wt", encoding="utf-8", newline="")) as f:
     w = csv.writer(f)
     w.writerow(["Season"] + COL)
+    for r in vecchie:
+        w.writerow(r)
     for anno in ([] if SALTA_FD else range(2012, 2026)):
         stag = f"{anno % 100:02d}{(anno + 1) % 100:02d}"
-        for div in PRINCIPALI + (ALTRI if anno >= DAL_ALTRI else ()):
+        for div in [d for d in PRINCIPALI + (ALTRI if anno >= DAL_ALTRI else ()) if d not in gia]:
+            print("scarico", stag, div, flush=True)
             try:
                 raw = get(f"https://www.football-data.co.uk/mmz4281/{stag}/{div}.csv")
             except Exception as e:  # noqa: BLE001
@@ -57,7 +68,7 @@ with (open(os.devnull, "w") if SALTA_FD else gzip.open(ARCHIVIO, "wt", encoding=
                 righe += 1
             time.sleep(0.5)
     # campionati "nuovi": un file per paese con tutte le stagioni; quote di chiusura (AvgC*), niente Over/Under
-    for paese, div in ({} if SALTA_FD else NUOVI).items():
+    for paese, div in ({} if SALTA_FD else {k: v for k, v in NUOVI.items() if v not in gia}).items():
         try:
             raw = get(f"https://www.football-data.co.uk/new/{paese}.csv")
         except Exception as e:  # noqa: BLE001
@@ -82,10 +93,15 @@ with (open(os.devnull, "w") if SALTA_FD else gzip.open(ARCHIVIO, "wt", encoding=
             righe += 1
         print(paese, div, righe - n0, "partite")
         time.sleep(0.5)
-print("Football-Data: righe", righe)
+if not SALTA_FD:
+    os.replace(ARCHIVIO + ".nuovo", ARCHIVIO)  # il file vecchio si sostituisce solo a download finito
+print("Football-Data: righe nuove", righe, flush=True)
 
 LEGHE_US = {"EPL": "E0", "La_liga": "SP1", "Bundesliga": "D1", "Serie_A": "I1", "Ligue_1": "F1"}
 n = 0
+if os.path.exists(os.path.join(OUT, "understat_xg.csv.gz")) and os.environ.get("RIFAI_XG") != "1":
+    print("Understat: archivio gia presente, salto", flush=True)
+    raise SystemExit(0)
 with gzip.open(os.path.join(OUT, "understat_xg.csv.gz"), "wt", encoding="utf-8", newline="") as f:
     w = csv.writer(f)
     w.writerow(["Div", "Season", "Datetime", "Home", "Away", "HG", "AG", "HxG", "AxG"])

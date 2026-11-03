@@ -26,6 +26,8 @@ import urllib.request
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
+import salvadanaio as SV
+
 # Campionati: id API-Football e titolo usato da The Odds API (la chiave viene cercata nell'elenco ufficiale, che e gratuito)
 LEAGUES = [
     {"nome": "Serie A", "af": 135, "odds_title": "Serie A - Italy", "odds_key": "soccer_italy_serie_a"},
@@ -41,7 +43,7 @@ LEAGUES = [
     {"nome": "Conference League", "af": 848, "odds_title": "UEFA Europa Conference League", "odds_key": "soccer_uefa_europa_conference_league"},
     {"nome": "Coppa Italia", "af": 137, "odds_title": "Coppa Italia", "odds_key": "soccer_italy_coppa_italia"},
 ]
-# The Odds API: 2 crediti per campionato (mercati h2h + totals, area eu). 6 campionati al giorno = circa 360 crediti al mese su 500.
+# The Odds API: 2 crediti per campionato (mercati h2h + totals, area eu), 500 crediti al mese: li divide salvadanaio.py.
 ODDS_API_LEAGUES = ["Serie A", "Serie B", "Premier League", "LaLiga", "Bundesliga", "Champions League", "Europa League", "Conference League", "Coppa Italia"]
 COPPE = {"Champions League", "Europa League", "Conference League", "Coppa Italia"}  # quote solo se ci sono partite entro 3 giorni (controllo gratuito)
 AF_BASE = "https://v3.football.api-sports.io"
@@ -70,17 +72,22 @@ def get(url, headers=None):
         return body, {k.lower(): v for k, v in r.headers.items()}
 
 
-def af(path, **params):
-    """Chiamata ad API-Football con controllo del budget giornaliero."""
+def af(path, cat="partite", **params):
+    """Chiamata ad API-Football con controllo del budget giornaliero: ogni lavoro (partite, infortuni, formazioni) ha il suo
+    tetto nel salvadanaio, cosi nessuno lascia a secco gli altri."""
     key = (os.environ.get("API_FOOTBALL_KEY") or "").strip()  # la chiave incollata nei segreti puo avere un "a capo" in fondo
     if not key:  # fonte facoltativa: senza chiave si va avanti con le altre
         return None
     if BUDGET.af_rimaste is not None and BUDGET.af_rimaste <= AF_RISERVA:
         print(f"  [API-Football] budget quasi esaurito ({BUDGET.af_rimaste} rimaste): salto {path}")
         return None
+    if not SV.af_puo(cat):
+        print(f"  [API-Football] tetto di oggi per '{cat}' raggiunto: salto {path} (si usano le fonti gratuite)")
+        return None
     body, h = get(f"{AF_BASE}{path}?{urllib.parse.urlencode(params)}", {"x-apisports-key": key})
     if "x-ratelimit-requests-remaining" in h:
         BUDGET.af_rimaste = int(h["x-ratelimit-requests-remaining"])
+    SV.af_spesa(cat, BUDGET.af_rimaste)
     if body.get("errors"):
         print(f"  [API-Football] {path} {params}: {body['errors']}")
     time.sleep(6.5)  # il piano gratuito limita anche le richieste al minuto
@@ -100,14 +107,33 @@ def partite_vicine(chiave, giorni=3):
     return False
 
 
-def odds_api(path, **params):
+def odds_api(path, cat="mattino", **params):
+    """The Odds API. Elenco campionati ed eventi sono gratis; quote e risultati costano (mercati x aree) e passano dal
+    salvadanaio: ogni giorno ha la sua parte dei crediti del mese, il mattino ha la precedenza sulle fotografie pre-partita."""
     key = os.environ.get("ODDS_API_KEY")
     if not key:
+        return None, {}
+    a_pagamento = path.endswith("/odds") or path.endswith("/scores")
+    stima = max(1, len(str(params.get("markets", "h2h")).split(","))) * max(1, len(str(params.get("regions", "eu")).split(","))) if path.endswith("/odds") else 2
+    rimasti = None
+    try:
+        rimasti = int(BUDGET.odds_rimasti) if BUDGET.odds_rimasti is not None else None
+    except ValueError:
+        pass
+    if a_pagamento and not SV.odds_puo(cat, stima, rimasti):
+        print(f"  [The Odds API] crediti di oggi finiti per '{cat}': salto {path} (crediti tenuti per i prossimi giorni)")
         return None, {}
     params["apiKey"] = key
     body, h = get(f"{ODDS_BASE}{path}?{urllib.parse.urlencode(params)}")
     if "x-requests-remaining" in h:
         BUDGET.odds_rimasti = h["x-requests-remaining"]
+        try:
+            if a_pagamento:
+                SV.odds_spesa(cat, int(h.get("x-requests-last", stima) or stima), int(h["x-requests-remaining"]))
+            else:
+                SV.odds_puo(cat, 0, int(h["x-requests-remaining"]))  # aggiorna i crediti rimasti (chiamata gratuita)
+        except ValueError:
+            pass
         try:  # registro dei crediti: serve a verificare che la fotografia pre-partita stia nel piano gratuito
             with open(os.path.join("data", "crediti_quote.json"), "w", encoding="utf-8") as f:
                 json.dump({"rimasti": int(h["x-requests-remaining"]), "usati": int(h.get("x-requests-used", 0) or 0), "t": datetime.now(timezone.utc).isoformat()}, f)
@@ -196,7 +222,7 @@ def giro_completo(base="data"):
     partite = {}
 
     giro_infortuni(base)  # piano gratuito: solo richieste per data (le stagioni in corso non sono incluse)
-    fx = af("/fixtures", date=giorno, timezone=TZ)  # una sola richiesta per tutte le partite del giorno
+    fx = af("/fixtures", cat="partite", date=giorno, timezone=TZ)  # una sola richiesta per tutte le partite del giorno
     if fx:
         salva(cart, f"{ora}_af_fixtures.json", fx)
         for f in fx.get("response", []):
@@ -244,15 +270,16 @@ def giro_completo(base="data"):
             k = per_titolo.get(lg["odds_title"], lg["odds_key"])
             if k in esistenti:
                 chiavi[lg["nome"]] = k
-    for nome in ODDS_API_LEAGUES:
-        if (nome not in attivi and nome not in COPPE) or nome not in chiavi:
-            continue
-        if nome in COPPE and not partite_vicine(chiavi[nome]):
-            print(f"{nome}: nessuna partita nei prossimi 3 giorni, quote non scaricate")
-            continue
-        ev, _ = odds_api(f"/sports/{chiavi[nome]}/odds", regions="eu", markets="h2h,totals", oddsFormat="decimal", dateFormat="iso")
+    # ordine dei campionati: prima quelli con partite nei prossimi 3 giorni (in ordine di importanza), poi gli altri solo se
+    # avanzano crediti e la loro ultima fotografia ha almeno 2 giorni (il controllo delle partite vicine e gratuito)
+    vicini = [n for n in ODDS_API_LEAGUES if n in chiavi and partite_vicine(chiavi[n])]
+    lontani = [n for n in ODDS_API_LEAGUES if n in chiavi and n not in vicini and n not in COPPE
+               and (SV.odds_ultima(n) or "0000") <= (datetime.now(timezone.utc).date() - timedelta(days=2)).isoformat()]
+    for nome in vicini + lontani:
+        ev, _ = odds_api(f"/sports/{chiavi[nome]}/odds", cat="mattino", regions="eu", markets="h2h,totals", oddsFormat="decimal", dateFormat="iso")
         if ev is None:
             continue
+        SV.odds_segna_lega(nome)
         salva(cart, f"{ora}_oddsapi_{chiavi[nome]}.json", ev)
         for e in ev:
             trovata = None
@@ -268,10 +295,12 @@ def giro_completo(base="data"):
     # risultati degli ultimi giorni per i campionati non coperti da football-data.org (2 crediti per campionato)
     for nome in SCORES_ODDS_API:
         if nome in chiavi:
-            sc, _ = odds_api(f"/sports/{chiavi[nome]}/scores", daysFrom=3, dateFormat="iso")
+            sc, _ = odds_api(f"/sports/{chiavi[nome]}/scores", cat="mattino", daysFrom=3, dateFormat="iso")
             if sc is not None:
                 salva(os.path.join(base, "fd"), f"scores_{chiavi[nome]}.json", sc)
 
+    SV.odds_mattino_fatto()
+    print("Salvadanaio:", SV.riassunto())
     scrivi_csv(cart, partite)
     giro_fd(base, completo=True)
     scarica_stagione_fd(base)
@@ -351,11 +380,12 @@ def giro_infortuni(base="data", forza=True):
         return
     out = {"aggiornato": ora.isoformat(timespec="minutes"), "squadre": {}}
     n = 0
-    for dd in (0, 1):
+    # oggi a ogni giro; domani al mattino e ogni 6 ore (cambia meno ed e lontano dal blocco del consiglio)
+    for dd in ((0, 1) if forza or ora.hour % 6 == 0 else (0,)):
         giorno = (ora + timedelta(days=dd)).strftime("%Y-%m-%d")
         page, tot = 1, 1
         while page <= tot and page <= 5:
-            x = af("/injuries", date=giorno, page=page) if page > 1 else af("/injuries", date=giorno)
+            x = af("/injuries", cat="infortuni", date=giorno, page=page) if page > 1 else af("/injuries", cat="infortuni", date=giorno)
             if not x:
                 break
             tot = (x.get("paging") or {}).get("total", 1) or 1
@@ -394,13 +424,24 @@ def giro_formazioni(base="data", finestra_min=90):
         return
     fx = json.load(open(os.path.join(cart, path[-1]), encoding="utf-8"))
     ids = {lg["af"] for lg in LEAGUES}
-    gia = {f.split("_")[2] for f in os.listdir(cart) if "_af_lineups_" in f}
+    gia = {f.rsplit("_", 1)[1][:-5] for f in os.listdir(cart) if "_af_lineups_" in f}  # id della partita (nome file ..._af_lineups_<id>.json)
+    # le formazioni ESPN sono gratuite: API-Football serve solo per le partite che ESPN non ha ancora
+    try:
+        with open(os.path.join("app", "data", "giornata.json"), encoding="utf-8") as fh:
+            per_id = {m["id"]: m for m in json.load(fh).get("matches", [])}
+        with open(os.path.join(base, "espn", "formazioni.json"), encoding="utf-8") as fh:
+            con_espn = [(per_id[i]["h"], per_id[i]["a"]) for i, x in (json.load(fh).get("partite") or {}).items() if i in per_id and x.get("h") and x.get("a")]
+    except (OSError, ValueError, KeyError):
+        con_espn = []
     for f in fx.get("response", []):
         if f["league"]["id"] not in ids or str(f["fixture"]["id"]) in gia:
             continue
+        if any(simile(h, f["teams"]["home"]["name"]) and simile(a, f["teams"]["away"]["name"]) for h, a in con_espn):
+            continue
         inizio = datetime.fromisoformat(f["fixture"]["date"])
-        if timedelta(0) <= inizio - oggi <= timedelta(minutes=finestra_min):
-            lu = af("/fixtures/lineups", fixture=f["fixture"]["id"])
+        # le formazioni escono circa un'ora prima: prima di 70 minuti la richiesta andrebbe quasi sempre a vuoto
+        if timedelta(minutes=10) <= inizio - oggi <= timedelta(minutes=min(70, finestra_min)):
+            lu = af("/fixtures/lineups", cat="formazioni", fixture=f["fixture"]["id"])
             if lu and lu.get("response"):
                 salva(cart, f"{oggi.strftime('%H%M')}_af_lineups_{f['fixture']['id']}.json", lu)
                 print(f"  Formazioni salvate: {f['teams']['home']['name']} - {f['teams']['away']['name']}")
@@ -478,7 +519,6 @@ def giro_notizie(base="data", ore=48):
 
 LEGA_APP = {"I1": "Serie A", "I2": "Serie B", "CL": "Champions League", "EL": "Europa League", "ECL": "Conference League", "CI": "Coppa Italia",
             "E0": "Premier League", "SP1": "LaLiga", "D1": "Bundesliga"}
-CREDITI_GIORNO = 14  # stima prudente dei crediti The Odds API usati dal giro del mattino
 
 
 def scarica_stagione_fd(base="data"):
@@ -555,9 +595,7 @@ def giro_prepartita(base="data", da_min=15, a_min=70):
     if not sports:
         sports, h = [], {"x-requests-remaining": "0"}
     rimasti = int(h.get("x-requests-remaining", "0") or 0)
-    import calendar
-    giorni = calendar.monthrange(ora.year, ora.month)[1] - ora.day + 1
-    riserva = giorni * CREDITI_GIORNO + 10
+    BUDGET.odds_rimasti = rimasti
     per_titolo = {x["title"]: x["key"] for x in sports}
     chiavi = {lg["nome"]: per_titolo.get(lg["odds_title"], lg["odds_key"]) for lg in LEAGUES}
     for k, ms in vicine.items():
@@ -568,10 +606,12 @@ def giro_prepartita(base="data", da_min=15, a_min=70):
         if ultimo and (ora - datetime.fromisoformat(ultimo)).total_seconds() < 50 * 60:
             fatte.add(k)  # fotografia media recente: non la si sostituisce con quella di un bookmaker solo
             continue
-        if rimasti - 2 < riserva:
-            print(f"Pre-partita {nome}: saltata, crediti rimasti {rimasti} (riserva per il mattino fino a fine mese: {riserva})")
+        if not SV.odds_puo("prepartita", 2, rimasti):
+            print(f"Pre-partita {nome}: crediti di oggi gia spesi, uso le quote gratuite ESPN (crediti rimasti {rimasti}, tenuti per i prossimi giorni)")
             continue
-        ev, h2 = odds_api(f"/sports/{chiavi.get(nome)}/odds", regions="eu", markets="h2h,totals", oddsFormat="decimal", dateFormat="iso")
+        ev, h2 = odds_api(f"/sports/{chiavi.get(nome)}/odds", cat="prepartita", regions="eu", markets="h2h,totals", oddsFormat="decimal", dateFormat="iso")
+        if ev is None:
+            continue
         rimasti = int(h2.get("x-requests-remaining", rimasti) or rimasti)
         stato[k] = ora.isoformat()
         fatte.add(k)

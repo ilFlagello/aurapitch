@@ -5,12 +5,12 @@ permissions: { contents: write }
 jobs:
   scarica:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with: { python-version: "3.12" }
-      - run: mkdir -p storico && python strumenti/scarica_storico.py 2>&1 | tee storico/esito.txt
+      - run: mkdir -p storico && python -u strumenti/scarica_storico.py 2>&1 | tee storico/esito.txt
       - run: |
           git config user.name "aurapitch-raccolta"; git config user.email "aurapitch-raccolta@users.noreply.github.com"
           git add storico && git commit -m "Archivi storici per i test" && git pull --rebase --autostash && git push

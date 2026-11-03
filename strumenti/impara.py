@@ -311,14 +311,17 @@ MIN_GRUPPO = 3000
 
 def segnali_archivio(R):
     """Valori degli specialisti per ogni partita dell'archivio, con le sole partite giocate prima (stesso codice dell'app)."""
-    storia = {}
+    storia, coppie = {}, {}
     X = np.full((len(R), len(SP.NOMI)), np.nan, dtype=np.float32)
     for i, r in enumerate(R):
         if not r.get("h") or not r.get("a"):
             continue
         t = datetime.fromisoformat(r["d"]).date()
         kh, ka = (r["lg"], r["h"]), (r["lg"], r["a"])
-        v = SP.segnali(storia.get(kh, []), storia.get(ka, []), t)
+        ph, pa = SP.piega(r["h"]), SP.piega(r["a"])
+        dir_ = [{"t": t1, "gf": x, "gs": y} for t1, x, y in coppie.get((ph, pa), [])] + [{"t": t1, "gf": y, "gs": x} for t1, x, y in coppie.get((pa, ph), [])]
+        v = SP.segnali(storia.get(kh, []), storia.get(ka, []), t, sorted(dir_, key=lambda z: z["t"]))
+        coppie.setdefault((ph, pa), []).append((t, r["g"][0], r["g"][1]))
         X[i] = [np.nan if x is None else x for x in v]
         storia.setdefault(kh, []).append({"t": t, "casa": True, "gf": r["g"][0], "gs": r["g"][1]})
         storia.setdefault(ka, []).append({"t": t, "casa": False, "gf": r["g"][1], "gs": r["g"][0]})

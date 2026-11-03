@@ -1,0 +1,22 @@
+# AuraPitch - guardiano della sicurezza ogni giorno: regole di sicurezza del sito, servizio (firme, richieste troppo grandi,
+# limiti), avvisi di sicurezza di GitHub, nessun dato personale nei file pubblici, cassaforte mai nel repository.
+# Se trova un problema l'esecuzione fallisce e il controllo orario apre l'avviso su GitHub (una mail).
+name: Guardiano della sicurezza
+on:
+  schedule:
+    - cron: "50 5 * * *"
+  workflow_dispatch: {}
+permissions:
+  contents: read
+  security-events: read
+concurrency: { group: guardiano, cancel-in-progress: true }
+jobs:
+  controlla:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Controlli di sicurezza
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 strumenti/guardiano.py

@@ -366,5 +366,176 @@ class Salvadanaio(unittest.TestCase):
                 SV.PATH, SV._ora = vecchi
 
 
+class NuoviSpecialisti(unittest.TestCase):
+    def test_coppe_e_movimento(self):
+        import specialisti as SP
+        for n in ("coppe", "movimento"):
+            self.assertIn(n, SP.NOMI)
+        self.assertEqual(SP.NOMI[-3:], ["consenso", "coppe", "movimento"])  # in coda: i diari vecchi restano validi
+        self.assertIsNone(SP.coppe(None))  # partita di coppa: nessun valore
+        self.assertEqual(SP.coppe([{"prima": None, "dopo": None}, {"prima": None, "dopo": None}]), 0)
+        self.assertGreater(SP.coppe([{"prima": None, "dopo": None}, {"prima": 2, "dopo": None}]), 0)  # l'ospite ha giocato in coppa: favorisce la casa
+        self.assertGreater(SP.carico_coppa({"prima": 2}), SP.carico_coppa({"dopo": 2}))  # la coppa giocata pesa piu di quella da giocare
+        self.assertIsNone(SP.movimento([0.5, 0.3, 0.2], None))
+        self.assertAlmostEqual(SP.movimento([0.55, 0.27, 0.18], [0.5, 0.3, 0.2]), 0.07)
+        v = SP.segnali([], [], None, coppa=0.3, mov=-0.02)
+        self.assertEqual(len(v), len(SP.NOMI))
+        self.assertEqual(v[SP.NOMI.index("coppe")], 0.3)
+        self.assertEqual(v[SP.NOMI.index("movimento")], -0.02)
+
+    def test_specialisti_del_giorno(self):
+        import tempfile
+        import genera_app as GA
+        import specialisti as SP
+        with tempfile.TemporaryDirectory() as d:
+            vecchio = GA.DIARIO
+            GA.DIARIO = d
+            with open(os.path.join(d, "2026-11-03.json"), "w") as f:
+                json.dump({"m1": {"mk0": [0.5, 0.3, 0.2]}}, f)
+            try:
+                dd = {"matches": [{"id": "m1", "date": "2026-11-03", "st": "NS", "mk": [0.55, 0.27, 0.18], "sp": None,
+                                   "_ctx": {"coppa": [{"prima": None, "dopo": None}, {"prima": 2, "dopo": None}]}}]}
+                GA.aggiorna_specialisti_giorno(dd)
+                sp = dd["matches"][0]["sp"]
+                self.assertEqual(len(sp), len(SP.NOMI))
+                self.assertGreater(sp[SP.NOMI.index("coppe")], 0)
+                self.assertAlmostEqual(sp[SP.NOMI.index("movimento")], 0.07)
+            finally:
+                GA.DIARIO = vecchio
+
+
+class VerificatoreStatistiche(unittest.TestCase):
+    def test_senza_taratura_nulla_cambia(self):
+        CK._TAR_STAT = {}
+        try:
+            a = CK.linee("K", 4.6)
+            b = CK.linee("K", 4.6, {"lega": 4.4, "arb": {"K": 1.2}, "eq": 0.7})
+            self.assertEqual(a, b)
+            sg = CK.segnali_stat("K", 4.5, 4.6, CK.MODELLI["K"]["r"], {"lega": 4.4, "arb": {"K": 1.2}, "eq": 0.7})
+            self.assertEqual(len(sg), len(CK.NOMI_STAT))
+            self.assertIsNone(CK.segnali_stat("C", 9.5, 10, CK.MODELLI["C"]["r"], {"arb": {"K": 1.2}})[2])  # arbitro: niente per gli angoli
+            tar = {"tipi": {"K": {"attivo": True, "a": 0.3, "b": 1.0, "mu": [0] * 5, "sd": [1] * 5, "w": {}}}}
+            p = CK.applica_stat("K", 0.5, sg, tar)
+            self.assertGreater(p, 0.5)
+            self.assertLessEqual(p, 0.62)  # mai piu di 12 punti
+        finally:
+            CK._TAR_STAT = None
+
+    def test_controllo_sul_tabellino(self):
+        import tempfile
+        from datetime import date
+        import statistiche_ia as SI
+        oggi = date.today().isoformat()
+        ck = {"K": [4.6, 2.2, 2.4, 4.4], "C": [9.8, 5.5, 4.3, 9.9], "F": [24.0, 12.0, 12.0, 24.5], "arb": {"K": 1.1, "F": 1.0}, "eq": 0.6}
+        righe = SI.righe_partita(ck, {"K": [3, 3], "C": [7, 2], "F": [10, 11]}, oggi, "p1")
+        self.assertTrue(righe)
+        per = {z[3]: z[5] for z in righe}
+        self.assertEqual(per.get("KO4.5"), 1)  # 6 cartellini
+        self.assertEqual(per.get("CO9.5"), 0)  # 9 angoli
+        self.assertEqual(per.get("CHO4.5"), 1)  # 7 angoli della squadra di casa
+        self.assertTrue(all(0.03 < z[4] < 0.97 and len(z) == 6 + len(SI.NOMI) for z in righe))
+        with tempfile.TemporaryDirectory() as d:
+            os.makedirs(os.path.join(d, "diario"))
+            with open(os.path.join(d, "diario", oggi + ".json"), "w") as f:
+                json.dump({"p1": {"lg": "I1", "h": "Inter", "a": "Milan", "date": oggi, "ko": oggi + "T19:45:00+00:00", "st": "FT", "g": [2, 1], "ck": ck}}, f)
+            with open(os.path.join(d, "tab.json"), "w") as f:
+                json.dump({"e1": {"lg": "I1", "t": oggi + "T19:45Z", "h": "Internazionale", "a": "AC Milan", "st": {"K": [3, 3], "C": [7, 2], "F": [10, 11]}}}, f)
+            vecchi = (SI.DIARIO, SI.TABELLINI, SI.VERIFICA)
+            SI.DIARIO, SI.TABELLINI, SI.VERIFICA = os.path.join(d, "diario"), os.path.join(d, "tab.json"), os.path.join(d, "ver.json")
+            try:
+                r1 = SI.verifica()
+                self.assertEqual(len(r1), len(righe))
+                self.assertEqual(len(SI.verifica()), len(righe))  # una partita si controlla una volta sola
+                tar = SI.tara(r1)
+                self.assertFalse(tar["tipi"]["K"]["attivo"])  # pochi controlli: in ombra
+            finally:
+                SI.DIARIO, SI.TABELLINI, SI.VERIFICA = vecchi
+
+    def test_statistiche_dal_tabellino_espn(self):
+        import espn_dati as ES
+        summ = {"header": {"competitions": [{"competitors": [{"homeAway": "home", "team": {"id": "1"}}, {"homeAway": "away", "team": {"id": "2"}}]}]},
+                "boxscore": {"teams": [{"team": {"id": "2"}, "statistics": [{"name": "yellowCards", "displayValue": "3"}, {"name": "redCards", "displayValue": "1"},
+                                                                          {"name": "wonCorners", "displayValue": "4"}, {"name": "foulsCommitted", "displayValue": "14"}]},
+                                       {"team": {"id": "1"}, "statistics": [{"name": "yellowCards", "displayValue": "2"}, {"name": "redCards", "displayValue": "0"},
+                                                                          {"name": "wonCorners", "displayValue": "6"}, {"name": "foulsCommitted", "displayValue": "11"}]}]}}
+        self.assertEqual(ES.statistiche_squadre(summ), {"K": [2, 4], "C": [6, 4], "F": [11, 14]})
+        self.assertIsNone(ES.statistiche_squadre({"header": {"competitions": [{"competitors": []}]}}))
+
+
+class StoricoSchedine(unittest.TestCase):
+    def test_salvata_una_volta_e_verificata(self):
+        import tempfile
+        from datetime import datetime, timezone
+        import schedine_ia as SI
+
+        def partita(i, p1, q1):
+            return {"id": f"m{i}", "lg": "I1", "h": f"Casa{i}", "a": f"Ospite{i}", "date": "2026-11-03", "ko": "2026-11-03T19:45:00+00:00", "st": "NS",
+                    "markets": [["1", p1, q1, 1], ["X", 0.25, 3.6, 1], ["2", round(0.75 - p1, 3), 4.0, 1], ["1X", 0.9, 1.15, 0], ["O2.5", 0.55, 1.8, 1], ["U2.5", 0.45, 2.0, 1]]}
+        d = {"matches": [partita(i, 0.66 - 0.02 * i, 1.45 + 0.03 * i) for i in range(6)]}
+        with tempfile.TemporaryDirectory() as t:
+            path = os.path.join(t, "s.json")
+            out = SI.aggiorna(d, ora=datetime(2026, 11, 3, 6, 30, tzinfo=timezone.utc), path=path)
+            giorno = out["giorni"]["2026-11-03"]
+            self.assertEqual(len(giorno["0"]["legs"]), 3)
+            self.assertTrue(all(1.3 <= l["q"] <= 1.6 for l in giorno["0"]["legs"]))  # Zero Tachicardia: quote 1,30-1,60
+            prima = json.dumps(giorno)
+            for m in d["matches"]:
+                m["markets"][0][2] = 1.31  # le quote cambiano: la schedina del giorno no
+            out = SI.aggiorna(d, ora=datetime(2026, 11, 3, 12, tzinfo=timezone.utc), path=path)
+            self.assertEqual(json.dumps(out["giorni"]["2026-11-03"]), prima)
+            for m in d["matches"]:
+                m["st"], m["g"] = "FT", [2, 1]
+            out = SI.aggiorna(d, ora=datetime(2026, 11, 4, 8, tzinfo=timezone.utc), path=path)
+            s0 = out["giorni"]["2026-11-03"]["0"]
+            self.assertIn(s0["esito"], (0, 1))
+            self.assertEqual(out["mese"]["0"]["giocate"], 1)
+            self.assertAlmostEqual(out["mese"]["0"]["punti"], round((s0["q"] - 1) if s0["esito"] else -1, 2))
+
+
+class Coerenza(unittest.TestCase):
+    def test_controlli(self):
+        sys.path.insert(0, os.path.join(RADICE, "strumenti"))
+        import coerenza as CO
+        buona = {"id": "a", "date": "2026-11-03", "h": "A", "a": "B", "ko": "2026-11-03T19:00:00+00:00", "st": "NS", "p": [0.5, 0.3, 0.2], "mk": [0.5, 0.3, 0.2],
+                 "po": 0.5, "odds": {"1": 1.9, "X": 3.2}, "markets": [["1", 0.5, 1.9, 1]], "tip": {"consiglio": {"c": "1"}}, "blocco": {"st": "bloccato"}}
+        reg = {"a": {"tips": {"consiglio": {"c": "1"}}, "tB": "2026-11-03T18:15:00+00:00"}}
+        pr, n = CO.controlla({"matches": [buona]}, {"x.json": '{"a": "https://x/NaN"}'}, reg, {"matches": [{"id": "a"}]})
+        self.assertEqual(pr, [])
+        self.assertGreater(n, 5)
+        cattiva = dict(buona, p=[0.6, 0.3, 0.2], odds={"1": 0.9}, tip={"consiglio": {"c": "2"}})
+        pr, _ = CO.controlla({"matches": [cattiva, dict(buona)]}, {"x.json": '{"a": NaN}'}, reg)
+        testo = " ".join(pr)
+        for parola in ("NaN", "sommano", "quota 1", "doppia", "cambiato dopo il blocco"):
+            self.assertIn(parola, testo)
+
+
+class RitmoCrediti(unittest.TestCase):
+    def test_previsione(self):
+        from datetime import date
+        import salvadanaio as SV
+        vecchio = SV.PATH
+        SV.PATH = os.path.join(RADICE, "data", "_non_esiste.json")
+        try:
+            self.assertTrue(SV.previsione(date(2026, 11, 15), rimasti=260)["basta"])  # 15,6 al giorno per 16 giorni: bastano
+            pv = SV.previsione(date(2026, 11, 10), rimasti=100)  # 4,3 al giorno: non bastano per il mattino
+            self.assertFalse(pv["basta"])
+            self.assertLess(pv["fino_al"], 30)
+            self.assertTrue(SV.previsione(date(2026, 11, 3), rimasti=400)["basta"])  # inizio mese con una spesa alta: la parte del giorno basta
+        finally:
+            SV.PATH = vecchio
+
+
+class PercheCambiato(unittest.TestCase):
+    def test_riga(self):
+        import genera_app as GA
+        m = {"h": "Inter", "a": "Milan"}
+        f = [{"chi": "Lautaro", "lato": 0, "tipo": "panchina", "delta": -0.08}]
+        q = [{"c": "1", "p": 0.5}, {"c": "X", "p": 0.27}, {"c": "2", "p": 0.23}]
+        r = GA.perche_cambiato(m, f, q, [0.46, 0.28, 0.26], True)
+        self.assertEqual(r["da"], [0.5, 0.27, 0.23])
+        self.assertIn("Lautaro (Inter) in panchina", r["chi"][0])
+        self.assertIsNone(GA.perche_cambiato(m, f, q, [0.502, 0.27, 0.228], True))  # sotto un punto: niente riga
+
+
 if __name__ == "__main__":
     unittest.main()

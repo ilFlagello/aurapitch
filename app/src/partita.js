@@ -428,6 +428,20 @@ import { Anteprima, partitaSettimana } from "./extra.js";
         <div className="text-[14px] space-y-0.5"><div className=${"font-semibold " + C.tx}>Quote in movimento</div><div>${testo}</div>
           <div className=${"text-[12px] " + C.mu}>${v.perche ? "Possibile motivo: " + v.perche + "." : "Nessuna notizia registrata: il mercato potrebbe sapere qualcosa in più."} Variazione dalla prima lettura${v.dal ? " (" + new Date(v.dal).toLocaleString("it-IT", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + ")" : ""}.</div></div></div>`;
     }
+    /* "perché è cambiato": formazioni ufficiali e notizie su assenze spostano le probabilità rispetto alle sole quote */
+    function PercheCambiato({ m }) {
+      const v = m.cambio;
+      if (!v || !v.da || !v.a) return null;
+      const d = v.a.map((x, i) => x - v.da[i]), i = d.map(Math.abs).indexOf(Math.max(...d.map(Math.abs)));
+      const nome = [m.h, "il pareggio", m.a][i];
+      return html`<div className=${C.card + " p-4 flex gap-3"}>
+        <span className=${"w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border " + (d[i] > 0 ? TONE.good : TONE.bad)}><${Ic.Users} size=${17} /></span>
+        <div className="text-[14px] space-y-1 min-w-0"><div className=${"font-semibold " + C.tx}>Perché è cambiato</div>
+          <div className=${C.tx}>${v.chi.join("; ")}.</div>
+          <div className=${C.tx}><b>${nome[0].toUpperCase() + nome.slice(1)}</b>: dal <span className="num text-[15px]">${pct(v.da[i])}%</span> al <b className="num text-[15px]">${pct(v.a[i])}%</b>
+            <span className=${"text-[12px] " + (d[i] > 0 ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}> ${d[i] > 0 ? "+" : ""}${Math.round(d[i] * 100)}</span></div>
+          <div className=${"text-[12px] " + C.mu}>Prima: probabilità dalle sole quote. Dopo: con ${v.uff ? "le formazioni ufficiali e " : ""}le notizie sulle assenze. 1 · X · 2: ${v.da.map(pct).join(" · ")} → ${v.a.map(pct).join(" · ")}.</div></div></div>`;
+    }
     function Lineups({ sm, m, onPlayer }) {
       const F = sm.formazioni;
       if (!F[0] && !F[1] && m.formazione) return html`<${FormazioneProbabile} m=${m} />`;
@@ -607,6 +621,49 @@ import { Anteprima, partitaSettimana } from "./extra.js";
       let p = 0, tot = 0;
       for (let i = 0; i < ph.length; i++) for (let j = 0; j < pa.length; j++) { const w = ph[i] * pa[j]; tot += w; if (evalCode(code, g[0] + i, g[1] + j)) p += w; }
       return p / tot;
+    }
+    // gol attesi che restano alle due squadre (stessa formula di liveProb): minuto, espulsioni e spinta degli ultimi 20 minuti
+    function golRestanti(xg, min, reds, sp) {
+      reds = reds || [0, 0];
+      const f = quotaRestante(min), z = sp ? 0.058 * ((sp[0] || 0) - (sp[1] || 0)) : 0;
+      return [xg[0] * f * Math.pow(0.67, reds[0]) * Math.pow(1.25, reds[1]) * Math.exp(z), xg[1] * f * Math.pow(0.67, reds[1]) * Math.pow(1.25, reds[0]) * Math.exp(-z)];
+    }
+    /* momenti della partita per le probabilità in diretta: inizio, ogni gol ed espulsione, adesso (o fine). Punteggio dal testo
+       dell'evento quando c'è, altrimenti contando i gol per squadra. */
+    function momentiDiretta(sm, m) {
+      const xg = m.xg && m.xg[0] != null ? m.xg : null;
+      if (!xg || !sm || sm.st === "NS") return [];
+      const out = [], g = [0, 0], reds = [0, 0];
+      const riga = (min, tipo, chi, side) => { const sp = spinta(sm, min); const r = golRestanti(xg, min, reds, sp);
+        out.push({ min, tipo, chi, side, g: g.slice(), reds: reds.slice(), p: ["1", "X", "2"].map((c) => liveProb(c, xg, g, min, reds, sp)), r }); };
+      riga(0, "inizio", "", null);
+      for (const e of sm.eventi) {
+        const mn = minuto(e.min);
+        if (["gol", "rigore", "autogol"].includes(e.k)) {
+          if (e.score && e.score[0] != null) { g[0] = e.score[0]; g[1] = e.score[1]; } else if (e.side != null) g[e.side] += 1;
+          riga(mn, "gol", e.a, e.side);
+        } else if (e.k === "rosso" && e.side != null) { reds[e.side] += 1; riga(mn, "rosso", e.a, e.side); }
+      }
+      const fine = sm.st === "FT", mn = fine ? 96 : minuto(sm.clock || "");
+      if (sm.g && sm.g[0] != null) { g[0] = sm.g[0]; g[1] = sm.g[1]; }
+      if (!fine || out.length === 1) riga(mn, fine ? "fine" : "adesso", "", null);
+      return out;
+    }
+    function ProbDiretta({ sm, m }) {
+      const M = React.useMemo(() => momentiDiretta(sm, m), [sm, m]);
+      if (M.length < 2) return null;
+      const nomi = { inizio: "Calcio d'inizio", adesso: "Adesso", fine: "Fine" };
+      return html`<div className=${C.card + " p-4 space-y-2"}>
+        <div className="flex items-baseline"><span className=${C.lab + " flex-1"}>Probabilità in diretta</span><span className=${"text-[12px] " + C.mu}>1 · X · 2</span></div>
+        ${M.map((x, i) => html`<div key=${i} className=${"border-t pt-2 " + C.bd}>
+          <div className="flex items-center gap-2 text-[13px]">
+            <span className=${"num w-9 shrink-0 text-[15px] " + C.mu}>${x.min}'</span>
+            <span className=${"flex-1 min-w-0 truncate " + C.tx}>${x.tipo === "gol" ? html`<b>Gol ${x.side === 1 ? m.a : x.side === 0 ? m.h : ""}</b>${x.chi ? " · " + x.chi : ""}` : x.tipo === "rosso" ? html`<b>Espulso</b> ${x.chi}${x.side != null ? " (" + (x.side ? m.a : m.h) + ")" : ""}` : html`<b>${nomi[x.tipo]}</b>`}</span>
+            <b className=${"num text-[16px] " + C.tx}>${x.g[0]}-${x.g[1]}</b></div>
+          <div className="mt-1.5"><${AuraLine} m=${m} p=${x.p} h=${5} /></div>
+          <div className=${"flex justify-between text-[12px] tabular-nums mt-1 " + C.mu}><span>${pct(x.p[0])}% · ${pct(x.p[1])}% · ${pct(x.p[2])}%</span>
+            <span>Gol attesi rimasti ${nf(x.r[0].toFixed(2))} – ${nf(x.r[1].toFixed(2))}</span></div></div>`)}
+        <p className=${"text-[11px] " + C.mu}>Ricalcolate a ogni gol ed espulsione con minuto, punteggio e gol attesi che restano alle due squadre (dai gol attesi prima della partita, corretti per le espulsioni e per chi sta spingendo).</p></div>`;
     }
     function LiveTips({ m, sm }) {
       const tip = m.tip || {};
@@ -936,12 +993,14 @@ import { Anteprima, partitaSettimana } from "./extra.js";
         <div key=${mt} onTouchStart=${onTS} onTouchEnd=${onTE} className=${"space-y-3 min-h-[50vh] " + (dir > 0 ? "entra-dx" : dir < 0 ? "entra-sx" : "")}>
 
         ${mt === 0 && html`<${InBreve} m=${m} sm=${sm} pLive=${pLive} vai=${vai} onPlayer=${(p, j) => setPl({ p, side: j })} />`}
+        ${mt === 0 && m.st === "NS" && html`<${PercheCambiato} m=${m} />`}
         ${mt === 0 && m.st === "NS" && html`<${Movimento} m=${m} />`}
 
         ${mt === 1 && html`<${React.Fragment}>
           ${(!sm || sm.st === "NS") && html`<div className=${C.card + " p-4 text-[14px] " + C.mu}>${m.st === "FT" ? "Il resoconto della partita non è disponibile." : `La partita inizia ${m.date === new Date().toISOString().slice(0, 10) ? "oggi" : "il " + m.date.slice(8) + "/" + m.date.slice(5, 7)} alle ${m.time}: qui troverai azione in diretta, andamento, eventi, migliori in campo, mappa dei tiri e statistiche.`}</div>`}
           ${sm && sm.st === "LIVE" && html`<${LiveAction} sm=${sm} m=${m} />`}
           ${sm && sm.st !== "NS" && html`<${KeyEvents} sm=${sm} m=${m} />`}
+          ${sm && sm.st !== "NS" && html`<${ProbDiretta} sm=${sm} m=${m} />`}
           ${sm && sm.st !== "NS" && html`<${Migliori} sm=${sm} m=${m} onPlayer=${(p, j) => setPl({ p, side: j })} />`}
           ${sm && sm.st !== "NS" && html`<${StatsCard} sm=${sm} m=${m} />`}
           ${sm && sm.st !== "NS" && html`<${Voce} id="andamento" titolo="Andamento" sotto="Chi ha spinto, minuto per minuto" icona=${Ic.Activity}><${Andamento} sm=${sm} m=${m} /><//>`}
@@ -1088,4 +1147,4 @@ import { Anteprima, partitaSettimana } from "./extra.js";
       <//>`;
     }
 
-export { EseCard, Movimento, FormazioneProbabile, usaVoti, Row, Gate, KEY_T, trasf, PESI, prob1x2, toks, stesso, assenze, AssenzeCard, CampoNotte, TIRI, suNotte, TiriCard, LiveAction, EvIcon, riassunto, righeResoconto, Resoconto, KeyEvents, StatsCard, Cronaca, InfoCard, ArbitroCard, Badges, Lineups, tonoVoto, VotoChip, Migliori, Andamento, Curiosita, Sondaggio, ST_IT, PlayerSheet, _voti, caricaVoti, pois, PESO_SPINTA, spinta, quotaRestante, liveProb, LiveTips, meteoCache, MeteoCard, FattoriCard, StoricoCard, TeamView, TipView, MatchView, Vai, InBreve };
+export { EseCard, Movimento, PercheCambiato, ProbDiretta, momentiDiretta, golRestanti, FormazioneProbabile, usaVoti, Row, Gate, KEY_T, trasf, PESI, prob1x2, toks, stesso, assenze, AssenzeCard, CampoNotte, TIRI, suNotte, TiriCard, LiveAction, EvIcon, riassunto, righeResoconto, Resoconto, KeyEvents, StatsCard, Cronaca, InfoCard, ArbitroCard, Badges, Lineups, tonoVoto, VotoChip, Migliori, Andamento, Curiosita, Sondaggio, ST_IT, PlayerSheet, _voti, caricaVoti, pois, PESO_SPINTA, spinta, quotaRestante, liveProb, LiveTips, meteoCache, MeteoCard, FattoriCard, StoricoCard, TeamView, TipView, MatchView, Vai, InBreve };

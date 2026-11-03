@@ -242,7 +242,7 @@ async function controlla(env) {
     if (!ev) { if (old[k]) nuovo[k] = old[k]; continue; }
     const s = stato(ev), o = old[k];
     if (!s.g) s.g = o ? o.g : [0, 0]; // punteggio assente da ESPN: si tiene quello di prima (niente falsi "gol annullato")
-    nuovo[k] = { st: s.st, g: s.g, half: s.half, rossi: s.rossi.length, form: o ? o.form : false, prom: o ? o.prom : false, rad: o ? o.rad : false };
+    nuovo[k] = { st: s.st, g: s.g, half: s.half, rossi: s.rossi.length, form: o ? o.form : false, prom: o ? o.prom : false, rad: o ? o.rad : false, formT: o ? o.formT : undefined };
     if (!o) continue; // prima volta che la vediamo: nessun avviso
     // ogni avviso ha il suo simbolo (geometrico, non un'emoji), la sua icona e la sua vibrazione (vedi sw.js); "stile" sceglie quale
     const push = (title, body, tipo, stile) => msgs.push({ f, ids: ids.filter((id) => vuole(subs[id], tipo)), msg: { title: (SIMBOLO[stile || tipo] || "") + title, body, tipo: stile || tipo, tag: k + "|" + tipo + "|" + s.g.join("-") + "|" + (tipo === "rossi" ? body : ""), url: "./" } });
@@ -270,12 +270,25 @@ async function controlla(env) {
     // formazioni ufficiali: da 75 minuti prima del calcio d'inizio, controllo ogni 3 minuti finche escono
     if (s.st === "pre" && !o.form && s.ko - Date.now() < 75 * 60000 && new Date().getUTCMinutes() % 3 === 0) {
       const tit = await formazioni(k.split("|")[0], k.split("|")[1]);
-      if (tit) {
+      G = tit ? G || (await giornata()) || { matches: [] } : G;
+      const m = tit ? G.matches.find((x) => piano(x.h) === piano(f.h) && piano(x.a) === piano(f.a)) : null;
+      // si aspetta che l'algoritmo abbia ricalcolato con le formazioni (giro ogni 10 minuti, campo "uff" dei dati), al massimo
+      // 15 minuti o fino a poco prima del blocco del consiglio (45 minuti prima): cosi l'avviso dice l'effetto sul consiglio
+      if (tit && !nuovo[k].formT) nuovo[k].formT = Date.now();
+      const pronto = tit && ((m && m.uff && m.uff.some(Boolean)) || Date.now() - nuovo[k].formT > 15 * 60000 || s.ko - Date.now() < 48 * 60000);
+      if (pronto) {
         nuovo[k].form = true;
-        G = G || (await giornata()) || { matches: [] };
-        const m = G.matches.find((x) => piano(x.h) === piano(f.h) && piano(x.a) === piano(f.a));
         let body = `${f.h} - ${f.a}: sono uscite le formazioni ufficiali.`;
-        if (m && m.p) body += ` IA: ${f.h} ${Math.round(m.p[0] * 100)}%, pari ${Math.round(m.p[1] * 100)}%, ${f.a} ${Math.round(m.p[2] * 100)}%.`;
+        const e = m && m.uff && m.uff.some(Boolean) ? m.eff : null;
+        if (e && e.da && e.a) {
+          const d = e.a.map((x, i) => x - e.da[i]), i = d.map(Math.abs).indexOf(Math.max(...d.map(Math.abs)));
+          const chi = [f.h, "pareggio", f.a][i];
+          body += Math.abs(d[i]) >= 0.01 ? ` ${chi}: dal ${Math.round(e.da[i] * 100)}% al ${Math.round(e.a[i] * 100)}%.` : " Probabilità quasi invariate.";
+          const bloccato = m.tip && m.tip.consiglio && m.bl === "bloccato" ? m.tip.consiglio.l : null;
+          if (bloccato) body += ` Consiglio IA già bloccato: ${bloccato}.`;
+          else if (e.tip_a) body += (e.tip_da && e.tip_da !== e.tip_a ? ` Consiglio IA cambiato: ${e.tip_a} (prima ${e.tip_da})` : ` Consiglio IA confermato: ${e.tip_a}`) + ", si blocca 45 minuti prima del fischio.";
+        } else if (m && m.p) body += ` IA: ${f.h} ${Math.round(m.p[0] * 100)}%, pari ${Math.round(m.p[1] * 100)}%, ${f.a} ${Math.round(m.p[2] * 100)}%.`;
+        if (m && m.cambio && m.cambio.chi && m.cambio.chi.length) body += ` Assenze: ${m.cambio.chi.slice(0, 2).join("; ")}.`;
         if (m && m.marcatori) {
           const fuori = Object.entries(m.marcatori).filter(([c, x]) => x.g >= 2 && !tit[x.lato].some((n) => piano(n) === piano(c.slice(5)))).map(([c, x]) => `${c.slice(5)} (${x.lato ? f.a : f.h})`);
           if (fuori.length) body += ` Non titolari: ${fuori.slice(0, 3).join(", ")}.`;
@@ -367,7 +380,7 @@ function troppi(req, max = 20) {
    Non stanno nel repository pubblico ma qui, nell'archivio privato del servizio. Ci accedono solo i processi automatici
    di GitHub, firmando ogni richiesta (HMAC-SHA256 con il token gia condiviso tra GitHub e il servizio, che non viaggia mai).
    Firma valida 5 minuti; un file alla volta (max 1,5 MB); nomi ammessi da una lista chiusa. */
-const NOME_CF = /^(diario\/\d{4}-\d{2}-\d{2}\.json|modello\.json|consigli\.json|taratura_fattori\.json|giocatori_verifica\.json|taratura_giocatori\.json)$/;
+const NOME_CF = /^(diario\/\d{4}-\d{2}-\d{2}\.json|modello\.json|consigli\.json|taratura_fattori\.json|giocatori_verifica\.json|taratura_giocatori\.json|statistiche_verifica\.json|taratura_statistiche\.json)$/;
 async function cassaforte(req, url, env, DB, segnala) {
   const nojson = (d, st = 200) => new Response(JSON.stringify(d), { status: st, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } });
   if (req.method !== "POST") return nojson({ ok: false }, 405);

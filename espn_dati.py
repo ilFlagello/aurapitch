@@ -235,9 +235,38 @@ def tabellino(summ, righe, k):
     segnato, chi ha fatto assist, chi ha preso un cartellino (giallo o rosso)."""
     comp = summ["header"]["competitions"][0]
     sq = {c["homeAway"]: c["team"]["displayName"] for c in comp["competitors"]}
-    return {"lg": k, "t": comp.get("date") or (summ.get("header") or {}).get("date"), "h": sq.get("home"), "a": sq.get("away"),
-            "in": [r["n"] for r in righe], "marc": [r["n"] for r in righe if r["g"] > 0], "ass": [r["n"] for r in righe if r["a"] > 0],
-            "amm": [r["n"] for r in righe if r.get("gi") or r.get("ro")]}
+    out = {"lg": k, "t": comp.get("date") or (summ.get("header") or {}).get("date"), "h": sq.get("home"), "a": sq.get("away"),
+           "in": [r["n"] for r in righe], "marc": [r["n"] for r in righe if r["g"] > 0], "ass": [r["n"] for r in righe if r["a"] > 0],
+           "amm": [r["n"] for r in righe if r.get("gi") or r.get("ro")]}
+    st = statistiche_squadre(summ)
+    if st:
+        out["st"] = st
+    return out
+
+
+def statistiche_squadre(summ):
+    """Cartellini (gialli + rossi), calci d'angolo e falli di casa e ospite dal tabellino ESPN, per il verificatore delle
+    statistiche (statistiche_ia.py). {"K": [casa, ospite], "C": [...], "F": [...]}; None se ESPN non le ha."""
+    try:
+        comp = summ["header"]["competitions"][0]
+        lato = {str(c["team"]["id"]): 0 if c["homeAway"] == "home" else 1 for c in comp["competitors"]}
+    except (KeyError, IndexError, TypeError):
+        return None
+    val = [{}, {}]
+    for t in (summ.get("boxscore") or {}).get("teams") or []:
+        j = lato.get(str((t.get("team") or {}).get("id")))
+        if j is None:
+            continue
+        for s in t.get("statistics") or []:
+            try:
+                val[j][s.get("name")] = float(s.get("displayValue"))
+            except (TypeError, ValueError):
+                pass
+    out = {}
+    for k, nomi in (("K", ("yellowCards", "redCards")), ("C", ("wonCorners",)), ("F", ("foulsCommitted",))):
+        if all(nomi[0] in v for v in val):
+            out[k] = [int(sum(v.get(n, 0) for n in nomi)) for v in val]
+    return out or None
 
 
 def formazioni_da_scheda(summ):

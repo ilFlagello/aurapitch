@@ -144,6 +144,33 @@ def af_spesa(cat, rimaste=None, costo=1):
     salva(d)
 
 
+ODDS_MATTINO = 14  # crediti di un giro del mattino (quote di tutti i campionati con partite vicine): il minimo da garantire ogni giorno
+
+
+def previsione(oggi=None, rimasti=None):
+    """Bastano i crediti di The Odds API fino a fine mese? Il salvadanaio divide i rimasti sui giorni che mancano, quindi non
+    restano mai a zero: il rischio vero e che la parte di ogni giorno scenda sotto il costo del giro del mattino (allora le
+    partite si aggiornano solo con le quote gratuite). Usa il registro (data/budget.json) e, se manca, i crediti rimasti.
+    Restituisce {"rimasti", "per_giorno" (crediti disponibili per ogni giorno che manca), "ritmo" (spesa media del mese finora),
+    "giorni", "fino_al" (giorno in cui finirebbero al ritmo del mese, solo informazione), "oltre" (oggi spesi oltre la quota), "basta"}."""
+    oggi = oggi or _ora().date()
+    o = carica().get("odds") or {}
+    if rimasti is None:
+        rimasti = o.get("rimasti")
+    if rimasti is None:
+        return None
+    ultimo = calendar.monthrange(oggi.year, oggi.month)[1]
+    giorni = max(1, ultimo - oggi.day)  # i giorni dopo oggi (la parte di oggi e gia assegnata), come il vecchio controllo orario
+    disponibili = max(0, rimasti - ODDS_RISERVA)
+    per_giorno = disponibili / giorni
+    ritmo = max(0, ODDS_MESE - rimasti) / max(1, oggi.day)
+    fino_al = oggi.day + int(disponibili / ritmo) if ritmo > 0 and disponibili / ritmo < giorni else None
+    di_oggi = {"quota": o.get("quota"), "spesi": sum((o.get("spesi") or {}).values())} if o.get("giorno") == oggi.isoformat() else None
+    oltre = bool(di_oggi and di_oggi["quota"] is not None and di_oggi["spesi"] > di_oggi["quota"] + ODDS_MATTINO)
+    return {"rimasti": rimasti, "per_giorno": round(per_giorno, 1), "ritmo": round(ritmo, 1), "giorni": giorni, "fino_al": fino_al,
+            "oggi": di_oggi, "oltre": oltre, "basta": per_giorno >= ODDS_MATTINO and not oltre}
+
+
 def riassunto():
     d = carica()
     o, a = d.get("odds") or {}, d.get("af") or {}

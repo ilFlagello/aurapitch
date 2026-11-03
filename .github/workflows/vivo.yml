@@ -1,0 +1,34 @@
+# AuraPitch - prova dal vivo ogni mattina: un iPhone simulato apre il sito pubblicato VERO e fa i passi di un utente
+# (apertura, home, una partita, schedina, pagina dell'IA, Il Mio Club). Se qualcosa non va l'esecuzione fallisce e il
+# controllo orario apre l'avviso su GitHub. Le schermate restano tra gli "artifacts" per 7 giorni.
+name: Prova dal vivo del sito
+on:
+  schedule:
+    - cron: "35 7 * * *"
+  workflow_dispatch: {}
+permissions:
+  contents: read
+concurrency: { group: vivo, cancel-in-progress: true }
+jobs:
+  prova:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+      - name: Browser per la prova
+        working-directory: app
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: Prova sul sito pubblicato (formato iPhone)
+        run: node test/prova_dal_vivo.mjs
+      - name: Schermate della prova
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: prova-dal-vivo
+          path: test/schermate-vivo
+          retention-days: 7

@@ -45,7 +45,8 @@ except Exception as e:
     problemi.append(f"File dei dati dell'app illeggibile: {type(e).__name__}")
 
 # 2. ultime esecuzioni dei processi automatici
-for wf, nome in (("raccolta.yml", "Raccolta dati"), ("pubblica.yml", "Pubblicazione app"), ("notifiche.yml", "Servizio notifiche"), ("test.yml", "Test"), ("impara.yml", "Apprendimento"), ("ripristino.yml", "Prova della copia di sicurezza"), ("codeql.yml", "Analisi sicurezza")):
+for wf, nome in (("raccolta.yml", "Raccolta dati"), ("pubblica.yml", "Pubblicazione app"), ("notifiche.yml", "Servizio notifiche"), ("test.yml", "Test"), ("impara.yml", "Apprendimento"), ("ripristino.yml", "Prova della copia di sicurezza"), ("codeql.yml", "Analisi sicurezza"),
+                 ("vivo.yml", "Prova dal vivo del sito"), ("guardiano.yml", "Guardiano della sicurezza")):
     try:
         _, j = get(f"https://api.github.com/repos/{REPO}/actions/workflows/{wf}/runs?per_page=5&status=completed", gh=True)
         runs = [r for r in j.get("workflow_runs", []) if r["conclusion"] != "cancelled"]
@@ -65,16 +66,40 @@ try:
 except Exception as e:
     note.append(f"Modello dell'IA non leggibile ({type(e).__name__})")
 
-# 3. crediti di The Odds API: riserva per il giro del mattino fino a fine mese
+# 3. crediti di The Odds API: il ritmo di spesa (salvadanaio.py, registro data/budget.json) deve bastare fino a fine mese
 try:
-    c = json.load(open("data/crediti_quote.json", encoding="utf-8"))
-    fine = (ORA.replace(day=28) + timedelta(days=4)).replace(day=1)
-    giorni = max(1, (fine.date() - ORA.date()).days)
-    serve = giorni * 14
-    testo = f"Crediti quote rimasti: {c['rimasti']} (servono circa {serve} per i giri del mattino fino a fine mese)"
-    (problemi if c["rimasti"] < serve else note).append(testo)
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    import salvadanaio as SV
+    try:
+        c = json.load(open("data/crediti_quote.json", encoding="utf-8"))
+    except (OSError, ValueError):
+        c = {}
+    pv = SV.previsione(rimasti=c.get("rimasti"))
+    if pv is None:
+        note.append("Crediti quote: non ancora noti")
+    else:
+        testo = (f"Crediti quote rimasti: {pv['rimasti']}, {str(pv['per_giorno']).replace('.', ',')} al giorno per i {pv['giorni']} giorni che mancano"
+                 f" (spesa media del mese {str(pv['ritmo']).replace('.', ',')} al giorno"
+                 + (f"; oggi {pv['oggi']['spesi']} su {pv['oggi']['quota']}" if pv.get("oggi") else "") + ")")
+        if pv["oltre"]:
+            problemi.append(testo + ": oggi si è speso oltre la parte del giorno. Controllare quali giri consumano di più")
+        elif not pv["basta"]:
+            problemi.append(testo + f": meno di {SV.ODDS_MATTINO} al giorno, non bastano per il giro del mattino fino a fine mese (si useranno le quote gratuite)")
+        else:
+            note.append(testo)
+    note.append(SV.riassunto())
 except Exception as e:
     note.append(f"Crediti quote: non leggibili ({type(e).__name__})")
+
+# 3b. coerenza dei dati (strumenti/coerenza.py, a ogni giro della raccolta)
+try:
+    co = json.load(open("data/coerenza.json", encoding="utf-8"))
+    if co.get("problemi"):
+        problemi.append("Dati incoerenti all'ultimo giro (" + co.get("quando", "?") + "): " + "; ".join(co["problemi"][:5]))
+    else:
+        note.append(f"Coerenza dei dati: ok ({co.get('controlli', 0)} controlli)")
+except Exception as e:
+    note.append(f"Coerenza dei dati: non ancora disponibile ({type(e).__name__})")
 
 # 4. servizio notifiche: risponde e l'orologio avvia la raccolta
 try:

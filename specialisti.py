@@ -29,6 +29,10 @@ SPECIALISTI = [
     # community: i pronostici dei tipster AuraPitch (verificati dal servizio), pesati per bravura. Vale solo per le partite dell'app
     # (nell'archivio storico non c'e): resta in ombra finche non ha abbastanza partite, poi l'integratore decide se pesa
     ("consenso", "Consenso della community AuraPitch (tipster pesati per bravura)", "1x2"),
+    # come il consenso, questi due valgono solo per le partite dell'app (l'archivio non ha coppe ne quote del mattino):
+    # restano in ombra finche non hanno abbastanza partite, poi l'integratore decide se pesano
+    ("coppe", "Turnover e coppe: partita di coppa pochi giorni prima o dopo", "1x2"),
+    ("movimento", "Movimento delle quote dal mattino al fischio", "1x2"),
 ]
 N_MOTORE = 9
 # campionati che si giocano nell'anno solare (la stagione e l'anno); gli altri vanno da luglio a giugno
@@ -72,7 +76,36 @@ def consenso(c, mk, minimo=5):
     return round(((c[0] - c[2]) / tot - (mk[0] - mk[2])), 4)
 
 
-def segnali(storia_h, storia_a, t0, diretti=None, motore=None, comunita=None):
+def carico_coppa(cp):
+    """Quanto pesa la coppa su una squadra (0 = niente, 1 = ha giocato in coppa il giorno prima). La partita di coppa
+    ancora da giocare pesa un po' meno (turnover possibile, non certo). cp = {"prima": giorni o None, "dopo": giorni o None}."""
+    if not cp:
+        return 0.0
+    v = 0.0
+    if cp.get("prima") is not None:
+        v = max(v, (6 - min(5, max(1, cp["prima"]))) / 5)
+    if cp.get("dopo") is not None:
+        v = max(v, 0.7 * (6 - min(5, max(1, cp["dopo"]))) / 5)
+    return v
+
+
+def coppe(cps):
+    """Specialista "coppe": carico di coppa dell'ospite meno quello della squadra di casa (positivo = favorisce la casa).
+    cps = [coppa casa, coppa ospite] da genera_app.coppa_vicina; None quando la partita e essa stessa di coppa."""
+    if not cps or len(cps) < 2:
+        return None
+    return round(carico_coppa(cps[1]) - carico_coppa(cps[0]), 4)
+
+
+def movimento(mk, mk0):
+    """Specialista "movimento": di quanto si e spostato il mercato verso la squadra di casa dalla prima lettura del mattino
+    (diario: mk0) all'ultima prima del fischio (mk). None senza le due letture."""
+    if not mk or not mk0 or len(mk) < 3 or len(mk0) < 3:
+        return None
+    return round((mk[0] - mk[2]) - (mk0[0] - mk0[2]), 4)
+
+
+def segnali(storia_h, storia_a, t0, diretti=None, motore=None, comunita=None, coppa=None, mov=None):
     """Lista di valori (uno per specialista, None se mancano i dati) per la partita casa-trasferta che inizia a t0.
     diretti = precedenti tra le due squadre visti dalla squadra di casa di oggi: [{"t", "gf", "gs"}, ...] (in casa e fuori)."""
     h, a = [z for z in storia_h if z["t"] < t0], [z for z in storia_a if z["t"] < t0]
@@ -97,6 +130,8 @@ def segnali(storia_h, storia_a, t0, diretti=None, motore=None, comunita=None):
     out.append((_media([_punti(z) for z in d6]) - 1.35) / 3 if len(d6) >= 3 else None)
     out += list(motore) if motore else [None] * N_MOTORE
     out.append(comunita)  # consenso della community (genera_app.aggiorna_consenso lo aggiorna durante il giorno)
+    out.append(coppa)  # turnover e coppe (genera_app.aggiorna_specialisti_giorno)
+    out.append(mov)  # movimento delle quote (genera_app.aggiorna_specialisti_giorno, fino al fischio)
     return [None if v is None else round(v, 4) for v in out]
 
 

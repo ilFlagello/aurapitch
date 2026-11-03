@@ -118,9 +118,37 @@ import { Allenatore } from "./allenatore.js";
             <button onClick=${() => setMySlip([])} className=${"py-2 rounded-xl text-xs font-semibold " + C.ch + " " + C.tx}>Svuota</button></div>
           <${Gioca} legs=${mine.filter((l) => l.q)} /></div>`}<//>`,
         html`<${React.Fragment}><${Diario} /><${Allenatore} /><${GiocoResponsabile} compatto=${true} /><//>`,
-        html`<${React.Fragment}><${IACard} /><${StoricoCard} /><//>`]}<//></div>`;
+        html`<${React.Fragment}><${StoricoSchedine} /><${IACard} /><${StoricoCard} /><//>`]}<//></div>`;
     }
 
+
+  /* ---- storico delle schedine IA per stile: ogni giorno il server salva la schedina di base di ogni stile e la verifica ---- */
+  function StoricoSchedine() {
+    const [S, setS] = useState(null);
+    const [aperto, setAperto] = useState(null);
+    useEffect(() => { let ok = true; fetch("data/schedine_ia.json").then((r) => (r.ok ? r.json() : null)).then((x) => ok && setS(x)).catch(() => {}); return () => { ok = false; }; }, []);
+    if (!S || !S.mese) return null;
+    const mese = new Date().toLocaleDateString("it-IT", { month: "long" });
+    const giorni = Object.keys(S.giorni || {}).sort().reverse();
+    const pun = (v) => (v >= 0 ? "+" : "") + String(v).replace(".", ",");
+    return html`<div className=${C.card + " p-4 space-y-2"}>
+      <div className="flex items-baseline"><span className=${C.lab + " flex-1"}>Schedine IA di ${mese}</span><${Ic.BarChart3} size=${15} className=${C.mu} /></div>
+      <div className=${"grid grid-cols-[1.4fr_0.9fr_0.8fr_0.9fr] text-[11px] font-medium " + C.mu}><span>Stile</span><span className="text-right">Passate</span><span className="text-right">Quota</span><span className="text-right">Punti</span></div>
+      ${["0", "1", "2"].map((k) => { const r = S.mese[k] || {}; return html`<div key=${k} className=${"grid grid-cols-[1.4fr_0.9fr_0.8fr_0.9fr] items-baseline text-sm tabular-nums border-t pt-1.5 " + C.bd + " " + C.tx}>
+        <span className="font-semibold truncate">${r.nome || PROFILI_SLIP[k].nome}</span>
+        <span className="text-right">${r.giocate ? html`${r.passate}/${r.giocate}` : html`<span className=${C.mu}>-</span>`}</span>
+        <span className=${"text-right " + C.mu}>${r.q_media ? "×" + odd(r.q_media) : "-"}</span>
+        <span className=${"text-right font-semibold " + (!r.giocate ? C.mu : r.punti >= 0 ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>${r.giocate ? pun(r.punti) : "-"}</span></div>`; })}
+      <p className=${"text-[11px] " + C.mu}>Ogni mattina AuraPitch salva la schedina di base di ogni stile con le partite del giorno (stesse regole che vedi in "Crea con l'IA", numero di partite dello stile) e non la cambia più. "Quota" è la quota totale media; "Punti" è il rendimento puntando 1 punto su ogni schedina (vinta: quota meno 1, persa: meno 1). Nessun denaro.</p>
+      ${giorni.length > 0 && html`<div className="space-y-1">${giorni.slice(0, 10).map((g) => html`<div key=${g} className=${"border-t " + C.bd}>
+        <button onClick=${() => setAperto(aperto === g ? null : g)} className="w-full flex items-center gap-2 py-2 text-left text-[13px]">
+          <span className=${"flex-1 " + C.tx}>${new Date(g + "T12:00:00").toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" })}</span>
+          ${["0", "1", "2"].map((k) => { const x = S.giorni[g][k]; return x ? html`<span key=${k} className=${"text-[11px] font-semibold px-2 py-0.5 rounded-full border " + (x.esito === 1 ? TONE.good : x.esito === 0 ? TONE.bad : TONE.ok)}>×${odd(x.q)}</span>` : null; })}</button>
+        ${aperto === g && html`<div className="pb-2 space-y-2">${["0", "1", "2"].filter((k) => S.giorni[g][k]).map((k) => { const x = S.giorni[g][k]; return html`<div key=${k}>
+          <div className=${"text-[12px] font-semibold " + C.tx}>${PROFILI_SLIP[k].nome} · ${x.esito === 1 ? "passata" : x.esito === 0 ? "non passata" : x.esito === -1 ? "non verificabile" : "in corso"}</div>
+          ${x.legs.map((l) => html`<div key=${l.id} className="flex items-center gap-2 text-[12px]"><span className=${"flex-1 truncate " + C.mu}>${l.h} - ${l.a}: <b className=${C.tx}>${mLabel({ h: l.h, a: l.a }, l.c, true)}</b></span>
+            <span className=${"num text-[14px] " + C.mu}>${odd(l.q)}</span>${l.ok === 1 ? html`<${Ic.CheckCircle2} size=${14} className="text-emerald-500" />` : l.ok === 0 ? html`<${Ic.XCircle} size=${14} className="text-rose-500" />` : html`<${Ic.Clock} size=${14} className=${C.mu} />`}</div>`)}</div>`; })}</div>`}</div>`)}</div>`}</div>`;
+  }
 
   /* ---- schedina come immagine (1080 x altezza variabile), nello stile AuraPitch ---- */
 
@@ -182,4 +210,4 @@ import { Allenatore } from "./allenatore.js";
       ${msg && html`<div className=${"text-[12px] " + C.mu}>${msg}</div>`}</div>`;
   }
 
-export { SlipView, esitoGamba, statoGiocata, Diario, Gioca };
+export { SlipView, esitoGamba, statoGiocata, Diario, Gioca, StoricoSchedine };

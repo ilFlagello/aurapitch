@@ -17,4 +17,4 @@ jobs:
           GIORNI: ${{ inputs.giorni }}
       - run: |
           git config user.name "aurapitch-raccolta"; git config user.email "aurapitch-raccolta@users.noreply.github.com"
-          git add storico/prova_fonti.json && git commit -m "Prova fonti" && git pull --rebase --autostash && git push || true
+          git add storico/prova_fonti.json && git commit -m "Prova fonti" && for i in 1 2 3 4; do git pull --rebase --autostash -q origin main && git push && break; sleep 5; done || true

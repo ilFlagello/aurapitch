@@ -1,10 +1,10 @@
-Esecuzione: 2026-11-03T16:55Z
+Esecuzione: 2026-11-03T21:43Z
 Token: ok
 Sottodominio: ilflagello
 Archivio KV: presente
 Database: v1
 Orologio della raccolta: token presente
-Carico il servizio: ok
+Carico il servizio (con limite condiviso): ok
 Attivo indirizzo workers.dev: ok
 Controllo ogni minuto: ok
 Prova https://aurapitch-push.ilflagello.workers.dev/vapid: HTTP 200

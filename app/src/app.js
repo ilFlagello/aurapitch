@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { flushSync } from "react-dom";
 import { ESPN_LG, useLiveScores, usaPonte } from "./live.js";
+import { NOVITA, VERSIONE } from "./novita.js";
 import { classificaViva, registraColori, Ricarica, vibra, AuraLine, C, Crest, Ctx, Flag, Giorni, Ic, Marchio, Seg, Sheet, TONE, auraCol, hs, html, mmss, store } from "./base.js";
 import { BarraSchedina, Cerca, Glossario, PrimoAvvio, partitaSettimana } from "./extra.js";
 import { MatchView, Movimento, PlayerSheet, Row, TeamView } from "./partita.js";
@@ -162,6 +163,9 @@ import { Guida } from "./guida.js";
     useEffect(() => store.set("slip", mySlip), [mySlip]);
     useEffect(() => { if (toast) { const id = setTimeout(() => setToast(""), 1800); return () => clearTimeout(id); } }, [toast]);
     const [nuova, setNuova] = useState(false);
+    // dopo un aggiornamento: una volta sola il riquadro con le novità (chi installa per la prima volta non lo vede)
+    const [novitaVis, setNovitaVis] = useState(() => { const vista = store.get("versioneVista", null); if (!vista) { store.set("versioneVista", store.get("onb", false) ? "1.0" : VERSIONE); } return !!store.get("onb", false) && (vista || "1.0") !== VERSIONE; });
+    const chiudiNovita = () => { store.set("versioneVista", VERSIONE); setNovitaVis(false); };
     // invito a installare: solo da browser (non già installata), al massimo una volta alla settimana se chiuso
     const richiesta = useRef(null);
     const [installa, setInstalla] = useState(() => { try { const inst = navigator.standalone || window.matchMedia("(display-mode: standalone)").matches; const no = store.get("installaNo", 0);
@@ -359,6 +363,7 @@ import { Guida } from "./guida.js";
       if (Math.abs(dx) > Math.abs(d) || window.scrollY > 0) { tiraRef.current = null; setTira(0); return; }
       const v = d > 0 ? Math.min(110, d * 0.55) : 0; if (v >= 64 && tira < 64) vibra(10); setTira(v); };
     const teH = () => {
+      if (tira >= 64 && nuova) { setRicaricando(true); setTimeout(() => location.reload(), 300); setTira(0); tiraRef.current = null; return; }
       if (tira >= 64) { setRicaricando(true); const t0 = Date.now(); ricarica().finally(() => setTimeout(() => setRicaricando(false), Math.max(0, 650 - (Date.now() - t0)))); }
       setTira(0); tiraRef.current = null;
     };
@@ -499,14 +504,21 @@ import { Guida } from "./guida.js";
         <div className="grid grid-cols-3 gap-2">${[["sicurezza", "Sicurezza"], ["privacy", "Privacy"], ["termini", "Termini"]].map(([k, l]) => html`<button key=${k} onClick=${() => setLegale(k)} className=${"py-2.5 rounded-xl text-sm font-semibold " + C.ch + " " + C.tx}>${l}</button>`)}</div>
         <button onClick=${() => invita()} className=${"w-full py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Share} size=${15} />Invita un amico</button>
         <button onClick=${() => { setProfile(false); setRecensione("profilo"); }} className=${"w-full py-2.5 rounded-xl text-sm font-semibold " + C.on}>Dicci cosa ne pensi</button>
+        <button onClick=${() => { setProfile(false); setNovitaVis(true); }} className=${"w-full text-[12px] text-center py-1 " + C.mu}>AuraPitch versione <b className=${C.tx}>${VERSIONE}</b> · ${NOVITA[0].data} · <span className="underline">Novità</span></button>
         <p className=${"text-[11px] text-center " + C.mu}>Solo per maggiorenni. Il gioco può causare dipendenza: Telefono Verde Nazionale 800 55 88 22.</p><//>`}
 
       ${copyText !== null && html`<${Sheet} title="Copia la schedina" onClose=${() => setCopyText(null)}>
         <p className=${"text-sm " + C.mu}>Il telefono non ha permesso la copia automatica: tieni premuto sul testo e scegli Copia.</p>
         <textarea readOnly value=${copyText} rows=${8} className=${"w-full rounded-xl p-3 text-sm " + C.ch + " " + C.tx} onFocus=${(e) => e.target.select()}></textarea><//>`}
 
-      ${nuova && html`<button onClick=${() => location.reload()} className="fixed left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full text-[14px] font-semibold shadow-lg flex items-center gap-2 bg-[#5B2EE6] text-white dark:bg-[#A58BFF] dark:text-[#0E0C18]"
-        style=${{ top: "calc(10px + env(safe-area-inset-top, 0px))" }}><${Ic.Sparkles} size=${15} />Nuova versione pronta: tocca per aggiornare</button>`}
+      ${nuova && html`<button onClick=${() => location.reload()} role="status" className="fixed inset-x-3 z-50 mx-auto max-w-[456px] px-4 py-3 rounded-[18px] shadow-xl flex items-center gap-3 text-left bg-[#5B2EE6] text-white dark:bg-[#A58BFF] dark:text-[#0E0C18] entra-giu"
+        style=${{ top: "calc(10px + env(safe-area-inset-top, 0px))" }}><span className="w-9 h-9 rounded-full flex items-center justify-center bg-white/20 shrink-0"><${Ic.Sparkles} size=${18} /></span>
+        <span className="flex-1 min-w-0"><span className="block text-[15px] font-bold leading-tight">AuraPitch è stata migliorata</span>
+          <span className="block text-[13px] opacity-90 leading-snug">Tira giù la pagina (o tocca qui) per aggiornare l'app</span></span><${Ic.ChevronDown} size=${18} className="shrink-0 opacity-80" /></button>`}
+      ${novitaVis && html`<${Sheet} title=${"Novità della versione " + VERSIONE} onClose=${chiudiNovita}>
+        <p className=${"text-[13px] " + C.mu}>Aggiornata il ${NOVITA[0].data}. Ecco cosa è cambiato:</p>
+        <div className="space-y-2">${NOVITA[0].punti.map((x) => html`<div key=${x} className="flex gap-2.5"><span className=${"mt-[7px] w-1.5 h-1.5 rounded-full shrink-0 bg-[#5B2EE6] dark:bg-[#A58BFF]"}></span><span className=${"text-[14px] leading-snug " + C.tx}>${x}</span></div>`)}</div>
+        <button onClick=${chiudiNovita} className=${"w-full py-3 rounded-2xl text-[15px] font-bold " + C.on}>Ho capito</button><//>`}
       ${toast && html`<div role="status" className="fixed left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-sm font-medium shadow-lg bg-[#17152B] text-white dark:bg-white dark:text-black"
         style=${{ bottom: "calc(96px + env(safe-area-inset-bottom, 0px))" }}>${toast}</div>`}
     </div><//>`;

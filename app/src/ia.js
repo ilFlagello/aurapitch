@@ -119,6 +119,14 @@ function IACard() {
         <p className=${"text-[11px] pt-1 " + C.mu}>"Attesi" somma le probabilità dei consigli: se i presi gli restano vicini nel tempo, l'IA non promette più di quanto mantiene.</p>
       </div><//>`}
 
+    ${(I.laboratorio || []).length > 0 && html`<${Voce} id="ia-lab" titolo="Laboratorio: segnali in prova" sotto=${(I.laboratorio.filter((x) => x.stato === "utile").length || "nessuno") + " utili oggi"} icona=${Ic.Sparkles}>
+      <div className=${C.card + " p-4 space-y-1"}>
+        <p className=${"text-[13px] pb-1 " + C.mu}>Ogni mattina l'IA prova idee nuove su migliaia di partite che non ha mai visto. Entra nel modello solo ciò che batte davvero le quote.</p>
+        ${I.laboratorio.map((x) => html`<${Riga} key=${x.k} k=${x.nome} nota=${x.verifica ? `${x.verifica.toLocaleString("it-IT")} partite di prova` : x.stato}
+          v=${x.guadagno == null ? "—" : html`<span className=${x.stato === "utile" ? "text-emerald-600 dark:text-emerald-300" : ""}>${segno(x.guadagno, 3)}%</span>`} />`)}
+        <p className=${"text-[11px] pt-1 " + C.mu}>Vicino a zero vuol dire che i bookmaker ne tengono già conto: lo diciamo invece di fingere un vantaggio.</p>
+      </div><//>`}
+
     ${(I.cronologia || []).length > 0 && html`<${Voce} id="ia-storia" titolo="Cronologia delle versioni" sotto=${(I.cronologia || []).length + " cambi"} icona=${Ic.Clock}>
       <div className=${C.card + " p-4 space-y-1"}>
         ${I.cronologia.slice().reverse().map((e, i) => html`<div key=${i} className=${"text-sm border-t pt-1.5 first:border-0 first:pt-0 " + C.bd}>

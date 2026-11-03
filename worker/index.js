@@ -318,13 +318,24 @@ async function controlla(env) {
 }
 
 /* ---------- orologio: avvia la raccolta dati su GitHub (gli avvii programmati di GitHub non partono) ----------
-   06:00 UTC giro completo; dalle 10:00 alle 23:50 UTC aggiornamento ogni 10 minuti. Serve il secret GH_TOKEN (permesso Actions: scrittura). */
+   05:20 UTC apprendimento dell'IA; 06:00 UTC giro completo; dalle 10:00 alle 23:50 UTC aggiornamento ogni 10 minuti. Serve il secret GH_TOKEN (permesso Actions: scrittura). */
 async function orologio(env) {
   const DB = archivio(env);
   if (!env.GH_TOKEN) return "senza token";
   const t = new Date();
   const h = t.getUTCHours(), mi = t.getUTCMinutes();
   let modo = null;
+  if (h === 5 && mi >= 20 && mi < 30) {  // apprendimento: l'IA si riallena prima del giro completo (gli avvii programmati di GitHub arrivano ore dopo)
+    const giorno = t.toISOString().slice(0, 10), fatto = (await DB.get("orologio_impara", "json")) || {};
+    if (fatto.giorno === giorno && fatto.esito === 204) return "apprendimento gia avviato";
+    const ri = await fetch("https://api.github.com/repos/ilFlagello/aurapitch/actions/workflows/impara.yml/dispatches", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + env.GH_TOKEN, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "aurapitch-orologio", "Content-Type": "application/json" },
+      body: JSON.stringify({ ref: "main" }),
+    });
+    await DB.put("orologio_impara", JSON.stringify({ giorno, esito: ri.status, t: t.toISOString() }));
+    return `apprendimento: ${ri.status}`;
+  }
   if (h === 6 && mi < 10) modo = "completo";
   else if (h >= 10 && h <= 23) modo = "live";
   if (!modo) return "fuori orario";

@@ -157,6 +157,8 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
       ${k === "se" && html`<rect width="24" height="16" fill="#1d4ed8" /><rect x="7" width="2.6" height="16" fill="#facc15" /><rect y="6.7" width="24" height="2.6" fill="#facc15" />`}
       ${k === "sa" && html`<rect width="24" height="16" fill="#15803d" /><rect x="6" y="9.5" width="12" height="1.2" rx="0.6" fill="#f8fafc" />`}
       ${k === "cl" && html`<rect width="24" height="16" fill="#f8fafc" /><rect y="8" width="24" height="8" fill="#dc2626" /><rect width="8" height="8" fill="#1d4ed8" /><circle cx="4" cy="4" r="1.4" fill="#f8fafc" />`}
+      ${k === "cn" && html`<rect width="24" height="16" fill="#dc2626" /><circle cx="5" cy="5" r="2.2" fill="#facc15" />${[[9,2],[11,4],[11,7],[9,9]].map(([x, y]) => html`<circle key=${x + "-" + y} cx=${x} cy=${y} r="0.8" fill="#facc15" />`)}`}
+      ${k === "cr" && html`<rect width="24" height="16" fill="#1d4ed8" /><rect y="2.67" width="24" height="10.66" fill="#f8fafc" /><rect y="5.33" width="24" height="5.34" fill="#dc2626" />`}
       ${k === "co" && html`<rect width="24" height="16" fill="#facc15" /><rect y="8" width="24" height="4" fill="#1d4ed8" /><rect y="12" width="24" height="4" fill="#dc2626" />`}
       ${k === "ec" && html`<rect width="24" height="16" fill="#facc15" /><rect y="8" width="24" height="4" fill="#1d4ed8" /><rect y="12" width="24" height="4" fill="#dc2626" /><circle cx="12" cy="8" r="1.8" fill="#a16207" />`}
       ${k === "au" && html`<rect width="24" height="16" fill="#1e3a8a" /><path d="M0 0L10 6M10 0L0 6" stroke="#f8fafc" stroke-width="1.4" /><circle cx="17" cy="11" r="1" fill="#f8fafc" /><circle cx="20" cy="6" r="0.8" fill="#f8fafc" /><circle cx="5" cy="12" r="1.3" fill="#f8fafc" />`}

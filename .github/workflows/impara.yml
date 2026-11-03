@@ -1,10 +1,10 @@
-# AuraPitch - apprendimento iterativo: ogni mattina alle 5:45 UTC (prima del giro completo delle 6:00) l'algoritmo
+# AuraPitch - apprendimento iterativo: ogni mattina alle 5:20 UTC (avviato dall'orologio del servizio, prima del giro completo delle 6:00) l'algoritmo
 # si riallena su archivio storico + diario delle previsioni dell'app e aggiorna data/modello.json e la pagina "Come sta andando l'IA".
 name: Apprendimento
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: "45 5 * * *"
+    - cron: "45 5 * * *"  # riserva: se l'orologio del servizio non parte
 permissions: { contents: write }
 concurrency: { group: impara, cancel-in-progress: false }
 jobs:
@@ -30,5 +30,10 @@ jobs:
       - name: Salva
         run: |
           git config user.name "aurapitch-raccolta"; git config user.email "aurapitch-raccolta@users.noreply.github.com"
-          git add app/data/ia.json; git commit -m "Apprendimento: modello del $(date -u +%F)" || true
-          for i in 1 2 3 4 5; do git pull --rebase -q origin main && git push && break; sleep 7; done
+          git add app/data/ia.json; git commit -m "Apprendimento: modello del $(date -u +%F)" || { echo "Niente di nuovo da salvare"; exit 0; }
+          git status --short  # file cambiati ma non salvati (non bloccano più il salvataggio: --autostash)
+          for i in 1 2 3 4 5; do
+            if git pull --rebase --autostash -q origin main && git push; then echo "Salvato"; exit 0; fi
+            sleep 7
+          done
+          echo "::error::Salvataggio della pagina dell'IA non riuscito"; exit 1

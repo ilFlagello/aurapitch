@@ -44,6 +44,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 @keyframes da-destra { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
 @keyframes da-sinistra { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
 .entra-dx { animation: da-destra 0.22s ease-out; }
+.entra-giu { animation: da-sopra 0.35s cubic-bezier(.2,.9,.3,1.2); }
+@keyframes da-sopra { from { transform: translateY(-140%); opacity: 0; } to { transform: none; opacity: 1; } }
 .entra-sx { animation: da-sinistra 0.22s ease-out; }
 #boot { padding: 48px 16px; text-align: center; color: #6E6A85; font-size: 14px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

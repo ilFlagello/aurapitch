@@ -2,7 +2,8 @@
    il numero cresce (1.1, 1.2, ...) e l'app lo mostra nel profilo e nel riquadro "Novità" dopo l'aggiornamento. */
 export const NOVITA = [
   { v: "1.9", data: "3 novembre 2026", punti: [
-    "Schedina IA: i tre stili ora scelgono le giocate sia per quota sia per probabilità. Zero Tachicardia: poche partite, quote giuste e molto probabili. La Classica (nuovo nome): più partite, quote standard. Colpaccio da Bar: quote alte, ma le più papabili",
+    "Schedina IA: i tre stili sono tre gradini della stessa scala. Zero Tachicardia (3 partite, quote 1,30-1,60, giocate molto probabili), La Classica (nuovo nome: 4 partite, quote 1,50-2,05), Colpaccio da Bar (3 partite, quote 2,00-3,60, le più papabili tra le difficili). Sotto ogni stile vedi quota e probabilità della sua schedina",
+    "Voci insieme (partite, marcatori, assist, ammoniti): nessuna è obbligatoria, entra la giocata più convincente per lo stile",
     "Formazioni ufficiali dentro l'algoritmo: appena escono, cambiano probabilità e consiglio prima del blocco dei 45 minuti",
     "Marcatori, assist e ammoniti più precisi con le formazioni ufficiali, e controllati dopo ogni partita sui tabellini",
     "Nuovo in Il Mio Club: Tipster AuraPitch, la classifica dei pronostici verificati (solo se scegli di comparire)",

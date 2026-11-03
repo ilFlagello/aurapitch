@@ -71,6 +71,21 @@ if (pool.length >= 12) {
   ok(qm(S[0]) < qm(S[1]) && qm(S[1]) < qm(S[2]), "stili: la quota media delle giocate deve salire da Zero Tachicardia a Colpaccio");
   ok(S[2].every((l) => l.q >= 2.0), "Colpaccio da Bar: tutte le giocate a quota alta");
   ok(B.buildSlip(pool, 1, 7).length === 7, "numero di partite scelto dall'utente rispettato");
+  // scala senza salti: quota totale e probabilità cambiano di gradino in gradino, non di colpo
+  const Q = S.map((L) => L.reduce((a, l) => a * l.q, 1)), P = S.map((L) => B.probVera(L).p);
+  ok(Q[0] < Q[1] && Q[1] < Q[2] && P[0] > P[1] && P[1] > P[2], "stili: quota totale sale e probabilità scende");
+  ok(Q[1] / Q[0] < 5 && Q[2] / Q[1] < 5, `stili: salto troppo grande tra stili vicini (${Q.map((q) => q.toFixed(1)).join(", ")})`);
+  // con più partite le giocate diventano più prudenti dentro lo stile
+  const pmed = (L) => L.reduce((a, l) => a + l.p, 0) / L.length;
+  ok(pmed(B.buildSlip(pool, 1, 7)) >= pmed(S[1]) - 0.01, "con più partite le giocate non diventano più rischiose");
+  // voci insieme: nessuna voce obbligatoria, una giocata per partita, stesse regole dello stile
+  const V = ["P", "MARC", "ASS", "AMM"];
+  for (const prof of [0, 1, 2]) {
+    const L = B.buildSlip(pool, prof, 0, 0, V);
+    ok(L.length === B.PROFILI_SLIP[prof].n && new Set(L.map((l) => l.m.id)).size === L.length, `voci insieme (stile ${prof}): partite doppie o numero sbagliato`);
+    const solo = B.buildSlip(pool, prof, 0, 0, ["AMM"]);
+    ok(solo.length > 0 && solo.every((l) => l.k.startsWith("AMM:")), `solo ammoniti (stile ${prof}): schedina vuota o voci non ammesse`);
+  }
 }
 
 // 6. schedina con esito scelto: stesso esito in ogni partita, nessuna partita doppia, quota vicina all'obiettivo

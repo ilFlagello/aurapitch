@@ -201,6 +201,10 @@ def controlla_diario(diario):
                 f"Probabilità poco oneste nella fascia {f * 10}-{f * 10 + 10}%: l'IA dice in media {_pct(pm)}, è successo il {_pct(fr)} ({k} previsioni)")
     if giudicate:
         note.append(f"Onestà delle probabilità: {giudicate} fasce controllate")
+    try:  # 9. stesso controllo campionato per campionato
+        controlla_campionati(diario)
+    except Exception as e:  # noqa: BLE001
+        attenzione.append(f"Controllo per campionato non riuscito: {type(e).__name__}")
 
 
 def controlla_consigli(diario):
@@ -248,6 +252,36 @@ def controlla_consigli(diario):
             note.append(testo + ": in linea con le attese")
     else:
         note.append(f"Consigli: servono almeno 50 consigli verificati per giudicarli (ora {n})")
+
+
+def controlla_campionati(diario):
+    """Controllo 9: onesta delle probabilita e consigli vinti contro attesi per campionato (onesta.py), solo dove ci sono
+    abbastanza partite. Lo chiama controlla_diario; il dettaglio va in data/revisore_campionati.json (mai nel repository)."""
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # onesta.py sta nella cartella del codice
+    import onesta as ON
+    q = ON.per_campionato(diario, _jload("data/consigli.json"))
+    rif = q["tutti"].get("scarto")
+    giudicati = []
+    for lg, r in q["campionati"].items():
+        if r.get("scarto") is not None and rif is not None:
+            giudicati.append((r["scarto"], lg))
+            if r["scarto"] - rif > 2 * ON.SOGLIA_SCARTO:
+                attenzione.append(f"Campionato {lg}: probabilità poco oneste, scarto {r['scarto']:.1f} punti contro {rif:.1f} di tutti i campionati ({r['partite']} partite)".replace(".", ","))
+        if r.get("consigli") and r.get("z", 0) < -2.5:
+            attenzione.append(f"Campionato {lg}: consigli vinti {r['vinti']} su {r['consigli']}, attesi {r['attesi']:.0f}: molto sotto le attese".replace(".", ","))
+    if giudicati:
+        giudicati.sort()
+        note.append(f"Onestà per campionato ({len(giudicati)} con almeno {ON.MIN_PARTITE} partite): più onesto {giudicati[0][1]} "
+                    f"({giudicati[0][0]:.1f} punti di scarto), meno onesto {giudicati[-1][1]} ({giudicati[-1][0]:.1f})".replace(".", ","))
+    else:
+        note.append(f"Onestà per campionato: nessun campionato ha ancora {ON.MIN_PARTITE} partite finite nel diario")
+    mod = _jload("data/modello.json") or {}
+    f = (mod.get("attivo") or {}).get("affid_lg") or {}
+    if f:
+        note.append("Affidabilità ridotta per l'onestà passata: " + ", ".join(f"{lg} ×{v}" for lg, v in sorted(f.items())).replace(".", ","))
+    with open(os.path.join(RADICE, "data", "revisore_campionati.json"), "w", encoding="utf-8") as f:
+        json.dump({"quando": ORA.isoformat(timespec="minutes"), **q}, f, ensure_ascii=False, indent=1)
+    return q
 
 
 # ---------- 6-7. dati del giorno ----------

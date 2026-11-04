@@ -19,6 +19,7 @@ import unicodedata
 import zlib
 
 import calibrazione as CB
+import onesta as ON
 import specialisti as SP
 import cartellini as CK
 import espn_dati as ES
@@ -1586,13 +1587,21 @@ def livello_dati(m):
              "forma": 10 if (m.get("last5") or m.get("forma")) else 0, "classifica": 5 if m.get("_classifica") else 0, "xg": 10 if m.get("xgf") else 0,
              "arbitro": 5 if m.get("arbitro") else 0, "notizie": 10 if pf else 0, "formazione": 15 if any(m.get("uff") or []) else 10 if m.get("formazione") else 0}
     score = min(100, sum(punti.values()))
+    # onesta passata dell'IA nel campionato (onesta.py): dove le probabilita sono state meno oneste l'affidabilita scende.
+    # Il fattore esiste solo se l'apprendimento l'ha provato su partite mai viste (altrimenti resta in ombra e vale 1)
+    try:
+        f_lg = ((CB.modello() or {}).get("affid_lg") or {}).get(m["lg"])
+    except Exception:  # noqa: BLE001
+        f_lg = None
+    if f_lg:
+        score = ON.applica(score, m["lg"], {m["lg"]: f_lg})
     if nb < 5 and m["lg"] not in cal_lg:
         lv = "quote"
     elif nb >= 5 and m["lg"] in cal_lg and len(fonti) >= 3:
         lv = "completa"
     else:
         lv = "parziale"
-    return {"lv": lv, "fonti": fonti, "nb": nb, "score": score}
+    return {"lv": lv, "fonti": fonti, "nb": nb, "score": score, **({"f_lg": f_lg} if f_lg else {})}
 
 
 def prossimo_giro(ora):

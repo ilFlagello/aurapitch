@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { ruolo, ESPN_LG } from "./live.js";
 import { NomeSquadra, NomeGiocatore, C, Chip, Crest, Ctx, Flag, Seg, Tabs, html, nf, store } from "./base.js";
-import { Row, VotoChip, caricaVoti, usaVoti } from "./partita.js";
+import { Row, VotoChip, caricaVoti, usaVoti } from "./riga.js";
 import { PanchineLega } from "./panchine.js";
 import { ordinaLeghe } from "./ordine.js";
 import { Tabellone, COPPE_TABELLONE } from "./tabellone.js";

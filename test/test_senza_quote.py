@@ -33,7 +33,7 @@ def compatto(e):
 
 
 ESD = {"senza_quote": {
-    "RU1": {"ev": [compatto(ev("1", "2026-11-02T15:00Z", "Krylia Sovetov", "Zenit St Petersburg", 0, 3, "post", True)),
+    "IL1": {"ev": [compatto(ev("1", "2026-11-02T15:00Z", "Krylia Sovetov", "Zenit St Petersburg", 0, 3, "post", True)),
                    compatto(ev("2", "2026-11-05T17:00Z", "Spartak Moscow", "CSKA Moscow", quote=["+120", "+240", "+210"]))],
             "cl": [{"team": "Zenit", "pg": 14, "v": 10, "n": 2, "p": 2, "gf": 30, "gs": 10, "pt": 32, "rank": 1}]},
     "SCC": {"ev": [compatto(ev("3", "2026-10-20T19:00Z", "Celtic", "Hearts", 2, 0, "post", True))], "cl": []},  # fuori dai giorni dell'app
@@ -43,7 +43,7 @@ ESD = {"senza_quote": {
 class TestSenzaQuote(unittest.TestCase):
     def test_partite_senza_consiglio(self):
         partite, leghe, cl = GA.partite_senza_quote(ESD, GIORNI)
-        self.assertEqual([m["id"] for m in partite], ["NQ-RU1-1", "NQ-RU1-2"])
+        self.assertEqual([m["id"] for m in partite], ["NQ-IL1-1", "NQ-IL1-2"])
         fin, dopo = partite
         self.assertTrue(fin["nq"] and dopo["nq"])
         self.assertEqual((fin["st"], fin["g"], fin["res"]), ("FT", [0, 3], 2))
@@ -52,9 +52,9 @@ class TestSenzaQuote(unittest.TestCase):
                 self.assertNotIn(k, m)
         self.assertEqual(dopo["q"], [2.2, 3.4, 3.1])
         self.assertAlmostEqual(sum(dopo["pq"]), 1, places=3)
-        self.assertEqual([l["k"] for l in leghe], ["RU1"])  # la coppa senza partite nei giorni dell'app e senza classifica non compare
-        self.assertTrue(cl["RU1"]["solo_generale"])
-        self.assertEqual(cl["RU1"]["generale"][0]["pt"], 32)
+        self.assertEqual([l["k"] for l in leghe], ["IL1"])  # la coppa senza partite nei giorni dell'app e senza classifica non compare
+        self.assertTrue(cl["IL1"]["solo_generale"])
+        self.assertEqual(cl["IL1"]["generale"][0]["pt"], 32)
 
     def test_archivio(self):
         path = os.path.join(tempfile.mkdtemp(), "archivio", "senza_quote.json")
@@ -75,7 +75,7 @@ class TestSenzaQuote(unittest.TestCase):
         n = GA.aggiorna_senza_quote(d, get=get, ora=datetime(2026, 11, 5, 18, 0, tzinfo=timezone.utc))
         self.assertEqual(n, 1)
         self.assertEqual((partite[1]["st"], partite[1]["g"]), ("LIVE", [1, 0]))  # abbinata per id anche con nomi diversi
-        self.assertTrue(all("rus.1" in u for u in chiamate))
+        self.assertTrue(all("isr.1" in u for u in chiamate))
 
     def test_fuori_da_schedina_e_storico(self):
         """Le partite senza quote non entrano in 'matches': schedina, consigli, diario e storico non le vedono."""

@@ -24,7 +24,9 @@ righe = 0
 PRINCIPALI = ("I1", "I2", "E0", "E1", "SP1", "D1", "F1")
 ALTRI = ("D2", "SP2", "F2", "N1", "B1", "P1", "T1", "G1", "SC0", "SC1", "E2", "E3", "EC")
 # campionati extraeuropei e nordici (football-data.co.uk/new/<PAESE>.csv): codice del file -> codice AuraPitch
-NUOVI = {"ARG": "AR1", "AUT": "A1", "BRA": "BR1", "DNK": "DK1", "JPN": "J1", "MEX": "MX1", "NOR": "NO1", "SWE": "SE1", "USA": "MLS", "CHN": "CN1"}
+NUOVI = {"ARG": "AR1", "AUT": "A1", "BRA": "BR1", "DNK": "DK1", "JPN": "J1", "MEX": "MX1", "NOR": "NO1", "SWE": "SE1", "USA": "MLS", "CHN": "CN1",
+         # verifica del 04/11/2026: risultati e quote medie di chiusura; Russia con consiglio, gli altri tra i campionati senza quote
+         "RUS": "RU1", "SWZ": "CH1", "ROU": "RO1", "FIN": "FI1", "IRL": "IE1"}
 DAL_ALTRI = 2019
 
 

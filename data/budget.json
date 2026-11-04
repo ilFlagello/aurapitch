@@ -1,19 +1,28 @@
 {
  "odds": {
-  "giorno": "2026-11-03",
-  "inizio": 400,
-  "quota": 12,
+  "giorno": "2026-11-04",
+  "inizio": 396,
+  "quota": 13,
   "spesi": {
-   "prepartita": 4
+   "mattino": 12
   },
-  "mattino_fatto": false,
-  "rimasti": 396
+  "mattino_fatto": true,
+  "rimasti": 384,
+  "ultime": {
+   "Serie A": "2026-11-04",
+   "Serie B": "2026-11-04",
+   "Premier League": "2026-11-04",
+   "LaLiga": "2026-11-04",
+   "Bundesliga": "2026-11-04",
+   "Champions League": "2026-11-04"
+  }
  },
  "af": {
-  "giorno": "2026-11-03",
+  "giorno": "2026-11-04",
   "usate": {
-   "infortuni": 4
+   "infortuni": 2,
+   "partite": 1
   },
-  "rimaste": 91
+  "rimaste": 97
  }
 }

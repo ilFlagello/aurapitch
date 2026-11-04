@@ -184,6 +184,13 @@ def togli_margine(quote):
     return [v / sum(p) for v in p]
 
 
+def gol_da_quote(mk, mo, mo_l=None, linea=None):
+    """Gol attesi dalle quote: Over/Under 2,5 se c'e, altrimenti la linea ESPN (es. 3,5), altrimenti solo l'1X2."""
+    if mo is None and mo_l is not None and linea:
+        return M.gol_attesi(mk, mo_l, linea)
+    return M.gol_attesi(mk, mo)
+
+
 def quote_di(r):
     src = "oa_" if r.get("oa_quota_media_1") else "af_"
     q = {e: fnum(r.get(f"{src}quota_media_{e}")) for e in ("1", "X", "2", "Over 2.5", "Under 2.5")}
@@ -698,7 +705,7 @@ def genera():
             ctx = {"tone": "ok", "text": "Giorni di riposo non disponibili per questo campionato."}
         tabs = classifiche.get(code) if code else classifiche.get("ES_" + k)
         # mercati e consiglio IA motivato
-        lh, la = M.gol_attesi(q["mk"], q["mo"]) if q["mo"] is not None or not q.get("mo_l") else M.gol_attesi(q["mk"], q["mo_l"], q["linea"])
+        lh, la = gol_da_quote(q["mk"], q["mo"], q.get("mo_l"), q.get("linea"))
         xg_quote = [lh, la]
         # specialisti (forma, riposo, casa/trasferta, tendenza gol) pesati dall'integratore imparato ogni mattina: corregge le quote
         # prima dei gol attesi; se l'integratore e spento per questo gruppo di campionati non cambia nulla
@@ -706,8 +713,8 @@ def genera():
         mot_f = motore.caratteristiche(SP.risolvi(h, scontri), SP.risolvi(a, scontri), k, t0)
         sp = SP.segnali(per_team.get(hid, []), per_team.get(aid, []), t0, dir_, mot_f) if (hid or aid or dir_ or any(v is not None for v in mot_f)) else None
         mkc, moc = SP.correggi(q["mk"], q["mo"], sp, k, (CB.modello() or {}).get("integratore"))
-        if mkc is not q["mk"]:
-            lh, la = M.gol_attesi(mkc, moc)
+        if mkc is not q["mk"]:  # senza Over/Under 2,5 resta la linea ESPN (es. 3,5): mai i gol attesi senza informazione sui gol (#66)
+            lh, la = gol_da_quote(mkc, moc, q.get("mo_l"), q.get("linea"))
         raccolte = {c: v for c, v in (("1", q["odds"]["1"]), ("X", q["odds"]["X"]), ("2", q["odds"]["2"]), ("O2.5", q["odds"]["O"]), ("U2.5", q["odds"]["U"])) if v}
         if q.get("mo_l") and q.get("linea"):  # quote raccolte sulla linea ESPN (es. Over/Under 3,5)
             L = ("%g" % q["linea"])
@@ -757,7 +764,8 @@ def genera():
             "curiosita": curiosita_partita(per_team, hid, aid, h, a, t0) if (hid or aid) else [],
             "col": colori_partita(colori_es.get(k), h, a), "_be": q.get("be"),
             "_ctx": {"coppa": [coppa_vicina(cal_coppe, h, t0), coppa_vicina(cal_coppe, a, t0)] if k not in ES.COPPE else None, "riposo": [rh, ra], "sh": sh, "sa": sa, "pos_h": pos.get(hid), "pos_a": pos.get(aid), "raccolte": raccolte,
-                     "gol": [next((rr.get("goalsFor") for rr in (tabs or {}).get("TOTAL", []) if (rr.get("team") or {}).get("id") == x), None) for x in (hid, aid)]},
+                     "gol": [next((rr.get("goalsFor") for rr in (tabs or {}).get("TOTAL", []) if (rr.get("team") or {}).get("id") == x), None) for x in (hid, aid)],
+                     "ol": [q["mo_l"], q["linea"]] if q.get("mo_l") and q.get("linea") else None},
         })
     # 3 partite FREE: le piu importanti tra oggi e domani non ancora iniziate
     cand = [m for m in out["matches"] if m["st"] == "NS" and m["date"] in (oggi.isoformat(), (oggi + timedelta(days=1)).isoformat())]
@@ -1009,11 +1017,20 @@ def aggiorna_prepartita(d):
         m["odds"], m["max"], m["nb"] = q["odds"], q["max"], q["nb"] or m.get("nb")
         if q.get("be"):
             m["_be"] = q["be"]
-        m["xg_mercato"] = list(M.gol_attesi(m["mk"], m["mo"]))
-        mkc, moc = SP.correggi(m["mk"], m["mo"], m.get("sp"), m["lg"], (CB.modello() or {}).get("integratore"))
-        m["xg_base"] = list(M.gol_attesi(mkc, moc)) if mkc is not m["mk"] else m["xg_mercato"]
         c = m.get("_ctx") or {}
+        # senza Over/Under 2,5 vero: la linea ESPN di questa fotografia, altrimenti quella del mattino (m["mo"] e allora una stima del modello)
+        if q["mo"] is None and q.get("mo_l") and q.get("linea"):
+            c["ol"] = [q["mo_l"], q["linea"]]
+        mo_v, ol = (q["mo"], None) if q["mo"] is not None else (None, c.get("ol"))
+        if mo_v is None and not ol:
+            mo_v = m["mo"]
+        m["xg_mercato"] = list(gol_da_quote(m["mk"], mo_v, *(ol or (None, None))))
+        mkc, moc = SP.correggi(m["mk"], mo_v, m.get("sp"), m["lg"], (CB.modello() or {}).get("integratore"))
+        m["xg_base"] = list(gol_da_quote(mkc, moc, *(ol or (None, None)))) if mkc is not m["mk"] else m["xg_mercato"]
         c["raccolte"] = {cc: v for cc, v in (("1", q["odds"]["1"]), ("X", q["odds"]["X"]), ("2", q["odds"]["2"]), ("O2.5", q["odds"]["O"]), ("U2.5", q["odds"]["U"])) if v}
+        if q["mo"] is None and q.get("mo_l") and q.get("linea"):  # quote raccolte sulla linea ESPN, come al mattino
+            L = ("%g" % q["linea"])
+            c["raccolte"].update({k2: v for k2, v in (("O" + L, fnum(r.get("oa_quota_media_Over L"))), ("U" + L, fnum(r.get("oa_quota_media_Under L")))) if v})
         m["foto"] = r["t"]
         m["prepartita"] = r["t"]
         m.pop("_firma", None)

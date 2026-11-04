@@ -985,7 +985,7 @@ def ritara_fattori(corr, ll):
 
 
 def aggiorna_prepartita(d):
-    """Quote prese 15-70 minuti prima del calcio d'inizio: diventano la nuova base (piu precise di quelle del mattino)."""
+    """Quote fotografate al blocco del consiglio (e, dopo, alla chiusura): diventano la nuova base (piu precise di quelle del mattino)."""
     righe = []
     oggi = datetime.now(timezone.utc)
     for dd in (-1, 0):
@@ -1623,18 +1623,7 @@ def livello_dati(m):
     return {"lv": lv, "fonti": fonti, "nb": nb, "score": score, **({"f_lg": f_lg} if f_lg else {})}
 
 
-def prossimo_giro(ora):
-    """Quando ripasserà la raccolta (orologio del servizio): giro completo alle 6:00 UTC, giri brevi ogni 10 minuti dalle 10:00
-    alle 23:50 UTC. Tra mezzanotte e le 6 e tra le 6:10 e le 10 non passa nessuno: le partite asiatiche e australiane che
-    iniziano in quelle ore vanno bloccate all'ultimo giro utile, prima del fischio."""
-    h = ora.replace(minute=0, second=0, microsecond=0)
-    if 10 <= ora.hour <= 23 and not (ora.hour == 23 and ora.minute >= 50):
-        return ora + timedelta(minutes=10)
-    if ora.hour >= 23:
-        return (h + timedelta(days=1)).replace(hour=6)
-    if ora.hour < 6:
-        return h.replace(hour=6)
-    return h.replace(hour=10)
+from orologio import prossimo_giro  # noqa: E402 - stessa regola della fotografia delle quote (raccoglitore.giro_prepartita)
 
 
 def blocca_consigli(d):

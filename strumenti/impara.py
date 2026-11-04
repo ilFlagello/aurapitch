@@ -30,6 +30,7 @@ import numpy as np
 RADICE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, RADICE)
 import calibrazione as CB  # noqa: E402
+import ciclo as CI  # noqa: E402
 import specialisti as SP  # noqa: E402
 import mercati as M  # noqa: E402
 import onesta as ON  # noqa: E402
@@ -355,9 +356,11 @@ def _ll_multi_B(L, Y, Z, B):
     return float(-np.mean(np.log(np.clip((Q * Y).sum(axis=1), 1e-9, 1))))
 
 
-def integratore(R, codici, P, Y, diario=None):
+def integratore(R, codici, P, Y, diario=None, riduci=None):
     """Per gruppo di campionati: allenamento sull'80% piu vecchio, prova sul 20% piu recente. Si accende solo se l'insieme degli
-    specialisti riduce l'errore di almeno MARGINE_PROMO; il contributo di ognuno = errore in piu quando lo si toglie."""
+    specialisti riduce l'errore di almeno MARGINE_PROMO; il contributo di ognuno = errore in piu quando lo si toglie.
+    riduci = {specialista: fattore}: peso piu basso chiesto dalla misura del vantaggio (ciclo.py); si applica solo se sulle
+    partite mai viste non peggiora l'errore."""
     X = segnali_archivio(R)
     idx = {c: k for k, c in enumerate(codici)}
     D = np.array([r["d"] for r in R])
@@ -446,13 +449,28 @@ def integratore(R, codici, P, Y, diario=None):
             guad_ou = (b0 - b1) / b0
             b_ou = (Bo[:, 0] - Bo[:, 1]) if guad_ou >= MARGINE_PROMO else None
         attivo = guad >= MARGINE_PROMO
+        # misura del vantaggio: specialisti da pesare meno, solo se sulle partite mai viste l'errore non sale
+        fatt = np.ones(len(SP.NOMI))
+        for n, f in (riduci or {}).items():
+            if n in SP.NOMI and n in scelti:
+                fatt[SP.NOMI.index(n)] = f
+        ridotti = {}
+        if (fatt < 1).any():
+            prova_r = _ll_multi_B(L[te], Y3[te], Z[te], B * fatt[:, None])
+            if prova_r <= nuovo * 1.0001:
+                ridotti = {SP.NOMI[i]: float(fatt[i]) for i in range(len(fatt)) if fatt[i] < 1}
+            else:
+                fatt[:] = 1
         Bf = _fit_multi(L, Y3, Z) if attivo else B  # modello definitivo su tutte le partite del gruppo
+        Bf = Bf * fatt[:, None]
         modello["gruppi"][gr] = {"attivo": bool(attivo or b_ou is not None), "mu": [round(float(v), 5) for v in mu], "sd": [round(float(v), 5) for v in sd],
                                  "B": [[round(float(x), 5) for x in row] for row in (Bf if attivo else np.zeros_like(B))],
-                                 "b_ou": [round(float(v), 5) for v in b_ou] if b_ou is not None else None}
+                                 "b_ou": [round(float(v), 5) for v in b_ou * fatt] if b_ou is not None else None}
+        if ridotti:
+            modello.setdefault("ridotti", {}).update(ridotti)
         rapporto[gr] = {"partite": int(ok.sum()), "verifica": int(te.sum()), "guadagno_1x2": round(100 * guad, 4),
                         "guadagno_ou": None if guad_ou is None else round(100 * guad_ou, 4), "attivo": bool(attivo), "contributi": contributi, "scelti_1x2": scelti,
-                        "in_ombra": {SP.NOMI[i]: int(np.sum(~np.isnan(Xg[:, i]))) for i in ombra}}
+                        "in_ombra": {SP.NOMI[i]: int(np.sum(~np.isnan(Xg[:, i]))) for i in ombra}, "ridotti": ridotti}
         print(f"  integratore {gr}: 1X2 {100 * guad:+.3f}%, O/U {'-' if guad_ou is None else f'{100 * guad_ou:+.3f}%'} su {int(te.sum())} partite mai viste; contributi {contributi}")
     return modello, rapporto
 
@@ -870,16 +888,25 @@ def main():
         json.dump({"attivo": attivo, "prova": {"data": oggi, "da": str(cut), "partite": int(te.sum()), "punteggi": {k: round(v, 5) for k, v in prove.items()}, "motivo": motivo},
                    "controllo": controllo, "pause": pause, "cronologia": cron[-30:]}, f, ensure_ascii=False, indent=1)
 
+    # 3a) misura del vantaggio (vantaggio.py): specialisti dove il mercato va contro i consigli -> peso piu basso (ciclo.py)
+    try:
+        with open(os.path.join(RADICE, "data", "consigli.json"), encoding="utf-8") as f:
+            riduci, _mi = CI.peso_specialisti(json.load(f))
+    except (OSError, ValueError):
+        riduci = {}
+    if riduci:
+        print(f"Vantaggio sul mercato: peso più basso chiesto per {riduci}")
+
     # 3b) integratore degli specialisti: entra nel modello attivo (genera_app lo applica alle quote prima dei gol attesi)
     try:
-        integ, integ_rap = integratore(R, codici, Ph, Yh, fin)
+        integ, integ_rap = integratore(R, codici, Ph, Yh, fin, riduci=riduci)
         attivo["integratore"] = integ
         with open(MODELLO, "w", encoding="utf-8") as f:
             json.dump({"attivo": attivo, "prova": {"data": oggi, "da": str(cut), "partite": int(te.sum()), "punteggi": {k: round(v, 5) for k, v in prove.items()}, "motivo": motivo},
                        "controllo": controllo, "pause": pause, "cronologia": cron[-30:]}, f, ensure_ascii=False, indent=1)
     except Exception as e:  # noqa: BLE001 - l'integratore non deve mai fermare l'apprendimento
         print("Integratore: errore", e)
-        integ_rap = {}
+        integ, integ_rap = {}, {}
 
     # 3c) affidabilita per campionato (onesta.py): dove l'IA e stata meno onesta l'affidabilita mostrata scende,
     # ma solo se la penalita calcolata sulle partite piu vecchie si conferma su quelle piu recenti (mai viste)
@@ -914,6 +941,42 @@ def main():
         print("Laboratorio: errore", e)
         lab = []
 
+    # 4b) ciclo di miglioramento (ciclo.py): ritaratura delle fasce di probabilita dove le probabilita mostrate si discostano da
+    # quello che succede (lo stesso controllo del revisore), provata su partite mai viste; poi la cronologia dei cambi del giorno
+    cambi = vecchio.get("cambi") or []
+    try:
+        storia = dict(att0.get("fasce_storia") or {})
+        fz = CI.impara_fasce(diario, storia)
+        if fz["attivo"]:
+            attivo["fasce"] = fz["corr"]
+            storia[oggi] = fz["corr"]
+        else:
+            attivo.pop("fasce", None)
+            if storia:
+                storia[oggi] = {}
+        if storia:
+            attivo["fasce_storia"] = {d: storia[d] for d in sorted(storia)[-40:]}
+        print(f"Fasce di probabilità: {'ritarate' if fz['attivo'] else 'in ombra'} ({fz['motivo']})")
+        motivi = {"ricetta": motivo, "fasce": fz["motivo"], "integratore": "misurato su partite mai viste",
+                  "specialisti": "dopo i consigli in cui lavorava, il mercato si è mosso contro più spesso che negli altri (misura del vantaggio)"}
+        try:
+            motivi["affid_lg"] = ((campionati or {}).get("affidabilita") or {}).get("motivo") or ""  # punto 2, se presente
+        except NameError:
+            pass
+        nuovi = CI.eventi(att0, attivo, oggi, motivi)
+        cambi = (cambi + nuovi)[-60:]
+        with open(MODELLO, encoding="utf-8") as f:
+            salvato = json.load(f)
+        salvato["attivo"], salvato["cambi"] = attivo, cambi
+        with open(MODELLO, "w", encoding="utf-8") as f:
+            json.dump(salvato, f, ensure_ascii=False, indent=1)
+        print(f"Cambi dell'IA oggi: {len(nuovi)}" + "".join(f"\n  - {e['cosa']}" for e in nuovi))
+        ciclo_rap = {"fasce": {k: fz.get(k) for k in ("attivo", "corr", "prova", "motivo")}, "specialisti_ridotti": (integ.get("ridotti") or {}) if isinstance(integ, dict) else {},
+                     "chiesti": riduci}
+    except Exception as e:  # noqa: BLE001 - il ciclo non deve mai fermare l'apprendimento
+        print("Ciclo di miglioramento: errore", e)
+        ciclo_rap = {}
+
     # 5) pagina "Come sta andando l'IA"
     base = per_codice["nessuna"]
     fam = []
@@ -930,6 +993,7 @@ def main():
         aff, fonte = affidabilita_gruppi(codici, Qte, Y[te]), "archivio"
     pagina = {
         "generato": datetime.now(timezone.utc).isoformat(timespec="minutes"),
+        "cambi": cambi[-30:], "ciclo": ciclo_rap,
         "diario": {"previste": len(diario), "verificate": len(fin), "dal": min((v["date"] for v in diario), default=None)},
         "modello": {"ricetta": scelta, "nome": NOMI[scelta], "dal": attivo["dal"], "motivo": motivo, "partite": int(len(P))},
         "prova": {"partite": int(te.sum()), "da": str(cut), "ricette": [{"k": k, "nome": NOMI[k], "guadagno": round(100 * (prove["nessuna"] - v) / prove["nessuna"], 3),

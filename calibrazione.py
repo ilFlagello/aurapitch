@@ -3,12 +3,15 @@
 Il modello lo scrive ogni mattina strumenti/impara.py in data/modello.json; qui lo si applica:
 1) peso della correzione IA (notizie, assenze...) contro la lettura delle quote, per famiglia di mercato;
 2) ricalibrazione per mercato (a + b * logit p) e piccola correzione per campionato;
+2b) ritaratura per fascia di probabilita (ciclo.py), solo se provata su partite mai viste;
 3) gli esiti che si escludono a vicenda tornano a sommare 1; le doppie chance sono la somma degli esiti singoli.
 Se il modello manca o e "nessuna correzione", le probabilita restano quelle del motore.
 """
 import json
 import math
 import os
+
+import ciclo as CI
 
 MODELLO = os.path.join("data", "modello.json")
 MARGINE = 0.06
@@ -77,7 +80,7 @@ def versione(mod=None):
 
 def attivo(mod=None):
     mod = modello() if mod is None else mod
-    return bool(mod.get("cal") or mod.get("cal_lg") or mod.get("peso_ia"))
+    return bool(mod.get("cal") or mod.get("cal_lg") or mod.get("peso_ia") or mod.get("fasce"))
 
 
 def calibra_p(pr, lg, mod=None, pm=None):
@@ -94,6 +97,9 @@ def calibra_p(pr, lg, mod=None, pm=None):
         a, b = cal.get(c, (0.0, 1.0))
         z[c] = a + b * l + cl.get(c, 0.0)
     z = {c: sig(v) for c, v in z.items()}
+    fasce = mod.get("fasce") or {}
+    if fasce:  # ritaratura per fascia imparata dal diario (ciclo.py): solo i 5 esiti controllati dal revisore
+        z = {c: CI.applica_fasce(v, fasce) if c in CI.CHIAVI else v for c, v in z.items()}
     for gr in GRUPPI:
         if all(c in z for c in gr):
             s = sum(z[c] for c in gr)

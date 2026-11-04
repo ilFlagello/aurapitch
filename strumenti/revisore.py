@@ -351,6 +351,14 @@ def controlla_dati(diario):
         controlla_stime_sq()
     except Exception as e:  # noqa: BLE001
         attenzione.append(f"Controllo delle stime senza quote non riuscito: {type(e).__name__}")
+    # sentinella delle fonti (strumenti/sentinella.py, dopo il giro completo): quanti dati arrivano da ogni fonte e con che forma
+    se = _jload("data/sentinella.json")
+    if se and str(se.get("quando", ""))[:10] >= (ORA - timedelta(days=1)).date().isoformat():
+        attenzione.extend(f"Sentinella delle fonti: {a}" for a in se.get("avvisi") or [])
+        if not se.get("avvisi"):
+            note.append("Sentinella delle fonti: " + ", ".join(f"{k} {v}" for k, v in sorted((se.get("oggi") or {}).items())))
+    elif se is not None:
+        attenzione.append("Sentinella delle fonti: nessun controllo nelle ultime 24 ore (giro completo non fatto?)")
 
 
 def controlla_vantaggio(diario):

@@ -19,6 +19,7 @@ import unicodedata
 import zlib
 
 import calibrazione as CB
+import esperti as BE
 import onesta as ON
 import specialisti as SP
 import cartellini as CK
@@ -197,8 +198,10 @@ def quote_di(r):
     mo_l, linea = None, fnum(r.get("linea"))
     if mo is None and linea and fnum(r.get("oa_quota_media_Over L")) and fnum(r.get("oa_quota_media_Under L")):
         mo_l = round(togli_margine([fnum(r["oa_quota_media_Over L"]), fnum(r["oa_quota_media_Under L"])])[0], 4)
-    return {"mk": mk, "mo": mo, "mo_l": mo_l, "linea": linea, "odds": {"1": q["1"], "X": q["X"], "2": q["2"], "O": q["Over 2.5"], "U": q["Under 2.5"]},
-            "max": {"1": mx["1"], "X": mx["X"], "2": mx["2"], "O": mx["Over 2.5"], "U": mx["Under 2.5"]}, "nb": int(nb) if nb else None}
+    mod = CB.modello() or {}
+    be = BE.da_riga(r, mk, mo, (mod.get("esperti") or {}).get("peso")) if src == "oa_" else None  # bookmaker esperti (esperti.py)
+    return BE.applica({"mk": mk, "mo": mo, "mo_l": mo_l, "linea": linea, "odds": {"1": q["1"], "X": q["X"], "2": q["2"], "O": q["Over 2.5"], "U": q["Under 2.5"]},
+                       "max": {"1": mx["1"], "X": mx["X"], "2": mx["2"], "O": mx["Over 2.5"], "U": mx["Under 2.5"]}, "nb": int(nb) if nb else None, "be": be}, mod)
 
 
 # ---------- football-data ----------
@@ -751,7 +754,7 @@ def genera():
             "xg_mercato": xg_quote, "xg_base": [lh, la], "sp": sp, "fattori": [], "foto": r["_foto"], "cart": cart, "arbitro": arbitro,
             "xgf": [lettura_xg(k, h, t0), lettura_xg(k, a, t0)] if k in xg_lega else None,
             "curiosita": curiosita_partita(per_team, hid, aid, h, a, t0) if (hid or aid) else [],
-            "col": colori_partita(colori_es.get(k), h, a),
+            "col": colori_partita(colori_es.get(k), h, a), "_be": q.get("be"),
             "_ctx": {"coppa": [coppa_vicina(cal_coppe, h, t0), coppa_vicina(cal_coppe, a, t0)] if k not in ES.COPPE else None, "riposo": [rh, ra], "sh": sh, "sa": sa, "pos_h": pos.get(hid), "pos_a": pos.get(aid), "raccolte": raccolte,
                      "gol": [next((rr.get("goalsFor") for rr in (tabs or {}).get("TOTAL", []) if (rr.get("team") or {}).get("id") == x), None) for x in (hid, aid)]},
         })
@@ -1003,6 +1006,8 @@ def aggiorna_prepartita(d):
         m.setdefault("mo_mattino", m["mo"])
         m["mk"], m["mo"] = q["mk"], (q["mo"] if q["mo"] is not None else m["mo"])
         m["odds"], m["max"], m["nb"] = q["odds"], q["max"], q["nb"] or m.get("nb")
+        if q.get("be"):
+            m["_be"] = q["be"]
         m["xg_mercato"] = list(M.gol_attesi(m["mk"], m["mo"]))
         mkc, moc = SP.correggi(m["mk"], m["mo"], m.get("sp"), m["lg"], (CB.modello() or {}).get("integratore"))
         m["xg_base"] = list(M.gol_attesi(mkc, moc)) if mkc is not m["mk"] else m["xg_mercato"]
@@ -1806,7 +1811,9 @@ def aggiorna_diario(d):
                      # giocatori: [probabilita di base, probabilita mostrata, specialisti...] (le controlla giocatori.py a partita finita)
                      "pg": m.get("_pg") or (r or {}).get("pg"), "uff": m.get("uff") or (r or {}).get("uff"),
                      # cartellini, angoli e falli attesi (partita e squadre), media del campionato, arbitro: li controlla statistiche_ia.py
-                     "ck": diario_statistiche(m) or (r or {}).get("ck")}
+                     "ck": diario_statistiche(m) or (r or {}).get("ck"),
+                     # bookmaker esperti (esperti.py): probabilita della media, della miscela con Pinnacle e dei candidati, misurate da impara
+                     "be": m.get("_be") or (r or {}).get("be")}
                 if r is None:
                     n.update({"t0": ora, "mk0": n["mk"], "mo0": n["mo"], "xm0": n["xm"], "pc0": n["pc"], "q0": q, "tips0": tips})
                     nuove += 1
@@ -1924,7 +1931,7 @@ def main():
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
         # le probabilita di base e gli specialisti dei giocatori (_pg) vanno solo nel diario, non nel file pubblico dell'app
-        json.dump({**d, "matches": [{k: v for k, v in m.items() if k != "_pg"} for m in d.get("matches", [])]}, f, ensure_ascii=False, separators=(",", ":"))
+        json.dump({**d, "matches": [{k: v for k, v in m.items() if k not in ("_pg", "_be")} for m in d.get("matches", [])]}, f, ensure_ascii=False, separators=(",", ":"))  # _be: vedi NON_SERVONO
     scrivi_stato(d)
     scrivi_lista(d)
     aggiorna_storico(d)
@@ -1946,7 +1953,7 @@ STATO_OUT = os.path.join("app", "data", "stato.json")
 DETTAGLI = ("markets", "ia", "cart", "curiosita", "xgf", "segnali", "attese", "prec", "forma", "ctx", "h2h", "last5", "odds", "max", "elo", "foto",
             "arbitro", "xg_mercato", "fattori", "formazione", "cambio")
 FATTORI_LISTA = ("chi", "lato", "tipo", "fonte", "delta")  # nella lista resta un riassunto delle assenze (pagina squadra)
-NON_SERVONO = ("_ctx", "_firma", "_p0", "sp", "xg_base", "_pg", "uff_eff")
+NON_SERVONO = ("_ctx", "_firma", "_p0", "sp", "xg_base", "_pg", "uff_eff", "_be")
 
 
 def scrivi_lista(d):

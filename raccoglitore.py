@@ -26,6 +26,7 @@ import urllib.request
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
+import esperti as ES_BK
 import salvadanaio as SV
 
 # Campionati: id API-Football e titolo usato da The Odds API (la chiave viene cercata nell'elenco ufficiale, che e gratuito)
@@ -291,6 +292,7 @@ def giro_completo(base="data"):
                                                                                          "casa": e["home_team"], "ospite": e["away_team"], "stato": "NS"})
             if trovata is not None:
                 trovata.update({f"oa_{k}": v for k, v in riassunto(media_oddsapi(e)).items()})
+                trovata.update({f"oa_{k}": v for k, v in ES_BK.riassunto(e).items()})  # bookmaker esperti (esperti.py): Pinnacle, exchange
 
     # risultati degli ultimi giorni per i campionati non coperti da football-data.org (2 crediti per campionato)
     for nome in SCORES_ODDS_API:
@@ -626,7 +628,8 @@ def giro_prepartita(base="data", da_min=15, a_min=70):
                 if dt <= 3 * 3600 and sc > bs:
                     best, bs = e, sc
             if best and bs >= 1.3:
-                righe.append({"id": m["id"], "t": ora.isoformat(), **{f"oa_{a}": b for a, b in riassunto(media_oddsapi(best)).items()}})
+                righe.append({"id": m["id"], "t": ora.isoformat(), **{f"oa_{a}": b for a, b in riassunto(media_oddsapi(best)).items()},
+                              **{f"oa_{a}": b for a, b in ES_BK.riassunto(best).items()}})
         print(f"Pre-partita {nome}: {len(ms)} partite, crediti rimasti {rimasti}")
     # quote gratuite di ESPN (DraftKings) vicino al calcio d'inizio: tutti i campionati senza crediti (o quando i crediti non bastano)
     for k, ms in vicine.items():

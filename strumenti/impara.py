@@ -31,6 +31,7 @@ RADICE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, RADICE)
 import calibrazione as CB  # noqa: E402
 import ciclo as CI  # noqa: E402
+import esperti as BK  # noqa: E402
 import specialisti as SP  # noqa: E402
 import mercati as M  # noqa: E402
 import onesta as ON  # noqa: E402
@@ -977,6 +978,29 @@ def main():
         print("Ciclo di miglioramento: errore", e)
         ciclo_rap = {}
 
+    # 4c) bookmaker esperti (esperti.py): Pinnacle invece della media semplice dei bookmaker. Il peso si misura sull'archivio;
+    # la miscela prende il posto della media solo se migliora sulle partite vere del diario (mai viste) e si spegne se smette
+    try:
+        arch = BK.misura_archivio(STORICO)
+        mis = BK.misura_diario(diario)
+        prima_bk = bool((att0.get("esperti") or {}).get("attivo"))
+        acceso_bk, motivo_bk = BK.decidi(mis, prima_bk)
+        attivo["esperti"] = {"attivo": acceso_bk, "peso": arch.get("peso_pinnacle", BK.PESO_PIN),
+                             "dal": ((att0.get("esperti") or {}).get("dal") if acceso_bk == prima_bk else oggi)}
+        if acceso_bk != prima_bk:
+            cambi = (cambi + [{"data": oggi, "cosa": ("Probabilità di base dalle quote di Pinnacle invece della media dei bookmaker" if acceso_bk
+                                                      else "Probabilità di base di nuovo dalla media dei bookmaker"), "perche": motivo_bk}])[-60:]
+        with open(MODELLO, encoding="utf-8") as f:
+            salvato = json.load(f)
+        salvato["attivo"], salvato["cambi"] = attivo, cambi
+        with open(MODELLO, "w", encoding="utf-8") as f:
+            json.dump(salvato, f, ensure_ascii=False, indent=1)
+        esperti_rap = {"attivo": acceso_bk, "motivo": motivo_bk, "archivio": arch, "diario": mis}
+        print(f"Bookmaker esperti: {motivo_bk}; archivio: {arch.get('motivo')}")
+    except Exception as e:  # noqa: BLE001 - non deve mai fermare l'apprendimento
+        print("Bookmaker esperti: errore", e)
+        esperti_rap = {}
+
     # 5) pagina "Come sta andando l'IA"
     base = per_codice["nessuna"]
     fam = []
@@ -1003,6 +1027,7 @@ def main():
         "peso_ia": {"minimo": MIN_PESO_IA, "famiglie": pesi}, "controllo": controllo,
         "consigli": andamento_consigli(), "rendimento": rendimento_consigli(), "cronologia": cron[-10:],
         "laboratorio": lab,
+        "esperti": esperti_rap,
         "integratore": integ_rap,
         "semplice": riepilogo_semplice(fin, Yd, codici),
         "campionati": campionati,

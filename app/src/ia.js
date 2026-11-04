@@ -166,6 +166,20 @@ function Vantaggio({ V, va }) {
     <p className=${"text-[11px] " + C.mu}>Positivo = quota scesa dopo il consiglio. Se uno specialista non sposta il mercato più dei consigli senza specialisti, il suo peso scende da solo.</p></div>`;
 }
 
+/* agente "bookmaker esperti" (esperti.py): Pinnacle invece della media dei bookmaker, solo se sbaglia meno su partite mai viste */
+function Esperti({ E }) {
+  if (!E || !E.archivio || !E.archivio.errore) return null;
+  const a = E.archivio, er = a.errore, d = E.diario || {}, t = d.tutte, min = d.minimo || 300;
+  return html`<div className=${C.card + " p-4 space-y-2"}><div className=${C.lab}>Bookmaker esperti</div>
+    <p className=${"text-[13px] " + C.mu}>Le probabilità partono dalla media di tutti i bookmaker. L'agente misura se dare più peso a quelli più precisi (Pinnacle) sbaglia meno: entra solo se lo dimostra sulle partite vere.</p>
+    <div className=${"grid grid-cols-[1fr_auto] gap-x-4 text-[11px] font-medium " + C.mu}><span>Archivio, ${(a.prova || 0).toLocaleString("it-IT")} partite mai viste</span><span className="text-right">Errore</span></div>
+    ${[["Media dei bookmaker", er.media], ["Pinnacle", er.pinnacle], ["Bet365", er.bet365]].filter(([, v]) => v != null).map(([k, v]) => html`<${Riga} key=${k} k=${k} v=${num(v, 4)} />`)}
+    ${a.chiusura && html`<${Riga} k="Media alla chiusura" nota="quote prese al fischio" v=${num(a.chiusura.media_chiusura, 4)} />`}
+    <${Riga} k="Sulle partite vere" nota=${t ? t.n + " partite" : (d.partite || 0) + "/" + min + " partite con Pinnacle"} v=${t && d.partite >= min ? segno(t.guadagno, 2) + "%" : "in attesa"} />
+    ${!(t && d.partite >= min) && html`<${Barra} v=${Math.min(d.partite || 0, min)} max=${min} />`}
+    <p className=${"text-[11px] " + C.mu}>${E.attivo ? "Accesa: " : "Oggi: "}${E.motivo || ""}. Più basso è meglio: conta più l'ora delle quote che il bookmaker.</p></div>`;
+}
+
 /* campionati dove l'IA è più e meno affidabile (onesta.py, nell'apprendimento) */
 function Campionati({ Q }) {
   const { lg } = React.useContext(Ctx);
@@ -306,6 +320,7 @@ function IACard() {
           ${[["1X2", "Esito finale"], ["O2.5", "Under/Over 2,5"]].filter(([k]) => bk[k] && bk[k].n).map(([k, n]) => html`<div key=${k} className=${"grid grid-cols-[1fr_auto_auto] gap-x-4 text-sm tabular-nums border-t pt-1.5 " + C.bd + " " + C.tx}>
             <span>${n} <span className=${"text-[11px] " + C.mu}>${bk[k].n} partite</span></span><b className="text-right">${num(bk[k].ia, 3)}</b><span className="text-right">${num(bk[k].quote, 3)}</span></div>`)}
           <p className=${"text-[11px] pt-1 " + C.mu}>Più basso è meglio. Battere le quote è difficile: già pareggiarle vuol dire che le probabilità sono affidabili.</p></div>`}
+        <${Esperti} E=${I.esperti} />
         ${Object.keys(pe).length > 0 && html`<div className=${C.card + " p-4 space-y-2"}><div className=${C.lab}>Quanto pesano notizie e assenze</div>
           ${Object.entries(pe).map(([f, v]) => html`<div key=${f} className="space-y-0.5"><div className="flex justify-between text-[13px]"><span className=${C.tx}>${f}</span><span className=${"tabular-nums " + (v.attivo ? "font-semibold " + C.tx : C.mu)}>${v.attivo ? "peso " + num(v.peso, 2) : v.n + "/" + minP}</span></div>
             <${Barra} v=${Math.min(v.n, minP)} max=${minP} tono=${v.attivo ? "bg-emerald-500" : "bg-[#5B2EE6] dark:bg-[#A58BFF]"} /></div>`)}</div>`}

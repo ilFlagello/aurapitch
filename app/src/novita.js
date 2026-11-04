@@ -1,6 +1,14 @@
 /* AuraPitch - versione dell'app e novità. A ogni pubblicazione con cambi visibili si aggiunge una voce IN CIMA:
    il numero cresce (1.1, 1.2, ...) e l'app lo mostra nel profilo e nel riquadro "Novità" dopo l'aggiornamento. */
 export const NOVITA = [
+  { v: "2.2", data: "4 novembre 2026", punti: [
+    "Nuova pagina dell'algoritmo (Schedina IA > Storico IA): in alto come sta andando l'IA in una frase, sotto le sezioni che si aprono al tocco (come ragiona, onestà, vantaggio sul mercato, campionati, cosa ha cambiato e perché)",
+    "Coppe: nei Campionati c'è il tabellone a eliminazione diretta di Champions, Europa e Conference League e delle coppe nazionali",
+    "Campionati senza quote: una stima dell'IA delle probabilità 1X2 (senza consiglio e senza schedina), con l'onestà controllata ogni giorno",
+    "Nuovi campionati: Premier League russa con il consiglio; Finlandia e Irlanda tra quelli senza quote. In tutto 26 campionati e coppe in più dal 3 novembre",
+    "Scheda squadra con la forma delle ultime 5 e la difficoltà delle prossime 3; in diretta la barra \"Chi spinge adesso\"; \"IA contro mercato\" nella pagina dell'IA",
+    "App più veloce all'avvio: la scheda della partita si scarica dopo l'elenco",
+  ] },
   { v: "2.1", data: "3 novembre 2026", punti: [
     "Storico dei consigli più onesto: se i dati di una partita arrivano dopo il fischio, il consiglio si vede ma non conta nel rendimento (etichetta \"Dati arrivati dopo il fischio\")",
     "Partite in Asia, Oceania e Sudamerica: il consiglio si blocca all'ultimo aggiornamento utile prima della notte, non più dopo l'inizio",

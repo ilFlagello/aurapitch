@@ -47,8 +47,8 @@ function GiocatoriIA() {
   const tipi = G && G.tipi ? Object.values(G.tipi).filter((t) => t.controlli > 0) : [];
   if (!tipi.length) return null;
   return html`<div className=${C.card + " p-4 space-y-2"}>
-    <div className=${C.lab}>Giocatori: marcatori, assist, ammoniti</div>
-    <p className=${"text-[13px] " + C.mu}>Dopo ogni partita il verificatore controlla sul tabellino chi ha segnato, chi ha fatto assist e chi è stato ammonito, e lo confronta con quanto diceva l'app prima del fischio.</p>
+    <div className=${C.lab}>Giocatori: marcatori, assist, cartellini</div>
+    <p className=${"text-[13px] " + C.mu}>Dopo ogni partita il verificatore controlla sul tabellino chi ha segnato, chi ha fatto assist e chi ha preso un cartellino (giallo o rosso), e lo confronta con quanto diceva l'app prima del fischio.</p>
     <div className=${"grid grid-cols-[1fr_auto_auto] gap-x-4 text-[11px] font-medium " + C.mu}><span>Giocata</span><span className="text-right">Attese</span><span className="text-right">Successe</span></div>
     ${tipi.map((t) => html`<div key=${t.nome} className=${"grid grid-cols-[1fr_auto_auto] gap-x-4 items-baseline text-[14px] tabular-nums border-t pt-1.5 " + C.bd + " " + C.tx}>
       <span>${t.nome} <span className=${"text-[11px] " + C.mu}>${t.controlli.toLocaleString("it-IT")} controlli${t.attivo ? ", taratura attiva" : ""}</span></span><span className="text-right">${num(t.attesi, 0)}</span><b className="text-right">${t.presi}</b></div>`)}

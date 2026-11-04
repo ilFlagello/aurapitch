@@ -1,4 +1,4 @@
-"""AuraPitch - agenti sui giocatori (marcatori, assist, ammoniti). Solo libreria standard: gira nel giro dei dati.
+"""AuraPitch - agenti sui giocatori (marcatori, assist, cartellini). Solo libreria standard: gira nel giro dei dati.
 
 Come per le partite, ogni agente ha un solo compito e lavora "in ombra" finche non dimostra di servire:
 
@@ -9,8 +9,8 @@ Come per le partite, ogni agente ha un solo compito e lavora "in ombra" finche n
     minuti      quanto gioca adesso: titolare/panchina dalla formazione ufficiale, altrimenti minuti delle ultime 5 rispetto alla stagione
     rigorista   tira i rigori della squadra? (solo marcatori)
     forma       gol, assist o cartellini nelle ultime 5 rispetto alla sua media di stagione
-    avversario  quanto e favorevole la partita: gol attesi della squadra (marcatori, assist) o cartellini attesi (ammoniti)
-    arbitro     quanti cartellini da l'arbitro rispetto alla media del campionato (solo ammoniti)
+    avversario  quanto e favorevole la partita: gol attesi della squadra (marcatori, assist) o cartellini attesi (cartellini dei giocatori)
+    arbitro     quanti cartellini da l'arbitro rispetto alla media del campionato (solo cartellini dei giocatori)
 - TARATURA: per ogni tipo di giocata, con abbastanza controlli, impara una correzione logistica
       logit(p) = a + b * logit(p_base) + somma(peso_i * specialista_i)
   allenata sui controlli piu vecchi e provata sui piu recenti (mai visti). Uno specialista entra solo se migliora la prova;
@@ -32,7 +32,7 @@ TABELLINI = os.path.join(DATA, "espn", "tabellini.json")
 DIARIO = os.path.join(DATA, "diario")
 
 TIPI = ("MARC", "ASS", "AMM")
-NOMI_TIPI = {"MARC": "Marcatori", "ASS": "Assist", "AMM": "Ammoniti"}
+NOMI_TIPI = {"MARC": "Marcatori", "ASS": "Assist", "AMM": "Cartellini"}
 SPECIALISTI = [("minuti", "Minuti: titolare, panchina o minuti recenti"), ("rigorista", "Rigorista della squadra"),
                ("forma", "Forma del giocatore nelle ultime 5"), ("avversario", "Partita favorevole (gol o cartellini attesi)"),
                ("arbitro", "Arbitro severo o permissivo")]

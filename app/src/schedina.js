@@ -57,7 +57,7 @@ import { META, principali, slipOffPredefinito } from "./ordine.js";
       const [esito, setEsito0] = useState(() => { const e = store.get("slipEsito", ""); return ESITI_SCHEDINA.some(([k]) => k === e) ? e : ""; });
       const setEsito = setEsito0;
       const [nP, setNP] = useState(store.get("slipN", 0)); // numero di partite: 0 = lo decide l'IA
-      // cosa giocare: una o più voci insieme (Partite, Marcatori, Assist, Ammoniti); solo "Partite" = schedina classica con esito e stile
+      // cosa giocare: una o più voci insieme (Partite, Marcatori, Assist, Cartellini); solo "Partite" = schedina classica con esito e stile
       const [tipi, setTipi0] = useState(() => { const t = store.get("slipTipi", null); return Array.isArray(t) && t.length ? t : ["P"]; });
       const setTipi = (t) => { setTipi0(t); store.set("slipTipi", t); };
       const tipoG = tipi.length === 1 && tipi[0] === "P" ? "" : tipi.join("+");

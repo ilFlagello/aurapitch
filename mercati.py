@@ -540,7 +540,7 @@ def valutazioni(mercati, h, a, sh, sa, ctx, cart=None, extra=None, marc=None, ma
         i = (marc_info or {}).get(c) or {}
         nome, pr, tit = c.split(":", 1)[1], i.get("pres", 0), i.get("tit", 0)
         if c.startswith("AMM:"):
-            g, mot = "Ammoniti", [(f"{nome} ha preso {i.get('v', 0)} gialli in {pr} presenze ({tit} da titolare).", i.get("v", 0) / max(1, pr) >= 0.25)]
+            g, mot = "Cartellini giocatori", [(f"{nome} ha preso {i.get('v', 0)} gialli in {pr} presenze ({tit} da titolare).", i.get("v", 0) / max(1, pr) >= 0.25)]
         elif c.startswith("ASS:"):
             g, mot = "Assist", [(f"{nome} ha fatto {i.get('v', 0)} assist in {pr} presenze ({tit} da titolare).", i.get("v", 0) / max(1, pr) >= 0.2)]
         else:

@@ -40,7 +40,7 @@ def gruppo(c):
     if c.startswith("MARC:"):
         return "Marcatori"
     if c.startswith("AMM:"):
-        return "Ammoniti"
+        return "Cartellini giocatori"
     if c.startswith("ASS:"):
         return "Assist"
     if re.match(r"^[KCF][HA][OU]\d", c):

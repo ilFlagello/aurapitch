@@ -1,6 +1,9 @@
 /* AuraPitch - versione dell'app e novità. A ogni pubblicazione con cambi visibili si aggiunge una voce IN CIMA:
    il numero cresce (1.1, 1.2, ...) e l'app lo mostra nel profilo e nel riquadro "Novità" dopo l'aggiornamento. */
 export const NOVITA = [
+  { v: "2.6", data: "4 novembre 2026", punti: [
+    "Nei mercati dei giocatori e nella Schedina IA la voce \"Ammoniti\" diventa \"Cartellini\": vale qualsiasi cartellino, giallo o rosso (come già nel controllo dei risultati)",
+  ] },
   { v: "2.5", data: "4 novembre 2026", punti: [
     "Storico dei consigli corretto: le partite finite non vengono più segnate per errore come \"Dati arrivati dopo il fischio\". Il consiglio resta quello bloccato prima della partita e conta nel rendimento",
   ] },

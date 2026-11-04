@@ -1,6 +1,10 @@
 /* AuraPitch - versione dell'app e novità. A ogni pubblicazione con cambi visibili si aggiunge una voce IN CIMA:
    il numero cresce (1.1, 1.2, ...) e l'app lo mostra nel profilo e nel riquadro "Novità" dopo l'aggiornamento. */
 export const NOVITA = [
+  { v: "2.3", data: "4 novembre 2026", punti: [
+    "Nuovo agente Anti-illusione (Storico IA > Gli agenti di controllo): ricontrolla ogni miglioramento dell'IA solo sulle partite arrivate dopo la sua accensione e lo spegne da solo se non aiuta più",
+    "Bookmaker esperti (Storico IA > Per chi vuole i numeri): l'IA prova se le quote di Pinnacle sbagliano meno della media dei bookmaker. Per ora è in prova e non cambia le probabilità",
+  ] },
   { v: "2.2", data: "4 novembre 2026", punti: [
     "Nuova pagina dell'algoritmo (Schedina IA > Storico IA): in alto come sta andando l'IA in una frase, sotto le sezioni che si aprono al tocco (come ragiona, onestà, vantaggio sul mercato, campionati, cosa ha cambiato e perché)",
     "Coppe: nei Campionati c'è il tabellone a eliminazione diretta di Champions, Europa e Conference League e delle coppe nazionali",

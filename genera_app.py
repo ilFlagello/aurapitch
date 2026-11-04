@@ -22,10 +22,10 @@ import calibrazione as CB
 import specialisti as SP
 import cartellini as CK
 import espn_dati as ES
+import stima_sq as SQ
 import fattori as FT
 import giocatori as GC
 import mercati as M
-import stima_sq as SQ
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 

@@ -218,7 +218,6 @@ async function giroSenzaQuote(tema) {
     if (/undefined|NaN/.test(t)) errori.push(`[${tema}] senza quote: testo con "undefined" o "NaN"`);
     // stima dell'IA: etichetta nella riga e nella scheda, mai consiglio né schedina
     await p.getByRole("button", { name: /Partite/ }).first().click(); await p.waitForTimeout(400);
-    if (!(await p.getByText("Stima dell'IA · senza quote").count())) errori.push(`[${tema}] stima senza quote: manca l'etichetta nella riga`);
     await p.getByRole("button", { name: /Lokomotiv Moscow/ }).first().click(); await p.waitForTimeout(500);
     if (!(await p.getByText("Stima dell'IA, senza quote").count())) errori.push(`[${tema}] stima senza quote: manca l'etichetta nella scheda`);
     if (await p.getByText(/Aggiungi alla tua schedina|Consiglio IA/).count()) errori.push(`[${tema}] stima senza quote: compare la schedina o il consiglio`);

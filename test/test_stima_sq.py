@@ -76,7 +76,8 @@ class TestStimaSQ(unittest.TestCase):
             subprocess.run([sys.executable, "-I", os.path.join(RADICE, "strumenti", "revisore.py"), base], capture_output=True, timeout=120)
             with open(os.path.join(base, "data", "revisore.json"), encoding="utf-8") as f:
                 rv = json.load(f)
-            self.assertEqual(rv["stime_sq"]["n"], 120)
+            with open(os.path.join(base, "data", "revisore_stime_sq.json"), encoding="utf-8") as f:
+                self.assertEqual(json.load(f)["n"], 120)
             self.assertTrue(any("Stime senza quote (120 partite)" in x for x in rv["note"] + rv["attenzione"]))
 
 

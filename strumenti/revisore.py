@@ -8,8 +8,7 @@ Controlla:
  4. consigli: vinti contro attesi (somma delle probabilita) negli ultimi 30 giorni, solo quelli bloccati prima del fischio;
  5. credibilita del blocco: nessun consiglio che conta nello storico registrato dopo il calcio d'inizio; quanti arrivano tardi;
  6. dati: partite rimaste "da giocare" ore dopo il fischio (risultati che non arrivano), partite finite mai verificate;
- 7. coerenza dei dati dell'ultimo giro (strumenti/coerenza.py);
- 10. stime dell'IA nei campionati senza quote (stima_sq.py): errore e onesta a partite finite.
+ 7. coerenza dei dati dell'ultimo giro (strumenti/coerenza.py).
 Esito in data/revisore.json (solo per chi lo esegue, mai nel repository) e codice di uscita 1 se c'e un problema:
 il controllo orario vede l'esecuzione fallita e apre l'avviso su GitHub; il riepilogo del lunedi riporta i punti "da tenere d'occhio".
 Uso: python3 strumenti/revisore.py [cartella radice]"""
@@ -252,6 +251,30 @@ def controlla_consigli(diario):
 
 # ---------- 6-7. dati del giorno ----------
 
+def controlla_stime_sq():
+    """Controllo 10: stime dell'IA nei campionati senza quote (stima_sq.py). A partite finite, errore contro un riferimento
+    ingenuo (frequenze medie di 1, X, 2) e contro le quote DraftKings dove c'erano; onesta per fasce. Mai nei consigli.
+    Lo chiama controlla_dati; il dettaglio va in data/revisore_stime_sq.json (mai nel repository)."""
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # stima_sq.py sta nella cartella del codice
+    import stima_sq as SQ
+    v = SQ.valuta(_jload("data/stime_senza_quote.json", {}) or {})
+    with open(os.path.join(RADICE, "data", "revisore_stime_sq.json"), "w", encoding="utf-8") as f:
+        json.dump({"quando": ORA.isoformat(timespec="minutes"), **v}, f, ensure_ascii=False, indent=1)
+    if v.get("n", 0) < 50:
+        note.append(f"Stime senza quote: servono almeno 50 partite finite per giudicarle (ora {v.get('n', 0)})")
+        return v
+    testo = f"Stime senza quote ({v['n']} partite): errore {v['ia']:.3f} contro {v['base']:.3f} del riferimento ingenuo".replace(".", ",")
+    if v.get("quote"):
+        testo += f", {v['quote']:.3f} delle quote DraftKings su {v['n_quote']}".replace(".", ",")
+    if v["ia"] > v["base"] * 1.01 and v["n"] >= 100:
+        attenzione.append(testo + ": la stima fa peggio del riferimento, da rivedere")
+    elif (v.get("scarto") or 0) > 6:
+        attenzione.append(testo + f"; probabilità poco oneste (scarto {v['scarto']:.1f} punti)".replace(".", ","))
+    else:
+        note.append(testo)
+    return v
+
+
 def controlla_dati(diario):
     d = _jload("app/data/giornata.json") or {}
     ferme, passate = {}, 0
@@ -288,27 +311,10 @@ def controlla_dati(diario):
             note.append(f"Coerenza dei dati: ok ({co.get('controlli', 0)} controlli)")
     for f, nome in (("app/data/giocatori_ia.json", "verificatore dei giocatori"), ("app/data/statistiche_ia.json", "verificatore delle statistiche")):
         note.append(f"{nome[0].upper() + nome[1:]}: " + ("riassunto presente" if os.path.exists(os.path.join(RADICE, f)) else "nessun riassunto ancora (si crea al giro del mattino)"))
-
-
-def controlla_stime_sq():
-    """Stime dell'IA nei campionati senza quote (stima_sq.py): a partite finite, errore contro un riferimento ingenuo
-    (frequenze medie di 1, X, 2) e contro le quote DraftKings dove c'erano; onesta per fasce. Mai nei consigli."""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # stima_sq.py sta nella cartella del codice
-    import stima_sq as SQ
-    v = SQ.valuta(_jload("data/stime_senza_quote.json", {}) or {})
-    if v.get("n", 0) < 50:
-        note.append(f"Stime senza quote: servono almeno 50 partite finite per giudicarle (ora {v.get('n', 0)})")
-        return v
-    testo = f"Stime senza quote ({v['n']} partite): errore {v['ia']:.3f} contro {v['base']:.3f} del riferimento ingenuo".replace(".", ",")
-    if v.get("quote"):
-        testo += f", {v['quote']:.3f} delle quote DraftKings su {v['n_quote']}".replace(".", ",")
-    if v["ia"] > v["base"] * 1.01 and v["n"] >= 100:
-        attenzione.append(testo + ": la stima fa peggio del riferimento, da rivedere")
-    elif (v.get("scarto") or 0) > 6:
-        attenzione.append(testo + f"; probabilità poco oneste (scarto {v['scarto']:.1f} punti)".replace(".", ","))
-    else:
-        note.append(testo)
-    return v
+    try:  # 10. stime dell'IA nei campionati senza quote
+        controlla_stime_sq()
+    except Exception as e:  # noqa: BLE001
+        attenzione.append(f"Controllo delle stime senza quote non riuscito: {type(e).__name__}")
 
 
 def main():
@@ -327,12 +333,7 @@ def main():
             fn(diario)
         except Exception as e:  # noqa: BLE001
             attenzione.append(f"Controllo {nome} non riuscito: {type(e).__name__}")
-    stime_sq = None
-    try:
-        stime_sq = controlla_stime_sq()
-    except Exception as e:  # noqa: BLE001
-        attenzione.append(f"Controllo delle stime senza quote non riuscito: {type(e).__name__}")
-    esito_tot = {"quando": ORA.isoformat(timespec="minutes"), "problemi": problemi, "attenzione": attenzione, "note": note, "stime_sq": stime_sq}
+    esito_tot = {"quando": ORA.isoformat(timespec="minutes"), "problemi": problemi, "attenzione": attenzione, "note": note}
     os.makedirs(os.path.join(RADICE, "data"), exist_ok=True)
     with open(os.path.join(RADICE, "data", "revisore.json"), "w", encoding="utf-8") as f:
         json.dump(esito_tot, f, ensure_ascii=False, indent=1)

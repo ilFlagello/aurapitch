@@ -1188,6 +1188,12 @@ def applica_fattori(d):
         m["_p0"] = [round(pm.get("1", 0), 4), round(pm.get("X", 0), 4), round(pm.get("2", 0), 4)] if corretta else m["mk"]  # prima delle correzioni imparate
         # correzioni imparate: con le notizie serve anche la lettura delle sole quote (per il peso della correzione IA)
         sole_quote = M.calcola_mercati(lh0, la0, m["h"], m["a"], c.get("raccolte") or {}) if corretta and (CB.modello().get("peso_ia")) else None
+        if sole_quote:  # anti-illusione: le stesse probabilita senza il peso delle notizie, per ricontrollarlo dopo l'accensione
+            mod_sz = {kk: vv for kk, vv in CB.modello().items() if kk != "peso_ia"}
+            p_sz = CB.calibra_p({x["c"]: x["p"] for x in mercati if not x["c"].startswith("CS")}, m["lg"], mod_sz, {x["c"]: x["p"] for x in sole_quote})
+            c["senza"] = {"peso_ia": [round(p_sz[cc], 4) if cc in p_sz else None for cc in CHIAVI_DIARIO]}
+        else:
+            c.pop("senza", None)
         CB.calibra(mercati, m["lg"], sole_quote)
         pm = {x["c"]: x["p"] for x in mercati}
         if corretta or CB.attivo():
@@ -1803,6 +1809,8 @@ def aggiorna_diario(d):
                      "mo": m.get("mo") if od.get("O") and od.get("U") else None, "nf": sum(1 for f in m.get("fattori") or [] if f.get("delta") or f.get("delta_avv")),
                      "ver": ver, "pc": {c: pr[c] for c in CHIAVI_DIARIO if c in pr}, "q": q, "tips": tips, "st": "NS",
                      "lv": (m.get("dati") or {}).get("lv"), "bl": 1 if (m.get("blocco") or {}).get("st") == "bloccato" else 0, "sp": m.get("sp"),
+                     # anti-illusione: probabilita (1, X, 2, Over 2,5, Goal) senza il peso delle notizie, quando conta
+                     "sz": m["_ctx"].get("senza") if isinstance(m.get("_ctx"), dict) else (r or {}).get("sz"),
                      # giocatori: [probabilita di base, probabilita mostrata, specialisti...] (le controlla giocatori.py a partita finita)
                      "pg": m.get("_pg") or (r or {}).get("pg"), "uff": m.get("uff") or (r or {}).get("uff"),
                      # cartellini, angoli e falli attesi (partita e squadre), media del campionato, arbitro: li controlla statistiche_ia.py

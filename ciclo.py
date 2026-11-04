@@ -186,10 +186,10 @@ def eventi(prima, dopo, oggi, motivi=None):
         ev(f"Peso più basso per lo specialista \"{s.replace('_', ' ')}\" (×{r1[s]})".replace(".", ","),
            motivi.get("specialisti") or "dopo il suo consiglio il mercato si muoveva contro più spesso del solito")
     for s in sorted(set(r0) - set(r1)):
-        ev(f"Peso pieno di nuovo per lo specialista \"{s.replace('_', ' ')}\"", "la misura del vantaggio non lo penalizza più")
+        ev(f"Peso pieno di nuovo per lo specialista \"{s.replace('_', ' ')}\"", motivi.get("ridotti_tolti") or "la misura del vantaggio non lo penalizza più")
     p0, p1 = prima.get("peso_ia") or {}, dopo.get("peso_ia") or {}
     for fam in sorted(set(p0) | set(p1)):
         if p0.get(fam) != p1.get(fam):
             ev(f"{fam}: le notizie (assenze, squalifiche) pesano " + (f"il {round(100 * p1[fam])}%" if fam in p1 else "di nuovo per intero"),
-               "misurato sulle partite in cui l'IA ha corretto le quote")
+               motivi.get("peso_ia") or "misurato sulle partite in cui l'IA ha corretto le quote")
     return out

@@ -370,6 +370,9 @@ async function giroAlgoritmo(tema) {
       elenco: [{ lg: "I1", partite: 70, scarto: 0.4, consigli: 40, vinti: 29, attesi: 27.5 }, { lg: "E0", partite: 66, scarto: 1.1 }, { lg: "SP1", partite: 61, scarto: 1.9 },
         { lg: "D1", partite: 64, scarto: 2.6 }, { lg: "F1", partite: 62, scarto: 4.2 }, { lg: "T1", partite: 63, scarto: 7.8, fattore: 0.8 }] };
     j.cambi = [{ data: j.allenato, cosa: "Probabilità ritarate per fascia: 60-70%: -2 punti", perche: "errore più basso dello 0,31% su 140 partite mai viste" }];
+    j.anti_illusione = { minimo: 150, pausa: 14, voci: [{ voce: "integratore:principali", nome: "Integratore degli specialisti (campionati principali)", dal: "2026-10-30", partite: 210, minimo: 150, guadagno: 0.12, stato: "aiuta" },
+      { voce: "fasce", nome: "Ritaratura delle probabilità per fascia", dal: j.allenato, partite: 40, minimo: 150, guadagno: -0.05, stato: "in verifica" },
+      { voce: "peso_ia", nome: "Peso delle notizie e delle assenze", stato: "in pausa", fino: "2026-11-18" }] };
     await r.fulfill({ response: res, json: j });
   });
   await p.goto(URL0); await p.waitForTimeout(800);
@@ -391,6 +394,7 @@ async function giroAlgoritmo(tema) {
       if (!(await bt.count())) { errori.push(`[${tema}] algoritmo: manca la sezione "${v}"`); continue; }
       await bt.click(); await p.waitForTimeout(150);
     }
+    for (const t of ["Anti-illusione", "aiuta ancora", "in verifica", "in pausa"]) if (!(await p.getByText(t, { exact: true }).first().count())) errori.push(`[${tema}] algoritmo: manca "${t}" (anti-illusione)`);
     for (const t of ["Su 100 consigli, dopo il blocco la quota...", "Più affidabile", "Meno affidabile", "Probabilità ritarate per fascia", "Blocca il consiglio 45 minuti prima"])
       if (!(await p.getByText(t).first().count())) errori.push(`[${tema}] algoritmo: dopo l'apertura manca "${t}"`);
     const t = await p.evaluate(() => document.body.innerText);

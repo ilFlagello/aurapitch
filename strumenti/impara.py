@@ -29,6 +29,7 @@ import numpy as np
 
 RADICE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, RADICE)
+import anti_illusione as AI  # noqa: E402
 import calibrazione as CB  # noqa: E402
 import ciclo as CI  # noqa: E402
 import specialisti as SP  # noqa: E402
@@ -944,6 +945,7 @@ def main():
     # 4b) ciclo di miglioramento (ciclo.py): ritaratura delle fasce di probabilita dove le probabilita mostrate si discostano da
     # quello che succede (lo stesso controllo del revisore), provata su partite mai viste; poi la cronologia dei cambi del giorno
     cambi = vecchio.get("cambi") or []
+    ai_rap = {}  # anti-illusione (sotto)
     try:
         storia = dict(att0.get("fasce_storia") or {})
         fz = CI.impara_fasce(diario, storia)
@@ -963,11 +965,22 @@ def main():
             motivi["affid_lg"] = ((campionati or {}).get("affidabilita") or {}).get("motivo") or ""  # punto 2, se presente
         except NameError:
             pass
+        # anti-illusione (anti_illusione.py): ogni miglioramento acceso si ricontrolla sulle partite arrivate dopo la sua
+        # accensione; se non riduce piu l'errore si spegne per 14 giorni e il motivo finisce nella voce di "cambi"
+        try:
+            attivo, ai_stato, ai_rap, ai_motivi = AI.controlla(attivo, vecchio.get("anti_illusione"), diario, oggi)
+            motivi.update(ai_motivi)
+            if "affid_lg" in ai_motivi and campionati.get("affidabilita"):
+                campionati["affidabilita"].update(attivo=False, fattori={}, motivo=ai_motivi["affid_lg"])
+            print("Anti-illusione: " + AI.riassunto(ai_rap))
+        except Exception as e:  # noqa: BLE001 - non deve mai fermare l'apprendimento
+            print("Anti-illusione: errore", e)
+            ai_stato, ai_rap = vecchio.get("anti_illusione"), {}
         nuovi = CI.eventi(att0, attivo, oggi, motivi)
         cambi = (cambi + nuovi)[-60:]
         with open(MODELLO, encoding="utf-8") as f:
             salvato = json.load(f)
-        salvato["attivo"], salvato["cambi"] = attivo, cambi
+        salvato["attivo"], salvato["cambi"], salvato["anti_illusione"] = attivo, cambi, ai_stato or {}
         with open(MODELLO, "w", encoding="utf-8") as f:
             json.dump(salvato, f, ensure_ascii=False, indent=1)
         print(f"Cambi dell'IA oggi: {len(nuovi)}" + "".join(f"\n  - {e['cosa']}" for e in nuovi))
@@ -1006,6 +1019,7 @@ def main():
         "integratore": integ_rap,
         "semplice": riepilogo_semplice(fin, Yd, codici),
         "campionati": campionati,
+        "anti_illusione": ai_rap,
         "allenato": oggi,
     }
     with open(PAGINA, "w", encoding="utf-8") as f:

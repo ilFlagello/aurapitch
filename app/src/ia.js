@@ -199,6 +199,21 @@ function Cambi({ I, ric }) {
     <p className=${"text-[11px] pt-1 " + C.mu}>Ogni cambio si prova prima sulle partite più vecchie e poi su quelle più recenti, che il modello non ha mai visto: entra solo se sbaglia meno.</p></div>`;
 }
 
+/* agente anti-illusione (anti_illusione.py): ogni miglioramento acceso si ricontrolla sulle partite arrivate dopo la sua accensione */
+function AntiIllusione({ A }) {
+  const v = (A && A.voci) || [];
+  if (!v.length) return null;
+  const stato = (r) => (r.stato === "aiuta" ? ["aiuta ancora", "text-emerald-600 dark:text-emerald-300"] : r.stato === "spento" ? ["spento", "text-[#E0314B] dark:text-[#FF7085]"]
+    : r.stato === "in pausa" ? ["in pausa", C.mu] : ["in verifica", C.mu]);
+  return html`<div className=${C.card + " p-4 space-y-2"}><div className=${C.lab}>Anti-illusione</div>
+    <p className=${"text-[13px] " + C.mu}>Un miglioramento può sembrare utile per caso. Ogni mattina l'agente lo ricontrolla solo sulle partite arrivate dopo la sua accensione: se non fa più sbagliare meno, lo spegne.</p>
+    ${v.map((r) => { const [t, tono] = stato(r);
+      return html`<div key=${r.voce} className="space-y-0.5 pt-1"><div className="flex items-baseline justify-between gap-3 text-[14px]"><span className=${C.tx}>${r.nome}</span><b className=${"shrink-0 " + tono}>${t}</b></div>
+        <div className=${"text-[11px] " + C.mu}>${r.stato === "in pausa" || r.stato === "spento" ? "Può tornare dal " + giorno(r.fino) + ", solo se ripassa la prova" :
+          `Acceso dal ${giorno(r.dal)}: ${r.partite || 0} partite dopo (servono ${r.minimo})${r.guadagno != null && r.voce !== "affid_lg" ? ", " + (r.guadagno > 0 ? "errore più basso del " + num(r.guadagno, 2) + "%" : "per ora non sbaglia meno") : ""}`}</div>
+        ${r.stato === "in verifica" && html`<${Barra} v=${Math.min(r.partite || 0, r.minimo || 150)} max=${r.minimo || 150} />`}</div>`; })}</div>`;
+}
+
 function IACard() {
   const [I, setI] = useState(null);
   const [V, setV] = useState(null);
@@ -257,11 +272,12 @@ function IACard() {
     <${Voce} id="alg-agenti" titolo="Gli agenti di controllo" sotto="Chi controlla l'IA, ogni giorno" icona=${Ic.ShieldCheck}>
       <div className="space-y-3"><div className=${C.card + " p-4 space-y-3"}><${Passi} righe=${[
         ["Apprendimento, ogni mattina alle 6:20", "Si riallena su archivio e partite vere; una correzione entra solo se sbaglia meno su partite mai viste."],
+        ["Anti-illusione, dopo l'apprendimento", "Ricontrolla ogni miglioramento acceso solo sulle partite arrivate dopo la sua accensione: se non aiuta più, lo spegne da solo e lo scrive in \"Cosa ha cambiato l'IA\"."],
         ["Revisore, alle 7:40", "Controlla l'onestà delle probabilità (anche campionato per campionato), i consigli vinti contro attesi, il vantaggio sul mercato e che nessun consiglio sia stato registrato dopo il fischio."],
         ["Verificatori, dopo ogni partita", "Confrontano marcatori, assist, cartellini, angoli e falli previsti con il tabellino vero."],
         ["Coerenza, a ogni aggiornamento", "Probabilità che sommano a 100, quote sensate, nessun doppione, consigli bloccati che non cambiano."],
         ["Guardiano, alle 6:50", "Sicurezza del servizio e dei dati."]]} /></div>
-        <${GiocatoriIA} /><${StatisticheIA} /></div><//>
+        <${AntiIllusione} A=${I.anti_illusione} /><${GiocatoriIA} /><${StatisticheIA} /></div><//>
 
     <${Voce} id="alg-onesta" titolo="Quanto sono oneste le probabilità" sotto="Quando l'IA dice 60%, succede 6 volte su 10?" icona=${Ic.Activity}>
       <div className=${C.card + " p-4 space-y-3"}>

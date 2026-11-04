@@ -183,6 +183,43 @@ async function giro(tema) {
   if (/undefined|NaN/.test(testo)) errori.push(`[${tema}] testo con "undefined" o "NaN" nell'ultima schermata`);
   await p.close();
 }
+// tabellone delle coppe (punto 7 del 4/11): file finto dei tabelloni, scheda "Tabellone" della Champions
+async function giroTabellone(tema) {
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, colorScheme: tema, hasTouch: true, serviceWorkers: "block" });
+  const p = await ctx.newPage();
+  p.on("pageerror", (e) => errori.push(`[${tema} tabellone] errore: ${e.message}`));
+  await p.route(/^(?!http:\/\/127\.0\.0\.1)/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
+  const g = (eid, t, h, a, gg, extra) => ({ eid, t, h, a, g: gg, fine: !!gg, ...(extra || {}) });
+  const TAB = { agg: "2026-11-04T06:00", anno: 2026, coppe: { CL: { anno: 2026, turni: [
+    { id: "2", nome: "Spareggi", inizio: "2027-02-15", ar: true, n: 0, sfide: [] },
+    { id: "3", nome: "Ottavi di finale", inizio: "2027-03-08", ar: true, sfide: [
+      { sq: ["Inter", "Barcelona"], gare: [g("1", "2027-03-10T20:00Z", "Inter", "Barcelona", [2, 1]), g("2", "2027-03-17T20:00Z", "Barcelona", "Inter", [1, 1])], tot: [3, 2], passa: "Inter" },
+      { sq: ["Arsenal", "Bayern Munich"], gare: [g("3", "2027-03-11T20:00Z", "Arsenal", "Bayern Munich", [1, 0]), g("4", "2027-03-18T20:00Z", "Bayern Munich", "Arsenal", [1, 0], { rig: [4, 2] })], tot: [1, 1], passa: "Bayern Munich" },
+      { sq: ["Liverpool", "Real Madrid"], gare: [g("5", "2027-03-11T20:00Z", "Liverpool", "Real Madrid", [0, 0]), g("6", "2027-03-18T20:00Z", "Real Madrid", "Liverpool", null)], tot: [0, 0], passa: null }] },
+    { id: "4", nome: "Quarti di finale", inizio: "2027-04-05", ar: true, n: 0, sfide: [] }] } } };
+  await p.route(/\/data\/tabelloni\.json/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(TAB) }));
+  await p.goto(URL0); await p.waitForTimeout(800);
+  await p.evaluate(() => { localStorage.setItem("ap:onb", "true"); localStorage.setItem("ap:guideSeen", "true"); localStorage.setItem("ap:swipeOk", "true"); localStorage.setItem("ap:lgSel", JSON.stringify("CL")); });
+  if (await p.getByText("Ho almeno").count()) { await p.locator("#eta").check(); await p.locator("#acc").check(); await p.getByRole("button", { name: "Entra", exact: true }).click(); }
+  await p.reload(); await p.waitForTimeout(1200);
+  if (await p.getByRole("button", { name: "Salta" }).count()) await p.getByRole("button", { name: "Salta" }).click();
+  try {
+    await p.getByRole("button", { name: "Campionati", exact: true }).last().click(); await p.waitForTimeout(400);
+    await p.getByRole("button", { name: /Champions League/ }).first().click(); await p.waitForTimeout(200);
+    await p.getByRole("tab", { name: "Tabellone", exact: true }).first().click(); await p.waitForTimeout(500);
+    if (!(await p.getByText("Ottavi di finale").count())) errori.push(`[${tema}] tabellone: manca il turno`);
+    if ((await p.getByText("passa", { exact: true }).count()) !== 2) errori.push(`[${tema}] tabellone: chi passa non è segnato su due sfide`);
+    if (!(await p.getByText(/rigori 2-4/).count())) errori.push(`[${tema}] tabellone: mancano i rigori`);
+    await p.screenshot({ path: path.join(OUT, `${tema}-tabellone.png`) });
+    await p.getByRole("button", { name: "Quarti di finale" }).click(); await p.waitForTimeout(200);
+    if (!(await p.getByText(/Turno non ancora sorteggiato/).count())) errori.push(`[${tema}] tabellone: turno futuro senza avviso`);
+    await p.getByRole("button", { name: /Serie A/ }).first().click(); await p.waitForTimeout(200);
+    if (await p.getByRole("tab", { name: "Tabellone", exact: true }).count()) errori.push(`[${tema}] tabellone: la scheda compare anche in un campionato`);
+    const t = await p.evaluate(() => document.body.innerText);
+    if (/undefined|NaN/.test(t)) errori.push(`[${tema}] tabellone: testo con "undefined" o "NaN"`);
+  } catch (e) { errori.push(`[${tema}] tabellone: ${e.message.split("\n")[0]}`); }
+  await ctx.close();
+}
 // campionati senza quote (punto 2 del 3/11): elenco a parte, riga senza barra delle quote, scheda senza consiglio e senza schedina
 async function giroSenzaQuote(tema) {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, colorScheme: tema, hasTouch: true, serviceWorkers: "block" });
@@ -288,48 +325,11 @@ async function giroPressione(tema) {
   } catch (e) { errori.push(`[${tema}] diretta: ${e.message.split("\n")[0]}`); }
   await ctx.close();
 }
-// tabellone delle coppe (punto 7 del 4/11): file finto dei tabelloni, scheda "Tabellone" della Champions
-async function giroTabellone(tema) {
-  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, colorScheme: tema, hasTouch: true, serviceWorkers: "block" });
-  const p = await ctx.newPage();
-  p.on("pageerror", (e) => errori.push(`[${tema} tabellone] errore: ${e.message}`));
-  await p.route(/^(?!http:\/\/127\.0\.0\.1)/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
-  const g = (eid, t, h, a, gg, extra) => ({ eid, t, h, a, g: gg, fine: !!gg, ...(extra || {}) });
-  const TAB = { agg: "2026-11-04T06:00", anno: 2026, coppe: { CL: { anno: 2026, turni: [
-    { id: "2", nome: "Spareggi", inizio: "2027-02-15", ar: true, n: 0, sfide: [] },
-    { id: "3", nome: "Ottavi di finale", inizio: "2027-03-08", ar: true, sfide: [
-      { sq: ["Inter", "Barcelona"], gare: [g("1", "2027-03-10T20:00Z", "Inter", "Barcelona", [2, 1]), g("2", "2027-03-17T20:00Z", "Barcelona", "Inter", [1, 1])], tot: [3, 2], passa: "Inter" },
-      { sq: ["Arsenal", "Bayern Munich"], gare: [g("3", "2027-03-11T20:00Z", "Arsenal", "Bayern Munich", [1, 0]), g("4", "2027-03-18T20:00Z", "Bayern Munich", "Arsenal", [1, 0], { rig: [4, 2] })], tot: [1, 1], passa: "Bayern Munich" },
-      { sq: ["Liverpool", "Real Madrid"], gare: [g("5", "2027-03-11T20:00Z", "Liverpool", "Real Madrid", [0, 0]), g("6", "2027-03-18T20:00Z", "Real Madrid", "Liverpool", null)], tot: [0, 0], passa: null }] },
-    { id: "4", nome: "Quarti di finale", inizio: "2027-04-05", ar: true, n: 0, sfide: [] }] } } };
-  await p.route(/\/data\/tabelloni\.json/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(TAB) }));
-  await p.goto(URL0); await p.waitForTimeout(800);
-  await p.evaluate(() => { localStorage.setItem("ap:onb", "true"); localStorage.setItem("ap:guideSeen", "true"); localStorage.setItem("ap:swipeOk", "true"); localStorage.setItem("ap:lgSel", JSON.stringify("CL")); });
-  if (await p.getByText("Ho almeno").count()) { await p.locator("#eta").check(); await p.locator("#acc").check(); await p.getByRole("button", { name: "Entra", exact: true }).click(); }
-  await p.reload(); await p.waitForTimeout(1200);
-  if (await p.getByRole("button", { name: "Salta" }).count()) await p.getByRole("button", { name: "Salta" }).click();
-  try {
-    await p.getByRole("button", { name: "Campionati", exact: true }).last().click(); await p.waitForTimeout(400);
-    await p.getByRole("button", { name: /Champions League/ }).first().click(); await p.waitForTimeout(200);
-    await p.getByRole("tab", { name: "Tabellone", exact: true }).first().click(); await p.waitForTimeout(500);
-    if (!(await p.getByText("Ottavi di finale").count())) errori.push(`[${tema}] tabellone: manca il turno`);
-    if ((await p.getByText("passa", { exact: true }).count()) !== 2) errori.push(`[${tema}] tabellone: chi passa non è segnato su due sfide`);
-    if (!(await p.getByText(/rigori 2-4/).count())) errori.push(`[${tema}] tabellone: mancano i rigori`);
-    await p.screenshot({ path: path.join(OUT, `${tema}-tabellone.png`) });
-    await p.getByRole("button", { name: "Quarti di finale" }).click(); await p.waitForTimeout(200);
-    if (!(await p.getByText(/Turno non ancora sorteggiato/).count())) errori.push(`[${tema}] tabellone: turno futuro senza avviso`);
-    await p.getByRole("button", { name: /Serie A/ }).first().click(); await p.waitForTimeout(200);
-    if (await p.getByRole("tab", { name: "Tabellone", exact: true }).count()) errori.push(`[${tema}] tabellone: la scheda compare anche in un campionato`);
-    const t = await p.evaluate(() => document.body.innerText);
-    if (/undefined|NaN/.test(t)) errori.push(`[${tema}] tabellone: testo con "undefined" o "NaN"`);
-  } catch (e) { errori.push(`[${tema}] tabellone: ${e.message.split("\n")[0]}`); }
-  await ctx.close();
-}
 for (const t of ["light", "dark"]) await giro(t);
 await giroSenzaQuote("light");
+for (const t of ["light", "dark"]) await giroTabellone(t);
 await giroSquadra("dark");
 await giroPressione("light");
-for (const t of ["light", "dark"]) await giroTabellone(t);
 await b.close(); srv.close();
 console.log(errori.length ? errori.join("\n") : "Interfaccia: nessun errore");
 process.exit(errori.length ? 1 : 0);

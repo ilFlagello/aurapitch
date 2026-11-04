@@ -195,7 +195,9 @@ async function giroSenzaQuote(tema) {
     j.standings.RU1 = { generale: [{ team: "Spartak Moscow", pg: 14, v: 9, n: 3, p: 2, gf: 25, gs: 12, pt: 30 }, { team: "CSKA Moscow", pg: 14, v: 8, n: 3, p: 3, gf: 22, gs: 14, pt: 27 }], casa: [], trasferta: [], solo_generale: true, inclusi: [] };
     j.senza_quote = [
       { id: "NQ-RU1-1", nq: true, lg: "RU1", lgE: "rus.1", eid: "1", date: oggi, time: "08:00", ko: oggi + "T07:00:00+00:00", h: "Krylia Sovetov", a: "Zenit", st: "FT", g: [0, 3], g1: null, res: 2 },
-      { id: "NQ-RU1-2", nq: true, lg: "RU1", lgE: "rus.1", eid: "2", date: oggi, time: "23:30", ko: oggi + "T22:30:00+00:00", h: "Spartak Moscow", a: "CSKA Moscow", st: "NS", g: null, g1: null, res: null, q: [2.2, 3.4, 3.1], pq: [0.44, 0.27, 0.29] }];
+      { id: "NQ-RU1-2", nq: true, lg: "RU1", lgE: "rus.1", eid: "2", date: oggi, time: "23:30", ko: oggi + "T22:30:00+00:00", h: "Spartak Moscow", a: "CSKA Moscow", st: "NS", g: null, g1: null, res: null, q: [2.2, 3.4, 3.1], pq: [0.44, 0.27, 0.29] },
+      // punto 4 del 4/11: stima dell'IA senza quote (forza dalla classifica + modello dei gol)
+      { id: "NQ-RU1-3", nq: true, lg: "RU1", lgE: "rus.1", eid: "3", date: oggi, time: "23:45", ko: oggi + "T22:45:00+00:00", h: "Lokomotiv Moscow", a: "Rostov", st: "NS", g: null, g1: null, res: null, pia: [0.52, 0.26, 0.22], xia: [1.6, 1.1] }];
     await r.fulfill({ response: res, json: j });
   });
   await p.goto(URL0); await p.waitForTimeout(800);
@@ -207,13 +209,19 @@ async function giroSenzaQuote(tema) {
     await p.getByRole("button", { name: /Premier League russa/ }).first().click({ timeout: 5000 }); await p.waitForTimeout(300);
     if (!(await p.getByText("Senza quote · risultati e diretta").count())) errori.push(`[${tema}] senza quote: la riga della partita senza quote non compare`);
     await p.getByRole("button", { name: /Spartak Moscow/ }).first().click(); await p.waitForTimeout(500);
-    if (!(await p.getByText("Campionato senza analisi IA.").count())) errori.push(`[${tema}] senza quote: manca l'avviso nella scheda`);
+    if (!(await p.getByText("Campionato senza quote.").count())) errori.push(`[${tema}] senza quote: manca l'avviso nella scheda`);
     if (await p.getByText(/Aggiungi alla tua schedina|Consiglio IA/).count()) errori.push(`[${tema}] senza quote: compare la schedina o il consiglio`);
     await p.getByRole("tab", { name: "Classifica", exact: true }).first().click(); await p.waitForTimeout(200);
     if (!(await p.getByText("CSKA Moscow").count())) errori.push(`[${tema}] senza quote: classifica assente`);
     await p.screenshot({ path: path.join(OUT, `${tema}-senza-quote.png`) });
     const t = await p.evaluate(() => document.body.innerText);
     if (/undefined|NaN/.test(t)) errori.push(`[${tema}] senza quote: testo con "undefined" o "NaN"`);
+    // stima dell'IA: etichetta nella riga e nella scheda, mai consiglio né schedina
+    await p.getByRole("button", { name: /Partite/ }).first().click(); await p.waitForTimeout(400);
+    await p.getByRole("button", { name: /Lokomotiv Moscow/ }).first().click(); await p.waitForTimeout(500);
+    if (!(await p.getByText("Stima dell'IA, senza quote").count())) errori.push(`[${tema}] stima senza quote: manca l'etichetta nella scheda`);
+    if (await p.getByText(/Aggiungi alla tua schedina|Consiglio IA/).count()) errori.push(`[${tema}] stima senza quote: compare la schedina o il consiglio`);
+    await p.screenshot({ path: path.join(OUT, `${tema}-stima-senza-quote.png`) });
   } catch (e) { errori.push(`[${tema}] senza quote: ${e.message.split("\n")[0]}`); }
   await ctx.close();
 }

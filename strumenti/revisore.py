@@ -286,6 +286,30 @@ def controlla_campionati(diario):
 
 # ---------- 6-7. dati del giorno ----------
 
+def controlla_stime_sq():
+    """Controllo 10: stime dell'IA nei campionati senza quote (stima_sq.py). A partite finite, errore contro un riferimento
+    ingenuo (frequenze medie di 1, X, 2) e contro le quote DraftKings dove c'erano; onesta per fasce. Mai nei consigli.
+    Lo chiama controlla_dati; il dettaglio va in data/revisore_stime_sq.json (mai nel repository)."""
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # stima_sq.py sta nella cartella del codice
+    import stima_sq as SQ
+    v = SQ.valuta(_jload("data/stime_senza_quote.json", {}) or {})
+    with open(os.path.join(RADICE, "data", "revisore_stime_sq.json"), "w", encoding="utf-8") as f:
+        json.dump({"quando": ORA.isoformat(timespec="minutes"), **v}, f, ensure_ascii=False, indent=1)
+    if v.get("n", 0) < 50:
+        note.append(f"Stime senza quote: servono almeno 50 partite finite per giudicarle (ora {v.get('n', 0)})")
+        return v
+    testo = f"Stime senza quote ({v['n']} partite): errore {v['ia']:.3f} contro {v['base']:.3f} del riferimento ingenuo".replace(".", ",")
+    if v.get("quote"):
+        testo += f", {v['quote']:.3f} delle quote DraftKings su {v['n_quote']}".replace(".", ",")
+    if v["ia"] > v["base"] * 1.01 and v["n"] >= 100:
+        attenzione.append(testo + ": la stima fa peggio del riferimento, da rivedere")
+    elif (v.get("scarto") or 0) > 6:
+        attenzione.append(testo + f"; probabilità poco oneste (scarto {v['scarto']:.1f} punti)".replace(".", ","))
+    else:
+        note.append(testo)
+    return v
+
+
 def controlla_dati(diario):
     d = _jload("app/data/giornata.json") or {}
     ferme, passate = {}, 0
@@ -322,6 +346,10 @@ def controlla_dati(diario):
             note.append(f"Coerenza dei dati: ok ({co.get('controlli', 0)} controlli)")
     for f, nome in (("app/data/giocatori_ia.json", "verificatore dei giocatori"), ("app/data/statistiche_ia.json", "verificatore delle statistiche")):
         note.append(f"{nome[0].upper() + nome[1:]}: " + ("riassunto presente" if os.path.exists(os.path.join(RADICE, f)) else "nessun riassunto ancora (si crea al giro del mattino)"))
+    try:  # 10. stime dell'IA nei campionati senza quote
+        controlla_stime_sq()
+    except Exception as e:  # noqa: BLE001
+        attenzione.append(f"Controllo delle stime senza quote non riuscito: {type(e).__name__}")
 
 
 def controlla_vantaggio(diario):

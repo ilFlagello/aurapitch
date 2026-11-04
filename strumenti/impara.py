@@ -30,9 +30,9 @@ import numpy as np
 RADICE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, RADICE)
 import calibrazione as CB  # noqa: E402
+import ciclo as CI  # noqa: E402
 import specialisti as SP  # noqa: E402
 import mercati as M  # noqa: E402
-import ciclo as CI  # noqa: E402
 
 MODELLO = os.path.join(RADICE, "data", "modello.json")
 DIARIO = os.path.join(RADICE, "data", "diario")

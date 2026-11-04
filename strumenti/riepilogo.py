@@ -1,7 +1,7 @@
 """AuraPitch - riepilogo settimanale (lunedi mattina). Mette insieme lo stato di tutto e, SOLO se c'e qualcosa da sistemare,
 apre un unico avviso su GitHub (issue con etichetta "riepilogo": GitHub manda una mail). Se tutto va bene non apre nulla.
 Guarda: esecuzioni dei processi automatici della settimana, avviso orario ancora aperto, coerenza dei dati, crediti delle
-quote, guardiano della sicurezza, prova dal vivo del sito, apprendimento dell'IA. Nessun valore segreto viene stampato."""
+quote, guardiano della sicurezza, prova dal vivo del sito, apprendimento dell'IA, parti inutilizzate da togliere (strumenti/pulizia.py). Nessun valore segreto viene stampato."""
 import json
 import os
 import sys
@@ -93,6 +93,11 @@ def raccogli():
     if rv:
         sistemare += [f"Algoritmo: {x}" for x in rv.get("problemi", [])] + [f"Algoritmo, da tenere d'occhio: {x}" for x in rv.get("attenzione", [])]
         stato += [f"Algoritmo: {x}" for x in rv.get("note", [])]
+    # 5c. parti inutilizzate (strumenti/pulizia.py, eseguito appena prima dal workflow): da togliere tra le cose da sistemare
+    pu = _jload("data/pulizia.json")
+    if pu:
+        sistemare += [f"Pulizia: {x}" for x in pu.get("da_togliere", [])]
+        stato += [f"Pulizia, da valutare: {x}" for x in pu.get("da_valutare", [])] + [f"Pulizia: {x}" for x in pu.get("note", [])]
     # 6. apprendimento dell'IA
     ia = _jload("app/data/ia.json")
     try:

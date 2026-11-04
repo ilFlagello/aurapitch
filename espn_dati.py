@@ -285,9 +285,6 @@ def formazioni_da_scheda(summ):
     return out
 
 
-FORMAZIONI = os.path.join("data", "espn", "formazioni.json")
-
-
 def giro_formazioni(base="data", prima_min=100, dopo_min=20):
     """Formazioni ufficiali per le partite che iniziano entro 'prima_min' minuti (giro "live", ogni 10 minuti): entrano nei fattori
     dell'algoritmo prima che il consiglio si blocchi (45 minuti prima del fischio). Una richiesta per campionato e giorno, poi la

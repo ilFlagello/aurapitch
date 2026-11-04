@@ -46,7 +46,7 @@ MIN_LG = 1500     # partite di un campionato prima di concedergli una correzione
 MARGINE_PROMO = 0.0005  # il candidato deve battere l'attivo di almeno lo 0,05% di log-loss medio
 PESO_DIARIO = 3.0  # le partite vere dell'app contano piu dell'archivio (sono quelle che l'algoritmo vede oggi)
 MIN_PESO_IA = 100  # partite corrette dall'IA prima di imparare il peso della correzione
-MIN_DIARIO_CTRL = 300  # esiti del diario prima di poter bocciare il modello attivo
+MIN_DIARIO_CTRL = 300  # partite finite del diario prima di misurare l'affidabilita sulle partite vere (prima si usa l'archivio)
 MIN_SEGNALE = 300  # partite con un valore prima che uno specialista possa pesare nell'integratore (prima resta in ombra)
 
 GRUPPI, DERIVATI, famiglia, FAMIGLIE = CB.GRUPPI, CB.DERIVATI, CB.famiglia, CB.FAMIGLIE
@@ -895,7 +895,7 @@ def main():
         g = float(np.mean([(base[k] - per_codice[scelta][k]) / base[k] for k in ks])) if ks else 0.0
         fam.append({"f": f, "mercati": len(ks), "guadagno": round(100 * g, 2)})
     Qte = Qs[scelta]
-    if len(fin) >= 300:
+    if len(fin) >= MIN_DIARIO_CTRL:
         idx = {c: k for k, c in enumerate(codici)}
         Pv = np.array([[v["pc"].get(c, Pd[n, idx[c]]) if v.get("pc") else Pd[n, idx[c]] for c in codici] for n, v in enumerate(fin)])
         aff, fonte = affidabilita_gruppi(codici, Pv, Yd), "diario"

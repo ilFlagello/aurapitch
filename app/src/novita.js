@@ -1,6 +1,9 @@
 /* AuraPitch - versione dell'app e novità. A ogni pubblicazione con cambi visibili si aggiunge una voce IN CIMA:
    il numero cresce (1.1, 1.2, ...) e l'app lo mostra nel profilo e nel riquadro "Novità" dopo l'aggiornamento. */
 export const NOVITA = [
+  { v: "2.5", data: "4 novembre 2026", punti: [
+    "Storico dei consigli corretto: le partite finite non vengono più segnate per errore come \"Dati arrivati dopo il fischio\". Il consiglio resta quello bloccato prima della partita e conta nel rendimento",
+  ] },
   { v: "2.4", data: "4 novembre 2026", punti: [
     "Quote più fresche per il consiglio IA: ora si leggono nell'ultimo aggiornamento prima che il consiglio si blocchi (circa 50 minuti dal fischio), non più 20-30 minuti prima. Le partite della notte (MLS, Sudamerica) hanno le quote aggiornate all'ultimo giro della sera",
     "Più partite con la media di tanti bookmaker vicino al blocco: i crediti delle quote seguono il calendario vero (più nei weekend pieni, meno nei giorni con poche partite) e una lettura vale per tutte le partite dello stesso orario",

@@ -1642,6 +1642,13 @@ def blocca_consigli(d):
         if not isinstance(tip, dict) or not tip:
             continue
         r = st.get(m["id"])
+        if r and r.get("tB") and not r.get("tipB"):
+            # gia bloccato e partita finita: il registro tiene solo la versione corta del consiglio. Il blocco non si ripete mai
+            # (prima di questa regola ogni giro ri-bloccava le partite finite rimaste nel file e le segnava "tardive")
+            corti = r.get("tips") or {}
+            m["tip"] = {k: (dict(v, **corti[k]) if isinstance(v, dict) and isinstance(corti.get(k), dict) else v) for k, v in tip.items()}
+            m["blocco"] = {"st": "tardivo" if r.get("tardivo") else "bloccato", "t": r["tB"]}
+            continue
         if r and r.get("tipB"):
             try:  # registrato dopo il fischio (anche prima che esistesse questa regola): resta fuori dallo storico
                 if not r.get("tardivo") and datetime.fromisoformat(r["tB"]) > datetime.fromisoformat(m["ko"]):
@@ -1729,15 +1736,19 @@ def aggiorna_storico(d):
                     r["tardivo"] = True
             except (TypeError, ValueError):
                 pass
-        if r["st"] == "FT":  # a partita finita il consiglio completo non serve piu: resta la versione corta (registro leggero)
-            r.pop("tipB", None)
-            r.pop("datiB", None)
         if r.get("tardivo"):
             r.pop("esiti", None)
             continue
         if r["st"] == "FT" and r.get("g"):
             es = {k: esito_sicuro(v["c"], r["g"], r.get("g1")) for k, v in r["tips"].items()}
             r["esiti"] = {k: v for k, v in es.items() if v is not None}
+    # a partita finita il consiglio completo serve finche la partita resta nel file dell'app (si mostra quello bloccato);
+    # quando esce dal file resta solo la versione corta (registro leggero)
+    nel_file = {m["id"] for m in d.get("matches", [])}
+    for k, r in st.items():
+        if r.get("st") == "FT" and k not in nel_file:
+            r.pop("tipB", None)
+            r.pop("datiB", None)
     limite = (datetime.now(timezone.utc).astimezone(ROME).date() - timedelta(days=60)).isoformat()
     st = {k: v for k, v in st.items() if v["date"] >= limite}
     segna_tardivi(st)

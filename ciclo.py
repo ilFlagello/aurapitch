@@ -188,6 +188,9 @@ def eventi(prima, dopo, oggi, motivi=None):
     for s in sorted(set(r0) - set(r1)):
         ev(f"Peso pieno di nuovo per lo specialista \"{s.replace('_', ' ')}\"", motivi.get("ridotti_tolti") or "la misura del vantaggio non lo penalizza più")
     p0, p1 = prima.get("peso_ia") or {}, dopo.get("peso_ia") or {}
+    if p0 and not p1 and motivi.get("peso_ia"):  # spento dall'anti-illusione: una voce sola, non una per famiglia
+        ev("Le notizie (assenze, squalifiche) pesano di nuovo per intero in tutti i mercati", motivi["peso_ia"])
+        p0 = {}
     for fam in sorted(set(p0) | set(p1)):
         if p0.get(fam) != p1.get(fam):
             ev(f"{fam}: le notizie (assenze, squalifiche) pesano " + (f"il {round(100 * p1[fam])}%" if fam in p1 else "di nuovo per intero"),

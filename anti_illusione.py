@@ -109,6 +109,8 @@ def _integ_ll(post, gruppi, lg_ok):
             continue
         mo = v.get("mo")
         mk2, mo2 = SP.correggi(mk, mo, sp, v.get("lg"), {"gruppi": gruppi})
+        if all(abs(x - y) < 1e-9 for x, y in zip(mk2, mk)) and (mo2 == mo or mo is None or abs(mo2 - mo) < 1e-9):
+            continue  # qui l'integratore non cambia nulla (nessun segnale): la partita non dice niente su di lui
         e = _esito3(v["g"])
         con.append(_ll3(mk2, e))
         senza.append(_ll3(mk, e))

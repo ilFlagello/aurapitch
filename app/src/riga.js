@@ -36,7 +36,8 @@ import { AuraLine, C, Crest, Ctx, html } from "./base.js";
         ${team(0)}${gol(0)}
         <span className="row-span-2 flex flex-col items-end justify-center gap-0.5">${m.free && html`<span className=${"text-[9px] font-bold " + C.acc}>Gratis</span>`}<${AffPill} m=${m} /></span>
         ${team(1)}${gol(1)}
-        <span></span><span className="col-span-2 pt-0.5">${m.nq ? (m.pq ? html`<${AuraLine} m=${m} p=${m.pq} h=${2} />` : html`<span className=${"block text-[10px] font-semibold " + C.mu}>Senza quote · risultati e diretta</span>`) : html`<${AuraLine} m=${m} h=${2} />`}</span></span></button>`;
+        <span></span><span className="col-span-2 pt-0.5">${m.nq ? (m.pq ? html`<${AuraLine} m=${m} p=${m.pq} h=${2} />` : m.pia ? html`<span className="block"><${AuraLine} m=${m} p=${m.pia} h=${2} /><span className=${"block text-[9.5px] font-semibold mt-0.5 " + C.mu}>Stima dell'IA · senza quote</span></span>`
+          : html`<span className=${"block text-[10px] font-semibold " + C.mu}>Senza quote · risultati e diretta</span>`) : html`<${AuraLine} m=${m} h=${2} />`}</span></span></button>`;
   }
 
     /* voto: numero in stile tabellone su una pastiglia; viola = ottimo, verde acqua = buono, lilla = nella media, corallo = insufficiente */

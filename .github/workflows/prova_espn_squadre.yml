@@ -1,0 +1,11 @@
+# Prova del Blocco 5 (solo su questo ramo, nessun salvataggio): storia delle squadre e dei giocatori ESPN in tutte le competizioni
+name: Prova ESPN squadre
+on: { push: { branches: [prova-espn-squadre] } }
+permissions: { contents: read }
+jobs:
+  prova:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - run: python3 -u strumenti/prova_espn_squadre.py

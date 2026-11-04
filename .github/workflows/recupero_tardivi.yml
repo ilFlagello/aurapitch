@@ -1,0 +1,49 @@
+# AuraPitch - recupero dei consigli segnati "tardivi" per errore (errore del ri-blocco, corretto con #59).
+# Uso (una volta sola): Actions -> Recupero consigli tardivi -> Run workflow.
+#   1) modo = prova: stampa cosa cambierebbe nel registro dei consigli, senza toccare nulla (la cassaforte NON si chiude).
+#   2) letto il resoconto, modo = applica: scrive il registro e lo rimanda alla cassaforte.
+#   "vecchie" = si aggiunge anche le partite del 2-3/11 finite prima che esistesse il blocco (ricostruzione meno certa).
+# Rete di sicurezza: il registro ha 30 giorni di storia (Actions -> Ripristino di emergenza).
+# Stesso gruppo della raccolta: mai insieme a un giro che apre e chiude la cassaforte (altrimenti un giro potrebbe
+# riscrivere il registro vecchio sopra quello recuperato). Se un giro era gia in coda, questo aspetta il suo turno.
+name: Recupero consigli tardivi
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "prova (solo resoconto) oppure applica (scrive il registro)"
+        default: prova
+        type: choice
+        options: [prova, applica]
+      vecchie:
+        description: "Anche le partite del 2-3/11 con le regole vecchie (si/no)"
+        default: "no"
+        type: choice
+        options: ["no", "si"]
+permissions: { contents: read }
+concurrency:
+  group: raccolta
+  cancel-in-progress: false
+jobs:
+  recupero:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_DISPATCH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+      MODO: ${{ inputs.modo }}
+      VECCHIE: ${{ inputs.vecchie }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - name: Apri la cassaforte (registro dei consigli)
+        run: python3 strumenti/cassaforte.py apri
+      - name: Recupero (prova o applica)
+        run: |
+          if [ "$VECCHIE" = "si" ]; then python3 strumenti/recupero_tardivi.py "$MODO" --vecchie; else python3 strumenti/recupero_tardivi.py "$MODO"; fi
+      - name: Rimanda il registro alla cassaforte (solo con "applica")
+        if: inputs.modo == 'applica'
+        run: python3 strumenti/cassaforte.py chiudi

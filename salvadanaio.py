@@ -113,12 +113,6 @@ def odds_calendario(cal):
     salva(d)
 
 
-def fasce_oggi():
-    """Fasce di calcio d'inizio di oggi nei campionati con crediti (dal calendario), None se non note."""
-    v = (((carica().get("odds") or {}).get("calendario") or {}).get(_ora().date().isoformat()))
-    return None if v is None else v.get("fasce", 0)
-
-
 def _odds_oggi(d, rimasti=None):
     o = d.setdefault("odds", {})
     oggi = _ora().date()

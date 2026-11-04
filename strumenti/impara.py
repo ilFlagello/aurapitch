@@ -32,6 +32,7 @@ sys.path.insert(0, RADICE)
 import calibrazione as CB  # noqa: E402
 import specialisti as SP  # noqa: E402
 import mercati as M  # noqa: E402
+import onesta as ON  # noqa: E402
 
 MODELLO = os.path.join(RADICE, "data", "modello.json")
 DIARIO = os.path.join(RADICE, "data", "diario")
@@ -880,6 +881,32 @@ def main():
         print("Integratore: errore", e)
         integ_rap = {}
 
+    # 3c) affidabilita per campionato (onesta.py): dove l'IA e stata meno onesta l'affidabilita mostrata scende,
+    # ma solo se la penalita calcolata sulle partite piu vecchie si conferma su quelle piu recenti (mai viste)
+    try:
+        affid = ON.fattori_affidabilita(diario)
+        if affid["attivo"]:
+            attivo["affid_lg"] = affid["fattori"]
+        else:
+            attivo.pop("affid_lg", None)
+        with open(MODELLO, encoding="utf-8") as f:
+            salvato = json.load(f)
+        salvato["attivo"] = attivo
+        with open(MODELLO, "w", encoding="utf-8") as f:
+            json.dump(salvato, f, ensure_ascii=False, indent=1)
+        try:
+            with open(os.path.join(RADICE, "data", "consigli.json"), encoding="utf-8") as f:
+                cons = json.load(f)
+        except (OSError, ValueError):
+            cons = {}
+        quadro = ON.per_campionato(diario, cons)
+        campionati = {"affidabilita": {k: affid[k] for k in ("attivo", "fattori", "ombra", "motivo")}, "tutti": quadro["tutti"],
+                      "elenco": [dict(r, lg=lg, fattore=affid["fattori"].get(lg)) for lg, r in quadro["campionati"].items()]}
+        print(f"Affidabilità per campionato: {'attiva' if affid['attivo'] else 'in ombra'} ({affid['motivo']})")
+    except Exception as e:  # noqa: BLE001 - non deve mai fermare l'apprendimento
+        print("Affidabilità per campionato: errore", e)
+        campionati = {}
+
     # 4) laboratorio: segnali nuovi provati ogni giorno in ombra (riposo, fortuna); entrano nel modello solo se utili
     try:
         lab = laboratorio(R, codici, Ph, Yh)
@@ -914,6 +941,7 @@ def main():
         "laboratorio": lab,
         "integratore": integ_rap,
         "semplice": riepilogo_semplice(fin, Yd, codici),
+        "campionati": campionati,
         "allenato": oggi,
     }
     with open(PAGINA, "w", encoding="utf-8") as f:

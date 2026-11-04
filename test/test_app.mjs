@@ -166,6 +166,43 @@ print(json.dumps(out))`;
   }
   console.log("schedine IA confrontate con l'app:", confronti);
 }
+// IA contro mercato: le partite da giocare con lo scarto più grande tra IA e quote sull'esito finale
+{
+  const outM = path.join(tmp, "mercato.mjs");
+  await esbuild.build({ entryPoints: [path.join(APP, "src/mercato.js")], bundle: true, platform: "node", format: "esm", outfile: outM, logLevel: "error" });
+  const MK = await import(pathToFileURL(outM).href);
+  const ms = [{ id: "a", st: "NS", ko: "2026-11-05T19:00Z", h: "A", a: "B", p: [0.5, 0.25, 0.25], mk: [0.45, 0.27, 0.28] },
+    { id: "b", st: "NS", ko: "2026-11-05T18:00Z", h: "C", a: "D", p: [0.2, 0.25, 0.55], mk: [0.3, 0.27, 0.43] },
+    { id: "c", st: "NS", ko: "2026-11-05T17:00Z", h: "E", a: "F", p: [0.46, 0.27, 0.27], mk: [0.45, 0.27, 0.28] },
+    { id: "d", st: "FT", ko: "2026-11-04T17:00Z", h: "G", a: "H", p: [0.7, 0.2, 0.1], mk: [0.5, 0.3, 0.2] }, { id: "e", st: "NS", nq: true, ko: "2026-11-05T17:00Z", h: "I", a: "L" }];
+  const dv = MK.divergenze(ms);
+  ok(dv.map((x) => x.m.id).join() === "b,a", `IA contro mercato: ordine e filtri (${dv.map((x) => x.m.id)})`);
+  ok(dv[0].c === "2" && Math.abs(dv[0].d - 0.12) < 1e-9 && dv[1].c === "1", "IA contro mercato: esito e scarto");
+  ok(MK.esitoLungo({ h: "A", a: "B" }, "2") === "vittoria B" && MK.esitoLungo({}, "X") === "pareggio", "IA contro mercato: etichette");
+}
+// scheda squadra: difficoltà delle prossime 3 dalle probabilità dell'IA o dal punteggio Elo dell'algoritmo
+{
+  const outD = path.join(tmp, "difficolta.mjs");
+  await esbuild.build({ entryPoints: [path.join(APP, "src/difficolta.js")], bundle: true, platform: "node", format: "esm", outfile: outD, logLevel: "error" });
+  const DF = await import(pathToFileURL(outD).href);
+  const pe = DF.probElo(1600, 1600, true);
+  ok(Math.abs(pe[0] + pe[1] + pe[2] - 1) < 1e-9 && pe[0] > pe[2] && pe[1] > 0.2, `probElo pari in casa: ${pe}`);
+  const forte = DF.probElo(1800, 1450, false);
+  ok(forte[0] > 0.6 && forte[1] >= 0.15, `probElo favorita in trasferta: ${forte}`);
+  ok(DF.livello(2.1) === "Facile" && DF.livello(1.5) === "Media" && DF.livello(0.9) === "Difficile", "livelli di difficoltà");
+  ok(DF.simile("Inter Milan", "Inter") >= 0.8 && DF.simile("AC Milan", "Inter") === 0 && DF.simile("Al Ittihad", "Al Ain") === 0, "nomi delle squadre");
+  const ko = "2026-11-08T19:45:00+00:00";
+  const matches = [{ id: "SA-1", h: "Roma", a: "Inter", ko, p: [0.3, 0.27, 0.43] }];
+  const forza = { casa: 60, t: { Inter: [1720, "I1"], Lecce: [1450, "I1"], Bayern: [1800, "D1"] } };
+  const prossime = [{ id: "a", date: ko, avv: "AS Roma", casa: false, comp: "Serie A" }, { id: "b", date: "2026-11-22T17:00Z", avv: "Lecce", casa: true },
+    { id: "c", date: "2026-11-26T20:00Z", avv: "Bayern Munich", casa: true }, { id: "d", date: "2026-11-30T20:00Z", avv: "Napoli", casa: false }];
+  const r = DF.difficolta(prossime, "Inter Milan", matches, forza);
+  ok(r.length === 3, "difficoltà: solo le prossime 3");
+  ok(r[0].fonte === "ia" && r[0].mid === "SA-1" && Math.abs(r[0].prob[0] - 0.43) < 1e-9 && Math.abs(r[0].punti - (3 * 0.43 + 0.27)) < 1e-9, `difficoltà dall'IA, lato ospite: ${JSON.stringify(r[0])}`);
+  ok(r[1].fonte === "elo" && r[1].livello === "Facile", `difficoltà dall'Elo contro una squadra più debole in casa: ${JSON.stringify(r[1])}`);
+  ok(r[2].fonte === null && r[2].livello === null, "campionati diversi (coppa): non stimabile");
+  ok(DF.difficolta(prossime, "Inter", [], null)[1].livello === null, "senza forza.json: non stimabile");
+}
 // diretta: barra della pressione (chi spinge negli ultimi 15 minuti) dalla cronaca
 {
   const outP = path.join(tmp, "pressione.mjs");

@@ -6,7 +6,7 @@ import { ESPN_LG, useLiveScores, usaPonte } from "./live.js";
 import { NOVITA, VERSIONE } from "./novita.js";
 import { QUOTA_MIN, options, mLabel, odd, pct, classificaViva, registraColori, Ricarica, vibra, AuraLine, C, Crest, Ctx, Flag, Giorni, Ic, Marchio, Seg, Sheet, TONE, auraCol, hs, html, mmss, store } from "./base.js";
 import { BarraSchedina, Cerca, Glossario, PrimoAvvio, partitaSettimana } from "./extra.js";
-import { MatchView, Movimento, PlayerSheet, Row, TeamView } from "./partita.js";
+import { MatchSenzaQuote, MatchView, Movimento, PlayerSheet, Row, TeamView } from "./partita.js";
 // schermate secondarie caricate solo quando servono (avvio piu leggero); poi scaricate in silenzio per l'uso offline
 const pigra = (f, nome) => React.lazy(() => f().then((m) => ({ default: m[nome] })));
 const carica = { campionati: () => import("./campionati.js"), club: () => import("./club.js"), schedina: () => import("./schedina.js") };
@@ -45,7 +45,9 @@ import { Guida } from "./guida.js";
           .then((x) => setMerc((m) => ({ ...(m || {}), ...x }))).catch(() => { inCarico.current.set(c, false); });
       }
     };
-    const live = useLiveScores(Draw ? Draw.matches : null);
+    // campionati senza quote: elenco a parte (niente consiglio, fuori dalla schedina), stessi risultati in diretta
+    const tutteLive = React.useMemo(() => (Draw ? [...Draw.matches, ...(Draw.senza_quote || [])] : null), [Draw]);
+    const live = useLiveScores(tutteLive);
     if (Draw) registraColori(Draw);
     const D0 = React.useMemo(() => Draw && { ...Draw, matches: Draw.matches.map((m0) => {
       const x = extra.get(m0.id);
@@ -55,12 +57,18 @@ import { Guida } from "./guida.js";
       const ok = l.st === "LIVE" || l.st === "FT" || (l.st === "RINV" && m.st !== "FT");
       const g = ok && l.g ? l.g : m.g;
       return { ...m, eid: l.eid, lgE: l.lgE, clock: l.clock, hid: l.hid, aid: l.aid, ...(ok ? { st: l.st, g, res: g ? (g[0] > g[1] ? 0 : g[0] === g[1] ? 1 : 2) : m.res } : {}) };
+    }), senza_quote: (Draw.senza_quote || []).map((m) => {
+      const l = live[m.id];
+      if (!l) return m;
+      const ok = l.st === "LIVE" || l.st === "FT" || (l.st === "RINV" && m.st !== "FT");
+      const g = ok && l.g ? l.g : m.g;
+      return { ...m, eid: l.eid || m.eid, clock: l.clock, hid: l.hid, aid: l.aid, ...(ok ? { st: l.st, g, res: g ? (g[0] > g[1] ? 0 : g[0] === g[1] ? 1 : 2) : m.res } : {}) };
     }) }, [Draw, live, extra, merc]);
     // classifiche aggiornate con i risultati del giorno (finali e in diretta), per tutta l'app
     const D = React.useMemo(() => {
       if (!D0 || !D0.standings) return D0;
       const st = {};
-      for (const [k, S] of Object.entries(D0.standings)) st[k] = classificaViva(S, D0.matches.filter((m) => m.lg === k));
+      for (const [k, S] of Object.entries(D0.standings)) st[k] = classificaViva(S, [...D0.matches, ...D0.senza_quote].filter((m) => m.lg === k));
       return { ...D0, standings: st };
     }, [D0]);
     const [err, setErr] = useState("");
@@ -293,7 +301,7 @@ import { Guida } from "./guida.js";
       if (sw) sw.addEventListener("message", fn);
       return () => { if (sw) sw.removeEventListener("message", fn); };
     }, []);
-    useEffect(() => { if (open) caricaDettagli(open); }, [open, Draw, extra]);
+    useEffect(() => { if (open && !String(open).startsWith("NQ-")) caricaDettagli(open); }, [open, Draw, extra]); // senza quote: nessun dettaglio da scaricare
     const legheSchedina = () => { const off = store.get("slipOff", null); return Draw ? [...new Set(Draw.matches.map((m) => m.lg))].filter((k, _i, tutte) => !(off || slipOffPredefinito(tutte, favLeagues)).includes(k)) : []; };
     useEffect(() => { if (tab === "schedina") caricaMercati([...legheSchedina(), ...mySlip.map((x) => (Draw && Draw.matches.find((m) => m.id === x.id) || {}).lg).filter(Boolean)]); }, [tab, Draw, mySlip.length]);
     useEffect(() => { if (!daAprire || !D) return; setOpen(daAprire); setMt(0); setTeam(null); window.scrollTo(0, 0); setDaAprire(null); if (location.hash) history.replaceState(null, "", location.pathname); }, [daAprire, D]);
@@ -303,7 +311,7 @@ import { Guida } from "./guida.js";
       <div className="flex gap-2">${[0, 1, 2, 3, 4].map((i) => html`<div key=${i} className="h-16 flex-1 rounded-2xl bg-[#17152B]/[0.06] dark:bg-white/[0.06] animate-pulse"></div>`)}</div>
       ${[0, 1, 2].map((i) => html`<div key=${i} className=${C.card + " p-4 space-y-3"}><div className="h-5 w-32 rounded bg-[#17152B]/[0.06] dark:bg-white/[0.06] animate-pulse"></div>
         ${[0, 1, 2].map((j) => html`<div key=${j} className="h-12 rounded-xl bg-[#17152B]/[0.05] dark:bg-white/[0.05] animate-pulse"></div>`)}</div>`)}</div>`;
-    const byId = Object.fromEntries(D.matches.map((m) => [m.id, m]));
+    const byId = Object.fromEntries([...D.matches, ...D.senza_quote].map((m) => [m.id, m]));
     const lg = (k) => D.leagues.find((l) => l.k === k);
     // senza scelte salvate: aperti i campionati che segui (o i primi 5 se non ne segui), gli altri chiusi con il solo conteggio
     const lgOpen = openL || (favLeagues && favLeagues.length ? D.leagues.filter((l) => favLeagues.includes(l.k)).map((l) => l.k) : D.leagues.slice(0, 5).map((l) => l.k));
@@ -366,6 +374,7 @@ import { Guida } from "./guida.js";
     /* ---- vista partite ---- */
     const nRadar = D.matches.filter((m) => m.mov && m.st === "NS" && (day === "all" || m.date === day)).length;
     const dayMatches = D.matches.filter((m) => (day === "all" || m.date === day) && (!liveOnly || m.st === "LIVE") && (!radarOnly || (m.mov && m.st === "NS")));
+    const daySq = radarOnly ? [] : D.senza_quote.filter((m) => (day === "all" || m.date === day) && (!liveOnly || m.st === "LIVE"));
     // aggiorna tirando giù, su ogni pagina: solo con un gesto verticale partito dall'inizio della pagina
     // (scorrere le chip dei giorni o un elenco orizzontale non deve aggiornare); indicatore "aura" che si riempie e poi gira
     const tsH = (e) => { tiraRef.current = window.scrollY <= 0 && !ricaricando && !e.target.closest("[data-noswipe], input, textarea, .overflow-x-auto") ? [e.touches[0].clientX, e.touches[0].clientY] : null; };
@@ -408,10 +417,10 @@ import { Guida } from "./guida.js";
             <div className="flex items-center gap-2"><${Crest} t=${pw.h} size=${22} /><span className=${"text-[18px] font-bold " + C.tx}>${pw.h}</span><span className=${C.mu}>-</span><span className=${"text-[18px] font-bold " + C.tx}>${pw.a}</span><${Crest} t=${pw.a} size=${22} /></div>
             <div className=${"text-[13px] mt-1 " + C.mu}>${(lg(pw.lg) || {}).name}, ${new Date(pw.ko).toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" })} alle ${pw.time}</div>
             <div className="mt-2.5"><${AuraLine} m=${pw} h=${4} /></div></button></div></div>`; })()}
-      ${sezioniLeghe(D.leagues.map((l) => l.k).filter((k) => dayMatches.some((m) => m.lg === k)), favLeagues).map((sez) => html`<${React.Fragment} key=${sez.titolo}>
+      ${sezioniLeghe(D.leagues.map((l) => l.k).filter((k) => dayMatches.some((m) => m.lg === k) || daySq.some((m) => m.lg === k)), favLeagues).map((sez) => html`<${React.Fragment} key=${sez.titolo}>
         <div className=${"px-1 pt-2 text-[12px] font-semibold uppercase tracking-[0.07em] " + C.mu}>${sez.titolo}</div>
         ${sez.leghe.map((k) => { const l = lg(k);
-        const ms = dayMatches.filter((m) => m.lg === l.k);
+        const ms = l.nq ? daySq.filter((m) => m.lg === l.k) : dayMatches.filter((m) => m.lg === l.k);
         if (!ms.length) return null;
         const o = lgOpen.includes(l.k);
         const toggle = () => { const nx = o ? lgOpen.filter((q) => q !== l.k) : [...lgOpen, l.k]; setOpenL(nx); store.set("openL", nx); };
@@ -421,7 +430,7 @@ import { Guida } from "./guida.js";
             <${Ic.ChevronDown} size=${16} className=${C.mu + " transition-transform " + (o ? "rotate-180" : "")} /></button>
           ${o && html`<div>${ms.map((m, i) => html`<${Row} key=${m.id} m=${m} i=${i} />`)}</div>`}</div>`;
       })}<//>`)}
-      ${!dayMatches.length && html`<div className=${C.card + " p-6 text-center text-sm " + C.mu}>${liveOnly ? "Nessuna partita in corso in questo momento." : "Nessuna partita in questo giorno."}</div>`}
+      ${!dayMatches.length && !daySq.length && html`<div className=${C.card + " p-6 text-center text-sm " + C.mu}>${liveOnly ? "Nessuna partita in corso in questo momento." : "Nessuna partita in questo giorno."}</div>`}
       <p className=${"text-[11px] text-center " + C.mu}>${D.demo ? "Dati: Football-Data.co.uk, ClubElo." : "Dati: quote da The Odds API; classifiche da football-data.org; diretta, cronaca e formazioni da ESPN."} Stemmi generici, non ufficiali.</p></div>`;
 
     const open_m = open && byId[open];
@@ -432,8 +441,8 @@ import { Guida } from "./guida.js";
     const ctx = { invita, gratisOggi, usaGratis, apriSquadra, apriGiocatore, apriLega, A, setRecensione, setLegale, caricaDettagli, caricaMercati, syncOn, setSyncOn, setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen: (v) => (v == null ? indietro() : goMatch(v)), mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
     return html`<${Ctx.Provider} value=${ctx}><div className="min-h-screen pb-28">
       ${header}
-      <main className="max-w-[480px] mx-auto" onTouchStart=${tsH} onTouchMove=${tmH} onTouchEnd=${teH}><${Ricarica} tira=${tira} attivo=${ricaricando} />${!online && html`<div role="status" className=${"mx-4 mb-3 px-3.5 py-2.5 rounded-2xl border text-[13px] flex items-center gap-2 " + TONE.warn}><${Ic.Clock} size=${15} />Sei offline: vedi i dati delle ${(D.generato || "").slice(-5)}. Quando torna la rete, tira giù la pagina per aggiornarli.</div>`}${team ? html`<${TeamView} key=${team.name} />` : open_m ? (D.leggera && !open_m.dett ? html`<div className="px-4 pt-4 space-y-3" aria-busy="true"><div className=${C.card + " p-5 text-center"}><div className=${"text-[17px] font-semibold " + C.tx}>${open_m.h} - ${open_m.a}</div><div className=${"text-[13px] mt-1 " + C.mu}>${online ? "Carico l'analisi della partita..." : "Sei offline: l'analisi di questa partita non è ancora stata scaricata."}</div>
-          <div className="h-2 mt-4 rounded-full bg-[#17152B]/[0.06] dark:bg-white/[0.06] animate-pulse"></div></div>${[0, 1].map((i) => html`<div key=${i} className=${C.card + " h-36 animate-pulse"}></div>`)}</div>` : html`<${MatchView} key=${open_m.id} m=${open_m} />`) : views[tab]}</main>
+      <main className="max-w-[480px] mx-auto" onTouchStart=${tsH} onTouchMove=${tmH} onTouchEnd=${teH}><${Ricarica} tira=${tira} attivo=${ricaricando} />${!online && html`<div role="status" className=${"mx-4 mb-3 px-3.5 py-2.5 rounded-2xl border text-[13px] flex items-center gap-2 " + TONE.warn}><${Ic.Clock} size=${15} />Sei offline: vedi i dati delle ${(D.generato || "").slice(-5)}. Quando torna la rete, tira giù la pagina per aggiornarli.</div>`}${team ? html`<${TeamView} key=${team.name} />` : open_m ? (D.leggera && !open_m.dett && !open_m.nq ? html`<div className="px-4 pt-4 space-y-3" aria-busy="true"><div className=${C.card + " p-5 text-center"}><div className=${"text-[17px] font-semibold " + C.tx}>${open_m.h} - ${open_m.a}</div><div className=${"text-[13px] mt-1 " + C.mu}>${online ? "Carico l'analisi della partita..." : "Sei offline: l'analisi di questa partita non è ancora stata scaricata."}</div>
+          <div className="h-2 mt-4 rounded-full bg-[#17152B]/[0.06] dark:bg-white/[0.06] animate-pulse"></div></div>${[0, 1].map((i) => html`<div key=${i} className=${C.card + " h-36 animate-pulse"}></div>`)}</div>` : (open_m.nq ? html`<${MatchSenzaQuote} key=${open_m.id} m=${open_m} />` : html`<${MatchView} key=${open_m.id} m=${open_m} />`)) : views[tab]}</main>
       <nav className="fixed inset-x-0 z-40" style=${{ bottom: "calc(10px + env(safe-area-inset-bottom, 0px))", paddingLeft: "calc(12px + env(safe-area-inset-left, 0px))", paddingRight: "calc(12px + env(safe-area-inset-right, 0px))" }}>
         <div className="dock max-w-[456px] mx-auto rounded-[26px] p-1.5 grid grid-cols-4 gap-1">${DOCK.map(([k, l, I]) => { const on = tab === k && !open && !team; return html`<button key=${k} onClick=${() => { pila.current = []; vibra(); transizione(() => { setTab(k); setOpen(null); setTeam(null); }); window.scrollTo(0, 0); }}
           aria-current=${on ? "page" : undefined}

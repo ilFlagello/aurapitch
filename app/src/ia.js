@@ -1,6 +1,7 @@
 /* AuraPitch - "Come sta andando l'IA": l'algoritmo che impara dai risultati (dati da data/ia.json, scritto ogni mattina da strumenti/impara.py). */
 import React, { useState, useEffect } from "react";
-import { C, Ic, Voce, html } from "./base.js";
+import { C, Ctx, Ic, Voce, html } from "./base.js";
+import { divergenze, esitoLungo } from "./mercato.js";
 
 const num = (x, d = 1) => (x == null ? "-" : Number(x).toFixed(d).replace(".", ","));
 const segno = (x, d = 2) => (x == null ? "-" : (x > 0 ? "+" : "") + num(x, d));
@@ -70,6 +71,41 @@ function StatisticheIA() {
     ${tipi.map((t) => html`<div key=${t.nome} className=${"grid grid-cols-[1fr_auto_auto] gap-x-4 items-baseline text-[14px] tabular-nums border-t pt-1.5 " + C.bd + " " + C.tx}>
       <span>${t.nome} <span className=${"text-[11px] " + C.mu}>${t.partite} partite, ${t.controlli.toLocaleString("it-IT")} linee${t.attivo ? ", taratura attiva" : ""}</span></span><span className="text-right">${num(t.attesi, 0)}</span><b className="text-right">${t.presi}</b></div>`)}
     <p className=${"text-[11px] " + C.mu}>Ogni linea "Over" conta come una giocata: se le successe sono vicine alle attese, le percentuali sono oneste. Con abbastanza partite l'IA corregge da sola le stime (distanza della linea, partita più o meno nervosa, arbitro, partita tirata), solo se così sbaglia meno.</p></div>`;
+}
+
+/* IA contro mercato (per chi vuole i numeri): dove l'IA la pensa diversamente dalle quote, e quante volte ha avuto ragione */
+function IAMercato() {
+  const { D, unlocked, goMatch } = React.useContext(Ctx);
+  const [S, setS] = useState(null);
+  useEffect(() => {
+    let ok = true;
+    fetch("data/ia_mercato.json").then((r) => (r.ok ? r.json() : null)).then((x) => ok && setS(x)).catch(() => {});
+    return () => { ok = false; };
+  }, []);
+  const soglia = (S && S.soglia) || 0.03;
+  const ora = divergenze(D ? D.matches : [], soglia);
+  const R = S && S.riass;
+  const pc = (x) => Math.round(x * 100);
+  return html`<${Voce} id="ia-mercato" titolo="IA contro mercato" sotto=${ora.length ? `${ora.length} partite con l'IA lontana dalle quote` : "Dove l'IA la pensa diversamente dalle quote"} icona=${Ic.Swords}>
+    <div className=${C.card + " p-4 space-y-2"}>
+      <p className=${"text-[13px] leading-snug " + C.mu}>Partite da giocare in cui la probabilità dell'IA sull'esito finale si allontana di almeno ${pc(soglia)} punti da quella delle quote (senza margine).</p>
+      ${ora.length ? ora.map((x, i) => html`<button key=${x.m.id} onClick=${() => goMatch && goMatch(x.m.id)} className=${"w-full text-left flex items-center gap-3 pt-2 " + (i ? "border-t " + C.bd : "")}>
+          <span className="flex-1 min-w-0"><span className=${"block text-[14px] font-semibold truncate " + C.tx}>${x.m.h} - ${x.m.a}</span>
+            <span className=${"block text-[12px] " + C.mu}>${esitoLungo(x.m, x.c)} · ${x.m.date.slice(8)}/${x.m.date.slice(5, 7)} ${x.m.time}</span></span>
+          ${unlocked && unlocked(x.m) ? html`<span className="text-right tabular-nums shrink-0"><span className=${"block text-[15px] font-bold " + VIOLA}>IA ${pc(x.ia)}%</span><span className=${"block text-[12px] " + C.mu}>quote ${pc(x.q)}% (${x.d > 0 ? "+" : "−"}${Math.abs(pc(x.d))})</span></span>`
+            : html`<span className=${"shrink-0 text-[11px] font-bold px-2 py-0.5 rounded-full " + C.ch + " " + C.mu}>PRO</span>`}</button>`)
+        : html`<${Attesa} testo="In questo momento l'IA segue le quote su tutte le partite da giocare: si allontana quando arrivano formazioni ufficiali, assenze e notizie." />`}
+      <div className=${"pt-2 border-t " + C.bd}>
+        <div className=${"text-[13px] font-semibold " + C.tx}>Quando si è allontanata, aveva ragione?</div>
+        ${!R || !R.n ? html`<${Attesa} testo="Si riempie con le prime partite finite in cui l'IA si è allontanata dalle quote: ogni previsione è salvata prima del fischio." />`
+          : html`<${React.Fragment}>
+            <p className=${"text-[14px] " + C.tx}>Ultimi ${S.giorni} giorni: <b>${R.n}</b> partite. L'IA dava più probabilità del mercato al risultato vero in <b>${R.ok}</b> (${pc(R.ok / R.n)}%).</p>
+            <${Riga} k="Errore medio (log-loss) IA" v=${num(R.ll_ia, 3)} nota="più basso è meglio" />
+            <${Riga} k="Errore medio quote, stesse partite" v=${num(R.ll_q, 3)} />
+            ${R.fasce.filter((f) => f.n).map((f) => html`<${Riga} key=${f.da} k=${f.a >= 1 ? `Scarto oltre ${pc(f.da)} punti` : `Scarto ${pc(f.da)}-${pc(f.a)} punti`} nota=${f.n + " partite"} v=${pc(f.ok / f.n) + "% ragione"} />`)}<//>`}
+      </div>
+      <p className=${"text-[11px] " + C.mu}>"Ragione" = l'IA dava al risultato vero una probabilità più alta delle quote. È uno strumento per capire l'algoritmo, non un invito a giocare: uno scarto non è un vantaggio garantito, e nell'app non ci sono bookmaker.</p>
+    </div><//>`;
 }
 
 function IACard() {
@@ -144,6 +180,8 @@ function IACard() {
               <span>${n} <span className=${"text-[11px] " + C.mu}>${b.n} partite</span></span><b className=${"text-right " + (meglio ? "text-emerald-600 dark:text-emerald-300" : "")}>${num(b.ia, 3)}</b><span className="text-right">${num(b.quote, 3)}</span></div>`; })}
             <p className=${"text-[11px] pt-1 " + C.mu}>Numero più basso = meno errori (misura tecnica: log-loss). Battere le quote è difficile: già pareggiarle vuol dire che le probabilità sono affidabili.</p><//>`}
       </div><//>
+
+    <${IAMercato} />
 
     <${Voce} id="ia-valore" titolo="Valore anticipato" sotto=${va.n >= 30 ? `${num(va.positivi, 0)}% dei consigli: quote scese prima del fischio` : "Il segnale più rapido di bravura"} icona=${Ic.TrendingUp}>
       <div className=${C.card + " p-4 space-y-1"}>

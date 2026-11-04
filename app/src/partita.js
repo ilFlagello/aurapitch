@@ -6,6 +6,7 @@ import { SchedaAllenatore, usaPanchine } from "./panchine.js";
 import { useSummary, loadPlayer, loadCareer, ruolo, findTeam, loadTeam, minuto, ESPN_LG, andamento, getJSON } from "./live.js";
 import { matriceRis, NomeSquadra, NomeGiocatore, NomeLega, inizioSwipe, fineSwipe, Voce, AuraLine, C, Crest, Ctx, DOT, FavPill, Flag, Form, GROUPS, Ic, Seg, Sheet, TONE, Tabs, auraCol, evalCode, html, leggiXg, lum, mGroup, mLabel, nf, norm, odd, options, pct, pctL, spiega, store } from "./base.js";
 import { Anteprima, partitaSettimana } from "./extra.js";
+import { difficolta } from "./difficolta.js";
 import { pressione, conPosizioni } from "./pressione.js";
 
     /* ---- riga partita: orario a sinistra, squadre una sopra l'altra, punteggi in colonna, aura delle probabilita sotto ---- */
@@ -32,13 +33,13 @@ import { pressione, conPosizioni } from "./pressione.js";
     const team = (j) => html`<span className="flex items-center gap-2 min-w-0"><${Crest} t=${j ? m.a : m.h} size=${16} />
       <span className=${"text-[14px] leading-[18px] truncate " + (fin && !vince(j) ? C.mu : C.tx) + (vince(j) ? " font-semibold" : "")}>${j ? m.a : m.h}</span></span>`;
     const gol = (j) => html`<span className=${"num text-[17px] font-bold leading-[18px] text-right " + (live ? "text-[#FF3D5A]" : fin && !vince(j) ? C.mu : C.tx)}>${m.g ? m.g[j] : ""}</span>`;
-    return html`<button onPointerDown=${() => caricaDettagli && caricaDettagli(m.id)} onClick=${() => goMatch(m.id)} className=${"w-full text-left px-4 pt-2 pb-1.5 " + (i ? "border-t " + C.bd : "")}>
+    return html`<button onPointerDown=${() => !m.nq && caricaDettagli && caricaDettagli(m.id)} onClick=${() => goMatch(m.id)} className=${"w-full text-left px-4 pt-2 pb-1.5 " + (i ? "border-t " + C.bd : "")}>
       <span className="grid items-center gap-x-3 gap-y-1" style=${{ gridTemplateColumns: "44px minmax(0,1fr) 20px 46px" }}>
         <span className="row-span-2 flex items-center min-w-0 overflow-hidden">${left}</span>
         ${team(0)}${gol(0)}
         <span className="row-span-2 flex flex-col items-end justify-center gap-0.5">${m.free && html`<span className=${"text-[9px] font-bold " + C.acc}>Gratis</span>`}<${AffPill} m=${m} /></span>
         ${team(1)}${gol(1)}
-        <span></span><span className="col-span-2 pt-0.5"><${AuraLine} m=${m} h=${2} /></span></span></button>`;
+        <span></span><span className="col-span-2 pt-0.5">${m.nq ? (m.pq ? html`<${AuraLine} m=${m} p=${m.pq} h=${2} />` : html`<span className=${"block text-[10px] font-semibold " + C.mu}>Senza quote · risultati e diretta</span>`) : html`<${AuraLine} m=${m} h=${2} />`}</span></span></button>`;
   }
 
     /* ---- gate PRO ---- */
@@ -795,8 +796,40 @@ import { pressione, conPosizioni } from "./pressione.js";
     }
 
     /* ---- pagina squadra ---- */
+    /* forza Elo delle squadre (una volta per sessione): serve alla difficoltà delle partite oltre i 5 giorni dell'app */
+    let _forza = null;
+    function usaForza() {
+      const [F, setF] = useState(_forza);
+      useEffect(() => { if (!_forza) fetch("data/forza.json").then((r) => (r.ok ? r.json() : { t: {} })).catch(() => ({ t: {} })).then((x) => { _forza = x; setF(x); }); }, []);
+      return F;
+    }
+    const LIV = { Facile: "good", Media: "warn", Difficile: "bad" };
+    /* forma delle ultime 5 a colpo d'occhio (la più recente a destra) e difficoltà delle prossime 3 */
+    function FormaDifficolta({ d, team, D, onMatch }) {
+      const F = usaForza();
+      const ult = d.risultati.slice(0, 5).reverse();
+      const punti = ult.reduce((n, r) => n + (r.esito === "V" ? 3 : r.esito === "N" ? 1 : 0), 0);
+      const pross = difficolta(d.prossime, team.name, D.matches, F);
+      const breve = (t) => String(t || "").replace(/^(FC|AC|AS|SS|SSC|US|CF|SC|CD|UD|RCD|CA|SD) /, "").split(" ").slice(0, 2).join(" ");
+      const dt = (s) => new Date(s).toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" });
+      return html`<${React.Fragment}>
+        ${ult.length > 0 && html`<div className=${C.card + " p-4"}>
+          <div className="flex items-baseline mb-2.5"><span className=${C.lab + " flex-1"}>Forma, ultime ${ult.length}</span><span className=${"text-[12px] " + C.mu}><b className=${"num text-[15px] " + C.tx}>${punti}</b> punti su ${ult.length * 3}</span></div>
+          <div className="grid gap-1.5" style=${{ gridTemplateColumns: `repeat(${ult.length}, minmax(0,1fr))` }}>${ult.map((r) => html`<div key=${r.id} className="flex flex-col items-center gap-1 min-w-0">
+            <span className=${"w-full h-9 rounded-xl border flex items-center justify-center num text-[16px] font-bold " + TONE[r.esito === "V" ? "good" : r.esito === "N" ? "warn" : "bad"]}>${r.g[0]}-${r.g[1]}</span>
+            <span className=${"text-[11px] leading-tight text-center truncate max-w-full " + C.mu}>${r.casa ? "" : "@"}${breve(r.avv)}</span></div>`)}</div></div>`}
+        ${pross.length > 0 && html`<div className=${C.card + " p-4"}>
+          <div className=${C.lab + " mb-1"}>Prossime ${pross.length}: quanto sono difficili</div>
+          ${pross.map((r, i) => html`<button key=${r.id} disabled=${!r.mid} onClick=${() => r.mid && onMatch(r.mid)} className=${"w-full flex items-center gap-2.5 py-2 text-left " + (i ? "border-t " + C.bd : "")}>
+            <${Crest} t=${r.avv} size=${22} />
+            <span className="flex-1 min-w-0"><span className=${"block text-[14px] font-semibold truncate " + C.tx}>${r.casa ? "vs" : "@"} ${r.avv}</span>
+              <span className=${"block text-[12px] " + C.mu}>${dt(r.date)}${r.comp ? " · " + r.comp : ""}${r.prob ? ` · vince nel ${pct(r.prob[0])}%` : ""}</span></span>
+            ${r.livello ? html`<span className=${"shrink-0 text-[12px] font-bold px-2.5 py-1 rounded-full border " + TONE[LIV[r.livello]]}>${r.livello}</span>`
+              : html`<span className=${"shrink-0 text-[11px] " + C.mu}>Non stimabile</span>`}</button>`)}
+          <p className=${"text-[11px] mt-1.5 " + C.mu}>Dalle probabilità dell'IA della partita${pross.some((r) => r.fonte === "elo") ? " o, per le partite più lontane, dal punteggio Elo dell'algoritmo (stesso campionato)" : ""}: punti attesi su 3, facile da 1,85 in su, difficile sotto 1,25. "Non stimabile": coppa o avversario senza dati.</p></div>`}<//>`;
+    }
     function TeamView() {
-      const { team, setTeam, D } = React.useContext(Ctx);
+      const { team, setTeam, D, goMatch } = React.useContext(Ctx);
       const V = usaVoti();
       const notizie = [];
       for (const m of D.matches) for (const f of m.fattori || []) { const sq = f.lato ? m.a : m.h; if (sq === team.name && !notizie.some((x) => x.chi === f.chi)) notizie.push(f); }
@@ -830,6 +863,7 @@ import { pressione, conPosizioni } from "./pressione.js";
         <${Seg} items=${["Partite", "Rosa", "Indisponibili"]} val=${t} set=${setT} />
         ${!d ? html`<div className=${C.card + " p-4 text-sm " + C.mu}>${err || "Caricamento..."}</div>`
           : t === 0 ? html`<${React.Fragment}>
+            <${FormaDifficolta} d=${d} team=${team} D=${D} onMatch=${(id) => goMatch(id)} />
             <div className=${C.lab}>Prossime partite</div>
             <div className=${C.card + " px-4 py-1"}>${d.prossime.length ? d.prossime.map((r, i) => html`<div key=${r.id} className=${"flex items-center gap-2 py-2 text-sm " + (i ? "border-t " + C.bd : "") + " " + C.tx}>
               <span className=${"w-24 text-xs tabular-nums " + C.mu}>${dt(r.date)}</span><span className="flex-1 truncate">${r.casa ? "vs" : "@"} <${NomeSquadra} t=${r.avv} lgE=${team.lgE} /></span><span className=${"text-[11px] " + C.mu}>${r.comp}</span></div>`)
@@ -1099,6 +1133,50 @@ import { pressione, conPosizioni } from "./pressione.js";
       </div>`;
     }
 
+    /* ---- partita di un campionato SENZA quote dei bookmaker: risultato, diretta, formazioni, classifica, cronaca.
+       Nessun consiglio IA e nessuna schedina: l'algoritmo lavora sulle quote e qui non ce ne sono (o sono di un solo bookmaker) ---- */
+    function MatchSenzaQuote({ m }) {
+      const { D, lg, setOpen, setTeam } = React.useContext(Ctx);
+      const L = lg(m.lg) || { name: m.lg, flag: "" };
+      const [t, setT] = useState(0);
+      const [pl, setPl] = useState(null);
+      const { d: sm } = useSummary(m.lgE, m.eid, m.st === "LIVE");
+      const S = D.standings[m.lg];
+      const st = (S && S.generale) || [];
+      const [ch, ca] = auraCol(m);
+      const gScore = m.g && m.st !== "NS";
+      const vuoto = (testo) => html`<div className=${C.card + " p-4 text-[14px] " + C.mu}>${testo}</div>`;
+      return html`<div className="px-4 space-y-3">
+        <div className="flex items-center"><button onClick=${() => setOpen(null)} className=${"flex items-center gap-1 text-[15px] font-semibold " + C.acc}><${Ic.ChevronLeft} size=${20} />Partite</button></div>
+        <div className=${C.card + " relative overflow-hidden"}>
+          <div aria-hidden="true" className="absolute inset-0 opacity-[0.22] dark:opacity-[0.3]" style=${{ background: `radial-gradient(90% 75% at 8% 0%, ${ch}, transparent 70%), radial-gradient(90% 75% at 92% 0%, ${ca}, transparent 70%)` }}></div>
+          <div className="relative p-4">
+            <div className="flex items-center justify-center gap-2"><${Flag} k=${L.flag} w=${16} /><span className=${"text-[12px] font-medium " + C.mu}>${L.name}, ${new Date(m.date + "T12:00:00").toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" })}</span></div>
+            <div className="grid items-start mt-4" style=${{ gridTemplateColumns: "minmax(0,1fr) auto minmax(0,1fr)" }}>
+              ${[m.h, m.a].map((tm, j) => html`<button key=${tm} onClick=${() => setTeam({ lgE: m.lgE, id: j ? m.aid : m.hid, name: tm })} className=${"flex flex-col items-center gap-1.5 min-w-0 " + (j ? "order-3" : "order-1")}>
+                <span className="w-[62px] h-[62px] rounded-full flex items-center justify-center bg-white/70 dark:bg-white/[0.06]"><${Crest} t=${tm} size=${40} /></span>
+                <span className=${"text-[15px] font-semibold text-center leading-tight " + C.tx}>${tm}</span></button>`)}
+              <div className="order-2 flex flex-col items-center px-2 pt-1">
+                <div className=${"num font-extrabold leading-none " + (m.st === "LIVE" ? "text-[#FF3D5A] " : C.tx + " ") + (gScore ? "text-[56px]" : "text-[40px] pt-2")}>${gScore ? m.g[0] + "–" + m.g[1] : m.time || "-"}</div>
+                <div className=${"text-[13px] mt-1.5 font-semibold " + (m.st === "LIVE" ? C.live : C.mu)}>${m.st === "FT" ? "Finale" : m.st === "LIVE" ? (sm && sm.clock) || m.clock || "In corso" : m.st === "RINV" ? "Rinviata" : "Calcio d'inizio"}</div></div></div>
+            ${m.pq && html`<div className="mt-4"><${AuraLine} m=${m} p=${m.pq} h=${6} labels=${true} /><div className=${"text-[11px] text-center mt-1.5 " + C.mu}>Probabilità dalle quote di un solo bookmaker (DraftKings, tramite ESPN), senza margine</div></div>`}
+            <div className=${"mt-3 rounded-2xl p-2.5 text-[12px] leading-snug " + C.ch + " " + C.tx}><b>Campionato senza analisi IA.</b> <span className=${C.mu}>Qui ci sono risultato, diretta, formazioni e classifica. Niente consiglio e niente schedina: l'algoritmo ragiona sulle quote di molti bookmaker, e per questa competizione non ci sono.</span></div></div></div>
+        <${Tabs} items=${["Partita", "Formazioni", "Classifica", "Cronaca"]} val=${t} set=${setT} sticky=${true} />
+        ${t === 0 && (!sm || sm.st === "NS" ? vuoto(m.st === "FT" ? "Il resoconto della partita non è disponibile." : "Quando la partita inizia qui trovi eventi, statistiche e migliori in campo.")
+          : html`<${React.Fragment}><${KeyEvents} sm=${sm} m=${m} /><${StatsCard} sm=${sm} m=${m} /><${Migliori} sm=${sm} m=${m} onPlayer=${(p, j) => setPl({ p, side: j })} /><//>`)}
+        ${t === 1 && (sm ? html`<${Lineups} sm=${sm} m=${m} onPlayer=${(p) => setPl({ p, side: sm.formazioni[0] && sm.formazioni[0].all.includes(p) ? 0 : 1 })} />` : vuoto("Le formazioni compaiono il giorno della partita, circa un'ora prima del calcio d'inizio."))}
+        ${t === 2 && (st.length ? html`<div className=${C.card + " p-2 overflow-x-auto"}><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}>
+            <th className="text-left font-medium p-1.5 w-6">#</th><th className="text-left font-medium">Squadra</th><th className="text-right font-medium">G</th><th className="text-right font-medium">DR</th><th className="text-right font-medium pr-1.5">Pt</th></tr></thead>
+            <tbody>${st.map((r, i) => html`<tr key=${r.team} className=${r.team === m.h || r.team === m.a ? "bg-[#5B2EE6]/[0.07] dark:bg-[#A58BFF]/[0.12] font-semibold" : ""}>
+              <td className="p-1.5">${i + 1}</td><td><span className="flex items-center gap-1.5 min-w-0"><${Crest} t=${r.team} size=${14} /><span className="truncate">${r.team}</span></span></td>
+              <td className=${"text-right " + C.mu}>${r.pg}</td><td className="text-right">${r.gf - r.gs > 0 ? "+" : ""}${r.gf - r.gs}</td><td className="text-right pr-1.5 font-semibold">${r.pt}</td></tr>`)}</tbody></table></div>`
+          : vuoto("Classifica non disponibile: per le coppe non c'è, per gli altri campionati ESPN non l'ha ancora pubblicata."))}
+        ${t === 3 && (sm ? html`<${Cronaca} sm=${sm} m=${m} />` : vuoto("La cronaca scritta compare quando la partita è in corso o finita."))}
+        <p className=${"text-[11px] " + C.mu}>Dati da ESPN: calendario, risultato, diretta e classifica.</p>
+        ${pl && html`<${PlayerSheet} p=${pl.p} side=${pl.side} col=${sm && sm.colors[pl.side]} m=${m} onClose=${() => setPl(null)} />`}
+      </div>`;
+    }
+
     /* ---- "In breve": solo l'essenziale, diverso prima, durante e dopo la partita; il resto si scopre scorrendo ---- */
     function Vai({ onClick, children }) {
       return html`<button onClick=${onClick} className=${"mt-3 w-full flex items-center justify-between rounded-[14px] px-3.5 py-2.5 text-[14px] font-semibold " + C.ch + " " + C.tx}><span>${children}</span><${Ic.ChevronRight} size=${17} className=${C.mu} /></button>`;
@@ -1168,4 +1246,4 @@ import { pressione, conPosizioni } from "./pressione.js";
       <//>`;
     }
 
-export { EseCard, Movimento, PercheCambiato, ProbDiretta, momentiDiretta, golRestanti, FormazioneProbabile, usaVoti, Row, Gate, KEY_T, trasf, PESI, prob1x2, toks, stesso, assenze, AssenzeCard, CampoNotte, TIRI, suNotte, TiriCard, LiveAction, EvIcon, riassunto, righeResoconto, Resoconto, KeyEvents, StatsCard, Cronaca, InfoCard, ArbitroCard, Badges, Lineups, tonoVoto, VotoChip, Migliori, Andamento, Curiosita, Sondaggio, ST_IT, PlayerSheet, _voti, caricaVoti, pois, PESO_SPINTA, spinta, quotaRestante, liveProb, LiveTips, meteoCache, MeteoCard, FattoriCard, StoricoCard, TeamView, TipView, MatchView, Pressione, Vai, InBreve };
+export { EseCard, Movimento, PercheCambiato, ProbDiretta, momentiDiretta, golRestanti, FormazioneProbabile, usaVoti, Row, Gate, KEY_T, trasf, PESI, prob1x2, toks, stesso, assenze, AssenzeCard, CampoNotte, TIRI, suNotte, TiriCard, LiveAction, EvIcon, riassunto, righeResoconto, Resoconto, KeyEvents, StatsCard, Cronaca, InfoCard, ArbitroCard, Badges, Lineups, tonoVoto, VotoChip, Migliori, Andamento, Curiosita, Sondaggio, ST_IT, PlayerSheet, _voti, caricaVoti, pois, PESO_SPINTA, spinta, quotaRestante, liveProb, LiveTips, meteoCache, MeteoCard, FattoriCard, StoricoCard, TeamView, TipView, MatchView, MatchSenzaQuote, Pressione, Vai, InBreve };

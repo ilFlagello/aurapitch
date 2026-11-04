@@ -49,7 +49,7 @@ FD_NUOVI = {"A1": ("Austria", "Bundesliga"), "DK1": ("Denmark", "Superliga"), "M
             "AR1": ("Argentina", "Liga Profesional"), "MX1": ("Mexico", "Liga MX"), "J1": ("Japan", "J1 League"),
             "NO1": ("Norway", "Eliteserien"), "SE1": ("Sweden", "Allsvenskan")}
 SOGLIE_GIALLI = (5, 10)  # squalifica alla 5a e alla 10a ammonizione (regola comune a Serie A, Serie B, Premier, LaLiga, Bundesliga)
-STOP = {"fc", "ac", "as", "ss", "us", "ssc", "afc", "cf", "sc", "calcio", "club", "de", "1907", "1909", "1913", "1919", "bc", "vfb", "vfl", "tsg", "sv", "fsv", "rc", "cd", "ud", "rcd", "ca", "sd", "1846", "04", "05", "1899", "hellas"}
+STOP = {"al", "fc", "ac", "as", "ss", "us", "ssc", "afc", "cf", "sc", "calcio", "club", "de", "1907", "1909", "1913", "1919", "bc", "vfb", "vfl", "tsg", "sv", "fsv", "rc", "cd", "ud", "rcd", "ca", "sd", "1846", "04", "05", "1899", "hellas"}
 ALIAS = {"internazionale": "inter", "inter milan": "inter", "ac milan": "milan", "manchester united": "man united", "manchester city": "man city", "bayern munich": "bayern", "tottenham hotspur": "tottenham"}
 
 
@@ -691,19 +691,18 @@ def giro_espn(base="data", ore=48):
     out["risultati_lega"] = {}
     for k in SOLO_ESPN + COPPE:
         evs = []
-        for dd in ((-4, -3, -2, -1, 0, 1, 2, 3) if k in COPPE else (-2, -1, 0)):
+        for dd in ((-4, -3, -2, -1, 0, 1, 2, 3) if k in COPPE else (-4, -3, -2, -1, 0)):  # 4 giorni indietro: ricontrollo dei risultati del diario
             giorno = (ora + timedelta(days=dd)).strftime("%Y%m%d")
             try:
                 for ev in get(f"{SITE}{ESPN_LG[k]}/scoreboard?dates={giorno}").get("events", []):
-                    c = ev["competitions"][0]
-                    h = next(x for x in c["competitors"] if x["homeAway"] == "home")
-                    a = next(x for x in c["competitors"] if x["homeAway"] == "away")
-                    t = ev["status"]["type"]
-                    evs.append({"t": ev["date"], "h": h["team"]["displayName"], "a": a["team"]["displayName"], "st": t["state"], "fine": t.get("completed", False),
-                                "g": [int(h.get("score") or 0), int(a.get("score") or 0)]})
+                    evs.append(evento(ev))
             except Exception as e:  # noqa: BLE001
                 print(f"ESPN risultati {k} {giorno}: {e}")
         out["risultati_lega"][k] = evs
+    try:
+        out["senza_quote"] = giro_senza_quote(ora)
+    except Exception as e:  # noqa: BLE001 - i campionati senza quote non devono fermare il giro
+        print(f"ESPN senza quote: errore {e}")
     for k in SOLO_ESPN:
         try:
             out["classifiche"][k] = classifica_espn(ESPN_LG[k])
@@ -721,6 +720,128 @@ def giro_espn(base="data", ore=48):
     with open(os.path.join(base, "espn", "squadre.json"), "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
     print(f"ESPN: {len(out['squadre'])} squadre con rosa e risultati, classifiche: {list(out['classifiche'])}")
+
+
+# campionati e coppe SENZA quote dei bookmaker (scelti da Andrea il 3/11): calendario, risultati, classifica e diretta da ESPN,
+# senza consiglio IA e fuori dalla schedina. Codice dell'app -> (codice ESPN, nome, paese, bandiera). Le quote DraftKings, se ESPN
+# le ha, si mostrano solo come informazione. Non entrano in ESPN_LG: niente voti, rose e formazioni (richieste in piu ogni giorno).
+SENZA_QUOTE = {
+    "RU1": ("rus.1", "Premier League russa", "Russia", "ru"), "IL1": ("isr.1", "Ligat ha'Al", "Israele", "il"), "CY1": ("cyp.1", "First Division", "Cipro", "cy"),
+    "CH1": ("sui.1", "Super League svizzera", "Svizzera", "ch"), "RO1": ("rou.1", "Liga 1", "Romania", "ro"),
+    "ZA1": ("rsa.1", "Premiership", "Sudafrica", "za"), "IN1": ("ind.1", "Indian Super League", "India", "in"), "IN2": ("ind.2", "I-League", "India", "in"),
+    "BO1": ("bol.1", "División Profesional", "Bolivia", "bo"), "VE1": ("ven.1", "Primera División", "Venezuela", "ve"), "UY2": ("uru.2", "Segunda División", "Uruguay", "uy"),
+    "HN1": ("hon.1", "Liga Nacional", "Honduras", "hn"), "GT1": ("gua.1", "Liga Nacional", "Guatemala", "gt"), "SV1": ("slv.1", "Primera División", "El Salvador", "sv"),
+    "USL1": ("usa.usl.l1", "USL League One", "Stati Uniti", "us"),
+    "TPO": ("por.taca.portugal", "Taça de Portugal", "Portogallo", "pt"), "EFT": ("eng.trophy", "EFL Trophy", "Inghilterra", "en"),
+    "SCC": ("sco.tennents", "Scottish Cup", "Scozia", "sc"), "SLC": ("sco.cis", "Scottish League Cup", "Scozia", "sc"), "SCH": ("sco.challenge", "Challenge Cup", "Scozia", "sc"),
+    "CCH": ("chi.copa_chi", "Copa Chile", "Cile", "cl"), "CAR": ("arg.copa", "Copa Argentina", "Argentina", "ar"), "CCO": ("col.copa", "Copa Colombia", "Colombia", "co"),
+    "KSC": ("ksa.kings.cup", "King's Cup", "Arabia Saudita", "sa"), "CBO": ("bol.copa", "Copa Bolivia", "Bolivia", "bo"), "USO": ("usa.open", "US Open Cup", "Stati Uniti", "us"),
+}
+COPPE_SQ = ("TPO", "EFT", "SCC", "SLC", "SCH", "CCH", "CAR", "CCO", "KSC", "CBO", "USO")
+
+
+def quote_1x2(c):
+    """Quote DraftKings 1X2 (decimali) di una partita del calendario ESPN, se ci sono."""
+    o = next((x for x in (c.get("odds") or []) if x and x.get("moneyline")), None)
+    if not o:
+        return None
+    ml = o["moneyline"]
+    q = [_decimale(((ml.get(x) or {}).get("close") or {}).get("odds")) for x in ("home", "draw", "away")]
+    return q if all(q) else None
+
+
+def giro_senza_quote(ora=None, giorni=(-2, -1, 0, 1, 2, 3, 4, 5)):
+    """Calendario (con id ESPN e quote se presenti) e classifica dei campionati senza quote. Una richiesta per giorno e campionato."""
+    ora = ora or datetime.now(timezone.utc)
+    out = {}
+    for k, (lg, *_rest) in SENZA_QUOTE.items():
+        evs, err = [], 0
+        for dd in giorni:
+            try:
+                for ev in get(f"{SITE}{lg}/scoreboard?dates={(ora + timedelta(days=dd)).strftime('%Y%m%d')}").get("events", []):
+                    try:
+                        e = evento(ev)
+                        e["eid"] = ev["id"]
+                        q = quote_1x2(ev["competitions"][0])
+                        if q:
+                            e["q"] = q
+                        evs.append(e)
+                    except (KeyError, StopIteration, TypeError, ValueError):
+                        continue
+            except Exception as e:  # noqa: BLE001 - rete o formato: si salta il giorno
+                err += 1
+                print(f"ESPN senza quote {k} {dd}: {str(e)[:100]}")
+        visti = {}
+        for e in evs:
+            visti[e["eid"]] = e
+        cl = []
+        if k not in COPPE_SQ:
+            try:
+                cl = classifica_espn(lg)
+            except Exception as e:  # noqa: BLE001
+                print(f"ESPN senza quote classifica {k}: {str(e)[:100]}")
+        out[k] = {"ev": sorted(visti.values(), key=lambda e: e["t"]), "cl": cl}
+    n = sum(len(v["ev"]) for v in out.values())
+    print(f"ESPN senza quote: {n} partite in {sum(1 for v in out.values() if v['ev'])} campionati e coppe, classifiche {sum(1 for v in out.values() if v['cl'])}")
+    return out
+
+
+def evento(ev):
+    """Partita del calendario ESPN in forma compatta: orario, squadre, stato, risultato (e primo tempo se noto)."""
+    c = ev["competitions"][0]
+    h = next(x for x in c["competitors"] if x["homeAway"] == "home")
+    a = next(x for x in c["competitors"] if x["homeAway"] == "away")
+    t = ev["status"]["type"]
+    out = {"t": ev["date"], "h": h["team"]["displayName"], "a": a["team"]["displayName"], "st": t["state"], "fine": t.get("completed", False),
+           "g": [int(h.get("score") or 0), int(a.get("score") or 0)]}
+    if t.get("name") in ("STATUS_POSTPONED", "STATUS_CANCELED", "STATUS_SUSPENDED", "STATUS_ABANDONED"):
+        out["rinv"] = True
+    try:
+        ls = [[int(x["value"]) for x in c_["linescores"]] for c_ in (h, a)]
+    except (KeyError, TypeError, ValueError):
+        ls = None
+    if ls and len(ls[0]) >= 2 and len(ls[1]) >= 2:
+        g1, g90 = [ls[0][0], ls[1][0]], [ls[0][0] + ls[0][1], ls[1][0] + ls[1][1]]
+        if g1[0] <= g90[0] <= out["g"][0] and g1[1] <= g90[1] <= out["g"][1]:  # solo se coerente con il finale
+            out["g1"] = g1
+            if g90 != out["g"]:
+                out["g120"], out["g"] = out["g"], g90
+    if t.get("name") in ("STATUS_FINAL_AET", "STATUS_FINAL_PEN") and "g120" not in out and "g1" not in out:
+        out["no90"] = True  # supplementari o rigori senza il risultato dei 90 minuti: non si usa (i consigli valgono sui 90')
+    return out
+
+
+def evento_vicino(evs, casa, ospite, t0, ore=6):
+    """La partita del calendario ESPN che corrisponde meglio a casa-ospite entro qualche ora (non la prima che somiglia:
+    "Al Ittihad - Al Ain" non deve prendere il risultato di "Al Sadd - Al Ahli"). Ognuna delle due squadre deve somigliare."""
+    best, bs = None, (0, 0)
+    for e in evs or []:
+        try:
+            t = datetime.fromisoformat(e["t"].replace("Z", "+00:00"))
+        except (KeyError, ValueError, AttributeError):
+            continue
+        dt = abs((t - t0).total_seconds())
+        if dt > ore * 3600:
+            continue
+        sh, sa = sim(casa, [e["h"]]), sim(ospite, [e["a"]])
+        if sh < 0.5 or sa < 0.5 or sh + sa < 1.3:
+            continue
+        if (sh + sa, -dt) > bs:
+            best, bs = e, (sh + sa, -dt)
+    return best
+
+
+def stato_evento(e):
+    """Stato per l'app (FT, LIVE, RINV, NS), risultato e primo tempo da una partita compatta del calendario ESPN."""
+    if e.get("rinv"):
+        return "RINV", None, None
+    if e.get("no90"):
+        return "NS", None, None
+    if e.get("st") == "post" and e.get("fine"):
+        return "FT", e["g"], e.get("g1")
+    if e.get("st") == "in":
+        return "LIVE", e["g"], None
+    return "NS", None, None
 
 
 def squalificati(sq):

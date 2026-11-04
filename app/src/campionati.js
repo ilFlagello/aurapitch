@@ -64,14 +64,14 @@ import { ordinaLeghe } from "./ordine.js";
       const [filt, setFilt] = useState(0);
       const L = lg(k);
       const st = D.standings[k] ? D.standings[k][["generale", "casa", "trasferta"][filt]] : [];
-      const ms = D.matches.filter((m) => m.lg === k);
+      const ms = [...D.matches, ...(D.senza_quote || [])].filter((m) => m.lg === k);
       const zone = (i) => { const n = st.length; if (["I1", "E0", "SP1", "D1"].includes(k)) return i < 4 ? "bg-[#5B2EE6] dark:bg-[#A58BFF]" : i >= n - 3 ? "bg-[#FF3D5A]" : ""; return i < 2 ? "bg-[#0F9D84]" : i >= n - 3 ? "bg-[#FF3D5A]" : ""; };
       return html`<div className="px-4 space-y-3">
         <div className="flex gap-2 overflow-x-auto noscroll -mx-4 px-4">${ordinate.map((l) => html`<${Chip} key=${l.k} on=${k === l.k} onClick=${() => { setK(l.k); store.set("lgSel", l.k); }}><${Flag} k=${l.flag} w=${16} />${l.name}<//>`)}</div>
         <div className=${"flex items-center gap-2 text-sm font-semibold " + C.tx}><${Flag} k=${L.flag} w=${22} />${L.country} - ${L.name} 2026/27</div>
         <${Tabs} items=${["Classifica", "Marcatori", "Assist", "Voti", "Confronta", "Panchine"]} val=${vista} set=${setVista} />
         ${vista === 3 && html`<${VotiLega} k=${k} />`}
-        ${vista === 5 && html`<${PanchineLega} k=${k} apriSquadra=${(t) => ESPN_LG[k] && setTeam({ lgE: ESPN_LG[k], name: t })} />`}
+        ${vista === 5 && html`<${PanchineLega} k=${k} apriSquadra=${(t) => (ESPN_LG[k] || (lg(k) || {}).lgE) && setTeam({ lgE: ESPN_LG[k] || lg(k).lgE, name: t })} />`}
         ${vista === 4 && html`<${Confronta} k=${k} />`}
         ${(vista === 1 || vista === 2) && (() => { const sc = ((D.scorers || {})[k] || []).slice().sort((a, b) => (vista === 1 ? b.g - a.g || b.a - a.a : b.a - a.a || b.g - a.g)).filter((r) => (vista === 1 ? r.g : r.a) > 0);
           return sc.length ? html`<div className=${C.card + " px-4 py-1"}>${sc.slice(0, 20).map((r, i) => html`<div key=${r.n + r.t} className=${"flex items-center gap-2 py-2 text-sm " + (i ? "border-t " + C.bd : "") + " " + C.tx}>
@@ -82,7 +82,7 @@ import { ordinaLeghe } from "./ordine.js";
         ${!(D.standings[k] && D.standings[k].solo_generale) && html`<${Seg} items=${["Generale", "Solo Casa", "Solo Trasferta"]} val=${filt} set=${setFilt} />`}
         <div className=${C.card + " p-2 overflow-x-auto"}><table className=${"w-full text-sm tabular-nums " + C.tx}><thead><tr className=${"text-[11px] " + C.mu}>
           <th className="text-left font-medium p-1.5 w-7">#</th><th className="text-left font-medium">Squadra</th><th className="text-right font-medium">G</th><th className="text-right font-medium">GF</th><th className="text-right font-medium">GS</th><th className="text-right font-medium pr-1.5">Pt</th></tr></thead>
-          <tbody>${st.map((r, i) => html`<tr key=${r.team} onClick=${() => ESPN_LG[k] && setTeam({ lgE: ESPN_LG[k], name: r.team })} className=${"cursor-pointer " + (r.team === fav ? "bg-[#5B2EE6]/[0.07] dark:bg-[#A58BFF]/[0.12] font-semibold" : "")}>
+          <tbody>${st.map((r, i) => html`<tr key=${r.team} onClick=${() => (ESPN_LG[k] || (lg(k) || {}).lgE) && setTeam({ lgE: ESPN_LG[k] || lg(k).lgE, name: r.team })} className=${"cursor-pointer " + (r.team === fav ? "bg-[#5B2EE6]/[0.07] dark:bg-[#A58BFF]/[0.12] font-semibold" : "")}>
             <td className="p-1.5"><span className="flex items-center gap-1"><span className=${"w-1 h-4 rounded-full " + (zone(i) || "bg-transparent")}></span>${i + 1}</span></td>
             <td><span className="flex items-center gap-1.5 min-w-0"><${Crest} t=${r.team} size=${14} /><span className="truncate">${r.team}</span>
               ${r.live && html`<span className=${"shrink-0 text-[9px] font-extrabold px-1 py-[1px] rounded " + (r.live === "V" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300" : r.live === "N" ? "bg-black/10 dark:bg-white/15 " + C.mu : "bg-[#FF3D5A]/15 text-[#FF3D5A]")}>LIVE</span>`}

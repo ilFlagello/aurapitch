@@ -142,10 +142,12 @@ async function giro(tema) {
   });
   await passo("come sta andando l'IA", async () => {
     if (!(await p.getByText("Come sta andando l'IA").count())) { errori.push(`[${tema}] Storico IA: manca la pagina dell'apprendimento`); return; }
-    for (const v of ["Probabilità oneste", "IA contro bookmaker", "Valore anticipato", "Quanto pesano notizie e assenze"]) {
+    if (!(await p.getByRole("button", { name: /IA contro mercato/ }).count())) errori.push(`[${tema}] pagina IA: manca "IA contro mercato"`);
+    for (const v of ["IA contro mercato", "Probabilità oneste", "IA contro bookmaker", "Valore anticipato", "Quanto pesano notizie e assenze"]) {
       const bt = p.getByRole("button", { name: new RegExp(v) }).first();
       if (await bt.count()) { await bt.click(); await p.waitForTimeout(150); }
     }
+    if (!(await p.getByText("Quando si è allontanata, aveva ragione?").count())) errori.push(`[${tema}] pagina IA: "IA contro mercato" non si apre`);
     const t = await p.evaluate(() => document.body.innerText);
     if (/undefined|NaN/.test(t)) errori.push(`[${tema}] pagina IA: testo con "undefined" o "NaN"`);
     await p.screenshot({ path: path.join(OUT, `${tema}-ia.png`), fullPage: true });
@@ -180,6 +182,76 @@ async function giro(tema) {
   const testo = await p.evaluate(() => document.body.innerText);
   if (/undefined|NaN/.test(testo)) errori.push(`[${tema}] testo con "undefined" o "NaN" nell'ultima schermata`);
   await p.close();
+}
+// campionati senza quote (punto 2 del 3/11): elenco a parte, riga senza barra delle quote, scheda senza consiglio e senza schedina
+async function giroSenzaQuote(tema) {
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, colorScheme: tema, hasTouch: true, serviceWorkers: "block" });
+  const p = await ctx.newPage();
+  p.on("pageerror", (e) => errori.push(`[${tema} senza quote] errore: ${e.message}`));
+  await p.route(/^(?!http:\/\/127\.0\.0\.1)/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
+  await p.route(/\/data\/lista\.json/, async (r) => {
+    const res = await r.fetch(); const j = await res.json(); const oggi = j.today;
+    j.leagues.push({ k: "RU1", name: "Premier League russa", country: "Russia", flag: "ru", nq: true, lgE: "rus.1" });
+    j.standings.RU1 = { generale: [{ team: "Spartak Moscow", pg: 14, v: 9, n: 3, p: 2, gf: 25, gs: 12, pt: 30 }, { team: "CSKA Moscow", pg: 14, v: 8, n: 3, p: 3, gf: 22, gs: 14, pt: 27 }], casa: [], trasferta: [], solo_generale: true, inclusi: [] };
+    j.senza_quote = [
+      { id: "NQ-RU1-1", nq: true, lg: "RU1", lgE: "rus.1", eid: "1", date: oggi, time: "08:00", ko: oggi + "T07:00:00+00:00", h: "Krylia Sovetov", a: "Zenit", st: "FT", g: [0, 3], g1: null, res: 2 },
+      { id: "NQ-RU1-2", nq: true, lg: "RU1", lgE: "rus.1", eid: "2", date: oggi, time: "23:30", ko: oggi + "T22:30:00+00:00", h: "Spartak Moscow", a: "CSKA Moscow", st: "NS", g: null, g1: null, res: null, q: [2.2, 3.4, 3.1], pq: [0.44, 0.27, 0.29] }];
+    await r.fulfill({ response: res, json: j });
+  });
+  await p.goto(URL0); await p.waitForTimeout(800);
+  await p.evaluate(() => { localStorage.setItem("ap:onb", "true"); localStorage.setItem("ap:guideSeen", "true"); localStorage.setItem("ap:swipeOk", "true"); });
+  if (await p.getByText("Ho almeno").count()) { await p.locator("#eta").check(); await p.locator("#acc").check(); await p.getByRole("button", { name: "Entra", exact: true }).click(); }
+  await p.reload(); await p.waitForTimeout(1200);
+  if (await p.getByRole("button", { name: "Salta" }).count()) await p.getByRole("button", { name: "Salta" }).click();
+  try {
+    await p.getByRole("button", { name: /Premier League russa/ }).first().click({ timeout: 5000 }); await p.waitForTimeout(300);
+    if (!(await p.getByText("Senza quote · risultati e diretta").count())) errori.push(`[${tema}] senza quote: la riga della partita senza quote non compare`);
+    await p.getByRole("button", { name: /Spartak Moscow/ }).first().click(); await p.waitForTimeout(500);
+    if (!(await p.getByText("Campionato senza analisi IA.").count())) errori.push(`[${tema}] senza quote: manca l'avviso nella scheda`);
+    if (await p.getByText(/Aggiungi alla tua schedina|Consiglio IA/).count()) errori.push(`[${tema}] senza quote: compare la schedina o il consiglio`);
+    await p.getByRole("tab", { name: "Classifica", exact: true }).first().click(); await p.waitForTimeout(200);
+    if (!(await p.getByText("CSKA Moscow").count())) errori.push(`[${tema}] senza quote: classifica assente`);
+    await p.screenshot({ path: path.join(OUT, `${tema}-senza-quote.png`) });
+    const t = await p.evaluate(() => document.body.innerText);
+    if (/undefined|NaN/.test(t)) errori.push(`[${tema}] senza quote: testo con "undefined" o "NaN"`);
+  } catch (e) { errori.push(`[${tema}] senza quote: ${e.message.split("\n")[0]}`); }
+  await ctx.close();
+}
+// scheda squadra (punto 3 del 3/11): forma delle ultime 5 e difficoltà delle prossime 3, con calendario ESPN finto
+async function giroSquadra(tema) {
+  const L = JSON.parse(fs.readFileSync(path.join(DIST, "data", "lista.json"), "utf8"));
+  const m0 = L.matches.find((m) => m.date === L.today && ["CL", "I1", "E0", "SP1", "D1"].includes(m.lg));
+  if (!m0) return;
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, colorScheme: tema, hasTouch: true, serviceWorkers: "block" });
+  const p = await ctx.newPage();
+  p.on("pageerror", (e) => errori.push(`[${tema} squadra] errore: ${e.message}`));
+  const ev = (id, giorni, avv, casa, g) => { const d = new Date(Date.now() + giorni * 86400e3).toISOString();
+    const me = { homeAway: casa ? "home" : "away", team: { id: "99", displayName: m0.h }, score: g ? String(g[0]) : null };
+    const op = { homeAway: casa ? "away" : "home", team: { id: "77", displayName: avv, shortDisplayName: avv }, score: g ? String(g[1]) : null };
+    return { id, date: d, league: { abbreviation: "UCL" }, competitions: [{ competitors: casa ? [me, op] : [op, me], status: { type: { state: g ? "post" : "pre" } } }] }; };
+  await p.route(/^(?!http:\/\/127\.0\.0\.1)/, (r) => {
+    const u = decodeURIComponent(r.request().url()), cors = { "Access-Control-Allow-Origin": "*" };
+    if (/\/teams$/.test(u)) return r.fulfill({ headers: cors, json: { sports: [{ leagues: [{ teams: [{ team: { id: "99", displayName: m0.h, shortDisplayName: m0.h, name: m0.h } }] }] }] } });
+    if (/\/teams\/99\/schedule\?fixture=true/.test(u)) return r.fulfill({ headers: cors, json: { events: [ev("f1", 4, "Lecce", true), ev("f2", 9, "Bayern", false), ev("f3", 13, "Roma", true)] } });
+    if (/\/teams\/99\/schedule/.test(u)) return r.fulfill({ headers: cors, json: { events: [ev("r1", -20, "Genoa", true, [2, 0]), ev("r2", -16, "Milan", false, [1, 1]), ev("r3", -12, "Como", true, [0, 1]), ev("r4", -8, "Pisa", false, [3, 1]), ev("r5", -4, "Lazio", true, [2, 2])] } });
+    return r.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+  });
+  await p.goto(URL0); await p.waitForTimeout(800);
+  await p.evaluate(() => { localStorage.setItem("ap:onb", "true"); localStorage.setItem("ap:guideSeen", "true"); localStorage.setItem("ap:swipeOk", "true"); });
+  if (await p.getByText("Ho almeno").count()) { await p.locator("#eta").check(); await p.locator("#acc").check(); await p.getByRole("button", { name: "Entra", exact: true }).click(); }
+  await p.reload(); await p.waitForTimeout(1200);
+  if (await p.getByRole("button", { name: "Salta" }).count()) await p.getByRole("button", { name: "Salta" }).click();
+  try {
+    await p.locator("main button").filter({ hasText: m0.h }).filter({ hasText: m0.a }).first().click({ timeout: 5000 }); await p.waitForTimeout(600);
+    await p.locator("main button").filter({ hasText: m0.h }).filter({ hasText: /in classifica|Pagina squadra/ }).first().click({ timeout: 5000 }); await p.waitForTimeout(900);
+    if (!(await p.getByText("Forma, ultime 5").count())) errori.push(`[${tema}] squadra: manca la forma delle ultime 5`);
+    if (!(await p.getByText(/Prossime 3: quanto sono difficili/).count())) errori.push(`[${tema}] squadra: manca la difficoltà delle prossime 3`);
+    if (!(await p.getByText("8 punti su 15", { exact: false }).count()) && !(await p.getByText(/8\s*punti su 15/).count())) errori.push(`[${tema}] squadra: punti della forma sbagliati`);
+    await p.screenshot({ path: path.join(OUT, `${tema}-squadra-forma.png`) });
+    const t = await p.evaluate(() => document.body.innerText);
+    if (/undefined|NaN/.test(t)) errori.push(`[${tema}] squadra: testo con "undefined" o "NaN"`);
+  } catch (e) { errori.push(`[${tema}] squadra: ${e.message.split("\n")[0]}`); }
+  await ctx.close();
 }
 // diretta (punto 4 del 3/11): barra "Chi spinge adesso" con una partita finta in corso (scoreboard e scheda ESPN finti)
 async function giroPressione(tema) {
@@ -217,6 +289,8 @@ async function giroPressione(tema) {
   await ctx.close();
 }
 for (const t of ["light", "dark"]) await giro(t);
+await giroSenzaQuote("light");
+await giroSquadra("dark");
 await giroPressione("light");
 await b.close(); srv.close();
 console.log(errori.length ? errori.join("\n") : "Interfaccia: nessun errore");

@@ -8,7 +8,8 @@ Controlla:
  4. consigli: vinti contro attesi (somma delle probabilita) negli ultimi 30 giorni, solo quelli bloccati prima del fischio;
  5. credibilita del blocco: nessun consiglio che conta nello storico registrato dopo il calcio d'inizio; quanti arrivano tardi;
  6. dati: partite rimaste "da giocare" ore dopo il fischio (risultati che non arrivano), partite finite mai verificate;
- 7. coerenza dei dati dell'ultimo giro (strumenti/coerenza.py).
+ 7. coerenza dei dati dell'ultimo giro (strumenti/coerenza.py);
+ 8. vantaggio sul mercato: quota al consiglio contro quota al fischio, per stile, mercato e specialista (vantaggio.py).
 Esito in data/revisore.json (solo per chi lo esegue, mai nel repository) e codice di uscita 1 se c'e un problema:
 il controllo orario vede l'esecuzione fallita e apre l'avviso su GitHub; il riepilogo del lunedi riporta i punti "da tenere d'occhio".
 Uso: python3 strumenti/revisore.py [cartella radice]"""
@@ -289,7 +290,24 @@ def controlla_dati(diario):
         note.append(f"{nome[0].upper() + nome[1:]}: " + ("riassunto presente" if os.path.exists(os.path.join(RADICE, f)) else "nessun riassunto ancora (si crea al giro del mattino)"))
 
 
+def controlla_vantaggio(diario):
+    """Misura del vantaggio (vantaggio.py): dopo il consiglio la quota scende (il mercato va verso il consiglio) o sale?
+    In totale, per stile, per mercato e per specialista attivo, ultimi GIORNI giorni. Esito anche in revisore.json["vantaggio"]."""
+    st = _jload("data/consigli.json")
+    if st is None:
+        return None
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # vantaggio.py sta nella cartella del codice
+    import vantaggio as VM
+    mi = VM.misura(st, dal=(ORA - timedelta(days=GIORNI)).date().isoformat())
+    p, a, n = VM.giudizio(mi)
+    problemi.extend(p)
+    attenzione.extend(a)
+    note.extend(n)
+    return mi
+
+
 def main():
+    vantaggio = None
     try:
         controlla_modello()
     except Exception as e:  # noqa: BLE001 - un controllo rotto si segnala, non ferma gli altri
@@ -305,7 +323,11 @@ def main():
             fn(diario)
         except Exception as e:  # noqa: BLE001
             attenzione.append(f"Controllo {nome} non riuscito: {type(e).__name__}")
-    esito_tot = {"quando": ORA.isoformat(timespec="minutes"), "problemi": problemi, "attenzione": attenzione, "note": note}
+    try:
+        vantaggio = controlla_vantaggio(diario)
+    except Exception as e:  # noqa: BLE001
+        attenzione.append(f"Controllo del vantaggio sul mercato non riuscito: {type(e).__name__}")
+    esito_tot = {"quando": ORA.isoformat(timespec="minutes"), "problemi": problemi, "attenzione": attenzione, "note": note, "vantaggio": vantaggio}
     os.makedirs(os.path.join(RADICE, "data"), exist_ok=True)
     with open(os.path.join(RADICE, "data", "revisore.json"), "w", encoding="utf-8") as f:
         json.dump(esito_tot, f, ensure_ascii=False, indent=1)

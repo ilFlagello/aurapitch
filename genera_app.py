@@ -25,6 +25,7 @@ import espn_dati as ES
 import fattori as FT
 import giocatori as GC
 import mercati as M
+import vantaggio as VM
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -1648,6 +1649,7 @@ def blocca_consigli(d):
                                     "nf": sum(1 for f in m.get("fattori", []) if f.get("delta")), "sc": SCALA_FATTORI(), "ver": FT.VERSIONE, "segnali": [x["tipo"] for x in m.get("segnali", [])]}
             r["tips"] = {k: {x: v[x] for x in ("c", "l", "p", "q", "qm")} for k, v in tip.items() if isinstance(v, dict)}
             r["tipB"], r["tB"], r["datiB"], r["ko"] = tip, ora.isoformat(timespec="minutes"), info, m.get("ko")
+            r["spB"] = VM.specialisti_attivi(m, SP.NOMI)  # chi lavorava al blocco: serve alla misura del vantaggio (vantaggio.py)
             # partita vista per la prima volta dopo il fischio (dati arrivati tardi): il consiglio si mostra ma non conta
             # nello storico, perche non e stato fissato prima della partita (credibilita del rendimento)
             if ora >= ko:
@@ -1688,6 +1690,7 @@ def segna_tardivi(st):
 def aggiorna_storico(d):
     """Salva i consigli IA prima del calcio d'inizio e li verifica a fine partita (storico trasparente)."""
     st = jload(STORICO_IN, {}) or {}
+    adesso, chiusure = datetime.now(timezone.utc), 0
     for m in d.get("matches", []):
         tip = m.get("tip") or {}
         if not tip:
@@ -1699,6 +1702,7 @@ def aggiorna_storico(d):
                  "nf": sum(1 for f in m.get("fattori", []) if f.get("delta")), "sc": SCALA_FATTORI(), "ver": FT.VERSIONE, "segnali": [x["tipo"] for x in m.get("segnali", [])],
                  "tips": {k: {x: v[x] for x in ("c", "l", "p", "q", "qm")} for k, v in tip.items()}}
             st[m["id"]] = r
+        chiusure += VM.registra_chiusura(r, m, adesso)  # quota dello stesso esito fino al fischio (misura del vantaggio)
         if m["st"] in ("FT", "LIVE", "RINV"):
             r["st"], r["g"], r["g1"] = m["st"], m.get("g"), m.get("g1")
         # registrato dopo il fischio (anche prima di questa regola): fuori dallo storico
@@ -1746,7 +1750,12 @@ def aggiorna_storico(d):
            "lista": [{"date": v["date"], "lg": v["lg"], "h": v["h"], "a": v["a"], "g": v["g"], "tips": v["tips"], "esiti": v["esiti"]} for v in rec[:60]]}
     with open(STORICO_OUT, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
-    print(f"Storico consigli: {len(chiuse)} partite verificate, {len(st)} salvate")
+    print(f"Storico consigli: {len(chiuse)} partite verificate, {len(st)} salvate; quote di chiusura aggiornate: {chiusure}")
+    try:  # riassunto pubblico del vantaggio sul mercato (solo numeri) per la pagina dell'algoritmo
+        t = VM.scrivi_pubblico(st, SP.NOMI)["totale"]
+        print(f"Vantaggio sul mercato: {t.get('n', 0)} consigli misurati" + (f", movimento medio {t['medio']:+.2f}%" if t.get("n") else ""))
+    except Exception as e:  # noqa: BLE001 - la misura non deve mai fermare il giro dei dati
+        print(f"Vantaggio sul mercato: non aggiornato ({type(e).__name__}: {e})")
 
 
 DIARIO = os.path.join(DATA, "diario")

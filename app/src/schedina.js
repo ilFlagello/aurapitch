@@ -152,7 +152,7 @@ import { META, principali, slipOffPredefinito } from "./ordine.js";
             <button onClick=${() => setMySlip([])} className=${"py-2 rounded-xl text-xs font-semibold " + C.ch + " " + C.tx}>Svuota</button></div>
           <${Gioca} legs=${mine.filter((l) => l.q)} /></div>`}<//>`,
         html`<${React.Fragment}><${Diario} /><${Allenatore} /><${GiocoResponsabile} compatto=${true} /><//>`,
-        html`<${React.Fragment}><${StoricoSchedine} /><${IACard} /><${StoricoCard} /><//>`]}<//></div>`;
+        html`<${React.Fragment}><${IACard} /><${StoricoSchedine} /><${StoricoCard} /><//>`]}<//></div>`;
     }
 
 

@@ -143,7 +143,7 @@ async function giro(tema) {
   await passo("come sta andando l'IA", async () => {
     if (!(await p.getByText("Come sta andando l'IA").count())) { errori.push(`[${tema}] Storico IA: manca la pagina dell'apprendimento`); return; }
     if (!(await p.getByRole("button", { name: /IA contro mercato/ }).count())) errori.push(`[${tema}] pagina IA: manca "IA contro mercato"`);
-    for (const v of ["IA contro mercato", "Probabilità oneste", "IA contro bookmaker", "Valore anticipato", "Quanto pesano notizie e assenze"]) {
+    for (const v of ["IA contro mercato", "Quanto sono oneste le probabilità", "Il vantaggio sul mercato", "Per chi vuole i numeri"]) {
       const bt = p.getByRole("button", { name: new RegExp(v) }).first();
       if (await bt.count()) { await bt.click(); await p.waitForTimeout(150); }
     }
@@ -288,10 +288,58 @@ async function giroPressione(tema) {
   } catch (e) { errori.push(`[${tema}] diretta: ${e.message.split("\n")[0]}`); }
   await ctx.close();
 }
+// pagina dell'algoritmo (punto 8 del 4/11): in alto pochi numeri, sotto le sezioni che si aprono, con i numeri dei punti 1-4
+async function giroAlgoritmo(tema) {
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, colorScheme: tema, hasTouch: true, serviceWorkers: "block" });
+  const p = await ctx.newPage();
+  p.on("pageerror", (e) => errori.push(`[${tema} algoritmo] errore: ${e.message}`));
+  await p.route(/^(?!http:\/\/127\.0\.0\.1)/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
+  const st = (n, verso, contro, medio) => ({ n, verso, contro, fermi: n - verso - contro, medio, margine: 0.8 });
+  await p.route(/\/data\/vantaggio\.json/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ giorni: 30, totale: st(180, 92, 51, 0.9),
+    per_stile: { consiglio: st(70, 38, 18, 1.2), prudente: st(60, 30, 18, 0.6), coraggiosa: st(50, 24, 15, 0.8) }, per_mercato: {},
+    per_specialista: { formazioni: st(40, 24, 9, 1.9), ultima_ora: st(22, 10, 9, 0.1) }, senza_specialisti: st(110, 54, 33, 0.7), nomi: { formazioni: "formazioni ufficiali", ultima_ora: "notizie dell'ultima ora" } }) }));
+  await p.route(/\/data\/ia\.json/, async (r) => {
+    const res = await r.fetch(); const j = await res.json();
+    j.campionati = { affidabilita: { attivo: true, fattori: { T1: 0.8 }, motivo: "confermata su 180 partite mai viste" }, tutti: { partite: 452, scarto: 2.1 },
+      elenco: [{ lg: "I1", partite: 70, scarto: 0.4, consigli: 40, vinti: 29, attesi: 27.5 }, { lg: "E0", partite: 66, scarto: 1.1 }, { lg: "SP1", partite: 61, scarto: 1.9 },
+        { lg: "D1", partite: 64, scarto: 2.6 }, { lg: "F1", partite: 62, scarto: 4.2 }, { lg: "T1", partite: 63, scarto: 7.8, fattore: 0.8 }] };
+    j.cambi = [{ data: j.allenato, cosa: "Probabilità ritarate per fascia: 60-70%: -2 punti", perche: "errore più basso dello 0,31% su 140 partite mai viste" }];
+    await r.fulfill({ response: res, json: j });
+  });
+  await p.goto(URL0); await p.waitForTimeout(800);
+  await p.evaluate(() => { localStorage.setItem("ap:onb", "true"); localStorage.setItem("ap:guideSeen", "true"); localStorage.setItem("ap:swipeOk", "true"); });
+  if (await p.getByText("Ho almeno").count()) { await p.locator("#eta").check(); await p.locator("#acc").check(); await p.getByRole("button", { name: "Entra", exact: true }).click(); }
+  await p.reload(); await p.waitForTimeout(1200);
+  if (await p.getByRole("button", { name: "Salta" }).count()) await p.getByRole("button", { name: "Salta" }).click();
+  try {
+    await p.getByRole("button", { name: "Schedina IA", exact: true }).click(); await p.waitForTimeout(600);
+    await p.getByRole("tab", { name: "Storico IA", exact: true }).first().click(); await p.waitForTimeout(800);
+    await p.getByText("Come sta andando l'IA").first().scrollIntoViewIfNeeded();
+    if (!(await p.getByText(/^(L'IA|I consigli|Consigli) .*\.$/).count())) errori.push(`[${tema}] algoritmo: manca la frase in alto`);
+    for (const t of ["Consigli vinti", "IA contro bookmaker", "Ultimo miglioramento"]) if (!(await p.getByText(t).count())) errori.push(`[${tema}] algoritmo: manca "${t}" in alto`);
+    await p.screenshot({ path: path.join(OUT, `${tema}-algoritmo.png`) });
+    const sezioni = ["Come ragiona l'IA", "Da dove prende i dati", "Gli agenti di controllo", "Quanto sono oneste le probabilità", "Il vantaggio sul mercato",
+      "Campionati: dove è più e meno affidabile", "Cosa ha cambiato l'IA e perché", "IA contro mercato"];
+    for (const v of sezioni) {
+      const bt = p.getByRole("button", { name: new RegExp(v.replace(/[()?]/g, ".")) }).first();
+      if (!(await bt.count())) { errori.push(`[${tema}] algoritmo: manca la sezione "${v}"`); continue; }
+      await bt.click(); await p.waitForTimeout(150);
+    }
+    for (const t of ["Su 100 consigli, dopo il blocco la quota...", "Più affidabile", "Meno affidabile", "Probabilità ritarate per fascia", "Blocca il consiglio 45 minuti prima"])
+      if (!(await p.getByText(t).first().count())) errori.push(`[${tema}] algoritmo: dopo l'apertura manca "${t}"`);
+    const t = await p.evaluate(() => document.body.innerText);
+    if (/undefined|NaN/.test(t)) errori.push(`[${tema}] algoritmo: testo con "undefined" o "NaN"`);
+    const largo = await p.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    if (largo) errori.push(`[${tema}] algoritmo: la pagina scorre in orizzontale`);
+    await p.screenshot({ path: path.join(OUT, `${tema}-algoritmo-aperto.png`), fullPage: true });
+  } catch (e) { errori.push(`[${tema}] algoritmo: ${e.message.split("\n")[0]}`); }
+  await ctx.close();
+}
 for (const t of ["light", "dark"]) await giro(t);
 await giroSenzaQuote("light");
 await giroSquadra("dark");
 await giroPressione("light");
+for (const t of ["light", "dark"]) await giroAlgoritmo(t);
 await b.close(); srv.close();
 console.log(errori.length ? errori.join("\n") : "Interfaccia: nessun errore");
 process.exit(errori.length ? 1 : 0);

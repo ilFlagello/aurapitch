@@ -27,6 +27,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
 import esperti as ES_BK
+import orologio as OR
 import salvadanaio as SV
 
 # Campionati: id API-Football e titolo usato da The Odds API (la chiave viene cercata nell'elenco ufficiale, che e gratuito)
@@ -558,100 +559,147 @@ def scarica_stagione_fd(base="data"):
     print("Understat: xG della stagione scaricati")
 
 
-def giro_prepartita(base="data", da_min=15, a_min=70):
-    """Seconda fotografia delle quote 15-70 minuti prima del calcio d'inizio (dopo le formazioni ufficiali).
-    Nei test su 17.508 partite le quote vicine al calcio d'inizio sono le piu precise in assoluto.
-    Parte solo se avanzano crediti: tiene da parte quelli per il giro del mattino fino a fine mese."""
+ATTESA_FASCIA_MIN = 20   # una chiamata di The Odds API fotografa tutte le partite del campionato: nella stessa fascia non si ripete
+CHIUSURA_MIN = (10, 30)  # fotografia di chiusura gratuita (ESPN), a consiglio gia bloccato: misura del vantaggio sul mercato
+
+
+def _t(s):
+    return datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+
+
+def piano_prepartita(matches, ora, stato):
+    """Quali partite fotografare in questo giro.
+    - "blocco": e l'ultimo giro prima del blocco del consiglio (orologio.ultimo_giro, la stessa regola di genera_app): la
+      fotografia entra nel consiglio. Prima si fotografava 15-70 minuti dal fischio: l'ultima foto prima del blocco arrivava
+      di solito 20-30 minuti prima, e una su due cadeva dopo il blocco (518 partite, 28/10-4/11).
+    - "chiusura": consiglio gia bloccato, 10-30 minuti dal fischio, una volta sola e solo se la foto del blocco era ESPN
+      (stessa fonte: la quota di chiusura non deve cambiare bookmaker, altrimenti il "movimento" sarebbe falso).
+    Restituisce {"blocco": {lega: [partite]}, "chiusura": {lega: [partite]}}."""
+    import espn_dati as ES
+    fatte = stato.get("partite") or {}
+    out = {"blocco": {}, "chiusura": {}}
+    for m in matches:
+        if m.get("st") != "NS" or not (m.get("lg") in LEGA_APP or m.get("lg") in ES.ESPN_LG):
+            continue
+        try:
+            ko = _t(m["ko"])
+        except (KeyError, ValueError):
+            continue
+        if ko <= ora:
+            continue
+        f = fatte.get(m["id"]) or {}
+        bloccato = (m.get("blocco") or {}).get("st") in ("bloccato", "tardivo")
+        if not bloccato and OR.ultimo_giro(ko, ora):
+            out["blocco"].setdefault(m["lg"], []).append(m)
+        elif bloccato and CHIUSURA_MIN[0] <= (ko - ora).total_seconds() / 60 <= CHIUSURA_MIN[1] and not f.get("ch") \
+                and (f.get("fonte") or ("oa" if m["lg"] in LEGA_APP else "espn")) == "espn" and m["lg"] in ES.ESPN_LG:
+            out["chiusura"].setdefault(m["lg"], []).append(m)
+    return out
+
+
+def giro_prepartita(base="data", ora=None):
+    """Fotografia delle quote nel giro in cui si blocca il consiglio (45 minuti prima del fischio): nei test su 19.803 partite
+    l'ora delle quote conta 13 volte piu del bookmaker. The Odds API (media di molti bookmaker) quando il salvadanaio lo
+    permette, con una chiamata per campionato e per fascia di calcio d'inizio; altrimenti ESPN (DraftKings, gratis).
+    Dopo il blocco, una fotografia di chiusura gratuita (ESPN) per la misura del vantaggio."""
     import espn_dati as ES
     try:
         with open(os.path.join("app", "data", "giornata.json"), encoding="utf-8") as f:
             gio = json.load(f)
     except (OSError, ValueError):
         return
-    ora = datetime.now(timezone.utc)
-    vicine = {}
-    for m in gio.get("matches", []):
-        try:
-            mins = (datetime.fromisoformat(m["ko"]) - ora).total_seconds() / 60
-        except (KeyError, ValueError):
-            continue
-        if m.get("st") == "NS" and da_min <= mins <= a_min and (m.get("lg") in LEGA_APP or m.get("lg") in ES.ESPN_LG):
-            vicine.setdefault(m["lg"], []).append(m)
-    if not vicine:
-        return
+    ora = ora or datetime.now(timezone.utc)
     stato_path = os.path.join(base, "prepartita_stato.json")
     try:
         with open(stato_path, encoding="utf-8") as f:
             stato = json.load(f)
     except (OSError, ValueError):
         stato = {}
+    piano = piano_prepartita(gio.get("matches", []), ora, stato)
+    if not piano["blocco"] and not piano["chiusura"]:
+        return
+    fatte = stato.setdefault("partite", {})
     cart = os.path.join(base, ora.strftime("%Y-%m-%d"))
-    path = os.path.join(cart, "prepartita.json")
     try:
-        with open(path, encoding="utf-8") as f:
+        with open(os.path.join(cart, "prepartita.json"), encoding="utf-8") as f:
             righe = json.load(f)
     except (OSError, ValueError):
         righe = []
-    fatte = set()
-    sports, h = odds_api("/sports") if os.environ.get("ODDS_API_KEY") else (None, {})  # gratis: crediti rimasti e chiavi dei campionati
-    if not sports:
-        sports, h = [], {"x-requests-remaining": "0"}
+    t = ora.isoformat()
+
+    def segna(m, tipo, fonte):
+        f = fatte.setdefault(m["id"], {"ko": m["ko"]})
+        if tipo == "blocco":
+            f.update({"pb": t, "fonte": fonte})
+        else:
+            f["ch"] = t
+
+    da_espn = {k: [(m, "chiusura") for m in ms] for k, ms in piano["chiusura"].items()}
+    leghe_oa = [k for k in piano["blocco"] if k in LEGA_APP]
+    sports, h = odds_api("/sports") if leghe_oa and os.environ.get("ODDS_API_KEY") else (None, {})  # gratis: crediti e chiavi
     rimasti = int(h.get("x-requests-remaining", "0") or 0)
-    BUDGET.odds_rimasti = rimasti
-    per_titolo = {x["title"]: x["key"] for x in sports}
+    BUDGET.odds_rimasti = rimasti if sports else BUDGET.odds_rimasti
+    per_titolo = {x["title"]: x["key"] for x in sports or []}
     chiavi = {lg["nome"]: per_titolo.get(lg["odds_title"], lg["odds_key"]) for lg in LEAGUES}
-    for k, ms in vicine.items():
-        if k not in LEGA_APP or not sports:
-            continue
-        nome = LEGA_APP[k]
-        ultimo = stato.get(k)
-        if ultimo and (ora - datetime.fromisoformat(ultimo)).total_seconds() < 50 * 60:
-            fatte.add(k)  # fotografia media recente: non la si sostituisce con quella di un bookmaker solo
-            continue
-        if not SV.odds_puo("prepartita", 2, rimasti):
-            print(f"Pre-partita {nome}: crediti di oggi gia spesi, uso le quote gratuite ESPN (crediti rimasti {rimasti}, tenuti per i prossimi giorni)")
-            continue
-        ev, h2 = odds_api(f"/sports/{chiavi.get(nome)}/odds", cat="prepartita", regions="eu", markets="h2h,totals", oddsFormat="decimal", dateFormat="iso")
-        if ev is None:
-            continue
-        rimasti = int(h2.get("x-requests-remaining", rimasti) or rimasti)
-        stato[k] = ora.isoformat()
-        fatte.add(k)
+    for k, ms in piano["blocco"].items():
+        coperte = []
+        if k in LEGA_APP and sports:
+            nome = LEGA_APP[k]
+            ultimo = stato.get(k)
+            if ultimo and (ora - _t(ultimo)).total_seconds() < ATTESA_FASCIA_MIN * 60:
+                coperte = [m for m in ms if (fatte.get(m["id"]) or {}).get("fonte") == "oa"]  # stessa fascia: foto appena fatta
+            elif SV.odds_puo("prepartita", 2, rimasti):
+                ev, h2 = odds_api(f"/sports/{chiavi.get(nome)}/odds", cat="prepartita", regions="eu", markets="h2h,totals", oddsFormat="decimal", dateFormat="iso")
+                if ev is not None:
+                    rimasti = int(h2.get("x-requests-remaining", rimasti) or rimasti)
+                    stato[k] = t
+                    for m in gio.get("matches", []):  # la chiamata vale per tutte le partite del campionato ancora da giocare
+                        if m.get("lg") != k or m.get("st") != "NS":
+                            continue
+                        best, bs = None, 0
+                        for e in ev or []:
+                            try:
+                                dt = abs((_t(e["commence_time"]) - _t(m["ko"])).total_seconds())
+                            except (KeyError, ValueError):
+                                continue
+                            sc = ES.sim(m["h"], [e["home_team"]]) + ES.sim(m["a"], [e["away_team"]])
+                            if dt <= 3 * 3600 and sc > bs:
+                                best, bs = e, sc
+                        if best and bs >= 1.3:
+                            righe.append({"id": m["id"], "t": t, "tipo": "blocco" if m in ms else "fascia", **{f"oa_{a}": b for a, b in riassunto(media_oddsapi(best)).items()},
+                                          **{f"oa_{a}": b for a, b in ES_BK.riassunto(best).items()}})
+                            if m in ms:
+                                segna(m, "blocco", "oa")
+                                coperte.append(m)
+                    print(f"Pre-partita {nome}: {len(coperte)} partite al blocco con una chiamata, crediti rimasti {rimasti}")
+            else:
+                print(f"Pre-partita {nome}: crediti di oggi gia spesi, uso le quote gratuite ESPN (crediti rimasti {rimasti})")
         for m in ms:
-            best, bs = None, 0
-            for e in ev or []:
-                try:
-                    dt = abs((datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")) - datetime.fromisoformat(m["ko"])).total_seconds())
-                except (KeyError, ValueError):
-                    continue
-                sc = ES.sim(m["h"], [e["home_team"]]) + ES.sim(m["a"], [e["away_team"]])
-                if dt <= 3 * 3600 and sc > bs:
-                    best, bs = e, sc
-            if best and bs >= 1.3:
-                righe.append({"id": m["id"], "t": ora.isoformat(), **{f"oa_{a}": b for a, b in riassunto(media_oddsapi(best)).items()},
-                              **{f"oa_{a}": b for a, b in ES_BK.riassunto(best).items()}})
-        print(f"Pre-partita {nome}: {len(ms)} partite, crediti rimasti {rimasti}")
-    # quote gratuite di ESPN (DraftKings) vicino al calcio d'inizio: tutti i campionati senza crediti (o quando i crediti non bastano)
-    for k, ms in vicine.items():
-        if k in fatte or k not in ES.ESPN_LG:
+            if m not in coperte:
+                da_espn.setdefault(k, []).append((m, "blocco"))
+    # quote gratuite di ESPN (DraftKings): campionati senza crediti, crediti finiti, fotografie di chiusura
+    for k, lista in da_espn.items():
+        if k not in ES.ESPN_LG:
             continue
-        ultimo = stato.get("es:" + k)
-        if ultimo and (ora - datetime.fromisoformat(ultimo)).total_seconds() < 50 * 60:
-            continue
-        stato["es:" + k] = ora.isoformat()
         n = 0
-        for giorno in sorted({datetime.fromisoformat(m["ko"]).strftime("%Y%m%d") for m in ms}):
+        for giorno in sorted({_t(m["ko"]).strftime("%Y%m%d") for m, _ in lista}):
             try:
                 evs = ES.get(f"{ES.SITE}{ES.ESPN_LG[k]}/scoreboard?dates={giorno}").get("events", [])
             except Exception as e:  # noqa: BLE001
                 print(f"Pre-partita ESPN {k}: {e}")
                 continue
-            for m in ms:
+            for m, tipo in lista:
+                if _t(m["ko"]).strftime("%Y%m%d") != giorno:
+                    continue
                 q = ES.quote_evento(evs, m["h"], m["a"], m["ko"])
                 if q:
-                    righe.append({"id": m["id"], "t": ora.isoformat(), "fonte": "espn", **q})
+                    righe.append({"id": m["id"], "t": t, "fonte": "espn", "tipo": tipo, **q})
+                    segna(m, tipo, "espn")
                     n += 1
-        print(f"Pre-partita ESPN {k}: {n} partite su {len(ms)} (nessun credito)")
+        stato["es:" + k] = t
+        print(f"Pre-partita ESPN {k}: {n} fotografie su {len(lista)} (nessun credito)")
+    limite = (ora - timedelta(days=2)).isoformat()
+    stato["partite"] = {i: f for i, f in fatte.items() if str(f.get("ko", "")) >= limite}
     salva(cart, "prepartita.json", righe)
     salva(base, "prepartita_stato.json", stato)
 

@@ -369,6 +369,8 @@ async function giroAlgoritmo(tema) {
     j.campionati = { affidabilita: { attivo: true, fattori: { T1: 0.8 }, motivo: "confermata su 180 partite mai viste" }, tutti: { partite: 452, scarto: 2.1 },
       elenco: [{ lg: "I1", partite: 70, scarto: 0.4, consigli: 40, vinti: 29, attesi: 27.5 }, { lg: "E0", partite: 66, scarto: 1.1 }, { lg: "SP1", partite: 61, scarto: 1.9 },
         { lg: "D1", partite: 64, scarto: 2.6 }, { lg: "F1", partite: 62, scarto: 4.2 }, { lg: "T1", partite: 63, scarto: 7.8, fattore: 0.8 }] };
+    j.esperti = { attivo: false, motivo: "in ombra: servono almeno 300 partite finite con le quote di Pinnacle nel diario (ora 40)", diario: { partite: 40, minimo: 300 },
+      archivio: { prova: 19803, errore: { media: 0.99608, pinnacle: 0.99579, bet365: 0.99661 }, chiusura: { media_chiusura: 0.99222 } } };
     j.cambi = [{ data: j.allenato, cosa: "Probabilità ritarate per fascia: 60-70%: -2 punti", perche: "errore più basso dello 0,31% su 140 partite mai viste" }];
     await r.fulfill({ response: res, json: j });
   });
@@ -393,6 +395,8 @@ async function giroAlgoritmo(tema) {
     }
     for (const t of ["Su 100 consigli, dopo il blocco la quota...", "Più affidabile", "Meno affidabile", "Probabilità ritarate per fascia", "Blocca il consiglio 45 minuti prima"])
       if (!(await p.getByText(t).first().count())) errori.push(`[${tema}] algoritmo: dopo l'apertura manca "${t}"`);
+    await p.getByRole("button", { name: /Per chi vuole i numeri/ }).first().click(); await p.waitForTimeout(150);
+    for (const t of ["Bookmaker esperti", "Media alla chiusura"]) if (!(await p.getByText(t).first().count())) errori.push(`[${tema}] algoritmo: manca "${t}" (bookmaker esperti)`);
     const t = await p.evaluate(() => document.body.innerText);
     if (/undefined|NaN/.test(t)) errori.push(`[${tema}] algoritmo: testo con "undefined" o "NaN"`);
     const largo = await p.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);

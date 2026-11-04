@@ -166,6 +166,20 @@ print(json.dumps(out))`;
   }
   console.log("schedine IA confrontate con l'app:", confronti);
 }
+// IA contro mercato: le partite da giocare con lo scarto più grande tra IA e quote sull'esito finale
+{
+  const outM = path.join(tmp, "mercato.mjs");
+  await esbuild.build({ entryPoints: [path.join(APP, "src/mercato.js")], bundle: true, platform: "node", format: "esm", outfile: outM, logLevel: "error" });
+  const MK = await import(pathToFileURL(outM).href);
+  const ms = [{ id: "a", st: "NS", ko: "2026-11-05T19:00Z", h: "A", a: "B", p: [0.5, 0.25, 0.25], mk: [0.45, 0.27, 0.28] },
+    { id: "b", st: "NS", ko: "2026-11-05T18:00Z", h: "C", a: "D", p: [0.2, 0.25, 0.55], mk: [0.3, 0.27, 0.43] },
+    { id: "c", st: "NS", ko: "2026-11-05T17:00Z", h: "E", a: "F", p: [0.46, 0.27, 0.27], mk: [0.45, 0.27, 0.28] },
+    { id: "d", st: "FT", ko: "2026-11-04T17:00Z", h: "G", a: "H", p: [0.7, 0.2, 0.1], mk: [0.5, 0.3, 0.2] }, { id: "e", st: "NS", nq: true, ko: "2026-11-05T17:00Z", h: "I", a: "L" }];
+  const dv = MK.divergenze(ms);
+  ok(dv.map((x) => x.m.id).join() === "b,a", `IA contro mercato: ordine e filtri (${dv.map((x) => x.m.id)})`);
+  ok(dv[0].c === "2" && Math.abs(dv[0].d - 0.12) < 1e-9 && dv[1].c === "1", "IA contro mercato: esito e scarto");
+  ok(MK.esitoLungo({ h: "A", a: "B" }, "2") === "vittoria B" && MK.esitoLungo({}, "X") === "pareggio", "IA contro mercato: etichette");
+}
 console.log(`${prove} controlli, ${errori} errori`);
 fs.rmSync(tmp, { recursive: true, force: true });
 process.exit(errori ? 1 : 0);

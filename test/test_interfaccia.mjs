@@ -142,10 +142,12 @@ async function giro(tema) {
   });
   await passo("come sta andando l'IA", async () => {
     if (!(await p.getByText("Come sta andando l'IA").count())) { errori.push(`[${tema}] Storico IA: manca la pagina dell'apprendimento`); return; }
-    for (const v of ["Probabilità oneste", "IA contro bookmaker", "Valore anticipato", "Quanto pesano notizie e assenze"]) {
+    if (!(await p.getByRole("button", { name: /IA contro mercato/ }).count())) errori.push(`[${tema}] pagina IA: manca "IA contro mercato"`);
+    for (const v of ["IA contro mercato", "Probabilità oneste", "IA contro bookmaker", "Valore anticipato", "Quanto pesano notizie e assenze"]) {
       const bt = p.getByRole("button", { name: new RegExp(v) }).first();
       if (await bt.count()) { await bt.click(); await p.waitForTimeout(150); }
     }
+    if (!(await p.getByText("Quando si è allontanata, aveva ragione?").count())) errori.push(`[${tema}] pagina IA: "IA contro mercato" non si apre`);
     const t = await p.evaluate(() => document.body.innerText);
     if (/undefined|NaN/.test(t)) errori.push(`[${tema}] pagina IA: testo con "undefined" o "NaN"`);
     await p.screenshot({ path: path.join(OUT, `${tema}-ia.png`), fullPage: true });

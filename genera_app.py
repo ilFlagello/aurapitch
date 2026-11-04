@@ -802,9 +802,42 @@ def genera():
     for v in out["standings"].values():
         squadre |= {r["team"] for r in v["generale"]}
     out["teams"] = sorted(squadre)
+    try:
+        scrivi_forza(out, scontri, motore)
+    except Exception as e:  # noqa: BLE001 - la scheda squadra non deve fermare il giro
+        print(f"Forza delle squadre: non scritta ({type(e).__name__}: {e})")
     aggiorna_prepartita(out)
     applica_fattori(out)
     return out
+
+
+FORZA_OUT = os.path.join("app", "data", "forza.json")
+
+
+def scrivi_forza(out, scontri, motore, path=None):
+    """Forza Elo dell'algoritmo (specialista "elo", solo risultati) per le squadre dell'app, con il campionato: serve alla
+    scheda squadra per la difficolta delle prossime partite quando l'IA non ha ancora le probabilita (oltre i 5 giorni).
+    Solo squadre con almeno 5 partite nell'archivio; il confronto vale solo tra squadre dello stesso campionato."""
+    lg_di = {}
+    for k, S in (out.get("standings") or {}).items():
+        if k in ES.COPPE or k in ES.NAZIONALI:
+            continue
+        for r in S.get("generale") or []:
+            lg_di.setdefault(r["team"], k)
+    for m in out.get("matches") or []:
+        if m["lg"] not in ES.COPPE and m["lg"] not in ES.NAZIONALI:
+            lg_di.setdefault(m["h"], m["lg"])
+            lg_di.setdefault(m["a"], m["lg"])
+    forza = {}
+    for nome, k in lg_di.items():
+        chiave = SP.piega(SP.risolvi(nome, scontri))
+        if motore.n.get(chiave, 0) >= 5 and chiave in motore.elo:
+            forza[nome] = [round(motore.elo[chiave]), k]
+    path = path or FORZA_OUT
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({"agg": out.get("generato"), "casa": 60, "t": forza}, f, ensure_ascii=False, separators=(",", ":"))
+    print(f"Forza delle squadre: {len(forza)} squadre con punteggio Elo su {len(lg_di)}")
+    return forza
 
 
 NOTIZIE = os.path.join(DATA, "notizie", "notizie.json")

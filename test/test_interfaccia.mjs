@@ -217,8 +217,45 @@ async function giroSenzaQuote(tema) {
   } catch (e) { errori.push(`[${tema}] senza quote: ${e.message.split("\n")[0]}`); }
   await ctx.close();
 }
+// scheda squadra (punto 3 del 3/11): forma delle ultime 5 e difficoltà delle prossime 3, con calendario ESPN finto
+async function giroSquadra(tema) {
+  const L = JSON.parse(fs.readFileSync(path.join(DIST, "data", "lista.json"), "utf8"));
+  const m0 = L.matches.find((m) => m.date === L.today && ["CL", "I1", "E0", "SP1", "D1"].includes(m.lg));
+  if (!m0) return;
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, colorScheme: tema, hasTouch: true, serviceWorkers: "block" });
+  const p = await ctx.newPage();
+  p.on("pageerror", (e) => errori.push(`[${tema} squadra] errore: ${e.message}`));
+  const ev = (id, giorni, avv, casa, g) => { const d = new Date(Date.now() + giorni * 86400e3).toISOString();
+    const me = { homeAway: casa ? "home" : "away", team: { id: "99", displayName: m0.h }, score: g ? String(g[0]) : null };
+    const op = { homeAway: casa ? "away" : "home", team: { id: "77", displayName: avv, shortDisplayName: avv }, score: g ? String(g[1]) : null };
+    return { id, date: d, league: { abbreviation: "UCL" }, competitions: [{ competitors: casa ? [me, op] : [op, me], status: { type: { state: g ? "post" : "pre" } } }] }; };
+  await p.route(/^(?!http:\/\/127\.0\.0\.1)/, (r) => {
+    const u = decodeURIComponent(r.request().url()), cors = { "Access-Control-Allow-Origin": "*" };
+    if (/\/teams$/.test(u)) return r.fulfill({ headers: cors, json: { sports: [{ leagues: [{ teams: [{ team: { id: "99", displayName: m0.h, shortDisplayName: m0.h, name: m0.h } }] }] }] } });
+    if (/\/teams\/99\/schedule\?fixture=true/.test(u)) return r.fulfill({ headers: cors, json: { events: [ev("f1", 4, "Lecce", true), ev("f2", 9, "Bayern", false), ev("f3", 13, "Roma", true)] } });
+    if (/\/teams\/99\/schedule/.test(u)) return r.fulfill({ headers: cors, json: { events: [ev("r1", -20, "Genoa", true, [2, 0]), ev("r2", -16, "Milan", false, [1, 1]), ev("r3", -12, "Como", true, [0, 1]), ev("r4", -8, "Pisa", false, [3, 1]), ev("r5", -4, "Lazio", true, [2, 2])] } });
+    return r.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+  });
+  await p.goto(URL0); await p.waitForTimeout(800);
+  await p.evaluate(() => { localStorage.setItem("ap:onb", "true"); localStorage.setItem("ap:guideSeen", "true"); localStorage.setItem("ap:swipeOk", "true"); });
+  if (await p.getByText("Ho almeno").count()) { await p.locator("#eta").check(); await p.locator("#acc").check(); await p.getByRole("button", { name: "Entra", exact: true }).click(); }
+  await p.reload(); await p.waitForTimeout(1200);
+  if (await p.getByRole("button", { name: "Salta" }).count()) await p.getByRole("button", { name: "Salta" }).click();
+  try {
+    await p.locator("main button").filter({ hasText: m0.h }).filter({ hasText: m0.a }).first().click({ timeout: 5000 }); await p.waitForTimeout(600);
+    await p.locator("main button").filter({ hasText: m0.h }).filter({ hasText: /in classifica|Pagina squadra/ }).first().click({ timeout: 5000 }); await p.waitForTimeout(900);
+    if (!(await p.getByText("Forma, ultime 5").count())) errori.push(`[${tema}] squadra: manca la forma delle ultime 5`);
+    if (!(await p.getByText(/Prossime 3: quanto sono difficili/).count())) errori.push(`[${tema}] squadra: manca la difficoltà delle prossime 3`);
+    if (!(await p.getByText("8 punti su 15", { exact: false }).count()) && !(await p.getByText(/8\s*punti su 15/).count())) errori.push(`[${tema}] squadra: punti della forma sbagliati`);
+    await p.screenshot({ path: path.join(OUT, `${tema}-squadra-forma.png`) });
+    const t = await p.evaluate(() => document.body.innerText);
+    if (/undefined|NaN/.test(t)) errori.push(`[${tema}] squadra: testo con "undefined" o "NaN"`);
+  } catch (e) { errori.push(`[${tema}] squadra: ${e.message.split("\n")[0]}`); }
+  await ctx.close();
+}
 for (const t of ["light", "dark"]) await giro(t);
 await giroSenzaQuote("light");
+await giroSquadra("dark");
 await b.close(); srv.close();
 console.log(errori.length ? errori.join("\n") : "Interfaccia: nessun errore");
 process.exit(errori.length ? 1 : 0);

@@ -33,6 +33,9 @@ SPECIALISTI = [
     # restano in ombra finche non hanno abbastanza partite, poi l'integratore decide se pesano
     ("coppe", "Turnover e coppe: partita di coppa pochi giorni prima o dopo", "1x2"),
     ("movimento", "Movimento delle quote dal mattino al fischio", "1x2"),
+    # notizie dell'ultima ora (3/11): assenze e cambi annunciati poco prima del fischio. Solo partite dell'app: in ombra
+    # finche non ha abbastanza partite, poi l'integratore decide se pesa. Sempre in coda: i diari vecchi restano validi
+    ("ultima_ora", "Notizie dell'ultima ora: assenze e cambi annunciati nelle 6 ore prima del fischio", "1x2"),
 ]
 N_MOTORE = 9
 # campionati che si giocano nell'anno solare (la stagione e l'anno); gli altri vanno da luglio a giugno
@@ -105,7 +108,43 @@ def movimento(mk, mk0):
     return round((mk[0] - mk[2]) - (mk0[0] - mk0[2]), 4)
 
 
-def segnali(storia_h, storia_a, t0, diretti=None, motore=None, comunita=None, coppa=None, mov=None):
+ULTIMA_ORA_ORE = 6
+
+
+def _quando(t):
+    from datetime import datetime, timezone
+    try:
+        x = datetime.fromisoformat(str(t).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return x if x.tzinfo else x.replace(tzinfo=timezone.utc)
+
+
+def ultima_ora(fattori, ko, ore=ULTIMA_ORA_ORE):
+    """Specialista "ultima_ora": effetto netto, a favore della squadra di casa, delle assenze e dei cambi annunciati nelle
+    ultime 'ore' prima del fischio (notizie, infortuni, formazione ufficiale: i fattori con l'orario della notizia).
+    Le quote del mattino non li conoscono; quelle vicine al fischio forse si': lo decide l'integratore, su partite mai viste.
+    Per ogni fattore: "delta" = attacco della propria squadra (negativo se manca un giocatore), "delta_avv" = attacco
+    dell'avversaria (positivo se manca un difensore). None senza notizie recenti (nessun dato, non zero)."""
+    k = ko if hasattr(ko, "tzinfo") else (_quando(ko) if ko else None)
+    if k is not None and k.tzinfo is None:
+        from datetime import timezone
+        k = k.replace(tzinfo=timezone.utc)
+    if not fattori or k is None:
+        return None
+    from datetime import timedelta
+    v, n = 0.0, 0
+    for f in fattori:
+        t = _quando(f.get("t")) if f.get("t") else None
+        if t is None or not (k - timedelta(hours=ore) <= t <= k) or f.get("lato") not in (0, 1):
+            continue
+        segno = 1 if f["lato"] == 0 else -1
+        v += segno * ((f.get("delta") or 0) - (f.get("delta_avv") or 0))
+        n += 1
+    return round(v, 4) if n else None
+
+
+def segnali(storia_h, storia_a, t0, diretti=None, motore=None, comunita=None, coppa=None, mov=None, ultima=None):
     """Lista di valori (uno per specialista, None se mancano i dati) per la partita casa-trasferta che inizia a t0.
     diretti = precedenti tra le due squadre visti dalla squadra di casa di oggi: [{"t", "gf", "gs"}, ...] (in casa e fuori)."""
     h, a = [z for z in storia_h if z["t"] < t0], [z for z in storia_a if z["t"] < t0]
@@ -132,6 +171,7 @@ def segnali(storia_h, storia_a, t0, diretti=None, motore=None, comunita=None, co
     out.append(comunita)  # consenso della community (genera_app.aggiorna_consenso lo aggiorna durante il giorno)
     out.append(coppa)  # turnover e coppe (genera_app.aggiorna_specialisti_giorno)
     out.append(mov)  # movimento delle quote (genera_app.aggiorna_specialisti_giorno, fino al fischio)
+    out.append(ultima)  # notizie dell'ultima ora (genera_app.aggiorna_specialisti_giorno, fino al fischio)
     return [None if v is None else round(v, 4) for v in out]
 
 

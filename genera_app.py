@@ -1557,10 +1557,11 @@ def diario_statistiche(m):
 
 
 def aggiorna_specialisti_giorno(d):
-    """Specialisti che cambiano durante il giorno, fino al fischio: turnover e coppe (partita di coppa pochi giorni prima o dopo)
-    e movimento delle quote (prima lettura del mattino, dal diario, contro l'ultima). Come il consenso, pesano solo quando
+    """Specialisti che cambiano durante il giorno, fino al fischio: turnover e coppe (partita di coppa pochi giorni prima o dopo),
+    movimento delle quote (prima lettura del mattino, dal diario, contro l'ultima) e notizie dell'ultima ora (assenze e cambi
+    annunciati nelle 6 ore prima del fischio, dai fattori). Come il consenso, pesano solo quando
     l'integratore (strumenti/impara.py) li trova utili su partite mai viste."""
-    ic, im = SP.NOMI.index("coppe"), SP.NOMI.index("movimento")
+    ic, im, iu = SP.NOMI.index("coppe"), SP.NOMI.index("movimento"), SP.NOMI.index("ultima_ora")
     giorni, n = {}, 0
     for m in d.get("matches", []):
         if m.get("st") != "NS":
@@ -1569,7 +1570,7 @@ def aggiorna_specialisti_giorno(d):
             giorni[m["date"]] = jload(os.path.join(DIARIO, m["date"] + ".json"), {}) or {}
         r = giorni[m["date"]].get(m["id"]) or {}
         coppa = (m.get("_ctx") or {}).get("coppa")
-        vals = {ic: SP.coppe(coppa) if coppa is not None else None, im: SP.movimento(m.get("mk"), r.get("mk0"))}
+        vals = {ic: SP.coppe(coppa) if coppa is not None else None, im: SP.movimento(m.get("mk"), r.get("mk0")), iu: SP.ultima_ora(m.get("fattori"), m.get("ko"))}
         if m.get("sp") is None and all(v is None for v in vals.values()):
             continue
         sp = list(m.get("sp") or [])
@@ -1579,7 +1580,7 @@ def aggiorna_specialisti_giorno(d):
                 sp[i] = v
                 n += 1
         m["sp"] = sp
-    print(f"Specialisti del giorno (coppe, movimento delle quote): {n} valori aggiornati")
+    print(f"Specialisti del giorno (coppe, movimento delle quote, ultima ora): {n} valori aggiornati")
     return n
 
 

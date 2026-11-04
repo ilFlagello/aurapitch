@@ -162,6 +162,37 @@ def media_af(odds_item):
     return raccolta
 
 
+# mercati nuovi in ombra (Blocco 2): stesse pagine di /odds?date=, nessuna richiesta in piu. Servono come metro di confronto
+# per i mercati di mercati_extra.py (handicap asiatico, draw no bet, primo gol, espulsioni, tiri in porta) e per Goal/No Goal.
+AF_OMBRA = {"Home/Away": "dnb", "Asian Handicap": "ah", "Both Teams Score": "gg", "Team To Score First": "pg", "Double Chance": "dc"}
+
+
+def mercati_ombra_af(odds_item):
+    """Quote medie dei mercati nuovi di una partita API-Football: {"ah": {"Home -0.5": 1.9, ...}, "dnb": {...}, ...}.
+    Si tengono anche i mercati di espulsioni e tiri in porta, se ci sono, con il loro nome."""
+    raccolta = defaultdict(lambda: defaultdict(list))
+    for bk in odds_item.get("bookmakers", []):
+        for bet in bk.get("bets", []):
+            nome = bet.get("name") or ""
+            k = AF_OMBRA.get(nome) or (nome if ("Red" in nome and "Card" in nome) or "Shots On Target" in nome else None)
+            if not k:
+                continue
+            for v in bet.get("values", []):
+                try:
+                    q = float(v["odd"])
+                except (KeyError, TypeError, ValueError):
+                    continue
+                val = str(v.get("value"))
+                if k == "ah":
+                    try:
+                        if abs(float(val.split()[-1])) > 2:
+                            continue
+                    except (ValueError, IndexError):
+                        continue
+                raccolta[k][val].append(q)
+    return {k: {v: round(sum(x) / len(x), 2) for v, x in d.items()} for k, d in raccolta.items()}
+
+
 def media_oddsapi(event):
     """Evento The Odds API -> quota per esito, per ogni bookmaker."""
     raccolta = defaultdict(list)
@@ -452,7 +483,8 @@ def giro_quote_af(base, fx, giorno):
                           "a": ((f.get("teams") or {}).get("away") or {}).get("name"), "nb": r.get("bookmaker_1"), "agg": it.get("update"),
                           "q": [r.get(f"quota_media_{e}") for e in ("1", "X", "2")],
                           "ou": [r.get("quota_media_Over 2.5"), r.get("quota_media_Under 2.5")],
-                          **({"pin": [rp.get(f"quota_media_{e}") for e in ("1", "X", "2")]} if rp.get("quota_media_1") else {})})
+                          **({"pin": [rp.get(f"quota_media_{e}") for e in ("1", "X", "2")]} if rp.get("quota_media_1") else {}),
+                          **({"altri": altri} if (altri := mercati_ombra_af(it)) else {})})
         page += 1
     if righe:
         salva(os.path.join(base, giorno), "quote_af.json", righe)

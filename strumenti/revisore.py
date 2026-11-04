@@ -10,7 +10,10 @@ Controlla:
  6. dati: partite rimaste "da giocare" ore dopo il fischio (risultati che non arrivano), partite finite mai verificate;
  7. coerenza dei dati dell'ultimo giro (strumenti/coerenza.py);
  8. vantaggio sul mercato: quota al consiglio contro quota al fischio, per stile, mercato e specialista (vantaggio.py);
- 9. budget delle API (salvadanaio.economo): avviso se i crediti non bastano fino a fine mese o se una fonte supera il limite.
+ 9. budget delle API (salvadanaio.economo): avviso se i crediti non bastano fino a fine mese o se una fonte supera il limite;
+10. mercati nuovi in ombra (mercati_extra.py): onesta sulle partite vere di handicap asiatico, draw no bet, espulsione,
+    tiri in porta e squadra che segna per prima (gol attesi in data/AAAA-MM-GG/mercati_ombra.json, esiti dal diario e dai
+    tabellini ESPN). Esito anche in revisore.json["mercati_ombra"].
 Esito in data/revisore.json (solo per chi lo esegue, mai nel repository) e codice di uscita 1 se c'e un problema:
 il controllo orario vede l'esecuzione fallita e apre l'avviso su GitHub; il riepilogo del lunedi riporta i punti "da tenere d'occhio".
 Uso: python3 strumenti/revisore.py [cartella radice]"""
@@ -385,6 +388,59 @@ def controlla_budget():
         note.append("Budget delle API: " + ", ".join(f"{r['fonte'].split(',')[0]} {r['stato']}" for r in e["righe"] if r["usato"] is not None))
 
 
+MIN_OMBRA = 300   # previsioni di una famiglia di mercati in ombra prima di giudicarla
+SOGLIA_OMBRA = 2.0  # punti di scarto (al netto del caso) oltre i quali una famiglia in ombra non e onesta sulle partite vere
+
+
+def scarto_coppie(cp):
+    """Scarto per fasce di 10 punti al netto del caso (stessa misura di onesta.py) su coppie (probabilita, esito)."""
+    fasce = {}
+    for p, y in cp:
+        if p < 0.5:
+            p, y = 1 - p, 1 - y
+        s = fasce.setdefault(min(9, int(p * 10)), [0.0, 0.0])
+        s[0] += y - p
+        s[1] += p * (1 - p)
+    ecc = sum(max(0.0, abs(d) - math.sqrt(2 / math.pi * v)) for d, v in fasce.values())
+    return round(100 * ecc / len(cp), 2) if cp else None
+
+
+def controlla_mercati_ombra(diario):
+    """Mercati nuovi in ombra contro i risultati veri: per famiglia (handicap asiatico, draw no bet, espulsione, tiri in
+    porta, primo gol) scarto tra probabilita e frequenze. Avviso se una famiglia promossa sull'archivio non regge qui."""
+    sys.path.insert(0, RADICE)
+    import mercati_extra as MX
+    import giocatori as GC
+    tab = _jload("data/espn/tabellini.json") or {}
+    limite = (ORA - timedelta(days=GIORNI)).date().isoformat()
+    ombre, fam = {}, {}
+    for v in diario:
+        if v.get("st") != "FT" or not isinstance(v.get("g"), list) or (v.get("date") or "") < limite:
+            continue
+        if v["date"] not in ombre:
+            ombre[v["date"]] = _jload(f"data/{v['date']}/mercati_ombra.json") or {}
+        o = ombre[v["date"]].get(v["id"])
+        if not o:
+            continue
+        pr = MX.ombra(o)
+        if not pr:
+            continue
+        t = GC.trova_tabellino(v, tab) or {}
+        for c, p, y in MX.valuta_ombra(pr, v["g"], v.get("g1"), t.get("st")):
+            nome = {"AH": "handicap asiatico", "DN": "draw no bet", "PG": "primo gol", "ES": "espulsione", "TP": "tiri in porta"}[c[:2]]
+            fam.setdefault(nome, []).append((p, y))
+    out = {}
+    for nome, cp in sorted(fam.items()):
+        out[nome] = {"n": len(cp), "scarto": scarto_coppie(cp) if len(cp) >= MIN_OMBRA else None,
+                     "detta": round(100 * sum(p for p, _ in cp) / len(cp), 1), "vera": round(100 * sum(y for _, y in cp) / len(cp), 1)}
+        if out[nome]["scarto"] is not None and out[nome]["scarto"] > SOGLIA_OMBRA:
+            attenzione.append(f"Mercati in ombra, {nome}: scarto {out[nome]['scarto']} punti su {len(cp)} previsioni (sull'archivio era onesto)")
+    if out:
+        note.append("Mercati nuovi in ombra: " + ", ".join(f"{k} {v['n']} previsioni" + (f", scarto {v['scarto']}" if v["scarto"] is not None else " (troppo poche)")
+                                                       for k, v in out.items()))
+    return out
+
+
 def main():
     vantaggio = None
     try:
@@ -406,7 +462,14 @@ def main():
         vantaggio = controlla_vantaggio(diario)
     except Exception as e:  # noqa: BLE001
         attenzione.append(f"Controllo del vantaggio sul mercato non riuscito: {type(e).__name__}")
-    esito_tot = {"quando": ORA.isoformat(timespec="minutes"), "problemi": problemi, "attenzione": attenzione, "note": note, "vantaggio": vantaggio}
+    ombra = None
+    if diario:
+        try:
+            ombra = controlla_mercati_ombra(diario)
+        except Exception as e:  # noqa: BLE001
+            attenzione.append(f"Controllo dei mercati in ombra non riuscito: {type(e).__name__}")
+    esito_tot = {"quando": ORA.isoformat(timespec="minutes"), "problemi": problemi, "attenzione": attenzione, "note": note, "vantaggio": vantaggio,
+                 "mercati_ombra": ombra}
     os.makedirs(os.path.join(RADICE, "data"), exist_ok=True)
     with open(os.path.join(RADICE, "data", "revisore.json"), "w", encoding="utf-8") as f:
         json.dump(esito_tot, f, ensure_ascii=False, indent=1)

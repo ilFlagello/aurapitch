@@ -28,6 +28,7 @@ import stima_sq as SQ
 import fattori as FT
 import giocatori as GC
 import mercati as M
+import mercati_extra as MX
 import vantaggio as VM
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -1626,6 +1627,34 @@ def livello_dati(m):
 from orologio import prossimo_giro  # noqa: E402 - stessa regola della fotografia delle quote (raccoglitore.giro_prepartita)
 
 
+def salva_mercati_ombra(d):
+    """IN OMBRA (mercati_extra.py): gol attesi di ogni partita non ancora iniziata, aggiornati fino al blocco del consiglio
+    e poi fermi: da questi il revisore ricalcola le probabilita dei mercati nuovi e le confronta con i risultati. Un file per giorno di partita: data/AAAA-MM-GG/mercati_ombra.json. Non va nell'app."""
+    per_giorno = {}
+    ora = datetime.now(timezone.utc).isoformat(timespec="minutes")
+    for m in d.get("matches", []):
+        if m.get("st") != "NS" or (m.get("blocco") or {}).get("st") in ("bloccato", "tardivo"):
+            continue
+        try:
+            if datetime.now(timezone.utc) >= datetime.fromisoformat(m["ko"]) - timedelta(minutes=BLOCCO_MIN):
+                continue
+        except (KeyError, TypeError, ValueError):
+            continue
+        o = MX.ombra(m)
+        if o:  # si salvano solo i gol attesi: le probabilita si ricalcolano (mercati_extra.ombra), il file resta piccolo
+            per_giorno.setdefault(m["date"], {})[m["id"]] = {"xg": o["xg"], "lg": m.get("lg"), "t": ora}
+    n = 0
+    for giorno, nuovi in per_giorno.items():
+        path = os.path.join(DATA, giorno, "mercati_ombra.json")
+        vecchi = jload(path, {}) or {}
+        vecchi.update(nuovi)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(vecchi, f, ensure_ascii=False, separators=(",", ":"))
+        n += len(nuovi)
+    print(f"Mercati nuovi in ombra: {n} partite aggiornate")
+
+
 def blocca_consigli(d):
     """Ogni consiglio si blocca BLOCCO_MIN minuti prima del calcio d'inizio (o al giro del mattino, se fino ad allora non ci sono altri giri)
     e resta quello fino a fine partita, giusto o sbagliato. Il consiglio bloccato vive nel registro privato dei consigli (cassaforte)."""
@@ -1935,6 +1964,10 @@ def main():
     aggiorna_consenso(d)
     aggiorna_specialisti_giorno(d)
     blocca_consigli(d)
+    try:
+        salva_mercati_ombra(d)
+    except Exception as e:  # noqa: BLE001 - i mercati in ombra non devono mai fermare il giro dei dati
+        print(f"Mercati nuovi in ombra: non salvati ({type(e).__name__}: {e})")
     aggiungi_movimenti(d)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:

@@ -996,7 +996,7 @@ def main():
         with open(MODELLO, "w", encoding="utf-8") as f:
             json.dump(salvato, f, ensure_ascii=False, indent=1)
         esperti_rap = {"attivo": acceso_bk, "motivo": motivo_bk, "archivio": arch, "diario": mis}
-        print(f"Bookmaker esperti: {'accesi' if acceso_bk else 'in ombra'} ({motivo_bk}); archivio: {arch.get('motivo')}")
+        print(f"Bookmaker esperti: {motivo_bk}; archivio: {arch.get('motivo')}")
     except Exception as e:  # noqa: BLE001 - non deve mai fermare l'apprendimento
         print("Bookmaker esperti: errore", e)
         esperti_rap = {}

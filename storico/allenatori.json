@@ -2872,6 +2872,18 @@
 "qid": "Q372372",
 "da": "2025-09-27",
 "a": "2026-11-03"
+},
+{
+"chi": "Scott Parker",
+"qid": "Q213989",
+"da": "2026-11-04",
+"a": null
+},
+{
+"chi": "Scott Parker",
+"qid": "Q213989",
+"da": "2026-11-04",
+"a": null
 }
 ]
 },
@@ -8283,7 +8295,7 @@
 "chi": "Paulo Fonseca",
 "qid": "Q10346582",
 "da": "2025-01-31",
-"a": null
+"a": "2026-11-04"
 }
 ]
 },
@@ -12279,7 +12291,7 @@
 "chi": "Didier Digard",
 "qid": "Q267128",
 "da": "2024-07-01",
-"a": null
+"a": "2026-11-01"
 }
 ]
 },
@@ -13638,14 +13650,14 @@
 "a": "2013-04-02"
 },
 {
-"chi": "Peter van den Berg",
-"qid": "Q2079317",
+"chi": "Arjan van der Laan",
+"qid": "Q2212508",
 "da": "2013-04-02",
 "a": "2013-04-06"
 },
 {
-"chi": "Arjan van der Laan",
-"qid": "Q2212508",
+"chi": "Peter van den Berg",
+"qid": "Q2079317",
 "da": "2013-04-02",
 "a": "2013-04-06"
 },
@@ -13674,14 +13686,14 @@
 "a": "2014-11-29"
 },
 {
-"chi": "Peter van den Berg",
-"qid": "Q2079317",
+"chi": "John de Wolf",
+"qid": "Q1438559",
 "da": "2014-11-29",
 "a": "2014-12-31"
 },
 {
-"chi": "John de Wolf",
-"qid": "Q1438559",
+"chi": "Peter van den Berg",
+"qid": "Q2079317",
 "da": "2014-11-29",
 "a": "2014-12-31"
 },
@@ -15393,7 +15405,7 @@
 "chi": "Rui Borges",
 "qid": "Q121147850",
 "da": "2024-12-26",
-"a": null
+"a": "2026-11-01"
 }
 ]
 },
@@ -21648,12 +21660,6 @@
 "a": "2019-01-01"
 },
 {
-"chi": "Vincent Bordot",
-"qid": "Q64578377",
-"da": "2019-01-01",
-"a": "2021-01-01"
-},
-{
 "chi": "Christian Caminiti",
 "qid": "Q2965110",
 "da": "2019-01-01",
@@ -21664,6 +21670,12 @@
 "qid": "Q3559600",
 "da": "2019-01-01",
 "a": "2019-01-01"
+},
+{
+"chi": "Vincent Bordot",
+"qid": "Q64578377",
+"da": "2019-01-01",
+"a": "2021-01-01"
 },
 {
 "chi": "Habib Beye",
@@ -23551,6 +23563,60 @@
 }
 ]
 },
+"Sao Paulo": {
+"wikidata": "Q38568",
+"nome": "São Paulo FC",
+"allenatori": [
+{
+"chi": "Hernán Crespo",
+"qid": "Q160206",
+"da": "2021-02-26",
+"a": "2021-10-13"
+},
+{
+"chi": "Rogério Ceni",
+"qid": "Q1249859",
+"da": "2021-10-13",
+"a": "2023-04-19"
+},
+{
+"chi": "Dorival Júnior",
+"qid": "Q1608978",
+"da": "2023-04-20",
+"a": "2024-01-07"
+},
+{
+"chi": "Thiago Carpini",
+"qid": "Q7783831",
+"da": "2024-01-11",
+"a": "2024-04-18"
+},
+{
+"chi": "Milton Cruz",
+"qid": "Q2734933",
+"da": "2024-04-19",
+"a": "2024-04-21"
+},
+{
+"chi": "Luis Zubeldía",
+"qid": "Q1779261",
+"da": "2024-04-22",
+"a": "2025-06-16"
+},
+{
+"chi": "Hernán Crespo",
+"qid": "Q160206",
+"da": "2025-06-18",
+"a": "2026-03-09"
+},
+{
+"chi": "Dorival Júnior",
+"qid": "Q1608978",
+"da": "2026-05-15",
+"a": null
+}
+]
+},
 "Atletico-MG": {
 "wikidata": "Q270995",
 "nome": "Clube Atlético Mineiro",
@@ -23613,102 +23679,6 @@
 "chi": "Jorge Sampaoli",
 "qid": "Q1089864",
 "da": "2025-09-02",
-"a": null
-}
-]
-},
-"Internacional": {
-"wikidata": "Q80845",
-"nome": "S.C. Internacional",
-"allenatori": [
-{
-"chi": "Odair Hellmann",
-"qid": "Q45202501",
-"da": "2017-11-11",
-"a": "2019-10-10"
-},
-{
-"chi": "Eduardo Coudet",
-"qid": "Q2547652",
-"da": "2019-01-01",
-"a": "2020-11-09"
-},
-{
-"chi": "Abel Braga",
-"qid": "Q2311308",
-"da": "2020-11-10",
-"a": "2021-02-28"
-},
-{
-"chi": "Miguel Ángel Ramírez",
-"qid": "Q69414067",
-"da": "2021-03-02",
-"a": "2021-06-11"
-},
-{
-"chi": "Diego Aguirre",
-"qid": "Q1220376",
-"da": "2021-06-23",
-"a": "2021-12-15"
-},
-{
-"chi": "Alexander Medina",
-"qid": "Q371399",
-"da": "2022-01-01",
-"a": "2022-04-15"
-},
-{
-"chi": "Cauan de Almeida",
-"qid": "Q107248959",
-"da": "2022-04-16",
-"a": "2022-04-18"
-},
-{
-"chi": "Mano Menezes",
-"qid": "Q81115",
-"da": "2022-04-18",
-"a": "2023-07-17"
-},
-{
-"chi": "Eduardo Coudet",
-"qid": "Q2547652",
-"da": "2023-07-20",
-"a": "2024-07-11"
-},
-{
-"chi": "Pablo de Toledo",
-"qid": "Q130742265",
-"da": "2024-07-12",
-"a": "2024-07-18"
-},
-{
-"chi": "Roger Machado",
-"qid": "Q197565",
-"da": "2024-07-18",
-"a": "2025-09-01"
-},
-{
-"chi": "Ramón Díaz",
-"qid": "Q348557",
-"da": "2025-09-24",
-"a": "2025-11-29"
-},
-{
-"chi": "Abel Braga",
-"qid": "Q2311308",
-"da": "2025-11-29",
-"a": "2025-12-08"
-},
-{
-"chi": "Paulo Pezzolano",
-"qid": "Q2740889",
-"da": "2026-01-01",
-"a": "2026-09-20"
-},
-{
-"chi": "Pablo de Toledo",
-"qid": "Q130742265",
-"da": "2026-09-20",
 "a": null
 }
 ]
@@ -25735,6 +25705,36 @@
 }
 ]
 },
+"Ranheim": {
+"wikidata": "Q1112784",
+"nome": "Ranheim Fotball",
+"allenatori": [
+{
+"chi": "Trond Nordsteien",
+"qid": "Q13217372",
+"da": "2013-01-01",
+"a": "2015-05-27"
+},
+{
+"chi": "Svein Maalen",
+"qid": "Q27553500",
+"da": "2016-01-01",
+"a": "2021-01-01"
+},
+{
+"chi": "Hugo Pereira",
+"qid": "Q28536860",
+"da": "2021-01-01",
+"a": "2023-01-01"
+},
+{
+"chi": "Kåre Ingebrigtsen",
+"qid": "Q2711489",
+"da": "2023-01-01",
+"a": null
+}
+]
+},
 "Sarpsborg 08": {
 "wikidata": "Q1151909",
 "nome": "Sarpsborg 08 FF",
@@ -27031,6 +27031,2910 @@
 }
 ]
 },
+"Arsenal Tula": {
+"wikidata": "Q2817362",
+"nome": "FC Arsenal Tula",
+"allenatori": [
+{
+"chi": "Sergei Kiriakov",
+"qid": "Q545778",
+"da": "2016-01-01",
+"a": "2017-01-01"
+},
+{
+"chi": "Oleg Kononov",
+"qid": "Q2040719",
+"da": "2018-06-01",
+"a": "2018-11-12"
+},
+{
+"chi": "Igor Cherevchenko",
+"qid": "Q4512643",
+"da": "2018-11-13",
+"a": "2020-07-02"
+},
+{
+"chi": "Sergei Podpaly",
+"qid": "Q544576",
+"da": "2020-07-02",
+"a": "2020-11-02"
+},
+{
+"chi": "Miodrag Božović",
+"qid": "Q656141",
+"da": "2021-09-03",
+"a": "2022-06-06"
+},
+{
+"chi": "Oleg Kononov",
+"qid": "Q2040719",
+"da": "2022-06-10",
+"a": null
+}
+]
+},
+"Spartak Moscow": {
+"wikidata": "Q29112",
+"nome": "Spartak Moscow",
+"allenatori": [
+{
+"chi": "Michael Laudrup",
+"qid": "Q188720",
+"da": "2008-09-12",
+"a": "2009-04-25"
+},
+{
+"chi": "Dmitri Alenichev",
+"qid": "Q526233",
+"da": "2015-06-10",
+"a": "2016-08-05"
+},
+{
+"chi": "Massimo Carrera",
+"qid": "Q980189",
+"da": "2016-08-17",
+"a": "2018-10-22"
+},
+{
+"chi": "Raúl Riancho",
+"qid": "Q20069494",
+"da": "2018-10-22",
+"a": "2018-11-12"
+},
+{
+"chi": "Oleg Kononov",
+"qid": "Q2040719",
+"da": "2018-11-12",
+"a": "2019-09-29"
+},
+{
+"chi": "Serhiy Kuznetsov",
+"qid": "Q980369",
+"da": "2019-09-29",
+"a": "2019-10-14"
+},
+{
+"chi": "Domenico Tedesco",
+"qid": "Q28916689",
+"da": "2019-10-14",
+"a": "2021-05-23"
+},
+{
+"chi": "Rui Vitória",
+"qid": "Q2364249",
+"da": "2021-05-24",
+"a": "2021-12-15"
+},
+{
+"chi": "Paolo Vanoli",
+"qid": "Q3362674",
+"da": "2021-12-17",
+"a": "2022-06-09"
+},
+{
+"chi": "Guillermo Abascal",
+"qid": "Q51844726",
+"da": "2022-06-10",
+"a": "2024-04-14"
+},
+{
+"chi": "Dejan Stanković",
+"qid": "Q192640",
+"da": "2024-07-01",
+"a": "2025-11-11"
+},
+{
+"chi": "Juan Carlos Carcedo",
+"qid": "Q5948229",
+"da": "2026-01-05",
+"a": null
+}
+]
+},
+"FK Rostov": {
+"wikidata": "Q182930",
+"nome": "FC Rostov",
+"allenatori": [
+{
+"chi": "Miodrag Božović",
+"qid": "Q656141",
+"da": "2012-06-11",
+"a": "2014-09-25"
+},
+{
+"chi": "Valeri Karpin",
+"qid": "Q310571",
+"da": "2017-12-19",
+"a": "2021-08-02"
+},
+{
+"chi": "Yuri Semin",
+"qid": "Q554012",
+"da": "2021-08-04",
+"a": "2021-09-25"
+},
+{
+"chi": "Valeri Karpin",
+"qid": "Q310571",
+"da": "2022-03-10",
+"a": "2025-02-25"
+},
+{
+"chi": "Jonatan Alba",
+"qid": "Q132883898",
+"da": "2025-02-25",
+"a": null
+}
+]
+},
+"Krylya Sovetov": {
+"wikidata": "Q274778",
+"nome": "FC Krylia Sovetov Samara",
+"allenatori": [
+{
+"chi": "Igor Osinkin",
+"qid": "Q5993552",
+"da": "2020-07-28",
+"a": "2025-05-27"
+},
+{
+"chi": "Magomed Adiev",
+"qid": "Q4057573",
+"da": "2025-06-05",
+"a": null
+}
+]
+},
+"CSKA Moscow": {
+"wikidata": "Q176371",
+"nome": "PFC CSKA Moscow",
+"allenatori": [
+{
+"chi": "Leonid Slutsky",
+"qid": "Q457624",
+"da": "2009-10-26",
+"a": "2016-12-01"
+},
+{
+"chi": "Viktor Goncharenko",
+"qid": "Q376296",
+"da": "2016-12-01",
+"a": "2021-03-22"
+},
+{
+"chi": "Ivica Olić",
+"qid": "Q150484",
+"da": "2021-03-23",
+"a": "2021-06-15"
+},
+{
+"chi": "Aleksei Berezutski",
+"qid": "Q213011",
+"da": "2021-06-15",
+"a": "2022-06-15"
+},
+{
+"chi": "Vladimir Valentinovich Fedotov",
+"qid": "Q4482196",
+"da": "2022-06-15",
+"a": "2024-06-03"
+},
+{
+"chi": "Marko Nikolić",
+"qid": "Q14553301",
+"da": "2024-06-04",
+"a": "2025-06-08"
+},
+{
+"chi": "Fabio Celestini",
+"qid": "Q443937",
+"da": "2025-06-20",
+"a": null
+}
+]
+},
+"Zenit": {
+"wikidata": "Q29108",
+"nome": "FC Zenit Saint Petersburg",
+"allenatori": [
+{
+"chi": "Luciano Spalletti",
+"qid": "Q310813",
+"da": "2009-12-11",
+"a": "2014-03-10"
+},
+{
+"chi": "Roberto Mancini",
+"qid": "Q48330",
+"da": "2017-07-01",
+"a": "2018-05-13"
+},
+{
+"chi": "Sergei Semak",
+"qid": "Q312520",
+"da": "2018-05-29",
+"a": null
+}
+]
+},
+"Akhmat Grozny": {
+"wikidata": "Q240444",
+"nome": "FC Akhmat Grozny",
+"allenatori": [
+{
+"chi": "Rashid Rakhimov",
+"qid": "Q698344",
+"da": "2018-09-05",
+"a": "2019-09-30"
+},
+{
+"chi": "Igor Shalimov",
+"qid": "Q558692",
+"da": "2019-10-01",
+"a": "2020-07-26"
+},
+{
+"chi": "Andrei Talalaev",
+"qid": "Q4450308",
+"da": "2020-07-27",
+"a": "2022-09-11"
+},
+{
+"chi": "Sergei Tashuyev",
+"qid": "Q4453078",
+"da": "2022-09-22",
+"a": "2023-08-15"
+},
+{
+"chi": "Miroslav Romaschenko",
+"qid": "Q4397539",
+"da": "2023-08-18",
+"a": "2024-04-04"
+},
+{
+"chi": "Magomed Adiev",
+"qid": "Q4057573",
+"da": "2024-04-05",
+"a": "2024-09-01"
+},
+{
+"chi": "Sergei Tashuyev",
+"qid": "Q4453078",
+"da": "2024-09-03",
+"a": "2025-05-28"
+},
+{
+"chi": "Aleksandr Storozhuk",
+"qid": "Q4715461",
+"da": "2025-06-16",
+"a": "2025-08-05"
+},
+{
+"chi": "Stanislav Cherchesov",
+"qid": "Q699557",
+"da": "2025-08-06",
+"a": null
+}
+]
+},
+"Lokomotiv Moscow": {
+"wikidata": "Q29115",
+"nome": "FC Lokomotiv Moscow",
+"allenatori": [
+{
+"chi": "Yuri Semin",
+"qid": "Q554012",
+"da": "2016-08-26",
+"a": "2020-05-31"
+},
+{
+"chi": "Marko Nikolić",
+"qid": "Q14553301",
+"da": "2020-06-01",
+"a": "2021-10-05"
+},
+{
+"chi": "Dmitri Loskov",
+"qid": "Q372568",
+"da": "2021-10-05",
+"a": "2021-10-10"
+},
+{
+"chi": "Markus Gisdol",
+"qid": "Q9318057",
+"da": "2021-10-10",
+"a": "2022-03-01"
+},
+{
+"chi": "Dmitri Loskov",
+"qid": "Q372568",
+"da": "2022-03-02",
+"a": "2022-04-04"
+},
+{
+"chi": "Zaur Khapov",
+"qid": "Q4495640",
+"da": "2022-04-04",
+"a": "2022-06-30"
+},
+{
+"chi": "Josef Zinnbauer",
+"qid": "Q1706119",
+"da": "2022-06-30",
+"a": "2022-10-08"
+},
+{
+"chi": "Mikhail Galaktionov",
+"qid": "Q42678015",
+"da": "2022-11-13",
+"a": null
+}
+]
+},
+"Rubin Kazan": {
+"wikidata": "Q170040",
+"nome": "Rubin Kazan",
+"allenatori": [
+{
+"chi": "Kurban Berdyev",
+"qid": "Q368902",
+"da": "2017-06-01",
+"a": "2019-06-01"
+},
+{
+"chi": "Roman Sharonov",
+"qid": "Q312940",
+"da": "2019-06-01",
+"a": "2019-12-01"
+},
+{
+"chi": "Leonid Slutsky",
+"qid": "Q457624",
+"da": "2019-12-01",
+"a": "2022-11-15"
+},
+{
+"chi": "Yüri Ütkelbayıf",
+"qid": "Q18218126",
+"da": "2022-11-15",
+"a": "2023-04-12"
+},
+{
+"chi": "Rashid Rakhimov",
+"qid": "Q698344",
+"da": "2023-04-12",
+"a": "2026-01-13"
+},
+{
+"chi": "Franc Artiga",
+"qid": "Q116250398",
+"da": "2026-01-14",
+"a": null
+}
+]
+},
+"Khimki": {
+"wikidata": "Q727147",
+"nome": "FC Khimki",
+"allenatori": [
+{
+"chi": "Igor Shalimov",
+"qid": "Q558692",
+"da": "2018-06-02",
+"a": "2019-04-09"
+},
+{
+"chi": "Dmitri Gunko",
+"qid": "Q4152202",
+"da": "2020-08-02",
+"a": "2020-09-21"
+},
+{
+"chi": "Sergei Yuran",
+"qid": "Q385742",
+"da": "2022-02-23",
+"a": "2022-08-10"
+},
+{
+"chi": "Andrei Talalaev",
+"qid": "Q4450308",
+"da": "2023-04-11",
+"a": "2024-06-20"
+},
+{
+"chi": "Franc Artiga",
+"qid": "Q116250398",
+"da": "2024-06-28",
+"a": "2025-04-15"
+},
+{
+"chi": "Magomed Adiev",
+"qid": "Q4057573",
+"da": "2025-04-16",
+"a": "2025-05-31"
+}
+]
+},
+"SKA Khabarovsk": {
+"wikidata": "Q927084",
+"nome": "FC SKA-Energiya Khabarovsk",
+"allenatori": [
+{
+"chi": "Giorgi Daraselia",
+"qid": "Q2710707",
+"da": "2013-01-01",
+"a": "2013-01-01"
+},
+{
+"chi": "Aleksei Poddubskiy",
+"qid": "Q4715865",
+"da": "2017-01-01",
+"a": "2017-01-01"
+},
+{
+"chi": "Vadim Evseev",
+"qid": "Q2548154",
+"da": "2018-01-01",
+"a": "2019-01-01"
+},
+{
+"chi": "Aleksei Poddubskiy",
+"qid": "Q4715865",
+"da": "2019-01-01",
+"a": null
+}
+]
+},
+"Torpedo Moscow": {
+"wikidata": "Q324338",
+"nome": "FC Torpedo Moscow",
+"allenatori": [
+{
+"chi": "Boris Ignatyev",
+"qid": "Q2362558",
+"da": "2012-11-22",
+"a": "2013-06-10"
+},
+{
+"chi": "Aleksandr Borodyuk",
+"qid": "Q386181",
+"da": "2021-03-23",
+"a": "2022-08-18"
+},
+{
+"chi": "Oleg Kononov",
+"qid": "Q2040719",
+"da": "2024-01-17",
+"a": "2025-08-15"
+},
+{
+"chi": "Pavel Kirilchik",
+"qid": "Q2498519",
+"da": "2025-08-15",
+"a": "2025-09-01"
+},
+{
+"chi": "Sergey Zhukov",
+"qid": "Q10472324",
+"da": "2025-09-01",
+"a": "2025-09-13"
+},
+{
+"chi": "Dmytro Parfenov",
+"qid": "Q1972844",
+"da": "2025-09-13",
+"a": "2025-10-15"
+},
+{
+"chi": "Oleg Kononov",
+"qid": "Q2040719",
+"da": "2025-10-15",
+"a": "2026-05-20"
+}
+]
+},
+"Akron Togliatti": {
+"wikidata": "Q65124755",
+"nome": "FC Akron Tolyatti",
+"allenatori": [
+{
+"chi": "Zaur Tedeyev",
+"qid": "Q8067177",
+"da": "2023-12-07",
+"a": null
+}
+]
+},
+"Basel": {
+"wikidata": "Q189671",
+"nome": "FC Basel",
+"allenatori": [
+{
+"chi": "Marcel Koller",
+"qid": "Q669861",
+"da": "2018-08-02",
+"a": "2020-08-31"
+},
+{
+"chi": "Ciriaco Sforza",
+"qid": "Q372858",
+"da": "2020-09-01",
+"a": "2021-04-06"
+},
+{
+"chi": "Patrick Rahmen",
+"qid": "Q2057898",
+"da": "2021-04-06",
+"a": "2022-02-21"
+},
+{
+"chi": "Guillermo Abascal",
+"qid": "Q51844726",
+"da": "2022-02-21",
+"a": "2022-06-09"
+},
+{
+"chi": "Alexander Frei",
+"qid": "Q193024",
+"da": "2022-07-01",
+"a": "2023-02-07"
+},
+{
+"chi": "Heiko Vogel",
+"qid": "Q84351",
+"da": "2023-02-07",
+"a": "2023-06-30"
+},
+{
+"chi": "Timo Schultz",
+"qid": "Q487074",
+"da": "2023-07-01",
+"a": "2023-09-28"
+},
+{
+"chi": "Heiko Vogel",
+"qid": "Q84351",
+"da": "2023-09-29",
+"a": "2023-10-30"
+},
+{
+"chi": "Fabio Celestini",
+"qid": "Q443937",
+"da": "2023-10-31",
+"a": "2025-06-14"
+},
+{
+"chi": "Ludovic Magnin",
+"qid": "Q122350",
+"da": "2025-06-16",
+"a": "2026-01-26"
+},
+{
+"chi": "Stephan Lichtsteiner",
+"qid": "Q208586",
+"da": "2026-01-26",
+"a": "2026-09-09"
+}
+]
+},
+"Xamax": {
+"wikidata": "Q335195",
+"nome": "Neuchâtel Xamax FCS",
+"allenatori": [
+{
+"chi": "Uli Forte",
+"qid": "Q165779",
+"da": "2023-04-25",
+"a": null
+}
+]
+},
+"Servette": {
+"wikidata": "Q219235",
+"nome": "Servette FC",
+"allenatori": [
+{
+"chi": "Sébastien Fournier",
+"qid": "Q124201",
+"da": "2012-09-13",
+"a": "2013-08-20"
+},
+{
+"chi": "Alain Geiger",
+"qid": "Q668029",
+"da": "2018-07-01",
+"a": "2023-06-30"
+},
+{
+"chi": "René Weiler",
+"qid": "Q7313817",
+"da": "2023-07-01",
+"a": "2024-06-30"
+},
+{
+"chi": "Thomas Häberli",
+"qid": "Q327929",
+"da": "2024-07-01",
+"a": "2025-08-04"
+},
+{
+"chi": "Jocelyn Gourvennec",
+"qid": "Q2702339",
+"da": "2025-08-11",
+"a": null
+}
+]
+},
+"Zurich": {
+"wikidata": "Q206692",
+"nome": "FC Zürich",
+"allenatori": [
+{
+"chi": "Ludovic Magnin",
+"qid": "Q122350",
+"da": "2018-02-20",
+"a": "2020-10-05"
+},
+{
+"chi": "Massimo Rizzo",
+"qid": "Q21208993",
+"da": "2020-10-05",
+"a": "2021-06-30"
+},
+{
+"chi": "André Breitenreiter",
+"qid": "Q517257",
+"da": "2021-07-01",
+"a": "2022-06-30"
+},
+{
+"chi": "Franco Foda",
+"qid": "Q66080",
+"da": "2022-07-01",
+"a": "2022-09-21"
+},
+{
+"chi": "Genesio Colatrella",
+"qid": "Q130860892",
+"da": "2022-09-23",
+"a": "2022-10-09"
+},
+{
+"chi": "Bo Henriksen",
+"qid": "Q4931102",
+"da": "2022-10-10",
+"a": "2024-02-12"
+},
+{
+"chi": "Murat Ural",
+"qid": "Q10422577",
+"da": "2024-02-13",
+"a": "2024-04-22"
+},
+{
+"chi": "Ricardo Moniz",
+"qid": "Q264409",
+"da": "2024-04-23",
+"a": "2025-05-27"
+},
+{
+"chi": "Mitchell van der Gaag",
+"qid": "Q9293193",
+"da": "2025-05-27",
+"a": "2025-10-23"
+},
+{
+"chi": "Dennis Hediger",
+"qid": "Q462150",
+"da": "2025-10-23",
+"a": null
+}
+]
+},
+"Lugano": {
+"wikidata": "Q633521",
+"nome": "FC Lugano",
+"allenatori": [
+{
+"chi": "Zdeněk Zeman",
+"qid": "Q169092",
+"da": "2015-07-01",
+"a": "2016-06-30"
+},
+{
+"chi": "Fabio Celestini",
+"qid": "Q443937",
+"da": "2018-10-03",
+"a": "2019-10-28"
+},
+{
+"chi": "Maurizio Jacobacci",
+"qid": "Q1911612",
+"da": "2019-10-28",
+"a": "2021-06-30"
+},
+{
+"chi": "Abel Braga",
+"qid": "Q2311308",
+"da": "2021-07-01",
+"a": "2021-09-01"
+},
+{
+"chi": "Mattia Croci-Torti",
+"qid": "Q108743489",
+"da": "2021-09-01",
+"a": null
+}
+]
+},
+"Vaduz": {
+"wikidata": "Q216773",
+"nome": "FC Vaduz",
+"allenatori": [
+{
+"chi": "Mario Frick",
+"qid": "Q315787",
+"da": "2018-09-17",
+"a": "2021-12-20"
+},
+{
+"chi": "Alessandro Mangiarratti",
+"qid": "Q3610110",
+"da": "2022-01-01",
+"a": null
+}
+]
+},
+"Lausanne": {
+"wikidata": "Q869907",
+"nome": "FC Stade Lausanne-Ouchy",
+"allenatori": [
+{
+"chi": "Ricardo Dionisio",
+"qid": "Q85006020",
+"da": "2023-11-15",
+"a": "2024-09-25"
+},
+{
+"chi": "Dalibor Stevanovič",
+"qid": "Q372253",
+"da": "2024-09-27",
+"a": null
+}
+]
+},
+"Yverdon": {
+"wikidata": "Q669130",
+"nome": "Yverdon-Sport FC",
+"allenatori": [
+{
+"chi": "Jean-Michel Aeby",
+"qid": "Q3167927",
+"da": "2019-12-13",
+"a": "2021-08-09"
+},
+{
+"chi": "Uli Forte",
+"qid": "Q165779",
+"da": "2021-08-10",
+"a": "2022-06-30"
+},
+{
+"chi": "Marco Schällibaum",
+"qid": "Q679510",
+"da": "2022-07-01",
+"a": "2023-10-30"
+},
+{
+"chi": "Alessandro Mangiarratti",
+"qid": "Q3610110",
+"da": "2023-10-31",
+"a": "2024-12-17"
+},
+{
+"chi": "Paolo Tramezzani",
+"qid": "Q3894541",
+"da": "2024-12-28",
+"a": "2025-06-30"
+},
+{
+"chi": "Adrian Ursea",
+"qid": "Q27307092",
+"da": "2025-07-01",
+"a": null
+}
+]
+},
+"FC Voluntari": {
+"wikidata": "Q18129096",
+"nome": "FC Voluntari",
+"allenatori": [
+{
+"chi": "Bogdan Vintilă",
+"qid": "Q15085838",
+"da": "2015-06-20",
+"a": "2015-08-14"
+},
+{
+"chi": "Flavius Stoican",
+"qid": "Q593165",
+"da": "2015-08-14",
+"a": "2015-09-24"
+},
+{
+"chi": "Daniel Pancu",
+"qid": "Q710813",
+"da": "2015-09-24",
+"a": "2015-10-07"
+},
+{
+"chi": "Gheorghe Mulțescu",
+"qid": "Q1521597",
+"da": "2015-10-06",
+"a": "2016-01-21"
+},
+{
+"chi": "Ionel Ganea",
+"qid": "Q527672",
+"da": "2016-01-24",
+"a": "2016-04-25"
+},
+{
+"chi": "Florin Marin",
+"qid": "Q5461851",
+"da": "2016-05-21",
+"a": "2017-03-09"
+},
+{
+"chi": "Claudiu Niculescu",
+"qid": "Q1098261",
+"da": "2017-04-02",
+"a": "2018-04-13"
+},
+{
+"chi": "Adrian Mutu",
+"qid": "Q202645",
+"da": "2018-04-14",
+"a": "2018-06-14"
+},
+{
+"chi": "Daniel Oprița",
+"qid": "Q420641",
+"da": "2018-06-25",
+"a": "2018-08-21"
+},
+{
+"chi": "Dinu Todoran",
+"qid": "Q997288",
+"da": "2018-08-25",
+"a": "2018-11-15"
+},
+{
+"chi": "Cristiano Bergodi",
+"qid": "Q545682",
+"da": "2018-11-15",
+"a": "2020-01-06"
+},
+{
+"chi": "Bogdan Andone",
+"qid": "Q265367",
+"da": "2020-01-09",
+"a": "2021-05-07"
+},
+{
+"chi": "Liviu Ciobotariu",
+"qid": "Q926512",
+"da": "2021-05-07",
+"a": "2023-06-08"
+},
+{
+"chi": "Ilie Poenaru",
+"qid": "Q50739711",
+"da": "2023-06-08",
+"a": "2024-01-31"
+},
+{
+"chi": "Nicolae Dică",
+"qid": "Q431610",
+"da": "2024-01-31",
+"a": "2024-03-12"
+},
+{
+"chi": "Florin Pârvu",
+"qid": "Q17285685",
+"da": "2024-03-12",
+"a": "2024-06-06"
+},
+{
+"chi": "Claudiu Niculescu",
+"qid": "Q1098261",
+"da": "2024-06-06",
+"a": "2024-11-22"
+},
+{
+"chi": "Ovidiu Burcă",
+"qid": "Q604740",
+"da": "2024-11-27",
+"a": "2024-12-30"
+},
+{
+"chi": "Florin Pârvu",
+"qid": "Q17285685",
+"da": "2025-04-25",
+"a": null
+}
+]
+},
+"FC Botosani": {
+"wikidata": "Q1262822",
+"nome": "FC Botoșani",
+"allenatori": [
+{
+"chi": "Leo Grozavu",
+"qid": "Q6526751",
+"da": "2014-01-06",
+"a": "2015-09-13"
+},
+{
+"chi": "Cristian Pustai",
+"qid": "Q5186251",
+"da": "2015-10-01",
+"a": "2016-04-01"
+},
+{
+"chi": "Leo Grozavu",
+"qid": "Q6526751",
+"da": "2016-04-02",
+"a": "2017-03-08"
+},
+{
+"chi": "Costel Enache",
+"qid": "Q5175085",
+"da": "2017-06-05",
+"a": "2018-11-16"
+},
+{
+"chi": "Liviu Ciobotariu",
+"qid": "Q926512",
+"da": "2018-11-17",
+"a": "2019-06-01"
+},
+{
+"chi": "Marius Croitoru",
+"qid": "Q466132",
+"da": "2019-06-01",
+"a": "2022-05-01"
+},
+{
+"chi": "Mihai Teja",
+"qid": "Q12735513",
+"da": "2022-06-01",
+"a": "2022-11-01"
+},
+{
+"chi": "Flavius Stoican",
+"qid": "Q593165",
+"da": "2022-11-01",
+"a": "2023-06-01"
+},
+{
+"chi": "Marius Croitoru",
+"qid": "Q466132",
+"da": "2023-06-01",
+"a": "2023-08-15"
+},
+{
+"chi": "Dan Alexa",
+"qid": "Q1158981",
+"da": "2023-09-01",
+"a": "2023-11-11"
+},
+{
+"chi": "Andrei Patache",
+"qid": "Q16231872",
+"da": "2023-09-12",
+"a": "2023-11-24"
+},
+{
+"chi": "Mihai Ciobanu",
+"qid": "Q123584476",
+"da": "2023-11-25",
+"a": "2023-12-28"
+},
+{
+"chi": "Bogdan Andone",
+"qid": "Q265367",
+"da": "2023-12-29",
+"a": "2024-07-25"
+},
+{
+"chi": "Liviu Ciobotariu",
+"qid": "Q926512",
+"da": "2024-07-26",
+"a": "2025-01-06"
+},
+{
+"chi": "Leo Grozavu",
+"qid": "Q6526751",
+"da": "2025-01-07",
+"a": "2026-03-03"
+},
+{
+"chi": "Marius Croitoru",
+"qid": "Q466132",
+"da": "2026-03-10",
+"a": null
+}
+]
+},
+"CFR Cluj": {
+"wikidata": "Q205998",
+"nome": "CFR Cluj",
+"allenatori": [
+{
+"chi": "Eugen Trică",
+"qid": "Q600144",
+"da": "2015-01-01",
+"a": "2015-04-02"
+},
+{
+"chi": "Francisc Dican",
+"qid": "Q32100958",
+"da": "2015-04-02",
+"a": "2015-12-05"
+},
+{
+"chi": "António Conceição da Silva Oliveira",
+"qid": "Q608444",
+"da": "2015-12-05",
+"a": "2016-06-27"
+},
+{
+"chi": "Vasile Miriuță",
+"qid": "Q258495",
+"da": "2016-06-27",
+"a": "2017-06-01"
+},
+{
+"chi": "Dan Petrescu",
+"qid": "Q1159141",
+"da": "2017-06-10",
+"a": "2018-05-29"
+},
+{
+"chi": "Edward Iordănescu",
+"qid": "Q5340416",
+"da": "2018-06-04",
+"a": "2018-07-26"
+},
+{
+"chi": "António Conceição da Silva Oliveira",
+"qid": "Q608444",
+"da": "2018-07-26",
+"a": "2019-02-18"
+},
+{
+"chi": "Alin Minteuan",
+"qid": "Q946694",
+"da": "2019-02-18",
+"a": "2019-03-22"
+},
+{
+"chi": "Dan Petrescu",
+"qid": "Q1159141",
+"da": "2019-03-22",
+"a": "2020-11-01"
+},
+{
+"chi": "Edward Iordănescu",
+"qid": "Q5340416",
+"da": "2020-12-01",
+"a": "2021-06-01"
+},
+{
+"chi": "Marius Șumudică",
+"qid": "Q704906",
+"da": "2021-06-01",
+"a": "2021-08-01"
+},
+{
+"chi": "Dan Petrescu",
+"qid": "Q1159141",
+"da": "2021-08-01",
+"a": "2023-06-01"
+},
+{
+"chi": "Andrea Mandorlini",
+"qid": "Q4755165",
+"da": "2023-06-01",
+"a": "2024-01-24"
+},
+{
+"chi": "Adrian Mutu",
+"qid": "Q202645",
+"da": "2024-01-24",
+"a": "2024-04-03"
+},
+{
+"chi": "Dan Petrescu",
+"qid": "Q1159141",
+"da": "2024-04-30",
+"a": "2025-08-21"
+},
+{
+"chi": "Andrea Mandorlini",
+"qid": "Q494319",
+"da": "2025-08-24",
+"a": "2025-10-21"
+},
+{
+"chi": "Ovidiu Hoban",
+"qid": "Q2363283",
+"da": "2025-10-21",
+"a": "2025-10-30"
+},
+{
+"chi": "Daniel Pancu",
+"qid": "Q710813",
+"da": "2025-10-30",
+"a": "2026-05-27"
+},
+{
+"chi": "António Folha",
+"qid": "Q2519999",
+"da": "2026-06-15",
+"a": "2026-08-10"
+},
+{
+"chi": "Marius Șumudică",
+"qid": "Q704906",
+"da": "2026-08-14",
+"a": null
+}
+]
+},
+"Poli Iasi": {
+"wikidata": "Q926152",
+"nome": "FC Politehnica Iași",
+"allenatori": [
+{
+"chi": "Anthony da Silva",
+"qid": "Q574199",
+"da": "2024-04-01",
+"a": "2024-09-04"
+},
+{
+"chi": "Emil Săndoi",
+"qid": "Q1336950",
+"da": "2024-09-11",
+"a": "2025-01-27"
+},
+{
+"chi": "Vasile Miriuță",
+"qid": "Q258495",
+"da": "2025-01-28",
+"a": "2025-06-01"
+},
+{
+"chi": "Anthony da Silva",
+"qid": "Q574199",
+"da": "2025-07-01",
+"a": "2025-11-13"
+},
+{
+"chi": "Tibor Selymes",
+"qid": "Q690682",
+"da": "2025-11-14",
+"a": null
+}
+]
+},
+"U Craiova": {
+"wikidata": "Q16838020",
+"nome": "CS Universitatea Craiova",
+"allenatori": [
+{
+"chi": "Emil Săndoi",
+"qid": "Q1336950",
+"da": "2014-09-03",
+"a": "2015-12-15"
+},
+{
+"chi": "Victor Naicu",
+"qid": "Q22926321",
+"da": "2016-01-10",
+"a": "2016-05-31"
+},
+{
+"chi": "Gheorghe Mulțescu",
+"qid": "Q1521597",
+"da": "2016-06-09",
+"a": "2017-05-23"
+},
+{
+"chi": "Devis Mangia",
+"qid": "Q956899",
+"da": "2017-05-23",
+"a": "2019-04-15"
+},
+{
+"chi": "Corneliu Papură",
+"qid": "Q1133689",
+"da": "2019-04-15",
+"a": "2019-09-01"
+},
+{
+"chi": "Victor Pițurcă",
+"qid": "Q381164",
+"da": "2019-09-01",
+"a": "2019-12-01"
+},
+{
+"chi": "Corneliu Papură",
+"qid": "Q1133689",
+"da": "2020-01-05",
+"a": "2020-05-07"
+},
+{
+"chi": "Cristiano Bergodi",
+"qid": "Q545682",
+"da": "2020-05-09",
+"a": "2020-11-10"
+},
+{
+"chi": "Corneliu Papură",
+"qid": "Q1133689",
+"da": "2020-11-10",
+"a": "2021-01-30"
+},
+{
+"chi": "Marinos Ouzounidis",
+"qid": "Q2021758",
+"da": "2021-02-07",
+"a": "2021-07-23"
+},
+{
+"chi": "Laurențiu Reghecampf",
+"qid": "Q239971",
+"da": "2021-07-26",
+"a": "2022-06-12"
+},
+{
+"chi": "László Balint",
+"qid": "Q6710635",
+"da": "2022-06-13",
+"a": "2022-08-09"
+},
+{
+"chi": "Mirel Rădoi",
+"qid": "Q455384",
+"da": "2022-08-09",
+"a": "2022-12-07"
+},
+{
+"chi": "Eugen Neagoe",
+"qid": "Q2578006",
+"da": "2023-01-01",
+"a": "2023-07-25"
+},
+{
+"chi": "Laurențiu Reghecampf",
+"qid": "Q239971",
+"da": "2023-07-25",
+"a": "2023-09-26"
+},
+{
+"chi": "Corneliu Papură",
+"qid": "Q1133689",
+"da": "2023-09-26",
+"a": "2023-11-07"
+},
+{
+"chi": "Ivaylo Petev",
+"qid": "Q3655549",
+"da": "2023-11-07",
+"a": "2024-04-11"
+},
+{
+"chi": "Constantin Gâlcă",
+"qid": "Q704268",
+"da": "2024-04-17",
+"a": "2025-01-27"
+},
+{
+"chi": "Mirel Rădoi",
+"qid": "Q455384",
+"da": "2025-01-28",
+"a": "2025-11-10"
+},
+{
+"chi": "Filipe Coelho",
+"qid": "Q136689680",
+"da": "2025-11-11",
+"a": null
+}
+]
+},
+"Academica Clinceni": {
+"wikidata": "Q5014453",
+"nome": "CS Inter Ilfov",
+"allenatori": [
+{
+"chi": "Valentin Bădoi",
+"qid": "Q980340",
+"da": "2012-12-04",
+"a": "2014-04-28"
+},
+{
+"chi": "Ilie Poenaru",
+"qid": "Q50739711",
+"da": "2018-01-01",
+"a": "2021-09-01"
+},
+{
+"chi": "Ionuț Chirilă",
+"qid": "Q12731015",
+"da": "2021-09-01",
+"a": "2021-12-01"
+},
+{
+"chi": "Adrian Falub",
+"qid": "Q132287",
+"da": "2021-12-01",
+"a": "2022-03-01"
+},
+{
+"chi": "Paul Pârvulescu",
+"qid": "Q3898138",
+"da": "2024-09-01",
+"a": null
+}
+]
+},
+"FCSB": {
+"wikidata": "Q179658",
+"nome": "FCSB",
+"allenatori": [
+{
+"chi": "Walter Zenga",
+"qid": "Q294302",
+"da": "2004-07-01",
+"a": "2005-05-20"
+},
+{
+"chi": "Laurențiu Reghecampf",
+"qid": "Q239971",
+"da": "2012-01-01",
+"a": "2014-01-01"
+},
+{
+"chi": "Constantin Gâlcă",
+"qid": "Q704268",
+"da": "2014-01-01",
+"a": "2015-06-10"
+},
+{
+"chi": "Mirel Rădoi",
+"qid": "Q455384",
+"da": "2015-06-10",
+"a": "2015-08-21"
+},
+{
+"chi": "Dumitru Dumitriu",
+"qid": "Q472763",
+"da": "2015-09-11",
+"a": "2015-12-04"
+},
+{
+"chi": "Laurențiu Reghecampf",
+"qid": "Q239971",
+"da": "2015-12-04",
+"a": "2017-05-15"
+},
+{
+"chi": "Nicolae Dică",
+"qid": "Q431610",
+"da": "2017-06-09",
+"a": "2018-12-24"
+},
+{
+"chi": "Mihai Teja",
+"qid": "Q12735513",
+"da": "2018-12-25",
+"a": "2019-06-30"
+},
+{
+"chi": "Bogdan Andone",
+"qid": "Q265367",
+"da": "2019-06-05",
+"a": "2019-08-02"
+},
+{
+"chi": "Vergil Andronache",
+"qid": "Q66244443",
+"da": "2019-08-02",
+"a": "2019-08-23"
+},
+{
+"chi": "Bogdan Vintilă",
+"qid": "Q15085838",
+"da": "2019-08-23",
+"a": "2020-07-01"
+},
+{
+"chi": "Anton Petrea",
+"qid": "Q97497477",
+"da": "2020-07-01",
+"a": "2021-05-26"
+},
+{
+"chi": "Dinu Todoran",
+"qid": "Q997288",
+"da": "2021-05-26",
+"a": "2021-08-18"
+},
+{
+"chi": "Edward Iordănescu",
+"qid": "Q5340416",
+"da": "2021-08-18",
+"a": "2021-11-14"
+},
+{
+"chi": "Anton Petrea",
+"qid": "Q97497477",
+"da": "2022-01-25",
+"a": "2022-07-26"
+},
+{
+"chi": "Nicolae Dică",
+"qid": "Q431610",
+"da": "2022-07-26",
+"a": "2022-11-01"
+},
+{
+"chi": "Elias Charalambous",
+"qid": "Q1329030",
+"da": "2023-03-30",
+"a": "2026-03-07"
+},
+{
+"chi": "Mirel Rădoi",
+"qid": "Q455384",
+"da": "2026-03-10",
+"a": "2026-04-21"
+},
+{
+"chi": "Marius Baciu",
+"qid": "Q3293768",
+"da": "2026-05-19",
+"a": "2026-09-23"
+},
+{
+"chi": "Laurențiu Reghecampf",
+"qid": "Q239971",
+"da": "2026-09-24",
+"a": null
+}
+]
+},
+"FC Hermannstadt": {
+"wikidata": "Q24884611",
+"nome": "FC Hermannstadt",
+"allenatori": [
+{
+"chi": "Vasile Miriuță",
+"qid": "Q258495",
+"da": "2018-10-09",
+"a": "2019-06-13"
+},
+{
+"chi": "Costel Enache",
+"qid": "Q5175085",
+"da": "2019-06-01",
+"a": "2019-10-01"
+},
+{
+"chi": "Eugen Neagoe",
+"qid": "Q2578006",
+"da": "2019-10-01",
+"a": "2019-12-01"
+},
+{
+"chi": "Vasile Miriuță",
+"qid": "Q258495",
+"da": "2020-01-01",
+"a": "2020-06-01"
+},
+{
+"chi": "Rubén Albés",
+"qid": "Q20021323",
+"da": "2020-06-01",
+"a": "2021-01-01"
+},
+{
+"chi": "Liviu Ciobotariu",
+"qid": "Q926512",
+"da": "2021-01-01",
+"a": "2021-03-22"
+},
+{
+"chi": "Marius Măldărășanu",
+"qid": "Q6765986",
+"da": "2021-07-01",
+"a": "2025-12-04"
+},
+{
+"chi": "Dorinel Munteanu",
+"qid": "Q433666",
+"da": "2025-12-10",
+"a": "2026-06-04"
+}
+]
+},
+"Gaz Metan Medias": {
+"wikidata": "Q856790",
+"nome": "CS Gaz Metan Mediaș",
+"allenatori": [
+{
+"chi": "Cristian Pustai",
+"qid": "Q5186251",
+"da": "2017-04-01",
+"a": "2018-06-30"
+},
+{
+"chi": "Mihai Teja",
+"qid": "Q12735513",
+"da": "2018-07-01",
+"a": "2018-12-29"
+},
+{
+"chi": "Edward Iordănescu",
+"qid": "Q5340416",
+"da": "2019-01-05",
+"a": "2020-05-01"
+},
+{
+"chi": "Dušan Uhrin Jr.",
+"qid": "Q1268229",
+"da": "2020-06-01",
+"a": "2020-09-01"
+},
+{
+"chi": "Jorge Costa",
+"qid": "Q465049",
+"da": "2020-09-01",
+"a": "2021-02-01"
+},
+{
+"chi": "Mihai Teja",
+"qid": "Q12735513",
+"da": "2021-02-01",
+"a": "2021-09-15"
+}
+]
+},
+"Viitorul Constanta": {
+"wikidata": "Q533094",
+"nome": "FC Viitorul Constanța",
+"allenatori": [
+{
+"chi": "Mircea Rednic",
+"qid": "Q515750",
+"da": "2020-12-01",
+"a": "2021-04-01"
+},
+{
+"chi": "Gheorghe Hagi",
+"qid": "Q189892",
+"da": "2021-07-01",
+"a": "2025-06-02"
+},
+{
+"chi": "Ianis Zicu",
+"qid": "Q485019",
+"da": "2025-06-03",
+"a": "2026-04-13"
+},
+{
+"chi": "Flavius Stoican",
+"qid": "Q593165",
+"da": "2026-04-13",
+"a": "2026-06-02"
+},
+{
+"chi": "Ioan Sabău",
+"qid": "Q1334250",
+"da": "2026-06-05",
+"a": null
+}
+]
+},
+"FC Arges": {
+"wikidata": "Q841245",
+"nome": "FC Argeș",
+"allenatori": [
+{
+"chi": "Augustin Eduard",
+"qid": "Q2871572",
+"da": "2019-03-01",
+"a": "2019-06-01"
+},
+{
+"chi": "Nicolae Dică",
+"qid": "Q431610",
+"da": "2019-06-01",
+"a": "2019-10-01"
+},
+{
+"chi": "Ionuț Badea",
+"qid": "Q10447891",
+"da": "2019-10-01",
+"a": "2020-10-01"
+},
+{
+"chi": "Ionuț Moșteanu",
+"qid": "Q101087534",
+"da": "2020-10-01",
+"a": "2020-11-01"
+},
+{
+"chi": "Ilie Poenaru",
+"qid": "Q451818",
+"da": "2020-12-01",
+"a": "2022-10-01"
+},
+{
+"chi": "Marius Croitoru",
+"qid": "Q466132",
+"da": "2022-10-01",
+"a": "2023-03-01"
+},
+{
+"chi": "Bogdan Vintilă",
+"qid": "Q15085838",
+"da": "2023-03-01",
+"a": "2023-06-20"
+},
+{
+"chi": "Alexandru Pelici",
+"qid": "Q18549166",
+"da": "2023-06-21",
+"a": "2023-08-26"
+},
+{
+"chi": "Eugen Beza",
+"qid": "Q5406891",
+"da": "2023-08-27",
+"a": "2023-10-09"
+},
+{
+"chi": "Eugen Neagoe",
+"qid": "Q2578006",
+"da": "2023-10-09",
+"a": "2024-05-21"
+},
+{
+"chi": "Nicolae Dică",
+"qid": "Q431610",
+"da": "2024-06-04",
+"a": "2024-09-21"
+},
+{
+"chi": "Bogdan Andone",
+"qid": "Q265367",
+"da": "2024-09-23",
+"a": null
+}
+]
+},
+"UTA Arad": {
+"wikidata": "Q680770",
+"nome": "FC UTA Arad",
+"allenatori": [
+{
+"chi": "Laurențiu Roșu",
+"qid": "Q539694",
+"da": "2016-10-10",
+"a": "2017-06-19"
+},
+{
+"chi": "Adrian Mihalcea",
+"qid": "Q646652",
+"da": "2017-06-30",
+"a": "2017-09-02"
+},
+{
+"chi": "Adrian Falub",
+"qid": "Q132287",
+"da": "2017-09-06",
+"a": "2017-09-21"
+},
+{
+"chi": "Cristian Todea",
+"qid": "Q5186263",
+"da": "2017-09-21",
+"a": "2018-03-01"
+},
+{
+"chi": "Ionuț Popa",
+"qid": "Q6063868",
+"da": "2018-03-01",
+"a": "2019-05-01"
+},
+{
+"chi": "László Balint",
+"qid": "Q6710635",
+"da": "2019-06-01",
+"a": "2022-01-01"
+},
+{
+"chi": "Ionuț Badea",
+"qid": "Q10447891",
+"da": "2022-02-01",
+"a": "2022-05-01"
+},
+{
+"chi": "Ilie Poenaru",
+"qid": "Q50739711",
+"da": "2022-05-23",
+"a": "2022-11-01"
+},
+{
+"chi": "Mircea Rednic",
+"qid": "Q515750",
+"da": "2023-04-25",
+"a": "2025-05-18"
+},
+{
+"chi": "Adrian Mihalcea",
+"qid": "Q646652",
+"da": "2025-06-05",
+"a": null
+}
+]
+},
+"FC Rapid Bucuresti": {
+"wikidata": "Q245162",
+"nome": "FC Rapid București",
+"allenatori": [
+{
+"chi": "Daniel Pancu",
+"qid": "Q710813",
+"da": "2018-10-01",
+"a": "2020-03-01"
+},
+{
+"chi": "Dan Alexa",
+"qid": "Q1158981",
+"da": "2020-03-01",
+"a": "2020-08-01"
+},
+{
+"chi": "Adrian Iencsi",
+"qid": "Q373200",
+"da": "2020-08-01",
+"a": "2020-10-01"
+},
+{
+"chi": "Mihai Iosif",
+"qid": "Q61083056",
+"da": "2020-10-01",
+"a": "2021-01-01"
+},
+{
+"chi": "Nicolae Grigore",
+"qid": "Q1524461",
+"da": "2021-01-01",
+"a": "2021-03-01"
+},
+{
+"chi": "Mihai Iosif",
+"qid": "Q61083056",
+"da": "2021-03-01",
+"a": "2022-02-01"
+},
+{
+"chi": "Adrian Mutu",
+"qid": "Q202645",
+"da": "2022-03-02",
+"a": "2023-07-01"
+},
+{
+"chi": "Cristiano Bergodi",
+"qid": "Q545682",
+"da": "2023-07-01",
+"a": "2024-04-01"
+},
+{
+"chi": "Bogdan Lobonț",
+"qid": "Q221614",
+"da": "2024-04-01",
+"a": "2024-05-01"
+},
+{
+"chi": "Neil Lennon",
+"qid": "Q437993",
+"da": "2024-05-21",
+"a": "2024-08-20"
+},
+{
+"chi": "Marius Șumudică",
+"qid": "Q704906",
+"da": "2024-08-20",
+"a": "2025-05-20"
+},
+{
+"chi": "Octavian Chihaia",
+"qid": "Q1058135",
+"da": "2025-05-20",
+"a": "2025-06-03"
+},
+{
+"chi": "Constantin Gâlcă",
+"qid": "Q704268",
+"da": "2025-06-03",
+"a": "2026-05-26"
+},
+{
+"chi": "Daniel Pancu",
+"qid": "Q710813",
+"da": "2026-05-27",
+"a": null
+}
+]
+},
+"Petrolul": {
+"wikidata": "Q1322550",
+"nome": "FC Petrolul Ploiești",
+"allenatori": [
+{
+"chi": "Tibor Selymes",
+"qid": "Q690682",
+"da": "2015-06-03",
+"a": "2015-08-25"
+},
+{
+"chi": "Eusebiu Tudor",
+"qid": "Q20871680",
+"da": "2015-08-25",
+"a": "2015-10-25"
+},
+{
+"chi": "Mihai Stoichiță",
+"qid": "Q2986197",
+"da": "2015-10-29",
+"a": "2015-12-22"
+},
+{
+"chi": "Constantin Schumacher",
+"qid": "Q5163764",
+"da": "2016-01-05",
+"a": "2016-03-14"
+},
+{
+"chi": "Ionel Gane",
+"qid": "Q691423",
+"da": "2016-03-15",
+"a": "2016-07-01"
+},
+{
+"chi": "Octavian Grigore",
+"qid": "Q2013835",
+"da": "2016-07-28",
+"a": "2017-11-20"
+},
+{
+"chi": "Romulus Ciobanu",
+"qid": "Q43402216",
+"da": "2017-11-23",
+"a": "2018-06-01"
+},
+{
+"chi": "Leo Grozavu",
+"qid": "Q6526751",
+"da": "2018-06-11",
+"a": "2018-10-19"
+},
+{
+"chi": "Octavian Grigore",
+"qid": "Q2013835",
+"da": "2018-10-19",
+"a": "2018-12-01"
+},
+{
+"chi": "Mugurel Cornățeanu",
+"qid": "Q18542108",
+"da": "2019-01-01",
+"a": "2019-03-25"
+},
+{
+"chi": "Gheorghe Mulțescu",
+"qid": "Q1521597",
+"da": "2019-03-25",
+"a": "2019-06-01"
+},
+{
+"chi": "Flavius Stoican",
+"qid": "Q593165",
+"da": "2019-06-01",
+"a": "2019-12-01"
+},
+{
+"chi": "Costel Enache",
+"qid": "Q5175085",
+"da": "2020-01-01",
+"a": "2020-08-01"
+},
+{
+"chi": "Viorel Moldovan",
+"qid": "Q342375",
+"da": "2020-08-01",
+"a": "2021-03-01"
+},
+{
+"chi": "Nicolae Constantin",
+"qid": "Q7029231",
+"da": "2021-01-01",
+"a": "2023-01-01"
+},
+{
+"chi": "Florin Pârvu",
+"qid": "Q17285685",
+"da": "2023-01-01",
+"a": "2024-03-09"
+},
+{
+"chi": "László Balint",
+"qid": "Q6710635",
+"da": "2024-04-08",
+"a": "2024-06-05"
+},
+{
+"chi": "Mehmet Topal",
+"qid": "Q348199",
+"da": "2024-06-06",
+"a": "2024-12-31"
+},
+{
+"chi": "Adrian Mutu",
+"qid": "Q202645",
+"da": "2025-01-01",
+"a": "2025-03-17"
+},
+{
+"chi": "Mehmet Topal",
+"qid": "Q348199",
+"da": "2025-03-18",
+"a": "2025-05-23"
+},
+{
+"chi": "Liviu Ciobotariu",
+"qid": "Q926512",
+"da": "2025-06-03",
+"a": "2025-09-16"
+},
+{
+"chi": "Eugen Neagoe",
+"qid": "Q2578006",
+"da": "2025-09-23",
+"a": "2026-03-25"
+},
+{
+"chi": "Mehmet Topal",
+"qid": "Q348199",
+"da": "2026-03-28",
+"a": "2026-06-06"
+},
+{
+"chi": "Ricardo Sousa",
+"qid": "Q325599",
+"da": "2026-06-07",
+"a": null
+}
+]
+},
+"Gloria Buzau": {
+"wikidata": "Q944169",
+"nome": "FC Gloria Buzău",
+"allenatori": [
+{
+"chi": "Viorel Ion",
+"qid": "Q3560510",
+"da": "2012-07-08",
+"a": "2016-01-01"
+}
+]
+},
+"Otelul": {
+"wikidata": "Q220863",
+"nome": "SC Oțelul Galați",
+"allenatori": [
+{
+"chi": "Petre Grigoraș",
+"qid": "Q7178725",
+"da": "2012-01-01",
+"a": "2013-01-01"
+},
+{
+"chi": "Alin Pânzaru",
+"qid": "Q12720453",
+"da": "2018-09-21",
+"a": "2019-03-21"
+},
+{
+"chi": "Tudorel Pelin",
+"qid": "Q7851342",
+"da": "2019-03-21",
+"a": "2019-06-30"
+},
+{
+"chi": "Mihai Ciobanu",
+"qid": "Q18538992",
+"da": "2019-07-01",
+"a": "2020-08-30"
+},
+{
+"chi": "Dorinel Munteanu",
+"qid": "Q433666",
+"da": "2021-07-06",
+"a": "2024-12-30"
+},
+{
+"chi": "Ovidiu Burcă",
+"qid": "Q604740",
+"da": "2025-01-01",
+"a": "2025-03-19"
+},
+{
+"chi": "László Balint",
+"qid": "Q6710635",
+"da": "2025-03-20",
+"a": "2026-03-14"
+},
+{
+"chi": "Stjepan Tomas",
+"qid": "Q453130",
+"da": "2026-03-17",
+"a": "2026-09-22"
+},
+{
+"chi": "Rui Duarte",
+"qid": "Q3452983",
+"da": "2026-09-28",
+"a": null
+}
+]
+},
+"Unirea Slobozia": {
+"wikidata": "Q5425216",
+"nome": "FC Unirea Slobozia",
+"allenatori": [
+{
+"chi": "Adrian Mihalcea",
+"qid": "Q646652",
+"da": "2020-12-01",
+"a": "2022-06-01"
+},
+{
+"chi": "Adrian Mihalcea",
+"qid": "Q646652",
+"da": "2023-06-08",
+"a": "2025-01-01"
+},
+{
+"chi": "Ilie Poenaru",
+"qid": "Q451818",
+"da": "2025-06-07",
+"a": null
+}
+]
+},
+"Dinamo Bucuresti": {
+"wikidata": "Q204237",
+"nome": "FC Dinamo Bucharest",
+"allenatori": [
+{
+"chi": "Walter Zenga",
+"qid": "Q294302",
+"da": "2007-08-31",
+"a": "2007-11-24"
+},
+{
+"chi": "Mircea Rednic",
+"qid": "Q515750",
+"da": "2015-05-06",
+"a": "2016-05-20"
+},
+{
+"chi": "Ioan Andone",
+"qid": "Q720131",
+"da": "2016-05-23",
+"a": "2017-02-14"
+},
+{
+"chi": "Vasile Miriuță",
+"qid": "Q258495",
+"da": "2017-09-19",
+"a": "2018-02-26"
+},
+{
+"chi": "Florin Bratu",
+"qid": "Q558873",
+"da": "2018-02-26",
+"a": "2018-09-22"
+},
+{
+"chi": "Claudiu Niculescu",
+"qid": "Q1098261",
+"da": "2018-09-23",
+"a": "2018-10-15"
+},
+{
+"chi": "Mircea Rednic",
+"qid": "Q515750",
+"da": "2018-10-15",
+"a": "2019-06-03"
+},
+{
+"chi": "Eugen Neagoe",
+"qid": "Q2578006",
+"da": "2019-06-03",
+"a": "2019-08-12"
+},
+{
+"chi": "Dušan Uhrin Jr.",
+"qid": "Q1268229",
+"da": "2019-08-13",
+"a": "2020-03-01"
+},
+{
+"chi": "Adrian Mihalcea",
+"qid": "Q646652",
+"da": "2020-03-01",
+"a": "2020-07-01"
+},
+{
+"chi": "Gheorghe Mulțescu",
+"qid": "Q1521597",
+"da": "2020-07-01",
+"a": "2020-08-01"
+},
+{
+"chi": "Cosmin Contra",
+"qid": "Q296215",
+"da": "2020-08-01",
+"a": "2020-12-01"
+},
+{
+"chi": "Ionel Gane",
+"qid": "Q691423",
+"da": "2020-12-01",
+"a": "2021-03-01"
+},
+{
+"chi": "Gheorghe Mulțescu",
+"qid": "Q1521597",
+"da": "2021-03-01",
+"a": "2021-04-01"
+},
+{
+"chi": "Dušan Uhrin Jr.",
+"qid": "Q1268229",
+"da": "2021-04-01",
+"a": "2021-07-01"
+},
+{
+"chi": "Dario Bonetti",
+"qid": "Q1449429",
+"da": "2021-07-01",
+"a": "2021-09-01"
+},
+{
+"chi": "Mircea Rednic",
+"qid": "Q515750",
+"da": "2021-10-01",
+"a": "2021-12-01"
+},
+{
+"chi": "Dušan Uhrin Jr.",
+"qid": "Q1268229",
+"da": "2022-01-01",
+"a": "2022-05-01"
+},
+{
+"chi": "Gheorghe Mihali",
+"qid": "Q1521592",
+"da": "2022-06-01",
+"a": "2022-07-01"
+},
+{
+"chi": "Ovidiu Burcă",
+"qid": "Q604740",
+"da": "2022-07-01",
+"a": "2023-11-01"
+},
+{
+"chi": "Željko Kopić",
+"qid": "Q18810070",
+"da": "2023-12-01",
+"a": "2026-06-05"
+},
+{
+"chi": "Nuno Campos",
+"qid": "Q109013057",
+"da": "2026-06-06",
+"a": null
+}
+]
+},
+"HJK": {
+"wikidata": "Q208584",
+"nome": "Helsingin Jalkapalloklubi",
+"allenatori": [
+{
+"chi": "Sixten Boström",
+"qid": "Q933404",
+"da": "2013-01-01",
+"a": "2014-04-01"
+},
+{
+"chi": "Mika Lehkosuo",
+"qid": "Q678285",
+"da": "2014-04-01",
+"a": "2019-05-01"
+},
+{
+"chi": "Toni Koskela",
+"qid": "Q1785688",
+"da": "2019-05-01",
+"a": "2023-07-13"
+},
+{
+"chi": "Ossi Virta",
+"qid": "Q123496971",
+"da": "2024-01-12",
+"a": "2024-05-20"
+},
+{
+"chi": "Toni Korkeakunnas",
+"qid": "Q6581952",
+"da": "2024-05-21",
+"a": null
+}
+]
+},
+"Inter Turku": {
+"wikidata": "Q222877",
+"nome": "FC Inter Turku",
+"allenatori": [
+{
+"chi": "Shefki Kuqi",
+"qid": "Q381488",
+"da": "2016-08-03",
+"a": "2017-08-03"
+},
+{
+"chi": "John Allen",
+"qid": "Q6218727",
+"da": "2018-06-10",
+"a": "2018-12-31"
+},
+{
+"chi": "José Riveiro",
+"qid": "Q70571759",
+"da": "2019-01-01",
+"a": "2021-12-31"
+},
+{
+"chi": "Vesa Vasara",
+"qid": "Q4405706",
+"da": "2024-01-01",
+"a": null
+}
+]
+},
+"KuPS": {
+"wikidata": "Q382324",
+"nome": "Kuopion Palloseura",
+"allenatori": [
+{
+"chi": "Arne Erlandsen",
+"qid": "Q692306",
+"da": "2020-01-01",
+"a": "2020-12-31"
+},
+{
+"chi": "Simo Valakari",
+"qid": "Q643105",
+"da": "2021-01-01",
+"a": "2023-01-01"
+},
+{
+"chi": "Jani Honkavaara",
+"qid": "Q17320972",
+"da": "2023-04-21",
+"a": "2024-12-31"
+},
+{
+"chi": "Jarkko Wiss",
+"qid": "Q977456",
+"da": "2025-01-01",
+"a": null
+}
+]
+},
+"SJK": {
+"wikidata": "Q2185704",
+"nome": "Seinäjoen Jalkapallokerho",
+"allenatori": [
+{
+"chi": "Alexei Eremenko",
+"qid": "Q2549618",
+"da": "2018-05-22",
+"a": "2019-08-16"
+},
+{
+"chi": "Jani Honkavaara",
+"qid": "Q17320972",
+"da": "2020-01-01",
+"a": "2021-12-31"
+},
+{
+"chi": "Joaquín Gómez",
+"qid": "Q105081927",
+"da": "2022-01-01",
+"a": "2023-11-03"
+},
+{
+"chi": "Toni Lehtinen",
+"qid": "Q3131581",
+"da": "2024-01-01",
+"a": "2024-05-27"
+},
+{
+"chi": "Stevie Grieve",
+"qid": "Q123669549",
+"da": "2024-05-28",
+"a": null
+}
+]
+},
+"HIFK": {
+"wikidata": "Q11336634",
+"nome": "HIFK Fotboll",
+"allenatori": [
+{
+"chi": "Tor Thodesen",
+"qid": "Q3993575",
+"da": "2019-01-04",
+"a": "2020-07-20"
+},
+{
+"chi": "Teemu Kankkunen",
+"qid": "Q7694240",
+"da": "2020-07-21",
+"a": "2020-12-31"
+},
+{
+"chi": "Joaquín Gómez",
+"qid": "Q105081927",
+"da": "2021-01-11",
+"a": "2021-12-31"
+},
+{
+"chi": "Mixu Paatelainen",
+"qid": "Q555595",
+"da": "2022-04-19",
+"a": "2022-10-05"
+}
+]
+},
+"Honka": {
+"wikidata": "Q385042",
+"nome": "FC Honka",
+"allenatori": [
+{
+"chi": "Vesa Vasara",
+"qid": "Q4405706",
+"da": "2017-01-01",
+"a": "2023-12-31"
+},
+{
+"chi": "Mika Väyrynen",
+"qid": "Q350263",
+"da": "2024-01-01",
+"a": null
+}
+]
+},
+"KPV Kokkola": {
+"wikidata": "Q574997",
+"nome": "Kokkolan Palloveikot",
+"allenatori": [
+{
+"chi": "Jani Uotinen",
+"qid": "Q5492950",
+"da": "2019-07-22",
+"a": null
+}
+]
+},
+"AC Oulu": {
+"wikidata": "Q289516",
+"nome": "AC Oulu",
+"allenatori": [
+{
+"chi": "Ricardo Duarte",
+"qid": "Q109672907",
+"da": "2021-10-06",
+"a": "2023-08-24"
+},
+{
+"chi": "Rauno Ojanen",
+"qid": "Q20253449",
+"da": "2023-08-25",
+"a": "2024-06-13"
+},
+{
+"chi": "Mikko Isokangas",
+"qid": "Q130307885",
+"da": "2024-09-03",
+"a": null
+}
+]
+},
+"Ekenas": {
+"wikidata": "Q18658729",
+"nome": "Ekenäs IF",
+"allenatori": [
+{
+"chi": "Gabriel Garcia Xatart",
+"qid": "Q107586069",
+"da": "2023-01-01",
+"a": "2024-08-10"
+},
+{
+"chi": "Christian Sund",
+"qid": "Q682837",
+"da": "2024-08-13",
+"a": null
+}
+]
+},
+"Bohemians": {
+"wikidata": "Q212708",
+"nome": "Bohemian F.C.",
+"allenatori": [
+{
+"chi": "Aaron Callaghan",
+"qid": "Q4661894",
+"da": "2012-01-01",
+"a": "2013-07-15"
+},
+{
+"chi": "Keith Long",
+"qid": "Q6384664",
+"da": "2014-10-30",
+"a": "2022-08-30"
+},
+{
+"chi": "Declan Devine",
+"qid": "Q5249334",
+"da": "2022-10-14",
+"a": "2024-03-10"
+},
+{
+"chi": "Alan Reynolds",
+"qid": "Q4707616",
+"da": "2024-03-26",
+"a": null
+}
+]
+},
+"Finn Harps": {
+"wikidata": "Q1352136",
+"nome": "Finn Harps F.C.",
+"allenatori": [
+{
+"chi": "Ollie Horgan",
+"qid": "Q23761833",
+"da": "2013-11-26",
+"a": "2022-11-09"
+}
+]
+},
+"Derry City": {
+"wikidata": "Q459622",
+"nome": "Derry City F.C.",
+"allenatori": [
+{
+"chi": "Billy Gillespie",
+"qid": "Q2903639",
+"da": "1932-01-01",
+"a": "1940-01-01"
+},
+{
+"chi": "Willie Ross",
+"qid": "Q8021797",
+"da": "1942-01-01",
+"a": "1953-01-01"
+},
+{
+"chi": "Matt Doherty",
+"qid": "Q6788569",
+"da": "1959-01-01",
+"a": "1961-01-01"
+},
+{
+"chi": "Willie Ross",
+"qid": "Q8021797",
+"da": "1961-01-01",
+"a": "1968-01-01"
+},
+{
+"chi": "Jimmy Hill",
+"qid": "Q2608520",
+"da": "1969-01-01",
+"a": "1971-01-01"
+},
+{
+"chi": "Dougie Wood",
+"qid": "Q5301137",
+"da": "1971-01-01",
+"a": "1972-01-01"
+},
+{
+"chi": "Noel King",
+"qid": "Q7047049",
+"da": "1985-01-01",
+"a": "1987-01-01"
+},
+{
+"chi": "Jim McLaughlin",
+"qid": "Q3178893",
+"da": "1987-01-01",
+"a": "1991-01-01"
+},
+{
+"chi": "Roy Coyle",
+"qid": "Q7372705",
+"da": "1991-01-01",
+"a": "1993-01-01"
+},
+{
+"chi": "Tony O'Doherty",
+"qid": "Q7823074",
+"da": "1993-01-01",
+"a": "1994-01-01"
+},
+{
+"chi": "Felix Healy",
+"qid": "Q742692",
+"da": "1994-01-01",
+"a": "1998-01-01"
+},
+{
+"chi": "http://www.wikidata.org/.well-known/genid/8252e282a9e5384fb3452ad77e92d7ea",
+"qid": "8252e282a9e5384fb3452ad77e92d7ea",
+"da": "1998-01-01",
+"a": "2003-01-01"
+},
+{
+"chi": "Gavin Dykes",
+"qid": "Q5528128",
+"da": "2003-01-01",
+"a": "2004-01-01"
+},
+{
+"chi": "Stephen Kenny",
+"qid": "Q520167",
+"da": "2004-01-01",
+"a": "2006-01-01"
+},
+{
+"chi": "Pat Fenlon",
+"qid": "Q1748836",
+"da": "2006-12-01",
+"a": "2007-05-01"
+},
+{
+"chi": "Peter Hutton",
+"qid": "Q7174806",
+"da": "2007-05-01",
+"a": "2007-07-01"
+},
+{
+"chi": "John Robertson",
+"qid": "Q2976664",
+"da": "2007-07-02",
+"a": "2007-12-28"
+},
+{
+"chi": "Stephen Kenny",
+"qid": "Q520167",
+"da": "2007-12-28",
+"a": "2011-12-24"
+},
+{
+"chi": "Declan Devine",
+"qid": "Q5249334",
+"da": "2012-01-01",
+"a": "2013-10-27"
+},
+{
+"chi": "Roddy Collins",
+"qid": "Q7356475",
+"da": "2013-11-19",
+"a": "2014-05-12"
+},
+{
+"chi": "Peter Hutton",
+"qid": "Q7174806",
+"da": "2014-05-13",
+"a": "2015-09-15"
+},
+{
+"chi": "Paul Hegarty",
+"qid": "Q10387985",
+"da": "2015-09-16",
+"a": "2015-10-29"
+},
+{
+"chi": "Kenny Shiels",
+"qid": "Q2293030",
+"da": "2015-11-05",
+"a": "2018-10-27"
+},
+{
+"chi": "Declan Devine",
+"qid": "Q5249334",
+"da": "2018-11-12",
+"a": "2021-04-22"
+},
+{
+"chi": "Ruaidhrí Higgins",
+"qid": "Q7375652",
+"da": "2021-04-23",
+"a": "2024-11-15"
+},
+{
+"chi": "Tiernan Lynch",
+"qid": "Q131292524",
+"da": "2024-11-20",
+"a": null
+}
+]
+},
+"UC Dublin": {
+"wikidata": "Q1341104",
+"nome": "University College Dublin A.F.C.",
+"allenatori": [
+{
+"chi": "Martin Russell",
+"qid": "Q6776495",
+"da": "2009-01-01",
+"a": "2014-02-23"
+},
+{
+"chi": "Andrew Myler",
+"qid": "Q4758097",
+"da": "2020-01-01",
+"a": "2023-11-30"
+}
+]
+},
+"Dundalk": {
+"wikidata": "Q338557",
+"nome": "Dundalk F.C.",
+"allenatori": [
+{
+"chi": "Stephen Kenny",
+"qid": "Q520167",
+"da": "2012-11-21",
+"a": "2018-11-24"
+},
+{
+"chi": "Vinny Perth",
+"qid": "Q7932692",
+"da": "2019-01-01",
+"a": "2020-08-20"
+},
+{
+"chi": "Filippo Giovagnoli",
+"qid": "Q98647906",
+"da": "2020-08-25",
+"a": "2021-04-19"
+},
+{
+"chi": "Stephen O'Donnell",
+"qid": "Q3973208",
+"da": "2021-12-11",
+"a": "2024-04-08"
+},
+{
+"chi": "Ciarán Kilduff",
+"qid": "Q2972227",
+"da": "2024-11-06",
+"a": null
+}
+]
+},
+"Sligo Rovers": {
+"wikidata": "Q244874",
+"nome": "Sligo Rovers F.C.",
+"allenatori": [
+{
+"chi": "Ian Baraclough",
+"qid": "Q3147227",
+"da": "2012-02-27",
+"a": "2014-06-19"
+},
+{
+"chi": "Liam Buckley",
+"qid": "Q3237640",
+"da": "2018-10-26",
+"a": "2022-05-22"
+},
+{
+"chi": "John Russell",
+"qid": "Q10534310",
+"da": "2022-05-22",
+"a": null
+}
+]
+},
+"Cork City": {
+"wikidata": "Q932284",
+"nome": "Cork City F.C.",
+"allenatori": [
+{
+"chi": "Neale Fenn",
+"qid": "Q3778345",
+"da": "2019-08-26",
+"a": "2020-10-08"
+},
+{
+"chi": "Colin Healy",
+"qid": "Q2617262",
+"da": "2020-10-09",
+"a": "2023-05-03"
+},
+{
+"chi": "Tim Clancy",
+"qid": "Q43893",
+"da": "2023-11-24",
+"a": "2025-05-09"
+},
+{
+"chi": "Barry Robson",
+"qid": "Q717062",
+"da": "2026-01-11",
+"a": null
+}
+]
+},
+"Waterford": {
+"wikidata": "Q394466",
+"nome": "Waterford United F.C.",
+"allenatori": [
+{
+"chi": "Alan Reynolds",
+"qid": "Q4707616",
+"da": "2017-01-02",
+"a": "2020-06-16"
+},
+{
+"chi": "Kevin Sheedy",
+"qid": "Q713720",
+"da": "2020-12-17",
+"a": "2021-05-05"
+},
+{
+"chi": "Keith Long",
+"qid": "Q6384664",
+"da": "2023-03-29",
+"a": "2025-04-19"
+},
+{
+"chi": "Jon Daly",
+"qid": "Q3433083",
+"da": "2025-11-16",
+"a": null
+}
+]
+},
+"Shamrock Rovers": {
+"wikidata": "Q203976",
+"nome": "Shamrock Rovers F.C.",
+"allenatori": [
+{
+"chi": "Trevor Croly",
+"qid": "Q7839107",
+"da": "2012-11-07",
+"a": "2014-08-02"
+},
+{
+"chi": "Stephen Bradley",
+"qid": "Q3973167",
+"da": "2016-07-04",
+"a": null
+}
+]
+},
+"Drogheda": {
+"wikidata": "Q761498",
+"nome": "Drogheda United F.C.",
+"allenatori": [
+{
+"chi": "Mick Cooke",
+"qid": "Q6838104",
+"da": "2011-02-27",
+"a": "2013-10-26"
+},
+{
+"chi": "Tim Clancy",
+"qid": "Q43893",
+"da": "2017-12-05",
+"a": "2021-12-01"
+},
+{
+"chi": "Kevin Doherty",
+"qid": "Q24450160",
+"da": "2021-12-02",
+"a": null
+}
+]
+},
+"Shelbourne": {
+"wikidata": "Q394474",
+"nome": "Shelbourne F.C.",
+"allenatori": [
+{
+"chi": "Alan Mathews",
+"qid": "Q4707261",
+"da": "2010-07-12",
+"a": "2013-05-16"
+},
+{
+"chi": "Ian Morris",
+"qid": "Q3147312",
+"da": "2018-11-06",
+"a": "2021-10-29"
+},
+{
+"chi": "Damien Duff",
+"qid": "Q192971",
+"da": "2021-11-03",
+"a": "2025-06-22"
+},
+{
+"chi": "Joey O'Brien",
+"qid": "Q158995",
+"da": "2025-06-22",
+"a": null
+}
+]
+},
 "Arezzo": {
 "wikidata": "Q297430",
 "nome": "S.S. Arezzo",
@@ -27469,6 +30373,102 @@
 }
 ]
 },
+"Internacional": {
+"wikidata": "Q80845",
+"nome": "S.C. Internacional",
+"allenatori": [
+{
+"chi": "Odair Hellmann",
+"qid": "Q45202501",
+"da": "2017-11-11",
+"a": "2019-10-10"
+},
+{
+"chi": "Eduardo Coudet",
+"qid": "Q2547652",
+"da": "2019-01-01",
+"a": "2020-11-09"
+},
+{
+"chi": "Abel Braga",
+"qid": "Q2311308",
+"da": "2020-11-10",
+"a": "2021-02-28"
+},
+{
+"chi": "Miguel Ángel Ramírez",
+"qid": "Q69414067",
+"da": "2021-03-02",
+"a": "2021-06-11"
+},
+{
+"chi": "Diego Aguirre",
+"qid": "Q1220376",
+"da": "2021-06-23",
+"a": "2021-12-15"
+},
+{
+"chi": "Alexander Medina",
+"qid": "Q371399",
+"da": "2022-01-01",
+"a": "2022-04-15"
+},
+{
+"chi": "Cauan de Almeida",
+"qid": "Q107248959",
+"da": "2022-04-16",
+"a": "2022-04-18"
+},
+{
+"chi": "Mano Menezes",
+"qid": "Q81115",
+"da": "2022-04-18",
+"a": "2023-07-17"
+},
+{
+"chi": "Eduardo Coudet",
+"qid": "Q2547652",
+"da": "2023-07-20",
+"a": "2024-07-11"
+},
+{
+"chi": "Pablo de Toledo",
+"qid": "Q130742265",
+"da": "2024-07-12",
+"a": "2024-07-18"
+},
+{
+"chi": "Roger Machado",
+"qid": "Q197565",
+"da": "2024-07-18",
+"a": "2025-09-01"
+},
+{
+"chi": "Ramón Díaz",
+"qid": "Q348557",
+"da": "2025-09-24",
+"a": "2025-11-29"
+},
+{
+"chi": "Abel Braga",
+"qid": "Q2311308",
+"da": "2025-11-29",
+"a": "2025-12-08"
+},
+{
+"chi": "Paulo Pezzolano",
+"qid": "Q2740889",
+"da": "2026-01-01",
+"a": "2026-09-20"
+},
+{
+"chi": "Pablo de Toledo",
+"qid": "Q130742265",
+"da": "2026-09-20",
+"a": null
+}
+]
+},
 "Ajaccio GFCO": {
 "wikidata": "Q270051",
 "nome": "A.C. Ajaccio",
@@ -27611,7 +30611,6 @@
 "A. Klagenfurt",
 "A. Lustenau",
 "Grazer AK",
-"Sao Paulo",
 "Botafogo RJ",
 "Avai",
 "Chapecoense-SC",
@@ -27663,7 +30662,6 @@
 "Guadalajara Chivas",
 "Veracruz",
 "Atlante",
-"Ranheim",
 "Tromso",
 "Haugesund",
 "Ham-Kam",
@@ -27744,6 +30742,60 @@
 "Dalian Yingbo",
 "Liaoning Tieren",
 "Chongqing Tonglianglong",
+"Dynamo Moscow",
+"Ural",
+"Ufa",
+"Sochi",
+"Orenburg",
+"Tambov",
+"Krasnodar",
+"R. Volgograd",
+"Pari NN",
+"Fakel Voronezh",
+"Yenisey",
+"Rodina Moscow",
+"Baltika",
+"Dynamo Makhachkala",
+"Sion",
+"St. Gallen",
+"Luzern",
+"Thun",
+"Young Boys",
+"Grasshoppers",
+"Schaffhausen",
+"Winterthur",
+"Lausanne Ouchy",
+"Sepsi Sf. Gheorghe",
+"Astra",
+"Chindia Targoviste",
+"Din. Bucuresti",
+"Mioveni",
+"Univ. Craiova",
+"Calarasi",
+"U Craiova 1948",
+"Farul Constanta",
+"Concordia",
+"U. Cluj",
+"Csikszereda M. Ciuc",
+"Metaloglobus Bucharest",
+"Corvinul",
+"Rovaniemi",
+"Ilves",
+"Lahti",
+"Mariehamn",
+"VPS",
+"TPS",
+"Haka",
+"KTP",
+"Jaro",
+"Gnistan",
+"PK-35",
+"St. Patricks",
+"Cabinteely",
+"Longford",
+"Bray",
+"Galway",
+"Treaty United",
 "Corum",
 "Amedspor",
 "Erzurumspor",

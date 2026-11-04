@@ -93,6 +93,10 @@ def raccogli():
     if rv:
         sistemare += [f"Algoritmo: {x}" for x in rv.get("problemi", [])] + [f"Algoritmo, da tenere d'occhio: {x}" for x in rv.get("attenzione", [])]
         stato += [f"Algoritmo: {x}" for x in rv.get("note", [])]
+        t = ((rv.get("vantaggio") or {}).get("totale") or {})
+        if t.get("n"):  # misura del vantaggio sul mercato, sempre in evidenza (anche senza avvisi)
+            stato.insert(0, f"Vantaggio sul mercato (30 giorni): quota scesa dopo il consiglio {t['verso']} volte su {t['n']}, "
+                            f"movimento medio {t['medio']:+.1f}%".replace(".", ","))
     # 5c. parti inutilizzate (strumenti/pulizia.py, eseguito appena prima dal workflow): da togliere tra le cose da sistemare
     pu = _jload("data/pulizia.json")
     if pu:

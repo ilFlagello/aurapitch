@@ -58,6 +58,7 @@ jobs:
           python giocatori.py || echo "::warning::Verificatore dei giocatori non riuscito"
           python statistiche_ia.py || echo "::warning::Verificatore delle statistiche non riuscito"
           python genera_app.py
+          python3 strumenti/sentinella.py || echo "::warning::Sentinella delle fonti non riuscita"
 
       - name: Aggiornamento durante il giorno (risultati e formazioni)
         if: inputs.modo == 'live'

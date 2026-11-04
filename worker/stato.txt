@@ -1,4 +1,4 @@
-Esecuzione: 2026-11-03T21:43Z
+Esecuzione: 2026-11-04T09:47Z
 Token: ok
 Sottodominio: ilflagello
 Archivio KV: presente

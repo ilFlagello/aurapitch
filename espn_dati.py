@@ -49,7 +49,7 @@ FD_NUOVI = {"A1": ("Austria", "Bundesliga"), "DK1": ("Denmark", "Superliga"), "M
             "AR1": ("Argentina", "Liga Profesional"), "MX1": ("Mexico", "Liga MX"), "J1": ("Japan", "J1 League"),
             "NO1": ("Norway", "Eliteserien"), "SE1": ("Sweden", "Allsvenskan")}
 SOGLIE_GIALLI = (5, 10)  # squalifica alla 5a e alla 10a ammonizione (regola comune a Serie A, Serie B, Premier, LaLiga, Bundesliga)
-STOP = {"fc", "ac", "as", "ss", "us", "ssc", "afc", "cf", "sc", "calcio", "club", "de", "1907", "1909", "1913", "1919", "bc", "vfb", "vfl", "tsg", "sv", "fsv", "rc", "cd", "ud", "rcd", "ca", "sd", "1846", "04", "05", "1899", "hellas"}
+STOP = {"al", "fc", "ac", "as", "ss", "us", "ssc", "afc", "cf", "sc", "calcio", "club", "de", "1907", "1909", "1913", "1919", "bc", "vfb", "vfl", "tsg", "sv", "fsv", "rc", "cd", "ud", "rcd", "ca", "sd", "1846", "04", "05", "1899", "hellas"}
 ALIAS = {"internazionale": "inter", "inter milan": "inter", "ac milan": "milan", "manchester united": "man united", "manchester city": "man city", "bayern munich": "bayern", "tottenham hotspur": "tottenham"}
 
 
@@ -691,16 +691,11 @@ def giro_espn(base="data", ore=48):
     out["risultati_lega"] = {}
     for k in SOLO_ESPN + COPPE:
         evs = []
-        for dd in ((-4, -3, -2, -1, 0, 1, 2, 3) if k in COPPE else (-2, -1, 0)):
+        for dd in ((-4, -3, -2, -1, 0, 1, 2, 3) if k in COPPE else (-4, -3, -2, -1, 0)):  # 4 giorni indietro: ricontrollo dei risultati del diario
             giorno = (ora + timedelta(days=dd)).strftime("%Y%m%d")
             try:
                 for ev in get(f"{SITE}{ESPN_LG[k]}/scoreboard?dates={giorno}").get("events", []):
-                    c = ev["competitions"][0]
-                    h = next(x for x in c["competitors"] if x["homeAway"] == "home")
-                    a = next(x for x in c["competitors"] if x["homeAway"] == "away")
-                    t = ev["status"]["type"]
-                    evs.append({"t": ev["date"], "h": h["team"]["displayName"], "a": a["team"]["displayName"], "st": t["state"], "fine": t.get("completed", False),
-                                "g": [int(h.get("score") or 0), int(a.get("score") or 0)]})
+                    evs.append(evento(ev))
             except Exception as e:  # noqa: BLE001
                 print(f"ESPN risultati {k} {giorno}: {e}")
         out["risultati_lega"][k] = evs
@@ -721,6 +716,64 @@ def giro_espn(base="data", ore=48):
     with open(os.path.join(base, "espn", "squadre.json"), "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
     print(f"ESPN: {len(out['squadre'])} squadre con rosa e risultati, classifiche: {list(out['classifiche'])}")
+
+
+def evento(ev):
+    """Partita del calendario ESPN in forma compatta: orario, squadre, stato, risultato (e primo tempo se noto)."""
+    c = ev["competitions"][0]
+    h = next(x for x in c["competitors"] if x["homeAway"] == "home")
+    a = next(x for x in c["competitors"] if x["homeAway"] == "away")
+    t = ev["status"]["type"]
+    out = {"t": ev["date"], "h": h["team"]["displayName"], "a": a["team"]["displayName"], "st": t["state"], "fine": t.get("completed", False),
+           "g": [int(h.get("score") or 0), int(a.get("score") or 0)]}
+    if t.get("name") in ("STATUS_POSTPONED", "STATUS_CANCELED", "STATUS_SUSPENDED", "STATUS_ABANDONED"):
+        out["rinv"] = True
+    try:
+        ls = [[int(x["value"]) for x in c_["linescores"]] for c_ in (h, a)]
+    except (KeyError, TypeError, ValueError):
+        ls = None
+    if ls and len(ls[0]) >= 2 and len(ls[1]) >= 2:
+        g1, g90 = [ls[0][0], ls[1][0]], [ls[0][0] + ls[0][1], ls[1][0] + ls[1][1]]
+        if g1[0] <= g90[0] <= out["g"][0] and g1[1] <= g90[1] <= out["g"][1]:  # solo se coerente con il finale
+            out["g1"] = g1
+            if g90 != out["g"]:
+                out["g120"], out["g"] = out["g"], g90
+    if t.get("name") in ("STATUS_FINAL_AET", "STATUS_FINAL_PEN") and "g120" not in out and "g1" not in out:
+        out["no90"] = True  # supplementari o rigori senza il risultato dei 90 minuti: non si usa (i consigli valgono sui 90')
+    return out
+
+
+def evento_vicino(evs, casa, ospite, t0, ore=6):
+    """La partita del calendario ESPN che corrisponde meglio a casa-ospite entro qualche ora (non la prima che somiglia:
+    "Al Ittihad - Al Ain" non deve prendere il risultato di "Al Sadd - Al Ahli"). Ognuna delle due squadre deve somigliare."""
+    best, bs = None, (0, 0)
+    for e in evs or []:
+        try:
+            t = datetime.fromisoformat(e["t"].replace("Z", "+00:00"))
+        except (KeyError, ValueError, AttributeError):
+            continue
+        dt = abs((t - t0).total_seconds())
+        if dt > ore * 3600:
+            continue
+        sh, sa = sim(casa, [e["h"]]), sim(ospite, [e["a"]])
+        if sh < 0.5 or sa < 0.5 or sh + sa < 1.3:
+            continue
+        if (sh + sa, -dt) > bs:
+            best, bs = e, (sh + sa, -dt)
+    return best
+
+
+def stato_evento(e):
+    """Stato per l'app (FT, LIVE, RINV, NS), risultato e primo tempo da una partita compatta del calendario ESPN."""
+    if e.get("rinv"):
+        return "RINV", None, None
+    if e.get("no90"):
+        return "NS", None, None
+    if e.get("st") == "post" and e.get("fine"):
+        return "FT", e["g"], e.get("g1")
+    if e.get("st") == "in":
+        return "LIVE", e["g"], None
+    return "NS", None, None
 
 
 def squalificati(sq):

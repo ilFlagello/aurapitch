@@ -4,7 +4,6 @@ import { immagineSchedina, mercatoBookmaker } from "./condividi.js";
 import { Citazione, citazioneSchedina, citazioneDiario } from "./citazioni.js";
 import { Sheet, TIPI_GIOCATORI, QUOTA_MIN, probVera, esitoGamba, statoGiocata, C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, buildForzata, PROFILI_SLIP, ESITI_SCHEDINA, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
 import { GiocoResponsabile } from "./extra.js";
-import { StoricoCard } from "./partita.js";
 import { IACard } from "./ia.js";
 import { Allenatore } from "./allenatore.js";
 import { META, principali, slipOffPredefinito } from "./ordine.js";
@@ -245,3 +244,27 @@ import { META, principali, slipOffPredefinito } from "./ordine.js";
   }
 
 export { SlipView, esitoGamba, statoGiocata, Diario, Gioca, StoricoSchedine };
+
+    /* ---- storico dei consigli IA (registro pubblico degli ultimi 30 giorni): sta qui perché si vede solo nella Schedina ---- */
+    function StoricoCard() {
+      const { stor } = React.useContext(Ctx);
+      const [open, setOpen] = useState(false);
+      if (!stor || !stor.riass) return null;
+      const R = stor.riass, nomi = { consiglio: "Consiglio", prudente: "Prudente", coraggiosa: "Coraggiosa" };
+      const tot = R.consiglio ? R.consiglio.n : 0;
+      return html`<div className=${C.card + " p-4 space-y-2"}>
+        <div className="flex items-center"><span className=${C.lab + " flex-1"}>Storico consigli IA, ultimi ${stor.giorni} giorni</span><${Ic.BarChart3} size=${15} className=${C.mu} /></div>
+        ${!tot ? html`<p className=${"text-sm " + C.mu}>Lo storico parte da oggi: ogni consiglio viene salvato prima del calcio d'inizio e verificato a fine partita, senza ritocchi. Torna tra qualche giorno.</p>`
+          : html`<${React.Fragment}>
+            <div className=${"grid grid-cols-[1.3fr_1fr_0.8fr_0.8fr] text-[11px] font-medium " + C.mu}><span>Profilo</span><span className="text-right">Presi</span><span className="text-right">Attesi</span><span className="text-right">Resa</span></div>
+            ${Object.keys(nomi).filter((k) => R[k] && R[k].n).map((k) => { const r = R[k]; return html`<div key=${k} className=${"grid grid-cols-[1.3fr_1fr_0.8fr_0.8fr] text-sm tabular-nums border-t pt-1.5 " + C.bd + " " + C.tx}>
+              <span className="font-semibold">${nomi[k]}</span><span className="text-right">${r.vinti}/${r.n} <span className=${"text-xs " + C.mu}>${Math.round((r.vinti / r.n) * 100)}%</span></span>
+              <span className=${"text-right " + C.mu}>${String(r.attesa).replace(".", ",")}</span><span className=${"text-right font-semibold " + (r.resa >= 0 ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>${r.resa >= 0 ? "+" : ""}${String(r.resa).replace(".", ",")}</span></div>`; })}
+            <p className=${"text-[11px] " + C.mu}>"Attesi" è quanti consigli ci si aspettava di prendere sommando le probabilità: se "Presi" gli resta vicino, le probabilità sono oneste. "Resa" è il guadagno in unità puntando 1 su ogni consiglio alla quota mostrata (stimata dove manca quella media).</p>
+            ${stor.taratura && html`<div className=${"text-[11px] rounded-lg p-2 " + C.ch + " " + C.tx}>${stor.taratura.n ? html`<b>Taratura dei fattori:</b> su ${stor.taratura.n} partite in cui l'IA ha corretto le quote, errore medio quote ${String(stor.taratura.errore_quote).replace(".", ",")} contro IA ${String(stor.taratura.errore_ia).replace(".", ",")} (più basso è meglio).`
+              : html`<b>Taratura dei fattori:</b> le correzioni dell'IA (notizie e formazioni) vengono registrate partita per partita; con abbastanza partite si misura se migliorano le quote e si ritarano i pesi.`}</div>`}
+            <button onClick=${() => setOpen(!open)} className="text-xs font-semibold text-[#5B2EE6] dark:text-[#A58BFF]">${open ? "Nascondi le partite" : "Vedi partita per partita"}</button>
+            ${open && html`<div className="space-y-1.5">${stor.lista.map((v, i) => html`<div key=${i} className=${"text-sm border-t pt-1.5 " + C.bd}>
+              <div className=${"flex justify-between " + C.tx}><span className="truncate">${v.h} - ${v.a}</span><b className="tabular-nums">${v.g ? v.g[0] + "-" + v.g[1] : ""}</b></div>
+              <div className="flex flex-wrap gap-1 mt-1">${Object.keys(nomi).filter((k) => v.tips[k]).map((k) => html`<span key=${k} className=${"text-[11px] px-2 py-0.5 rounded-full border " + (v.esiti[k] ? TONE.good : TONE.bad)}>${mLabel({ h: v.h, a: v.a }, v.tips[k].c, true)}</span>`)}</div></div>`)}</div>`}<//>`}</div>`;
+    }

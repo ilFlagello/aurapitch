@@ -6,11 +6,16 @@ import { ESPN_LG, useLiveScores, usaPonte } from "./live.js";
 import { NOVITA, VERSIONE } from "./novita.js";
 import { QUOTA_MIN, options, mLabel, odd, pct, classificaViva, registraColori, Ricarica, vibra, AuraLine, C, Crest, Ctx, Flag, Giorni, Ic, Marchio, Seg, Sheet, TONE, auraCol, hs, html, mmss, store } from "./base.js";
 import { BarraSchedina, Cerca, Glossario, PrimoAvvio, partitaSettimana } from "./extra.js";
-import { MatchSenzaQuote, MatchView, Movimento, PlayerSheet, Row, TeamView } from "./partita.js";
+import { Row } from "./riga.js";
 // schermate secondarie caricate solo quando servono (avvio piu leggero); poi scaricate in silenzio per l'uso offline
 const pigra = (f, nome) => React.lazy(() => f().then((m) => ({ default: m[nome] })));
-const carica = { campionati: () => import("./campionati.js"), club: () => import("./club.js"), schedina: () => import("./schedina.js") };
+let modPartita = null; // scheda partita gia scaricata: si mostra subito, senza passare dall'attesa di React.Suspense (che aspetta almeno 300 ms)
+const carica = { campionati: () => import("./campionati.js"), club: () => import("./club.js"), schedina: () => import("./schedina.js"), partita: () => import("./partita.js").then((m) => (modPartita = m)) };
 const LeaguesView = pigra(carica.campionati, "LeaguesView"), ClubView = pigra(carica.club, "ClubView"), SlipView = pigra(carica.schedina, "SlipView");
+// scheda partita, squadra e giocatore (partita.js): si scarica quando apri una partita (o in silenzio quando l'app è ferma)
+const daPartita = (nome, attesa) => { const Pigra = pigra(carica.partita, nome);
+  return (props) => (modPartita ? React.createElement(modPartita[nome], props) : html`<${React.Suspense} fallback=${attesa ? html`<${Attesa} />` : null}><${Pigra} ...${props} /><//>`); };
+const MatchView = daPartita("MatchView", true), MatchSenzaQuote = daPartita("MatchSenzaQuote", true), TeamView = daPartita("TeamView", true), PlayerSheet = daPartita("PlayerSheet", false);
 const Attesa = () => html`<div className="px-4 space-y-3" aria-busy="true">${[0, 1, 2].map((i) => html`<div key=${i} className="bg-white dark:bg-[#191626] rounded-[20px] h-28 animate-pulse"></div>`)}</div>`;
 import { AccountCard, Benvenuto, InvitoRecensione, Legale, PannelloBeta, Recensione, useAccount } from "./fiducia.js";
 import { avviaStatistiche, conta, statAttive } from "./statistiche.js";
@@ -201,6 +206,8 @@ import { Guida } from "./guida.js";
     useEffect(() => { if (pushUrl) { usaPonte(pushUrl); avviaStatistiche(pushUrl); } }, [pushUrl]);
     // a riposo: scarica le altre schermate (cosi il primo tocco e immediato e funzionano anche offline)
     useEffect(() => { if (!D) return; const id = (window.requestIdleCallback || ((f) => setTimeout(f, 1500)))(() => Object.values(carica).forEach((f) => f().catch(() => {}))); return () => (window.cancelIdleCallback || clearTimeout)(id); }, [!!D]);
+    // la scheda partita è la schermata più usata: si scarica appena l'elenco è sul telefono, senza aspettare il riposo
+    useEffect(() => { if (!D) return; const id = setTimeout(() => carica.partita().catch(() => {}), 50); return () => clearTimeout(id); }, [!!D]);
     useEffect(() => { if (tab !== "partite") conta(tab); }, [tab]);
     useEffect(() => { if (open) conta("partita"); }, [open]);
     // notifiche push: partite seguite = preferite + squadra del cuore, collegate alla diretta e non ancora finite

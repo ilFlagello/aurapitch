@@ -4,7 +4,7 @@ import { ESPN_LG } from "./live.js";
 import { statoGiocata, C, Crest, Ctx, Flag, Form, Ic, Schede, Seg, TONE, html, store } from "./base.js";
 import { GiocoResponsabile, gruppiSquadre } from "./extra.js";
 import { scaricaCalendario } from "./condividi.js";
-import { Row } from "./partita.js";
+import { Row } from "./riga.js";
 import { AccountCard, codiceChi } from "./fiducia.js";
 import { conta } from "./statistiche.js";
 

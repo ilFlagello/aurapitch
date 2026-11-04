@@ -7,40 +7,8 @@ import { useSummary, loadPlayer, loadCareer, ruolo, findTeam, loadTeam, minuto, 
 import { matriceRis, NomeSquadra, NomeGiocatore, NomeLega, inizioSwipe, fineSwipe, Voce, AuraLine, C, Crest, Ctx, DOT, FavPill, Flag, Form, GROUPS, Ic, Seg, Sheet, TONE, Tabs, auraCol, evalCode, html, leggiXg, lum, mGroup, mLabel, nf, norm, odd, options, pct, pctL, spiega, store } from "./base.js";
 import { Anteprima, partitaSettimana } from "./extra.js";
 import { difficolta } from "./difficolta.js";
+import { AffPill, Row, VotoChip, caricaVoti, tonoVoto, usaVoti } from "./riga.js";
 import { pressione, conPosizioni } from "./pressione.js";
-
-    /* ---- riga partita: orario a sinistra, squadre una sopra l'altra, punteggi in colonna, aura delle probabilita sotto ---- */
-    function usaVoti() { const [V, setV] = useState(null); useEffect(() => { caricaVoti().then(setV); }, []); return V; }
-    /* affidabilita dei dati (0-100): quanta informazione ha l'algoritmo su questa partita oltre alle quote. Colore: verde alta, ambra media, rossa bassa */
-    const tonoAff = (v) => (v >= 70 ? "text-emerald-700 dark:text-emerald-300 bg-emerald-500/12 ring-emerald-500/30" : v >= 40 ? "text-amber-700 dark:text-amber-300 bg-amber-500/12 ring-amber-500/30" : "text-[#E0314B] dark:text-[#FF7085] bg-[#FF3D5A]/10 ring-[#FF3D5A]/25");
-    function AffPill({ m }) {
-      const v = m.dati && m.dati.score;
-      if (v == null) return null;
-      return html`<span className=${"flex flex-col items-center justify-center w-[46px] h-[38px] rounded-[12px] ring-1 " + tonoAff(v)} aria-label=${"Affidabilità dei dati " + v + "%"}>
-        <span className="num text-[16px] font-bold leading-none">${v}<span className="text-[10px]">%</span></span><span className="text-[8.5px] font-bold uppercase tracking-[0.06em] leading-none mt-[3px] opacity-80">dati</span></span>`;
-    }
-    function Row({ m, i }) {
-    const { goMatch, caricaDettagli } = React.useContext(Ctx);
-    const fin = m.st === "FT" && m.g;
-    const vince = (j) => m.g && m.g[j] > m.g[1 - j];
-    const live = m.st === "LIVE";
-    const left = m.st === "NS" ? html`<span className=${"num text-[17px] font-bold leading-none " + C.tx}>${m.time || "-"}</span>`
-      : m.st === "RINV" ? html`<span className=${"text-[10px] font-semibold " + C.mu}>Rinviata</span>`
-      : live ? html`<span className="flex items-center gap-1 text-[#FF3D5A] whitespace-nowrap" aria-label=${m.clock || "In diretta"}><i className="pulse block w-1.5 h-1.5 rounded-full bg-[#FF3D5A] shrink-0"></i>${m.clock && /\d/.test(m.clock)
-        ? html`<span className="num text-[16px] font-bold leading-none">${m.clock.replace(/'.*/, "'")}</span>`
-        : html`<span className="text-[11px] font-extrabold tracking-[0.06em] leading-none">${/Intervallo/.test(m.clock || "") ? "INT" : "LIVE"}</span>`}</span>`
-      : html`<span className=${"text-[11px] font-semibold " + C.mu}>Finale</span>`;
-    const team = (j) => html`<span className="flex items-center gap-2 min-w-0"><${Crest} t=${j ? m.a : m.h} size=${16} />
-      <span className=${"text-[14px] leading-[18px] truncate " + (fin && !vince(j) ? C.mu : C.tx) + (vince(j) ? " font-semibold" : "")}>${j ? m.a : m.h}</span></span>`;
-    const gol = (j) => html`<span className=${"num text-[17px] font-bold leading-[18px] text-right " + (live ? "text-[#FF3D5A]" : fin && !vince(j) ? C.mu : C.tx)}>${m.g ? m.g[j] : ""}</span>`;
-    return html`<button onPointerDown=${() => !m.nq && caricaDettagli && caricaDettagli(m.id)} onClick=${() => goMatch(m.id)} className=${"w-full text-left px-4 pt-2 pb-1.5 " + (i ? "border-t " + C.bd : "")}>
-      <span className="grid items-center gap-x-3 gap-y-1" style=${{ gridTemplateColumns: "44px minmax(0,1fr) 20px 46px" }}>
-        <span className="row-span-2 flex items-center min-w-0 overflow-hidden">${left}</span>
-        ${team(0)}${gol(0)}
-        <span className="row-span-2 flex flex-col items-end justify-center gap-0.5">${m.free && html`<span className=${"text-[9px] font-bold " + C.acc}>Gratis</span>`}<${AffPill} m=${m} /></span>
-        ${team(1)}${gol(1)}
-        <span></span><span className="col-span-2 pt-0.5">${m.nq ? (m.pq ? html`<${AuraLine} m=${m} p=${m.pq} h=${2} />` : html`<span className=${"block text-[10px] font-semibold " + C.mu}>Senza quote · risultati e diretta</span>`) : html`<${AuraLine} m=${m} h=${2} />`}</span></span></button>`;
-  }
 
     /* ---- gate PRO ---- */
     function Gate({ m, title, children }) {
@@ -488,11 +456,6 @@ import { pressione, conPosizioni } from "./pressione.js";
             <span className=${"num w-5 text-[14px] " + C.mu}>${p.num}</span><span className=${"truncate flex-1 py-0.5 " + (p.inn ? "font-semibold" : "")}>${p.short}</span>${p.inn && html`<span className=${"num text-[14px] shrink-0 " + C.acc}>${p.minIn || "in"}</span>`}${p.voto != null && html`<${VotoChip} v=${p.voto} />`}</button>`)}</div>`)}</div>
           <p className=${"text-[11px] mt-3 " + C.mu}>Voti AuraPitch: calcolati dalle statistiche della partita (gol, assist, tiri, falli, cartellini, parate, gol subiti, risultato). Partono da 6.</p></div><//>`;
     }
-    /* voto: numero in stile tabellone su una pastiglia; viola = ottimo, verde acqua = buono, lilla = nella media, corallo = insufficiente */
-    const tonoVoto = (v) => (v >= 7.5 ? "#5B2EE6" : v >= 6.6 ? "#0F9D84" : v >= 5.8 ? "#8A84A3" : "#FF3D5A");
-    function VotoChip({ v, big }) {
-      return html`<span className=${"num inline-flex items-center justify-center rounded-[6px] text-white font-bold leading-none shrink-0 " + (big ? "text-[20px] px-2 py-1 min-w-[42px]" : "text-[13px] px-1 py-[2px] min-w-[28px]")} style=${{ background: tonoVoto(v) }}>${v.toFixed(1).replace(".", ",")}</span>`;
-    }
     /* migliori in campo: i 3 voti più alti, il primo in grande */
     function Migliori({ sm, m, onPlayer }) {
       const col = auraCol(m);
@@ -613,8 +576,6 @@ import { pressione, conPosizioni } from "./pressione.js";
           <p className=${"text-[11px] " + C.mu}>Campionati e coppe stagione per stagione, dalle più recenti. Le amichevoli sono escluse.</p><//>`}<//>`;
     }
 
-    let _voti = null;
-    function caricaVoti() { if (!_voti) _voti = fetch("data/voti.json").then((r) => (r.ok ? r.json() : {})).catch(() => ({})); return _voti; }
 
     /* ---- consiglio IA in diretta ---- */
     function pois(l) { const o = [Math.exp(-l)]; for (let k = 1; k <= 8; k++) o.push((o[k - 1] * l) / k); return o; }
@@ -772,29 +733,6 @@ import { pressione, conPosizioni } from "./pressione.js";
     }
 
     /* ---- storico dei consigli ---- */
-    function StoricoCard() {
-      const { stor } = React.useContext(Ctx);
-      const [open, setOpen] = useState(false);
-      if (!stor || !stor.riass) return null;
-      const R = stor.riass, nomi = { consiglio: "Consiglio", prudente: "Prudente", coraggiosa: "Coraggiosa" };
-      const tot = R.consiglio ? R.consiglio.n : 0;
-      return html`<div className=${C.card + " p-4 space-y-2"}>
-        <div className="flex items-center"><span className=${C.lab + " flex-1"}>Storico consigli IA, ultimi ${stor.giorni} giorni</span><${Ic.BarChart3} size=${15} className=${C.mu} /></div>
-        ${!tot ? html`<p className=${"text-sm " + C.mu}>Lo storico parte da oggi: ogni consiglio viene salvato prima del calcio d'inizio e verificato a fine partita, senza ritocchi. Torna tra qualche giorno.</p>`
-          : html`<${React.Fragment}>
-            <div className=${"grid grid-cols-[1.3fr_1fr_0.8fr_0.8fr] text-[11px] font-medium " + C.mu}><span>Profilo</span><span className="text-right">Presi</span><span className="text-right">Attesi</span><span className="text-right">Resa</span></div>
-            ${Object.keys(nomi).filter((k) => R[k] && R[k].n).map((k) => { const r = R[k]; return html`<div key=${k} className=${"grid grid-cols-[1.3fr_1fr_0.8fr_0.8fr] text-sm tabular-nums border-t pt-1.5 " + C.bd + " " + C.tx}>
-              <span className="font-semibold">${nomi[k]}</span><span className="text-right">${r.vinti}/${r.n} <span className=${"text-xs " + C.mu}>${Math.round((r.vinti / r.n) * 100)}%</span></span>
-              <span className=${"text-right " + C.mu}>${String(r.attesa).replace(".", ",")}</span><span className=${"text-right font-semibold " + (r.resa >= 0 ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600 dark:text-rose-300")}>${r.resa >= 0 ? "+" : ""}${String(r.resa).replace(".", ",")}</span></div>`; })}
-            <p className=${"text-[11px] " + C.mu}>"Attesi" è quanti consigli ci si aspettava di prendere sommando le probabilità: se "Presi" gli resta vicino, le probabilità sono oneste. "Resa" è il guadagno in unità puntando 1 su ogni consiglio alla quota mostrata (stimata dove manca quella media).</p>
-            ${stor.taratura && html`<div className=${"text-[11px] rounded-lg p-2 " + C.ch + " " + C.tx}>${stor.taratura.n ? html`<b>Taratura dei fattori:</b> su ${stor.taratura.n} partite in cui l'IA ha corretto le quote, errore medio quote ${String(stor.taratura.errore_quote).replace(".", ",")} contro IA ${String(stor.taratura.errore_ia).replace(".", ",")} (più basso è meglio).`
-              : html`<b>Taratura dei fattori:</b> le correzioni dell'IA (notizie e formazioni) vengono registrate partita per partita; con abbastanza partite si misura se migliorano le quote e si ritarano i pesi.`}</div>`}
-            <button onClick=${() => setOpen(!open)} className="text-xs font-semibold text-[#5B2EE6] dark:text-[#A58BFF]">${open ? "Nascondi le partite" : "Vedi partita per partita"}</button>
-            ${open && html`<div className="space-y-1.5">${stor.lista.map((v, i) => html`<div key=${i} className=${"text-sm border-t pt-1.5 " + C.bd}>
-              <div className=${"flex justify-between " + C.tx}><span className="truncate">${v.h} - ${v.a}</span><b className="tabular-nums">${v.g ? v.g[0] + "-" + v.g[1] : ""}</b></div>
-              <div className="flex flex-wrap gap-1 mt-1">${Object.keys(nomi).filter((k) => v.tips[k]).map((k) => html`<span key=${k} className=${"text-[11px] px-2 py-0.5 rounded-full border " + (v.esiti[k] ? TONE.good : TONE.bad)}>${mLabel({ h: v.h, a: v.a }, v.tips[k].c, true)}</span>`)}</div></div>`)}</div>`}<//>`}</div>`;
-    }
-
     /* ---- pagina squadra ---- */
     /* forza Elo delle squadre (una volta per sessione): serve alla difficoltà delle partite oltre i 5 giorni dell'app */
     let _forza = null;
@@ -1246,4 +1184,4 @@ import { pressione, conPosizioni } from "./pressione.js";
       <//>`;
     }
 
-export { EseCard, Movimento, PercheCambiato, ProbDiretta, momentiDiretta, golRestanti, FormazioneProbabile, usaVoti, Row, Gate, KEY_T, trasf, PESI, prob1x2, toks, stesso, assenze, AssenzeCard, CampoNotte, TIRI, suNotte, TiriCard, LiveAction, EvIcon, riassunto, righeResoconto, Resoconto, KeyEvents, StatsCard, Cronaca, InfoCard, ArbitroCard, Badges, Lineups, tonoVoto, VotoChip, Migliori, Andamento, Curiosita, Sondaggio, ST_IT, PlayerSheet, _voti, caricaVoti, pois, PESO_SPINTA, spinta, quotaRestante, liveProb, LiveTips, meteoCache, MeteoCard, FattoriCard, StoricoCard, TeamView, TipView, MatchView, MatchSenzaQuote, Pressione, Vai, InBreve };
+export { EseCard, Movimento, PercheCambiato, ProbDiretta, momentiDiretta, golRestanti, FormazioneProbabile, usaVoti, Row, Gate, KEY_T, trasf, PESI, prob1x2, toks, stesso, assenze, AssenzeCard, CampoNotte, TIRI, suNotte, TiriCard, LiveAction, EvIcon, riassunto, righeResoconto, Resoconto, KeyEvents, StatsCard, Cronaca, InfoCard, ArbitroCard, Badges, Lineups, tonoVoto, VotoChip, Migliori, Andamento, Curiosita, Sondaggio, ST_IT, PlayerSheet, caricaVoti, pois, PESO_SPINTA, spinta, quotaRestante, liveProb, LiveTips, meteoCache, MeteoCard, FattoriCard, TeamView, TipView, MatchView, MatchSenzaQuote, Pressione, Vai, InBreve };

@@ -22,15 +22,23 @@ const srv = http.createServer((req, res) => {
 const URL0 = `http://127.0.0.1:${srv.address().port}/`;
 
 const errori = [];
-// budget di velocità: codice scaricato all'avvio (compresso) sotto i 185 KB
+// budget di velocità: codice scaricato all'avvio (compresso) sotto i 150 KB (185 fino al 4/11: la scheda partita ora si scarica dopo, 172 -> 132 KB)
 // (175 fino alla 1.9; la 2.0 ha aggiunto storico schedine, "perché è cambiato" e probabilità in diretta: l'apertura resta sotto i 250 ms, il limite vero qui sotto è 2,5 secondi)
 {
   const zlib = await import("node:zlib");
   const sw = fs.readFileSync(path.join(DIST, "sw.js"), "utf8");
-  const avvio = ["app.js", ...((/const PARTI = (\[[^\]]*\])/.exec(sw) || [0, "[]"])[1] ? JSON.parse((/const PARTI = (\[[^\]]*\])/.exec(sw) || [0, "[]"])[1]).filter((f) => /chunk-/.test(f)) : [])];
+  // file scaricati davvero all'avvio: app.js e i pezzi che importa (anche indirettamente). Fino al 4/11 si contavano tutti i pezzi
+  // "chunk-", anche quelli usati solo dalle schermate caricate dopo (stima per eccesso: 172 KB contro 116 reali)
+  const avvio = [], visita = (f) => { if (avvio.includes(f)) return; avvio.push(f);
+    const dir = path.posix.dirname(f), t = fs.readFileSync(path.join(DIST, f), "utf8");
+    for (const m of t.matchAll(/(?:from|import)\s*"(\.\/[^"]+\.js)"/g)) visita(path.posix.normalize(path.posix.join(dir, m[1]))); };
+  visita("app.js");
+  const vecchio = ["app.js", ...((/const PARTI = (\[[^\]]*\])/.exec(sw) || [0, "[]"])[1] ? JSON.parse((/const PARTI = (\[[^\]]*\])/.exec(sw) || [0, "[]"])[1]).filter((f) => /chunk-/.test(f)) : [])];
+  console.log(`Codice all'avvio, conteggio di prima (tutti i pezzi "chunk-"): ${(vecchio.reduce((n, f) => n + zlib.gzipSync(fs.readFileSync(path.join(DIST, f))).length, 0) / 1024).toFixed(0)} KB compressi`);
+  console.log(`File all'avvio: ${avvio.join(", ")}`);
   const kb = avvio.reduce((n, f) => n + zlib.gzipSync(fs.readFileSync(path.join(DIST, f))).length, 0) / 1024;
   console.log(`Codice all'avvio: ${kb.toFixed(0)} KB compressi`);
-  if (kb > 185) errori.push(`avvio troppo pesante: ${kb.toFixed(0)} KB compressi (budget 185)`);
+  if (kb > 150) errori.push(`avvio troppo pesante: ${kb.toFixed(0)} KB compressi (budget 150)`);
 }
 const b = await pw.chromium.launch();
 async function giro(tema) {
@@ -76,6 +84,19 @@ async function giro(tema) {
     const t0 = Date.now(); await p.reload(); await p.getByRole("button", { name: /In diretta/ }).first().waitFor({ timeout: 8000 }); // con partite in corso i pulsanti sono due
     const ms = Date.now() - t0; console.log(`[${tema}] apertura: ${ms} ms`);
     if (ms > 2500) errori.push(`[${tema}] apertura lenta: ${ms} ms`);
+  });
+  // apertura di una partita subito dopo l'avvio (codice della scheda non ancora scaricato) e a app già aperta: entro 1,5 secondi
+  await passo0("velocità di apertura della partita", async () => {
+    await p.reload(); await p.getByRole("button", { name: /In diretta/ }).first().waitFor({ timeout: 8000 });
+    const t0 = Date.now(); await p.locator("main button").filter({ hasText: /\d\d:\d\d/ }).first().click();
+    await p.getByRole("tab", { name: "In breve", exact: true }).first().waitFor({ timeout: 8000 });
+    const ms = Date.now() - t0; console.log(`[${tema}] apertura partita subito dopo l'avvio: ${ms} ms`);
+    if (ms > 1500) errori.push(`[${tema}] apertura della partita lenta: ${ms} ms`);
+    await p.getByRole("button", { name: "Partite", exact: true }).first().click(); await p.waitForTimeout(1500);
+    const t1 = Date.now(); await p.locator("main button").filter({ hasText: /\d\d:\d\d/ }).nth(1).click();
+    await p.getByRole("tab", { name: "In breve", exact: true }).first().waitFor({ timeout: 8000 });
+    console.log(`[${tema}] apertura partita ad app aperta: ${Date.now() - t1} ms`);
+    await p.getByRole("button", { name: "Partite", exact: true }).first().click(); await p.waitForTimeout(400);
   });
   const tab = async (n) => { await p.getByRole("tab", { name: n, exact: true }).first().click({ timeout: 5000 }); await p.waitForTimeout(250); };
   const dock = async (n) => { await p.getByRole("button", { name: n, exact: true }).click({ timeout: 5000 }); await p.waitForTimeout(600); };

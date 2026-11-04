@@ -1,7 +1,7 @@
 /* AuraPitch - partita della settimana, glossario, gioco responsabile, primo avvio, schedina in diretta, ricerca. */
 import { conta } from "./statistiche.js";
 import { sezioniLeghe } from "./ordine.js";
-import { caricaVoti } from "./partita.js";
+import { caricaVoti } from "./riga.js";
 import React, { useState, useEffect } from "react";
 import { ESPN_LG } from "./live.js";
 import { statoGiocata, C, Crest, Ctx, Flag, Ic, Marchio, Sheet, evalCode, hit, html, norm, pct, store } from "./base.js";

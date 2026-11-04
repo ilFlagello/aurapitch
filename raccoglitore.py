@@ -96,9 +96,8 @@ def af(path, cat="partite", **params):
     return body
 
 
-def partite_vicine(chiave, giorni=3):
-    """Elenco eventi di The Odds API (non consuma crediti): ci sono partite nei prossimi giorni?"""
-    ev, _ = odds_api(f"/sports/{chiave}/events", dateFormat="iso")
+def _vicine(ev, giorni=3):
+    """Ci sono partite nei prossimi giorni? (dall'elenco eventi di The Odds API, che non consuma crediti)"""
     ora = datetime.now(timezone.utc)
     for e in ev or []:
         try:
@@ -274,7 +273,12 @@ def giro_completo(base="data"):
                 chiavi[lg["nome"]] = k
     # ordine dei campionati: prima quelli con partite nei prossimi 3 giorni (in ordine di importanza), poi gli altri solo se
     # avanzano crediti e la loro ultima fotografia ha almeno 2 giorni (il controllo delle partite vicine e gratuito)
-    vicini = [n for n in ODDS_API_LEAGUES if n in chiavi and partite_vicine(chiavi[n])]
+    # calendario dei costi (elenco eventi gratuito): la parte di oggi e dei prossimi giorni segue le partite vere
+    eventi = {n: (odds_api(f"/sports/{chiavi[n]}/events", dateFormat="iso")[0] or []) for n in ODDS_API_LEAGUES if n in chiavi}
+    SV.odds_calendario(SV.calendario_da_eventi(eventi))
+    oggi_utc = datetime.now(timezone.utc).date().isoformat()
+    di_oggi = [n for n in ODDS_API_LEAGUES if any(str(e.get("commence_time", ""))[:10] == oggi_utc for e in eventi.get(n, []))]
+    vicini = di_oggi + [n for n in ODDS_API_LEAGUES if n in eventi and n not in di_oggi and _vicine(eventi[n])]  # prima chi gioca oggi
     lontani = [n for n in ODDS_API_LEAGUES if n in chiavi and n not in vicini and n not in COPPE
                and (SV.odds_ultima(n) or "0000") <= (datetime.now(timezone.utc).date() - timedelta(days=2)).isoformat()]
     for nome in vicini + lontani:
@@ -318,6 +322,7 @@ def fd(path, **params):
     url = f"{FD_BASE}{path}" + ("?" + urllib.parse.urlencode(params) if params else "")
     body = None
     try:
+        SV.fd_spesa()
         body, _ = get(url, {"X-Auth-Token": key})
     except urllib.error.HTTPError as e:
         print(f"  [football-data] {path}: errore {e.code}")

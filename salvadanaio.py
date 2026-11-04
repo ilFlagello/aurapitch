@@ -8,6 +8,10 @@ Fonti con un limite (le altre, ESPN, football-data.co.uk, Google News, Open-Mete
 - API-Football: 100 richieste al GIORNO (si azzerano a mezzanotte UTC), divise tra i lavori: infortuni, partite del giorno,
   formazioni. Ogni lavoro ha il suo tetto, cosi nessuno lascia a secco gli altri; resta sempre una piccola riserva.
 Quando i crediti di una fonte non bastano, si usa la fonte gratuita (quote ESPN, formazioni ESPN): le partite si aggiornano sempre.
+Dal 4/11: la parte di ogni giorno segue il calendario vero (elenco eventi di The Odds API, gratuito): quanto costano le
+fotografie al blocco del consiglio (una chiamata per campionato e fascia di calcio d'inizio) e il giro del mattino dei
+campionati che giocano. Le fotografie al blocco hanno la precedenza sul mattino (l'ora delle quote conta 13 volte piu del
+bookmaker). "Economo": una sola tabella con usato, rimasto e previsione di tutte le fonti a consumo (economo()).
 Registro: data/budget.json (solo conteggi). Solo libreria standard."""
 import calendar
 import json
@@ -47,11 +51,66 @@ def salva(d):
 
 # ---------- The Odds API (mese) ----------
 
-def quota_odds_giorno(rimasti, giorno):
-    """Crediti che il giorno puo spendere: i rimasti (meno la riserva) divisi sui giorni fino a fine mese, pesati per giorno."""
+ODDS_CHIAMATA = 2           # crediti di una chiamata (h2h + totals, area eu)
+FASCIA_MIN = 20             # partite dello stesso campionato a meno di 20 minuti: una sola fotografia al blocco
+
+
+def costo_giorno(v):
+    """Crediti che servono in un giorno del calendario: una chiamata per fascia (blocco) e una per campionato (mattino)."""
+    return ODDS_CHIAMATA * ((v or {}).get("fasce", 0) + (v or {}).get("leghe", 0))
+
+
+def quota_odds_giorno(rimasti, giorno, cal=None):
+    """Crediti che il giorno puo spendere: i rimasti (meno la riserva) divisi sui giorni fino a fine mese, in proporzione a
+    quanto costa ogni giorno secondo il calendario (cal: {"AAAA-MM-GG": {"fasce", "leghe"}}). I giorni che il calendario non
+    copre ancora valgono il costo medio dei giorni noti, pesato per giorno della settimana (sabato e domenica di piu).
+    Senza calendario: solo i pesi della settimana (come prima)."""
     ultimo = calendar.monthrange(giorno.year, giorno.month)[1]
-    pesi = [PESI_GIORNO[date(giorno.year, giorno.month, g).weekday()] for g in range(giorno.day, ultimo + 1)]
+    giorni = [date(giorno.year, giorno.month, g) for g in range(giorno.day, ultimo + 1)]
+    pesi = [PESI_GIORNO[g.weekday()] for g in giorni]
+    noti = [(i, costo_giorno(cal[g.isoformat()])) for i, g in enumerate(giorni) if cal and g.isoformat() in cal]
+    if noti and sum(c for _, c in noti) > 0:
+        scala = sum(c for _, c in noti) / sum(pesi[i] for i, _ in noti)
+        pesi = [p * scala for p in pesi]
+    for i, c in noti:  # giorno noto senza partite nei campionati con crediti: nessun credito (restano ai giorni dopo)
+        pesi[i] = c
+    if sum(pesi) <= 0:
+        return 0
     return max(0, int((rimasti - ODDS_RISERVA) * pesi[0] / sum(pesi)))
+
+
+def calendario_da_eventi(eventi, fascia_min=FASCIA_MIN):
+    """Calendario dei costi da {campionato: [eventi di The Odds API]}: per ogni giorno (UTC) le fasce di calcio d'inizio
+    (partite dello stesso campionato a meno di fascia_min minuti l'una dall'altra = una fascia) e i campionati che giocano."""
+    per = {}
+    for lega, evs in (eventi or {}).items():
+        orari = {}
+        for e in evs or []:
+            try:
+                t = datetime.fromisoformat(str(e["commence_time"]).replace("Z", "+00:00"))
+            except (KeyError, ValueError):
+                continue
+            orari.setdefault(t.date().isoformat(), []).append(t)
+        for g, ts in orari.items():
+            ts.sort()
+            fasce = 1 + sum(1 for a, b in zip(ts, ts[1:]) if (b - a).total_seconds() > fascia_min * 60)
+            v = per.setdefault(g, {"fasce": 0, "leghe": 0})
+            v["fasce"] += fasce
+            v["leghe"] += 1
+    return dict(sorted(per.items()))
+
+
+def odds_calendario(cal):
+    """Salva il calendario dei costi (si tengono solo i giorni da oggi in poi)."""
+    d = carica()
+    o = d.setdefault("odds", {})
+    oggi = _ora().date().isoformat()
+    vecchio = {g: v for g, v in (o.get("calendario") or {}).items() if g >= oggi}
+    vecchio.update({g: v for g, v in (cal or {}).items() if g >= oggi})
+    o["calendario"] = dict(sorted(vecchio.items()))
+    if o.get("giorno") == oggi and o.get("inizio") is not None:  # la parte di oggi si ricalcola con il calendario vero
+        o["quota"] = quota_odds_giorno(o["inizio"], _ora().date(), o["calendario"])
+    salva(d)
 
 
 def _odds_oggi(d, rimasti=None):
@@ -59,10 +118,10 @@ def _odds_oggi(d, rimasti=None):
     oggi = _ora().date()
     if o.get("giorno") != oggi.isoformat():
         base = rimasti if rimasti is not None else o.get("rimasti")
-        o.update({"giorno": oggi.isoformat(), "inizio": base, "quota": quota_odds_giorno(base, oggi) if base is not None else None,
+        o.update({"giorno": oggi.isoformat(), "inizio": base, "quota": quota_odds_giorno(base, oggi, o.get("calendario")) if base is not None else None,
                   "spesi": {}, "mattino_fatto": False})
     elif o.get("quota") is None and rimasti is not None:
-        o.update({"inizio": rimasti, "quota": quota_odds_giorno(rimasti, oggi)})
+        o.update({"inizio": rimasti, "quota": quota_odds_giorno(rimasti, oggi, o.get("calendario"))})
     if rimasti is not None:
         o["rimasti"] = rimasti
     return o
@@ -81,6 +140,9 @@ def odds_puo(cat, costo, rimasti=None):
     limite = o["quota"]
     if cat != "mattino" and not o.get("mattino_fatto"):
         limite -= min(ODDS_RISERVA_MATTINO, o["quota"] // 2)
+    fasce = ((o.get("calendario") or {}).get(o["giorno"]) or {}).get("fasce")
+    if cat == "mattino" and fasce:  # le fotografie al blocco di oggi hanno la precedenza: il mattino lascia loro i crediti
+        limite -= min(ODDS_CHIAMATA * fasce, max(0, o["quota"] - ODDS_CHIAMATA))  # (ma almeno un campionato al mattino)
     return spesi + costo <= limite
 
 
@@ -169,6 +231,71 @@ def previsione(oggi=None, rimasti=None):
     oltre = bool(di_oggi and di_oggi["quota"] is not None and di_oggi["spesi"] > di_oggi["quota"] + ODDS_MATTINO)
     return {"rimasti": rimasti, "per_giorno": round(per_giorno, 1), "ritmo": round(ritmo, 1), "giorni": giorni, "fino_al": fino_al,
             "oggi": di_oggi, "oltre": oltre, "basta": per_giorno >= ODDS_MATTINO and not oltre}
+
+
+# ---------- football-data.org (10 richieste al minuto, nessun limite giornaliero) ----------
+
+FD_MINUTO = 10
+
+
+def fd_spesa():
+    """Conta le richieste a football-data.org del giorno (il limite e al minuto: raccoglitore.fd aspetta 6,5 secondi)."""
+    d = carica()
+    f = d.setdefault("fd", {})
+    oggi = _ora().date().isoformat()
+    if f.get("giorno") != oggi:
+        f.update({"giorno": oggi, "usate": 0})
+    f["usate"] += 1
+    salva(d)
+
+
+# ---------- economo: una sola tabella per tutte le fonti a consumo ----------
+
+def economo(oggi=None, rimasti=None):
+    """Tabella del budget di tutte le API: per ogni fonte limite, usato, rimasto, previsione e stato ("ok" o "attenzione").
+    The Odds API: previsione a fine mese (crediti al giorno contro il costo medio dei giorni del calendario).
+    API-Football: oggi contro le 100 richieste. football-data.org: richieste di oggi (limite al minuto, rispettato dal giro).
+    Le altre fonti sono libere. Restituisce {"righe": [...], "avvisi": [...]}."""
+    oggi = oggi or _ora().date()
+    d = carica()
+    righe, avvisi = [], []
+    o = d.get("odds") or {}
+    pv = previsione(oggi, rimasti)
+    if pv:
+        futuri = [costo_giorno(v) for g, v in (o.get("calendario") or {}).items() if g > oggi.isoformat()]
+        bisogno = round(sum(futuri) / len(futuri), 1) if futuri else None
+        copertura = min(1.0, pv["per_giorno"] / bisogno) if bisogno else None
+        ok = pv["basta"] and (copertura is None or copertura >= 0.6)
+        righe.append({"fonte": "The Odds API", "limite": f"{ODDS_MESE} crediti al mese", "usato": ODDS_MESE - pv["rimasti"], "rimasto": pv["rimasti"],
+                      "previsione": f"{pv['per_giorno']} al giorno per {pv['giorni']} giorni" + (f", servirebbero {bisogno} (calendario)" if bisogno else ""),
+                      "copertura": None if copertura is None else round(copertura, 2), "stato": "ok" if ok else "attenzione"})
+        if not ok:
+            avvisi.append(f"The Odds API: {pv['per_giorno']} crediti al giorno fino a fine mese"
+                          + (f" contro {bisogno} che servirebbero per tutte le fotografie al blocco e il mattino" if bisogno else "")
+                          + ": alcune partite avranno solo le quote gratuite ESPN")
+    a = d.get("af") or {}
+    if a.get("giorno") == oggi.isoformat():
+        usate = sum((a.get("usate") or {}).values())
+        ok = usate <= AF_GIORNO - AF_RISERVA
+        righe.append({"fonte": "API-Football", "limite": f"{AF_GIORNO} richieste al giorno", "usato": usate, "rimasto": a.get("rimaste"),
+                      "previsione": "per lavoro: " + ", ".join(f"{k} {v}/{AF_TETTI.get(k, '-')}" for k, v in sorted((a.get("usate") or {}).items())),
+                      "stato": "ok" if ok else "attenzione"})
+        if not ok:
+            avvisi.append(f"API-Football: oggi {usate} richieste, oltre le {AF_GIORNO - AF_RISERVA} previste")
+    f = d.get("fd") or {}
+    if f.get("giorno") == oggi.isoformat():
+        righe.append({"fonte": "football-data.org", "limite": f"{FD_MINUTO} richieste al minuto", "usato": f.get("usate", 0), "rimasto": None,
+                      "previsione": "nessun limite giornaliero (il giro aspetta 6,5 secondi tra due richieste)", "stato": "ok"})
+    righe.append({"fonte": "ESPN, Football-Data.co.uk, Google News, Open-Meteo", "limite": "libere", "usato": None, "rimasto": None,
+                  "previsione": "-", "stato": "ok"})
+    return {"righe": righe, "avvisi": avvisi}
+
+
+def riga_economo(oggi=None, rimasti=None):
+    """Una riga di testo per il riepilogo del lunedi."""
+    e = economo(oggi, rimasti)
+    pezzi = [f"{r['fonte']} {r['usato']} usati, {r['rimasto']} rimasti ({r['previsione']})" for r in e["righe"] if r["usato"] is not None]
+    return ("Budget delle API: " + "; ".join(pezzi)).replace(".", ",") if pezzi else None
 
 
 def riassunto():

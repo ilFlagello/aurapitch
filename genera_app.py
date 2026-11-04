@@ -1908,6 +1908,11 @@ def main():
             archivia_senza_quote(jload(ESPN, {}) or {})
         except Exception as e:  # noqa: BLE001
             print(f"Archivio senza quote: non aggiornato ({type(e).__name__}: {e})")
+        try:  # tabellone delle coppe (tabellone.py): una volta al giorno, con memoria delle partite finite
+            import tabellone as TB
+            TB.aggiorna(ES.get)
+        except Exception as e:  # noqa: BLE001 - il tabellone non deve mai fermare il giro dei dati
+            print(f"Tabelloni delle coppe: non aggiornati ({type(e).__name__}: {e})")
         try:  # mattino: ricontrollo dei risultati del diario e dei consigli con il calendario ESPN appena scaricato
             risultati_espn(d, eventi=(jload(ESPN, {}) or {}).get("risultati_lega") or {}, massimo=60)
         except Exception as e:  # noqa: BLE001

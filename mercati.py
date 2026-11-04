@@ -109,10 +109,6 @@ def gol_attesi(mk, mo, linea=2.5):
 TEMPI = ("T1:", "T2:", "PF", "TPG", "HSET", "ASET", "HVET", "AVET")
 
 
-def serve_primo_tempo(c):
-    return any(x.startswith(TEMPI) for x in c.split("+"))
-
-
 def valuta(c, h, a, h1=None, a1=None):
     """Vero se il mercato (codice) e vinto con il risultato finale h-a (e del primo tempo h1-a1, se serve).
     None se il mercato riguarda i tempi e il risultato del primo tempo non e noto. Stessa logica dell'app."""

@@ -99,8 +99,9 @@ print("Football-Data: righe nuove", righe, flush=True)
 
 LEGHE_US = {"EPL": "E0", "La_liga": "SP1", "Bundesliga": "D1", "Serie_A": "I1", "Ligue_1": "F1"}
 n = 0
-if os.path.exists(os.path.join(OUT, "understat_xg.csv.gz")) and os.environ.get("RIFAI_XG") != "1":
-    print("Understat: archivio gia presente, salto", flush=True)
+# archivio xG (Understat): serviva allo studio "fortuna o merito", concluso; nessun processo lo legge. Si riscarica solo a richiesta
+if os.environ.get("RIFAI_XG") != "1":
+    print("Understat: archivio xG non richiesto (RIFAI_XG=1 per riscaricarlo), salto", flush=True)
     raise SystemExit(0)
 with gzip.open(os.path.join(OUT, "understat_xg.csv.gz"), "wt", encoding="utf-8", newline="") as f:
     w = csv.writer(f)

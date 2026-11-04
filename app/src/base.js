@@ -374,7 +374,6 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     { nome: "La Classica", n: 4, lo: 1.5, hi: 2.05, mid: 1.72, pmin: 0.48, pmax: 0.68, wp: 1.2, ws: 0.6, wv: 0.7, wm: 2.5, testo: "Una partita in più, quote standard (1,50-2,05) e giocate a probabilità media (48-68% ciascuna)." },
     { nome: "Colpaccio da Bar", n: 3, lo: 2.0, hi: 3.6, mid: 2.55, pmin: 0.28, pmax: 0.52, wp: 1.8, ws: 0.5, wv: 1.0, wm: 1.5, testo: "Poche partite a quota alta (2,00-3,60): tra le giocate difficili, l'IA sceglie le più papabili." },
   ];
-  const PROF_T = PROFILI_SLIP; // nome vecchio, per compatibilità
   const ESCLUSI_SLIP = ["Pari/Dispari", "Risultato esatto"];
   // esiti delle partite che uno stile non usa: Zero Tachicardia e La Classica restano sugli esiti principali (niente tempi e statistiche)
   const MERCATI_ESCLUSI = [/Cartellini|Falli|angolo|Parziale|Gol esatti|Margine|Tempo|tempo|Combo|Handicap/, /Cartellini|Falli|angolo|Parziale|Gol esatti|Margine|Tempo|tempo/, null];
@@ -469,10 +468,6 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     legs.libera = pool.libera;
     return legs;
   }
-  // compatibilità: la schedina con giocatori è la stessa schedina dello stile, con le voci scelte
-  function buildGiocatori(matches, tipi, T, v, nP, prof = 1) {
-    return T ? buildTarget(matches, prof, T, v, nP, vociDi(tipi)) : buildSlip(matches, prof, nP, v, vociDi(tipi));
-  }
   /* schedina con un esito scelto dall'utente (tutte in casa, tutti pareggi, tutti Goal, tutti Over 2,5...): l'IA sceglie
      le partite dove quell'esito è più probabile e più d'accordo con i dati, e se c'è una quota obiettivo la avvicina */
   const ESITI_SCHEDINA = [["", "Scelta IA"], ["1", "Tutte in casa (1)"], ["X", "Tutti pareggi (X)"], ["2", "Tutte fuori casa (2)"], ["FAV", "Vince la favorita"],
@@ -559,14 +554,6 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   function Form({ list }) {
     return html`<div className="flex gap-1">${list.map((z, i) => html`<span key=${i} title=${z.avv + " " + z.ris}
       className=${"w-6 h-6 rounded-md border flex items-center justify-center text-[11px] font-semibold " + TONE[z.esito === "V" ? "good" : z.esito === "N" ? "warn" : "bad"]}>${z.esito}</span>`)}</div>`;
-  }
-  function ProbBar({ p }) {
-    return html`<div className="space-y-1">
-      <div className="flex h-2 rounded-full overflow-hidden gap-0.5">
-        <i className="block bg-emerald-300 dark:bg-emerald-500/70" style=${{ width: pct(p[0]) + "%" }}></i>
-        <i className="block bg-[#C7C7CC] dark:bg-[#48484A]" style=${{ width: pct(p[1]) + "%" }}></i>
-        <i className="block bg-sky-300 dark:bg-sky-500/70" style=${{ width: pct(p[2]) + "%" }}></i></div>
-      <div className=${"flex justify-between text-xs tabular-nums " + C.mu}><span>1 <b className=${C.tx}>${pct(p[0])}%</b></span><span>X <b className=${C.tx}>${pct(p[1])}%</b></span><span>2 <b className=${C.tx}>${pct(p[2])}%</b></span></div></div>`;
   }
 
   /* marchio: anelli concentrici (l'aura) attorno al dischetto del centrocampo */
@@ -747,4 +734,4 @@ function classificaViva(S, partite) {
   return { ...S, generale, casa: applica(S.casa, 0), trasferta: applica(S.trasferta, 1), viva: { live: nuove.filter((m) => m.st === "LIVE").length, finite: nuove.filter((m) => m.st === "FT").length } };
 }
 
-export { TIPI_GIOCATORI, buildGiocatori, QUOTA_MIN, classificaViva, registraColori, iniziali, matriceRis, probVera, NomeSquadra, NomeGiocatore, NomeLega, Ricarica, vibra, esitoGamba, statoGiocata, html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROF_T, PROFILI_SLIP, quotaIdeale, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, ProbBar, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };
+export { TIPI_GIOCATORI, QUOTA_MIN, classificaViva, registraColori, iniziali, matriceRis, probVera, NomeSquadra, NomeGiocatore, NomeLega, Ricarica, vibra, esitoGamba, statoGiocata, html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROFILI_SLIP, quotaIdeale, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };

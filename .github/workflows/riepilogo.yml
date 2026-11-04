@@ -9,6 +9,7 @@ permissions:
   contents: read
   issues: write
   actions: read
+  pull-requests: read
   security-events: read
 jobs:
   riepilogo:
@@ -25,6 +26,10 @@ jobs:
         run: |
           python3 strumenti/cassaforte.py apri --tutto || true
           python3 strumenti/revisore.py || true
+      - name: Parti inutilizzate (per le cose da togliere)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 strumenti/pulizia.py || true
       - name: Riepilogo
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

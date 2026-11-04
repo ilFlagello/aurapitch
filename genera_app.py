@@ -25,6 +25,7 @@ import espn_dati as ES
 import fattori as FT
 import giocatori as GC
 import mercati as M
+import stima_sq as SQ
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -775,6 +776,11 @@ def genera():
     out["leagues"] += [l for l in leghe_sq if l["k"] not in presenti]
     for k, v in cl_sq.items():
         out["standings"].setdefault(k, v)
+    try:  # stima dell'IA (modello dei gol + forza dalla classifica) per le partite senza quote: mai consiglio, mai schedina, mai storico
+        n_sq = SQ.aggiungi_stime(out["senza_quote"], out["standings"], archivio=jload(ARCHIVIO_SQ, {}) or {})
+        print(f"Stime dell'IA senza quote: {n_sq} partite su {len(out['senza_quote'])}")
+    except Exception as e:  # noqa: BLE001 - la stima non deve mai fermare il giro dei dati
+        print(f"Stime dell'IA senza quote: non calcolate ({type(e).__name__}: {e})")
     # stessi nomi tra partite e classifiche/marcatori (es. "Sudtirol" in classifica, "Südtirol" nelle partite)
     import unicodedata
     piega = lambda x: unicodedata.normalize("NFD", x or "").encode("ascii", "ignore").decode().lower().strip()

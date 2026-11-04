@@ -39,7 +39,7 @@ SPECIALISTI = [
 ]
 N_MOTORE = 9
 # campionati che si giocano nell'anno solare (la stagione e l'anno); gli altri vanno da luglio a giugno
-ANNO_SOLARE = {"MLS", "BR1", "BR2", "AR1", "AR2", "AR3", "J1", "CN1", "NO1", "SE1", "CHI1", "COL1", "UY1", "PY1", "EC1", "PE1", "USL", "CR1"}
+ANNO_SOLARE = {"MLS", "BR1", "BR2", "AR1", "AR2", "AR3", "J1", "CN1", "NO1", "SE1", "CHI1", "COL1", "UY1", "PY1", "EC1", "PE1", "USL", "CR1", "FI1", "IE1"}
 
 
 def _data(t):

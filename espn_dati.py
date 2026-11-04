@@ -27,12 +27,14 @@ ESPN_LG = {"I1": "ita.1", "I2": "ita.2", "E0": "eng.1", "SP1": "esp.1", "D1": "g
            "E2": "eng.3", "E3": "eng.4", "EC": "eng.5", "SC1": "sco.2", "N2": "ned.2", "KNV": "ned.cup", "BR2": "bra.2", "CDB": "bra.copa_do_brazil", "AR2": "arg.2", "MX2": "mex.2", "USL": "usa.usl.1", "ACL2": "afc.cup", "WSL": "eng.w.1", "AUW": "aus.w.1", "UWCL": "uefa.wchampions",
            # dalla scansione del 02/11/2026: quote gratuite vere
            "CN1": "chn.1", "AR3": "arg.3", "CR1": "crc.1",
+           # dalla verifica del 04/11/2026 (campionati nuovi, seconda parte): quote DraftKings su ESPN, archivio con quote da Football-Data
+           "RU1": "rus.1",
            # nazionali
            "NL": "uefa.nations", "AMI": "fifa.friendly", "EQ": "uefa.euroq", "WCQ": "fifa.worldq.uefa"}
 NAZIONALI = ("NL", "AMI", "EQ", "WCQ")
 COPPE = ("KNV", "CDB", "ACL2", "UWCL", "CL", "EL", "ECL", "CI", "FAC", "ELC", "CDR", "DFB", "CDF", "SCI", "LIB", "SUD", "ACL", "NL", "AMI", "EQ", "WCQ")
 SOLO_ESPN = ("I2", "F1", "N1", "P1", "E1", "D2", "SP2", "B1", "T1", "SC0", "A1", "G1", "DK1", "MLS", "BR1", "AR1", "MX1", "J1",
-             "F2", "NO1", "SE1", "SA1", "CHI1", "COL1", "AU1", "UY1", "PY1", "EC1", "PE1", "E2", "E3", "EC", "SC1", "N2", "BR2", "AR2", "MX2", "USL", "WSL", "AUW", "CN1", "AR3", "CR1")  # campionati con classifica e risultati da ESPN (non da football-data.org)
+             "F2", "NO1", "SE1", "SA1", "CHI1", "COL1", "AU1", "UY1", "PY1", "EC1", "PE1", "E2", "E3", "EC", "SC1", "N2", "BR2", "AR2", "MX2", "USL", "WSL", "AUW", "CN1", "AR3", "CR1", "RU1")  # campionati con classifica e risultati da ESPN (non da football-data.org)
 # quote da ESPN: nome del campionato come nel file delle quote (deve coincidere con l'ultimo campo di LEAGUES in genera_app.py)
 QUOTE_ESPN = {"F1": "Ligue 1", "N1": "Eredivisie", "P1": "Primeira Liga", "E1": "Championship", "FAC": "FA Cup", "ELC": "Carabao Cup",
               "CDR": "Copa del Rey", "DFB": "DFB-Pokal", "CDF": "Coppa di Francia", "SCI": "Supercoppa Italiana",
@@ -42,12 +44,15 @@ QUOTE_ESPN = {"F1": "Ligue 1", "N1": "Eredivisie", "P1": "Primeira Liga", "E1": 
               "AU1": "A-League", "UY1": "Primera División Uruguay", "PY1": "Primera División Paraguay", "EC1": "LigaPro Ecuador", "PE1": "Liga 1 Perù",
               "LIB": "Copa Libertadores", "SUD": "Copa Sudamericana", "ACL": "AFC Champions League", "NL": "Nations League", "AMI": "Amichevoli nazionali",
               "EQ": "Qualificazioni Europei", "WCQ": "Qualificazioni Mondiali",
-              "E2": "League One", "E3": "League Two", "EC": "National League", "SC1": "Scottish Championship", "N2": "Eerste Divisie", "KNV": "KNVB Beker", "BR2": "Série B Brasile", "CDB": "Copa do Brasil", "AR2": "Primera Nacional", "MX2": "Liga de Expansión", "USL": "USL Championship", "ACL2": "AFC Champions League Two", "WSL": "Women's Super League", "AUW": "A-League Women", "UWCL": "Champions League femminile", "CN1": "Chinese Super League", "AR3": "Primera B Metropolitana", "CR1": "Primera División Costa Rica"}
+              "E2": "League One", "E3": "League Two", "EC": "National League", "SC1": "Scottish Championship", "N2": "Eerste Divisie", "KNV": "KNVB Beker", "BR2": "Série B Brasile", "CDB": "Copa do Brasil", "AR2": "Primera Nacional", "MX2": "Liga de Expansión", "USL": "USL Championship", "ACL2": "AFC Champions League Two", "WSL": "Women's Super League", "AUW": "A-League Women", "UWCL": "Champions League femminile", "CN1": "Chinese Super League", "AR3": "Primera B Metropolitana", "CR1": "Primera División Costa Rica", "RU1": "Premier League russa"}
 # Football-Data.co.uk: quote medie di molti bookmaker per il prossimo turno (fixtures.csv: codice "Div"; new_league_fixtures.csv: paese/campionato)
 FD_DIV = {"E2": "E2", "E3": "E3", "EC": "EC", "SC1": "SC1", "F1": "F1", "N1": "N1", "P1": "P1", "E1": "E1", "D2": "D2", "SP2": "SP2", "B1": "B1", "T1": "T1", "SC0": "SC0", "G1": "G1", "F2": "F2"}
 FD_NUOVI = {"A1": ("Austria", "Bundesliga"), "DK1": ("Denmark", "Superliga"), "MLS": ("USA", "MLS"), "BR1": ("Brazil", "Serie A"),
             "AR1": ("Argentina", "Liga Profesional"), "MX1": ("Mexico", "Liga MX"), "J1": ("Japan", "J1 League"),
-            "NO1": ("Norway", "Eliteserien"), "SE1": ("Sweden", "Allsvenskan")}
+            "NO1": ("Norway", "Eliteserien"), "SE1": ("Sweden", "Allsvenskan"),
+            # verifica del 04/11/2026: Football-Data ha risultati e quote medie di chiusura anche per questi (quote del prossimo turno solo a volte)
+            "RU1": ("Russia", "Premier League"), "CH1": ("Switzerland", "Super League"), "RO1": ("Romania", "Superliga"),
+            "FI1": ("Finland", "Veikkausliiga"), "IE1": ("Ireland", "Premier Division")}
 SOGLIE_GIALLI = (5, 10)  # squalifica alla 5a e alla 10a ammonizione (regola comune a Serie A, Serie B, Premier, LaLiga, Bundesliga)
 STOP = {"al", "fc", "ac", "as", "ss", "us", "ssc", "afc", "cf", "sc", "calcio", "club", "de", "1907", "1909", "1913", "1919", "bc", "vfb", "vfl", "tsg", "sv", "fsv", "rc", "cd", "ud", "rcd", "ca", "sd", "1846", "04", "05", "1899", "hellas"}
 ALIAS = {"internazionale": "inter", "inter milan": "inter", "ac milan": "milan", "manchester united": "man united", "manchester city": "man city", "bayern munich": "bayern", "tottenham hotspur": "tottenham"}
@@ -723,8 +728,10 @@ def giro_espn(base="data", ore=48):
 # senza consiglio IA e fuori dalla schedina. Codice dell'app -> (codice ESPN, nome, paese, bandiera). Le quote DraftKings, se ESPN
 # le ha, si mostrano solo come informazione. Non entrano in ESPN_LG: niente voti, rose e formazioni (richieste in piu ogni giorno).
 SENZA_QUOTE = {
-    "RU1": ("rus.1", "Premier League russa", "Russia", "ru"), "IL1": ("isr.1", "Ligat ha'Al", "Israele", "il"), "CY1": ("cyp.1", "First Division", "Cipro", "cy"),
+    "IL1": ("isr.1", "Ligat ha'Al", "Israele", "il"), "CY1": ("cyp.1", "First Division", "Cipro", "cy"),
     "CH1": ("sui.1", "Super League svizzera", "Svizzera", "ch"), "RO1": ("rou.1", "Liga 1", "Romania", "ro"),
+    # verifica del 04/11/2026: stagione finita a ottobre, ripartono in primavera (ESPN li ha, quote da verificare con la scansione settimanale)
+    "FI1": ("fin.1", "Veikkausliiga", "Finlandia", "fi"), "IE1": ("irl.1", "Premier Division", "Irlanda", "ie"),
     "ZA1": ("rsa.1", "Premiership", "Sudafrica", "za"), "IN1": ("ind.1", "Indian Super League", "India", "in"), "IN2": ("ind.2", "I-League", "India", "in"),
     "BO1": ("bol.1", "División Profesional", "Bolivia", "bo"), "VE1": ("ven.1", "Primera División", "Venezuela", "ve"), "UY2": ("uru.2", "Segunda División", "Uruguay", "uy"),
     "HN1": ("hon.1", "Liga Nacional", "Honduras", "hn"), "GT1": ("gua.1", "Liga Nacional", "Guatemala", "gt"), "SV1": ("slv.1", "Primera División", "El Salvador", "sv"),

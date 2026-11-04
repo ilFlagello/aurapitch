@@ -81,8 +81,10 @@ LEAGUES = [
     ("CN1", "Chinese Super League", "Cina", "cn", None, "Chinese Super League"),
     ("AR3", "Primera B Metropolitana", "Argentina", "ar", None, "Primera B Metropolitana"),
     ("CR1", "Primera División", "Costa Rica", "cr", None, "Primera División Costa Rica"),
+    # verifica del 04/11/2026 (campionati nuovi, seconda parte): quote DraftKings da ESPN
+    ("RU1", "Premier League russa", "Russia", "ru", None, "Premier League russa"),
 ]
-PRIORITA = ["NL", "CL", "I1", "EL", "CI", "SCI", "E0", "SP1", "D1", "F1", "ECL", "I2", "FAC", "CDR", "DFB", "ELC", "CDF", "P1", "N1", "E1", "D2", "SP2", "T1", "B1", "SC0", "BR1", "AR1", "MLS", "MX1", "A1", "G1", "DK1", "J1", "SA1", "LIB", "SUD", "F2", "NO1", "SE1", "COL1", "CHI1", "AU1", "UY1", "PY1", "EC1", "PE1", "ACL", "AMI", "EQ", "WCQ", "E2", "E3", "EC", "SC1", "N2", "KNV", "BR2", "CDB", "AR2", "MX2", "USL", "ACL2", "WSL", "AUW", "UWCL", "CN1", "CR1", "AR3"]
+PRIORITA = ["NL", "CL", "I1", "EL", "CI", "SCI", "E0", "SP1", "D1", "F1", "ECL", "I2", "FAC", "CDR", "DFB", "ELC", "CDF", "P1", "N1", "E1", "D2", "SP2", "T1", "B1", "SC0", "BR1", "AR1", "MLS", "MX1", "A1", "G1", "DK1", "J1", "SA1", "LIB", "SUD", "F2", "NO1", "SE1", "COL1", "CHI1", "AU1", "UY1", "PY1", "EC1", "PE1", "ACL", "AMI", "EQ", "WCQ", "E2", "E3", "EC", "SC1", "N2", "KNV", "BR2", "CDB", "AR2", "MX2", "USL", "ACL2", "WSL", "AUW", "UWCL", "CN1", "CR1", "AR3", "RU1"]
 GG = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"]
 STOP = {"fc", "ac", "as", "ssc", "afc", "cf", "sc", "us", "usd", "calcio", "club", "de", "del", "cd", "ud", "sd", "rc", "rcd", "sv", "vfb", "vfl", "tsg",
         "bc", "fk", "1", "04", "05", "1899", "1909", "1913", "1919", "1929", "and", "hove", "albion", "hotspur", "wanderers", "the"}

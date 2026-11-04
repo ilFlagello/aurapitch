@@ -458,7 +458,7 @@ class VerificatoreStatistiche(unittest.TestCase):
                                                                           {"name": "wonCorners", "displayValue": "4"}, {"name": "foulsCommitted", "displayValue": "14"}]},
                                        {"team": {"id": "1"}, "statistics": [{"name": "yellowCards", "displayValue": "2"}, {"name": "redCards", "displayValue": "0"},
                                                                           {"name": "wonCorners", "displayValue": "6"}, {"name": "foulsCommitted", "displayValue": "11"}]}]}}
-        self.assertEqual(ES.statistiche_squadre(summ), {"K": [2, 4], "C": [6, 4], "F": [11, 14]})
+        self.assertEqual(ES.statistiche_squadre(summ), {"K": [2, 4], "C": [6, 4], "F": [11, 14], "R": [0, 1]})
         self.assertIsNone(ES.statistiche_squadre({"header": {"competitions": [{"competitors": []}]}}))
 
 

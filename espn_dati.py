@@ -268,7 +268,8 @@ def statistiche_squadre(summ):
             except (TypeError, ValueError):
                 pass
     out = {}
-    for k, nomi in (("K", ("yellowCards", "redCards")), ("C", ("wonCorners",)), ("F", ("foulsCommitted",))):
+    # R (espulsioni) e TP (tiri in porta): servono al controllo dei mercati in ombra (mercati_extra.py), stessa richiesta
+    for k, nomi in (("K", ("yellowCards", "redCards")), ("C", ("wonCorners",)), ("F", ("foulsCommitted",)), ("R", ("redCards",)), ("TP", ("shotsOnTarget",))):
         if all(nomi[0] in v for v in val):
             out[k] = [int(sum(v.get(n, 0) for n in nomi)) for v in val]
     return out or None

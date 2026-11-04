@@ -19,13 +19,13 @@ import unicodedata
 import zlib
 
 import calibrazione as CB
+import onesta as ON
 import specialisti as SP
 import cartellini as CK
 import espn_dati as ES
 import fattori as FT
 import giocatori as GC
 import mercati as M
-import onesta as ON
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 

@@ -75,8 +75,10 @@ class TestOnesta(unittest.TestCase):
                 with open(p, "w") as f:
                     json.dump({v["id"]: v}, f)
             subprocess.run([sys.executable, "-I", os.path.join(RADICE, "strumenti", "revisore.py"), base], capture_output=True, timeout=120)
-            rv = json.load(open(os.path.join(base, "data", "revisore.json"), encoding="utf-8"))
-            self.assertIn("T1", rv["campionati"]["campionati"])
+            with open(os.path.join(base, "data", "revisore.json"), encoding="utf-8") as f:
+                rv = json.load(f)
+            with open(os.path.join(base, "data", "revisore_campionati.json"), encoding="utf-8") as f:
+                self.assertIn("T1", json.load(f)["campionati"])
             self.assertTrue(any("Campionato T1" in x for x in rv["attenzione"]), rv["attenzione"])
             self.assertTrue(any("meno onesto T1" in x for x in rv["note"]))
 

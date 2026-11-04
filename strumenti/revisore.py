@@ -8,8 +8,7 @@ Controlla:
  4. consigli: vinti contro attesi (somma delle probabilita) negli ultimi 30 giorni, solo quelli bloccati prima del fischio;
  5. credibilita del blocco: nessun consiglio che conta nello storico registrato dopo il calcio d'inizio; quanti arrivano tardi;
  6. dati: partite rimaste "da giocare" ore dopo il fischio (risultati che non arrivano), partite finite mai verificate;
- 7. coerenza dei dati dell'ultimo giro (strumenti/coerenza.py);
- 9. per campionato: onesta delle probabilita e consigli vinti contro attesi (onesta.py), dove ci sono abbastanza partite.
+ 7. coerenza dei dati dell'ultimo giro (strumenti/coerenza.py).
 Esito in data/revisore.json (solo per chi lo esegue, mai nel repository) e codice di uscita 1 se c'e un problema:
 il controllo orario vede l'esecuzione fallita e apre l'avviso su GitHub; il riepilogo del lunedi riporta i punti "da tenere d'occhio".
 Uso: python3 strumenti/revisore.py [cartella radice]"""
@@ -201,6 +200,10 @@ def controlla_diario(diario):
                 f"Probabilità poco oneste nella fascia {f * 10}-{f * 10 + 10}%: l'IA dice in media {_pct(pm)}, è successo il {_pct(fr)} ({k} previsioni)")
     if giudicate:
         note.append(f"Onestà delle probabilità: {giudicate} fasce controllate")
+    try:  # 9. stesso controllo campionato per campionato
+        controlla_campionati(diario)
+    except Exception as e:  # noqa: BLE001
+        attenzione.append(f"Controllo per campionato non riuscito: {type(e).__name__}")
 
 
 def controlla_consigli(diario):
@@ -250,6 +253,36 @@ def controlla_consigli(diario):
         note.append(f"Consigli: servono almeno 50 consigli verificati per giudicarli (ora {n})")
 
 
+def controlla_campionati(diario):
+    """Controllo 9: onesta delle probabilita e consigli vinti contro attesi per campionato (onesta.py), solo dove ci sono
+    abbastanza partite. Lo chiama controlla_diario; il dettaglio va in data/revisore_campionati.json (mai nel repository)."""
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # onesta.py sta nella cartella del codice
+    import onesta as ON
+    q = ON.per_campionato(diario, _jload("data/consigli.json"))
+    rif = q["tutti"].get("scarto")
+    giudicati = []
+    for lg, r in q["campionati"].items():
+        if r.get("scarto") is not None and rif is not None:
+            giudicati.append((r["scarto"], lg))
+            if r["scarto"] - rif > 2 * ON.SOGLIA_SCARTO:
+                attenzione.append(f"Campionato {lg}: probabilità poco oneste, scarto {r['scarto']:.1f} punti contro {rif:.1f} di tutti i campionati ({r['partite']} partite)".replace(".", ","))
+        if r.get("consigli") and r.get("z", 0) < -2.5:
+            attenzione.append(f"Campionato {lg}: consigli vinti {r['vinti']} su {r['consigli']}, attesi {r['attesi']:.0f}: molto sotto le attese".replace(".", ","))
+    if giudicati:
+        giudicati.sort()
+        note.append(f"Onestà per campionato ({len(giudicati)} con almeno {ON.MIN_PARTITE} partite): più onesto {giudicati[0][1]} "
+                    f"({giudicati[0][0]:.1f} punti di scarto), meno onesto {giudicati[-1][1]} ({giudicati[-1][0]:.1f})".replace(".", ","))
+    else:
+        note.append(f"Onestà per campionato: nessun campionato ha ancora {ON.MIN_PARTITE} partite finite nel diario")
+    mod = _jload("data/modello.json") or {}
+    f = (mod.get("attivo") or {}).get("affid_lg") or {}
+    if f:
+        note.append("Affidabilità ridotta per l'onestà passata: " + ", ".join(f"{lg} ×{v}" for lg, v in sorted(f.items())).replace(".", ","))
+    with open(os.path.join(RADICE, "data", "revisore_campionati.json"), "w", encoding="utf-8") as f:
+        json.dump({"quando": ORA.isoformat(timespec="minutes"), **q}, f, ensure_ascii=False, indent=1)
+    return q
+
+
 # ---------- 6-7. dati del giorno ----------
 
 def controlla_dati(diario):
@@ -290,34 +323,6 @@ def controlla_dati(diario):
         note.append(f"{nome[0].upper() + nome[1:]}: " + ("riassunto presente" if os.path.exists(os.path.join(RADICE, f)) else "nessun riassunto ancora (si crea al giro del mattino)"))
 
 
-def controlla_campionati(diario):
-    """Onesta delle probabilita e consigli vinti contro attesi per campionato (onesta.py), solo dove ci sono abbastanza partite.
-    Dettaglio in revisore.json["campionati"]."""
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # onesta.py sta nella cartella del codice
-    import onesta as ON
-    q = ON.per_campionato(diario, _jload("data/consigli.json"))
-    rif = q["tutti"].get("scarto")
-    giudicati = []
-    for lg, r in q["campionati"].items():
-        if r.get("scarto") is not None and rif is not None:
-            giudicati.append((r["scarto"], lg))
-            if r["scarto"] - rif > 2 * ON.SOGLIA_SCARTO:
-                attenzione.append(f"Campionato {lg}: probabilità poco oneste, scarto {r['scarto']:.1f} punti contro {rif:.1f} di tutti i campionati ({r['partite']} partite)".replace(".", ","))
-        if r.get("consigli") and r.get("z", 0) < -2.5:
-            attenzione.append(f"Campionato {lg}: consigli vinti {r['vinti']} su {r['consigli']}, attesi {r['attesi']:.0f}: molto sotto le attese".replace(".", ","))
-    if giudicati:
-        giudicati.sort()
-        note.append(f"Onestà per campionato ({len(giudicati)} con almeno {ON.MIN_PARTITE} partite): più onesto {giudicati[0][1]} "
-                    f"({giudicati[0][0]:.1f} punti di scarto), meno onesto {giudicati[-1][1]} ({giudicati[-1][0]:.1f})".replace(".", ","))
-    else:
-        note.append(f"Onestà per campionato: nessun campionato ha ancora {ON.MIN_PARTITE} partite finite nel diario")
-    mod = _jload("data/modello.json") or {}
-    f = (mod.get("attivo") or {}).get("affid_lg") or {}
-    if f:
-        note.append("Affidabilità ridotta per l'onestà passata: " + ", ".join(f"{lg} ×{v}" for lg, v in sorted(f.items())).replace(".", ","))
-    return q
-
-
 def main():
     try:
         controlla_modello()
@@ -334,13 +339,7 @@ def main():
             fn(diario)
         except Exception as e:  # noqa: BLE001
             attenzione.append(f"Controllo {nome} non riuscito: {type(e).__name__}")
-    campionati = None
-    if diario:
-        try:
-            campionati = controlla_campionati(diario)
-        except Exception as e:  # noqa: BLE001
-            attenzione.append(f"Controllo per campionato non riuscito: {type(e).__name__}")
-    esito_tot = {"quando": ORA.isoformat(timespec="minutes"), "problemi": problemi, "attenzione": attenzione, "note": note, "campionati": campionati}
+    esito_tot = {"quando": ORA.isoformat(timespec="minutes"), "problemi": problemi, "attenzione": attenzione, "note": note}
     os.makedirs(os.path.join(RADICE, "data"), exist_ok=True)
     with open(os.path.join(RADICE, "data", "revisore.json"), "w", encoding="utf-8") as f:
         json.dump(esito_tot, f, ensure_ascii=False, indent=1)

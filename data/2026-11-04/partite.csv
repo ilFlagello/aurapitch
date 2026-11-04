@@ -1,0 +1,14 @@
+campionato,casa,id,inizio,ospite,stato,oa_bookmaker_1,oa_bookmaker_2,oa_bookmaker_Over 2.5,oa_bookmaker_Under 2.5,oa_bookmaker_X,oa_margine,oa_prob_1,oa_prob_2,oa_prob_Over 2.5,oa_prob_X,oa_quota_max_1,oa_quota_max_2,oa_quota_max_Over 2.5,oa_quota_max_Under 2.5,oa_quota_max_X,oa_quota_media_1,oa_quota_media_2,oa_quota_media_Over 2.5,oa_quota_media_Under 2.5,oa_quota_media_X
+Europa League,Rennes,1636324,2026-11-04T16:30:00+01:00,Olympiakos Piraeus,NS,,,,,,,,,,,,,,,,,,,,
+Champions League,AEK Athens FC,1635606,2026-11-04T18:45:00+01:00,Real Madrid,NS,22,22,3,3,22,0.0511,0.0805,0.7915,0.7492,0.128,14.0,1.24,1.27,3.82,8.2,11.813,1.202,1.263,3.773,7.433
+Champions League,Fenerbahçe,1635658,2026-11-04T18:45:00+01:00,Liverpool,NS,,,,,,,,,,,,,,,,,,,,
+Championship,Cardiff,1563248,2026-11-04T20:45:00+01:00,West Ham,NS,,,,,,,,,,,,,,,,,,,,
+Championship,Wrexham,1563250,2026-11-04T20:45:00+01:00,Middlesbrough,NS,,,,,,,,,,,,,,,,,,,,
+Champions League,Borussia Dortmund,1635651,2026-11-04T21:00:00+01:00,Real Betis,NS,22,22,3,3,22,0.054,0.5484,0.2202,0.6444,0.2314,1.8,4.6,1.47,2.72,4.4,1.73,4.309,1.457,2.64,4.1
+Champions League,FC Porto,1635656,2026-11-04T21:00:00+01:00,Napoli,NS,22,22,13,13,22,0.0534,0.4965,0.2455,0.5484,0.258,2.0,4.1,1.79,2.19,3.9,1.912,3.867,1.73,2.101,3.68
+Champions League,Lens,1635681,2026-11-04T21:00:00+01:00,Como,NS,22,22,3,3,22,0.0527,0.274,0.4817,0.6164,0.2443,3.7,2.07,1.55,2.51,4.1,3.467,1.972,1.537,2.47,3.889
+Champions League,PSV Eindhoven,1635707,2026-11-04T21:00:00+01:00,Club Brugge KV,NS,22,22,3,3,22,0.055,0.4848,0.2932,0.7142,0.222,2.04,3.5,1.33,3.37,4.6,1.955,3.233,1.33,3.323,4.27
+Champions League,RB Leipzig,1635710,2026-11-04T21:00:00+01:00,Manchester City,NS,22,22,3,3,22,0.0537,0.179,0.624,0.7276,0.1971,5.8,1.59,1.3,3.57,5.03,5.303,1.521,1.3,3.473,4.816
+Champions League,Slavia Praha,1635726,2026-11-04T21:00:00+01:00,Arsenal,NS,22,22,10,10,22,0.0536,0.084,0.7618,0.5891,0.1542,14.0,1.28,1.72,2.38,6.6,11.295,1.246,1.603,2.298,6.155
+Champions League,Viking,1635745,2026-11-04T21:00:00+01:00,Sabah FA,NS,,,,,,,,,,,,,,,,,,,,
+Championship,Bristol City,1563247,2026-11-04T21:00:00+01:00,Wolves,NS,,,,,,,,,,,,,,,,,,,,

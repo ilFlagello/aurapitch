@@ -371,7 +371,7 @@ class NuoviSpecialisti(unittest.TestCase):
         import specialisti as SP
         for n in ("coppe", "movimento"):
             self.assertIn(n, SP.NOMI)
-        self.assertEqual(SP.NOMI[-3:], ["consenso", "coppe", "movimento"])  # in coda: i diari vecchi restano validi
+        self.assertEqual(SP.NOMI[-4:], ["consenso", "coppe", "movimento", "ultima_ora"])  # in coda: i diari vecchi restano validi
         self.assertIsNone(SP.coppe(None))  # partita di coppa: nessun valore
         self.assertEqual(SP.coppe([{"prima": None, "dopo": None}, {"prima": None, "dopo": None}]), 0)
         self.assertGreater(SP.coppe([{"prima": None, "dopo": None}, {"prima": 2, "dopo": None}]), 0)  # l'ospite ha giocato in coppa: favorisce la casa

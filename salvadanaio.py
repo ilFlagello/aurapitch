@@ -28,7 +28,9 @@ PESI_GIORNO = {0: 0.8, 1: 1.2, 2: 1.2, 3: 1.2, 4: 0.8, 5: 2.0, 6: 2.0}
 
 AF_GIORNO = 100
 AF_RISERVA = 5
-AF_TETTI = {"partite": 6, "infortuni": 64, "formazioni": 25}  # + 5 di riserva = 100
+# misurato il 3-4/11: infortuni ~10 richieste al giorno su 64, formazioni quasi 0 (ESPN le ha gratis): le richieste ferme
+# vanno alle quote per data (in ombra, raccoglitore.giro_quote_af)
+AF_TETTI = {"partite": 6, "infortuni": 34, "formazioni": 25, "quote": 30}  # + 5 di riserva = 100
 
 
 def _ora():

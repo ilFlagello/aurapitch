@@ -771,6 +771,10 @@ def genera():
         if sc:
             out.setdefault("scorers", {})[k] = [{"n": (r.get("player") or {}).get("name", "?"), "t": nome_fd(r.get("team")), "g": r.get("goals") or 0, "a": r.get("assists") or 0,
                                                   "r": r.get("penalties") or 0, "pg": r.get("playedMatches") or 0} for r in sc]
+    out["senza_quote"], leghe_sq, cl_sq = partite_senza_quote(esd, giorni)
+    out["leagues"] += [l for l in leghe_sq if l["k"] not in presenti]
+    for k, v in cl_sq.items():
+        out["standings"].setdefault(k, v)
     # stessi nomi tra partite e classifiche/marcatori (es. "Sudtirol" in classifica, "Südtirol" nelle partite)
     import unicodedata
     piega = lambda x: unicodedata.normalize("NFD", x or "").encode("ascii", "ignore").decode().lower().strip()
@@ -785,10 +789,10 @@ def genera():
             r["t"] = nomi.get(piega(r["t"]), r["t"])
     # partite gia contate nella classifica scaricata ora: l'app aggiunge da sola solo i risultati arrivati dopo (in diretta e finali)
     for k, tabs in out["standings"].items():
-        tabs["inclusi"] = [m["id"] for m in out["matches"] if m["lg"] == k and m.get("st") == "FT"]
+        tabs["inclusi"] = [m["id"] for m in out["matches"] + out["senza_quote"] if m["lg"] == k and m.get("st") == "FT"]
     etich = {-1: "Ieri", 0: "Oggi", 1: "Domani"}
     for d in giorni:
-        if any(m["date"] == d.isoformat() for m in out["matches"]):
+        if any(m["date"] == d.isoformat() for m in out["matches"] + out["senza_quote"]):
             delta = (d - oggi).days
             out["days"].append({"k": d.isoformat(), "label": etich.get(delta, f"{GG[d.weekday()]} {d.day}")})
     out["today"] = oggi.isoformat()
@@ -1278,6 +1282,10 @@ def aggiorna_live():
             m["st"], m["g"], m["res"], m["g1"] = st, g, res, g1
             cambi += 1
     try:
+        cambi += aggiorna_senza_quote(d)
+    except Exception as e:  # noqa: BLE001
+        print(f"Senza quote: non aggiornate ({type(e).__name__}: {e})")
+    try:
         cambi += risultati_espn(d)
     except Exception as e:  # noqa: BLE001 - i risultati ESPN non devono fermare il giro
         print(f"Risultati ESPN: non aggiornati ({type(e).__name__}: {e})")
@@ -1289,6 +1297,103 @@ def aggiorna_live():
     na = aggiorna_arbitri(d)
     print(f"Quote pre-partita applicate: {npre}; partite ricalcolate: {nf}; arbitri aggiunti: {na}")
     return d if (cambi or nf or npre or na) else None
+
+
+# ---------- campionati senza quote (punto 2 del piano del 3/11) ----------
+# Partite dal calendario ESPN: risultato, classifica e diretta, archiviate per l'apprendimento. SENZA consiglio e FUORI dalla
+# schedina: vivono in un elenco a parte ("senza_quote"), cosi nessuna parte dell'app che lavora con le quote le incontra.
+ARCHIVIO_SQ = os.path.join(DATA, "archivio", "senza_quote.json")
+
+
+def partite_senza_quote(esd, giorni):
+    """Elenco delle partite senza quote dei giorni dell'app, leghe e classifiche."""
+    sq = esd.get("senza_quote") or {}
+    partite, leghe, classifiche = [], [], {}
+    for k, (lgE, nome, paese, flag) in ES.SENZA_QUOTE.items():
+        x = sq.get(k) or {}
+        n = 0
+        for e in x.get("ev") or []:
+            try:
+                t0 = datetime.fromisoformat(e["t"].replace("Z", "+00:00"))
+            except (KeyError, ValueError):
+                continue
+            loc = t0.astimezone(ROME)
+            if loc.date() not in giorni:
+                continue
+            st, g, g1 = ES.stato_evento(e)
+            m = {"id": f"NQ-{k}-{e['eid']}", "nq": True, "lg": k, "lgE": lgE, "eid": e["eid"], "date": loc.strftime("%Y-%m-%d"), "time": loc.strftime("%H:%M"),
+                 "ko": t0.isoformat(), "h": e["h"], "a": e["a"], "st": st, "g": g, "g1": g1, "res": None if g is None else (0 if g[0] > g[1] else 1 if g[0] == g[1] else 2)}
+            if e.get("q"):  # quote DraftKings da ESPN: solo informazione (probabilita senza margine), nessun consiglio
+                m["q"] = e["q"]
+                m["pq"] = [round(v, 4) for v in togli_margine(e["q"])]
+            partite.append(m)
+            n += 1
+        if x.get("cl"):
+            righe = [{"team": r["team"], "pg": r["pg"], "v": r["v"], "n": r["n"], "p": r["p"], "gf": r["gf"], "gs": r["gs"], "pt": r["pt"]} for r in x["cl"]]
+            classifiche[k] = {"generale": righe, "casa": [], "trasferta": [], "solo_generale": True}
+        if n or x.get("cl"):
+            leghe.append({"k": k, "name": nome, "country": paese, "flag": flag, "nq": True, "lgE": lgE})
+    partite.sort(key=lambda m: (m["ko"], m["lg"]))
+    return partite, leghe, classifiche
+
+
+def archivia_senza_quote(esd, path=None):
+    """Archivio per l'apprendimento: ogni partita finita dei campionati senza quote (risultato, primo tempo, quote se c'erano)."""
+    path = path or ARCHIVIO_SQ
+    arch = jload(path, {}) or {}
+    nuove = 0
+    for k, x in (esd.get("senza_quote") or {}).items():
+        for e in x.get("ev") or []:
+            st, g, g1 = ES.stato_evento(e)
+            if st != "FT" or not e.get("eid"):
+                continue
+            r = {"lg": k, "t": e["t"], "h": e["h"], "a": e["a"], "g": g, **({"g1": g1} if g1 else {}), **({"q": e["q"]} if e.get("q") else {})}
+            if arch.get(e["eid"]) != r:
+                nuove += 0 if e["eid"] in arch else 1
+                arch[e["eid"]] = r
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:  # una partita per riga: git conserva solo le righe nuove
+        f.write("{\n" + ",\n".join(json.dumps(i) + ":" + json.dumps(arch[i], ensure_ascii=False, separators=(",", ":")) for i in sorted(arch, key=lambda i: (arch[i]["t"], i))) + "\n}\n")
+    print(f"Archivio senza quote: {nuove} partite nuove, {len(arch)} in tutto")
+    return nuove
+
+
+def aggiorna_senza_quote(d, get=None, massimo=10, ora=None):
+    """Durante il giorno: stato e risultato delle partite senza quote iniziate (abbinate per id ESPN, nessun dubbio sui nomi)."""
+    get = get or ES.get
+    ora = ora or datetime.now(timezone.utc)
+    da_fare = {}
+    for m in d.get("senza_quote") or []:
+        try:
+            t0 = datetime.fromisoformat(m["ko"])
+        except (KeyError, ValueError):
+            continue
+        if m.get("st") in ("NS", "LIVE") and ora - timedelta(hours=36) <= t0 <= ora - timedelta(minutes=5):
+            for g in {t0.strftime("%Y%m%d"), (t0 - timedelta(hours=6)).strftime("%Y%m%d")}:
+                da_fare.setdefault((m["lgE"], g), []).append(m)
+    per_id, richieste = {}, 0
+    for (lgE, g) in sorted(da_fare)[:massimo]:
+        richieste += 1
+        try:
+            for ev in get(f"{ES.SITE}{lgE}/scoreboard?dates={g}").get("events", []):
+                try:
+                    per_id[ev["id"]] = ES.evento(ev)
+                except (KeyError, StopIteration, TypeError, ValueError):
+                    continue
+        except Exception as e:  # noqa: BLE001
+            print(f"Senza quote {lgE} {g}: {str(e)[:100]}")
+    cambi = 0
+    for m in d.get("senza_quote") or []:
+        e = per_id.get(m.get("eid"))
+        if not e:
+            continue
+        st, g, g1 = ES.stato_evento(e)
+        if st != "NS" and (st, g) != (m.get("st"), m.get("g")):
+            m.update({"st": st, "g": g, "g1": g1, "res": None if g is None else (0 if g[0] > g[1] else 1 if g[0] == g[1] else 2)})
+            cambi += 1
+    if richieste:
+        print(f"Senza quote: {cambi} partite aggiornate, {richieste} richieste")
+    return cambi
 
 
 def senza_fd():
@@ -1739,6 +1844,10 @@ def main():
             print("Nessuna partita con quote nei prossimi giorni: il file dell'app non viene toccato.")
             return
         print(f"Partite: {len(d['matches'])}; campionati: {[l['name'] for l in d['leagues']]}; FREE: {[m['h'] + '-' + m['a'] for m in d['matches'] if m['free']]}")
+        try:
+            archivia_senza_quote(jload(ESPN, {}) or {})
+        except Exception as e:  # noqa: BLE001
+            print(f"Archivio senza quote: non aggiornato ({type(e).__name__}: {e})")
         try:  # mattino: ricontrollo dei risultati del diario e dei consigli con il calendario ESPN appena scaricato
             risultati_espn(d, eventi=(jload(ESPN, {}) or {}).get("risultati_lega") or {}, massimo=60)
         except Exception as e:  # noqa: BLE001

@@ -87,24 +87,26 @@ export function useLiveScores(matches) {
     const tick = async () => {
       const ms = ref.current || [];
       const now = Date.now();
-      const near = ms.filter((m) => Math.abs(new Date(m.ko).getTime() - now) < 36 * 3600e3 && ESPN_LG[m.lg]);
+      const slug = (m) => (m.nq ? m.lgE : ESPN_LG[m.lg]); // campionati senza quote: codice ESPN nei dati della partita
+      const near = ms.filter((m) => Math.abs(new Date(m.ko).getTime() - now) < 36 * 3600e3 && slug(m));
+      const perLega = Object.fromEntries(near.map((m) => [m.lg, slug(m)]));
       const keys = new Set(near.map((m) => m.lg + "|" + m.date.replace(/-/g, "")));
       const out = {};
       await Promise.all([...keys].map(async (k) => {
         const [lg, d] = k.split("|");
         try {
-          const sb = await getJSON(`${SITE}${ESPN_LG[lg]}/scoreboard?dates=${d}`, 20000);
+          const sb = await getJSON(`${SITE}${perLega[lg]}/scoreboard?dates=${d}`, 20000);
           const evs = sb.events || [];
           for (const m of near.filter((x) => x.lg === lg && x.date.replace(/-/g, "") === d)) {
-            let best = null, bs = 0;
-            for (const ev of evs) {
+            let best = m.eid ? evs.find((ev) => ev.id === m.eid) || null : null, bs = best ? 2 : 0; // id ESPN noto: nessun dubbio sui nomi
+            for (const ev of best ? [] : evs) {
               if (Math.abs(new Date(ev.date).getTime() - new Date(m.ko).getTime()) > 3 * 3600e3) continue;
               const c = ev.competitions[0].competitors;
               const h = c.find((x) => x.homeAway === "home"), a = c.find((x) => x.homeAway === "away");
               const s = sim(m.eh || m.h, names(h)) + sim(m.ea || m.a, names(a)); // nazionali: nome originale (inglese) per l'abbinamento
               if (s > bs) { best = ev; bs = s; }
             }
-            if (best && bs >= 1.3) out[m.id] = { ...compact(best), lgE: ESPN_LG[lg] };
+            if (best && bs >= 1.3) out[m.id] = { ...compact(best), lgE: perLega[lg] };
           }
         } catch (e) { /* rete assente: si riprova al giro dopo */ }
       }));

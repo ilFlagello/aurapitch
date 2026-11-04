@@ -1,6 +1,10 @@
 /* AuraPitch - versione dell'app e novità. A ogni pubblicazione con cambi visibili si aggiunge una voce IN CIMA:
    il numero cresce (1.1, 1.2, ...) e l'app lo mostra nel profilo e nel riquadro "Novità" dopo l'aggiornamento. */
 export const NOVITA = [
+  { v: "2.4", data: "4 novembre 2026", punti: [
+    "Quote più fresche per il consiglio IA: ora si leggono nell'ultimo aggiornamento prima che il consiglio si blocchi (circa 50 minuti dal fischio), non più 20-30 minuti prima. Le partite della notte (MLS, Sudamerica) hanno le quote aggiornate all'ultimo giro della sera",
+    "Più partite con la media di tanti bookmaker vicino al blocco: i crediti delle quote seguono il calendario vero (più nei weekend pieni, meno nei giorni con poche partite) e una lettura vale per tutte le partite dello stesso orario",
+  ] },
   { v: "2.3", data: "4 novembre 2026", punti: [
     "Nuovo agente Anti-illusione (Storico IA > Gli agenti di controllo): ricontrolla ogni miglioramento dell'IA solo sulle partite arrivate dopo la sua accensione e lo spegne da solo se non aiuta più",
     "Bookmaker esperti (Storico IA > Per chi vuole i numeri): l'IA prova se le quote di Pinnacle sbagliano meno della media dei bookmaker. Per ora è in prova e non cambia le probabilità",

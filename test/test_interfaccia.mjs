@@ -177,8 +177,11 @@ async function giro(tema) {
   await passo("indietro del telefono", async () => {
     await p.getByRole("button", { name: "Partite", exact: true }).last().click({ timeout: 5000 }); await p.waitForTimeout(400);
     await p.evaluate(() => window.scrollTo(0, 300)); await p.waitForTimeout(150);
-    const righe = p.locator("main button").filter({ hasText: /\d\d:\d\d/ }); let presa = false;
-    for (let i = 0; i < Math.min(30, await righe.count()) && !presa; i++) { const b = await righe.nth(i).boundingBox(); if (b && b.y > 120 && b.y < 600) { await p.mouse.click(b.x + 40, b.y + 15); presa = true; } }
+    // righe delle partite in qualsiasi stato (da giocare "HH:MM", in diretta "LIVE", finite "Finale"): con i dati della sera
+    // la prima coppa puo essere tutta in diretta e senza orari (4/11: il test non apriva nulla e "indietro" usciva dall'app)
+    const righe = p.locator("main button").filter({ hasText: /\d\d:\d\d|LIVE|Finale/ }); let presa = false;
+    for (let i = 0; i < Math.min(40, await righe.count()) && !presa; i++) { const b = await righe.nth(i).boundingBox(); if (b && b.y > 120 && b.y < 600) { await p.mouse.click(b.x + 40, b.y + 15); presa = true; } }
+    if (!presa) { errori.push(`[${tema}] indietro: nessuna partita da aprire nella lista`); return; }
     await p.waitForTimeout(700);
     await p.goBack(); await p.waitForTimeout(700);
     if (!(await p.getByRole("button", { name: /In diretta/ }).count())) errori.push(`[${tema}] il tasto indietro non torna alla lista`);

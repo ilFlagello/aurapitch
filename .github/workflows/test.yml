@@ -1,9 +1,13 @@
 # AuraPitch - test automatici a ogni modifica del codice (e ogni mattina sui dati del giorno).
 # Se qualcosa si rompe, GitHub manda una mail al proprietario del repository; le schermate della prova restano tra gli "artifacts".
+# Collaudatore delle PR: gli stessi test girano anche su ogni pull request verso main, prima dell'unione.
 name: Test
 
 on:
   push:
+    branches: [main]
+    paths: ["app/src/**", "app/build.mjs", "app/sw.js", "app/index.html", "*.py", "strumenti/**", "test/**", "worker/**", ".github/workflows/test.yml"]
+  pull_request:
     branches: [main]
     paths: ["app/src/**", "app/build.mjs", "app/sw.js", "app/index.html", "*.py", "strumenti/**", "test/**", "worker/**", ".github/workflows/test.yml"]
   schedule:
@@ -12,6 +16,11 @@ on:
 
 permissions:
   contents: read
+
+# Su una PR, un push nuovo ferma la prova vecchia dello stesso ramo; su main ogni prova arriva in fondo.
+concurrency:
+  group: test-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   test:

@@ -81,6 +81,9 @@ def raccogli():
         if pv:
             riga = f"Crediti delle quote: {pv['rimasti']} rimasti, {pv['per_giorno']} al giorno per i {pv['giorni']} giorni che mancano (spesa media del mese {pv['ritmo']})"
             (stato if pv["basta"] else sistemare).append(riga + ("" if pv["basta"] else f": sotto i {SV.ODDS_MATTINO} del giro del mattino o spesa oltre la parte del giorno"))
+        riga_e = SV.riga_economo(rimasti=(_jload("data/crediti_quote.json") or {}).get("rimasti"))  # economo: tutte le fonti a consumo
+        if riga_e:
+            stato.append(riga_e)
     except Exception as e:  # noqa: BLE001
         stato.append(f"Crediti delle quote: non leggibili ({type(e).__name__})")
     # 5. guardiano della sicurezza (eseguito appena prima dal workflow)

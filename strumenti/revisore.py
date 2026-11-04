@@ -9,7 +9,8 @@ Controlla:
  5. credibilita del blocco: nessun consiglio che conta nello storico registrato dopo il calcio d'inizio; quanti arrivano tardi;
  6. dati: partite rimaste "da giocare" ore dopo il fischio (risultati che non arrivano), partite finite mai verificate;
  7. coerenza dei dati dell'ultimo giro (strumenti/coerenza.py);
- 8. vantaggio sul mercato: quota al consiglio contro quota al fischio, per stile, mercato e specialista (vantaggio.py).
+ 8. vantaggio sul mercato: quota al consiglio contro quota al fischio, per stile, mercato e specialista (vantaggio.py);
+ 9. budget delle API (salvadanaio.economo): avviso se i crediti non bastano fino a fine mese o se una fonte supera il limite.
 Esito in data/revisore.json (solo per chi lo esegue, mai nel repository) e codice di uscita 1 se c'e un problema:
 il controllo orario vede l'esecuzione fallita e apre l'avviso su GitHub; il riepilogo del lunedi riporta i punti "da tenere d'occhio".
 Uso: python3 strumenti/revisore.py [cartella radice]"""
@@ -368,6 +369,22 @@ def controlla_vantaggio(diario):
     return mi
 
 
+def controlla_budget():
+    """Economo (salvadanaio.economo): crediti e richieste di tutte le fonti a consumo. Avviso, non problema: quando i crediti
+    non bastano le partite si aggiornano comunque con le quote gratuite."""
+    sys.path.insert(0, RADICE)
+    import salvadanaio as SV
+    vecchio = SV.PATH
+    SV.PATH = os.path.join(RADICE, "data", "budget.json")
+    try:
+        e = SV.economo(rimasti=(_jload("data/crediti_quote.json") or {}).get("rimasti"))
+    finally:
+        SV.PATH = vecchio
+    attenzione.extend(f"Budget delle API: {x}" for x in e["avvisi"])
+    if not e["avvisi"] and e["righe"]:
+        note.append("Budget delle API: " + ", ".join(f"{r['fonte'].split(',')[0]} {r['stato']}" for r in e["righe"] if r["usato"] is not None))
+
+
 def main():
     vantaggio = None
     try:
@@ -375,7 +392,7 @@ def main():
     except Exception as e:  # noqa: BLE001 - un controllo rotto si segnala, non ferma gli altri
         attenzione.append(f"Controllo del modello non riuscito: {type(e).__name__}")
     diario = carica_diario()
-    controlli = [("registro dei consigli", controlla_consigli), ("dati del giorno", controlla_dati)]
+    controlli = [("registro dei consigli", controlla_consigli), ("dati del giorno", controlla_dati), ("budget delle API", lambda _d: controlla_budget())]
     if diario:
         controlli.insert(0, ("diario", controlla_diario))
     else:

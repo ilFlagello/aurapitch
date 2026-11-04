@@ -222,7 +222,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   function mLabel(m, c, short) {
     c = norm(c);
     if (c.startsWith("MARC:")) return "Segna " + c.slice(5) + (short ? "" : " (in qualsiasi momento)");
-    if (c.startsWith("AMM:")) return "Ammonito " + c.slice(4);
+    if (c.startsWith("AMM:")) return "Cartellino a " + c.slice(4);
     if (c.startsWith("ASS:")) return "Assist di " + c.slice(4);
     if (/^[KCF][HA][OU]\d/.test(c)) return ({ K: "Cartellini ", C: "Angoli ", F: "Falli " })[c[0]] + (c[1] === "H" ? m.h : m.a) + (c[2] === "O" ? " Over " : " Under ") + nf(c.slice(3));
     if (/^[KCF][OU]\d/.test(c)) return ({ K: "Cartellini ", C: "Angoli ", F: "Falli " })[c[0]] + (c[1] === "O" ? "Over " : "Under ") + nf(c.slice(2));
@@ -274,7 +274,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     let t;
     if (c.includes("+")) t = c.split("+").map((x, i) => (i ? min1(fine(spiega(m, x, true))) : fine(spiega(m, x, true)))).join(" e ") + ".";
     else if (c.startsWith("MARC:")) t = `${c.slice(5)} segna almeno un gol.`;
-    else if (c.startsWith("AMM:")) t = `${c.slice(4)} riceve almeno un cartellino giallo (vale anche il rosso diretto, secondo il regolamento del bookmaker).`;
+    else if (c.startsWith("AMM:")) t = `${c.slice(4)} riceve almeno un cartellino, giallo o rosso.`;
     else if (c.startsWith("ASS:")) t = `${c.slice(4)} fa almeno un assist a un gol.`;
     else if (/^[KCF][HA][OU]/.test(c)) { const v = { K: ["riceve", "cartellini"], C: ["batte", "calci d'angolo"], F: ["commette", "falli"] }[c[0]]; t = `${sq(c[1])} ${v[0]} ${c[2] === "O" ? "almeno " + almeno(c.slice(3)) : "al massimo " + almassimo(c.slice(3))} ${v[1]}.`; }
     else if (/^[KCF][OU]/.test(c)) { const v = { K: "cartellini", C: "calci d'angolo", F: "falli" }[c[0]]; t = `In tutta la partita ci sono ${c[1] === "O" ? "almeno " + almeno(c.slice(2)) : "al massimo " + almassimo(c.slice(2))} ${v}.`; }
@@ -306,10 +306,10 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     return t;
   }
   const GROUPS = ["Esito finale", "Doppia chance", "Under/Over", "Goal/No Goal", "Multigol", "Gol squadra", "Combo", "Primo tempo", "Secondo tempo", "Parziale/finale", "Tempo con più gol", "Tempi",
-    "Handicap", "Margine di vittoria", "Gol esatti", "Risultato esatto", "Marcatori", "Assist", "Ammoniti", "Cartellini", "Cartellini squadra", "Falli", "Falli squadra", "Calci d'angolo", "Calci d'angolo squadra", "Pari/Dispari"];
+    "Handicap", "Margine di vittoria", "Gol esatti", "Risultato esatto", "Marcatori", "Assist", "Cartellini giocatori", "Cartellini", "Cartellini squadra", "Falli", "Falli squadra", "Calci d'angolo", "Calci d'angolo squadra", "Pari/Dispari"];
   function mGroup(c) {
     if (c.startsWith("MARC:")) return "Marcatori";
-    if (c.startsWith("AMM:")) return "Ammoniti";
+    if (c.startsWith("AMM:")) return "Cartellini giocatori";
     if (c.startsWith("ASS:")) return "Assist";
     if (/^[KCF][HA][OU]\d/.test(c)) return ({ K: "Cartellini", C: "Calci d'angolo", F: "Falli" })[c[0]] + " squadra";
     if (/^K[OU]\d/.test(c)) return "Cartellini";
@@ -366,7 +366,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
      della giocata ^ partite di base); se l'utente sceglie più partite, ogni giocata scende verso la parte prudente della fascia,
      se ne sceglie meno sale verso quella coraggiosa, sempre dentro la fascia dello stile.
      Punteggio di ogni giocata: probabilità IA, punteggio IA (accordo dei dati), valore (probabilità IA x quota - 1) e vicinanza
-     alla quota ideale; ogni stile li pesa a modo suo. Tutte le voci scelte (partite, marcatori, assist, ammoniti) seguono le
+     alla quota ideale; ogni stile li pesa a modo suo. Tutte le voci scelte (partite, marcatori, assist, cartellini) seguono le
      stesse regole: nessuna quota fissa per voce, entra solo ciò che ha senso per lo stile. */
   const QUOTA_MIN = 1.3; // sotto questa quota l'IA non mette una giocata in schedina: il rischio non vale il guadagno (l'utente può farlo a mano)
   const PROFILI_SLIP = [
@@ -378,7 +378,7 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
   // esiti delle partite che uno stile non usa: Zero Tachicardia e La Classica restano sugli esiti principali (niente tempi e statistiche)
   const MERCATI_ESCLUSI = [/Cartellini|Falli|angolo|Parziale|Gol esatti|Margine|Tempo|tempo|Combo|Handicap/, /Cartellini|Falli|angolo|Parziale|Gol esatti|Margine|Tempo|tempo/, null];
   // voci selezionabili insieme: P = esiti delle partite, poi i giocatori
-  const TIPI_GIOCATORI = [["P", "Partite"], ["MARC", "Marcatori"], ["ASS", "Assist"], ["AMM", "Ammoniti"]];
+  const TIPI_GIOCATORI = [["P", "Partite"], ["MARC", "Marcatori"], ["ASS", "Assist"], ["AMM", "Cartellini"]];
   const vociDi = (voci) => (Array.isArray(voci) && voci.length ? voci : voci === "MIX" ? ["MARC", "ASS", "AMM"] : typeof voci === "string" && voci ? [voci] : ["P"]);
   function rumore(id, v) { // numero pseudo-casuale in [-0,5, 0,5): diverso per ogni combinazione richiesta
     if (!v) return 0; let h = hs(v + "|" + id) ^ Math.imul(v, 0x9E3779B1);

@@ -233,6 +233,10 @@ def giro_completo(base="data"):
                 partite[fid] = {"id": fid, "campionato": ids[lid]["nome"], "inizio": f["fixture"]["date"],
                                 "casa": f["teams"]["home"]["name"], "ospite": f["teams"]["away"]["name"], "stato": f["fixture"]["status"]["short"]}
     print(f"Partite di oggi nei campionati seguiti (API-Football): {len(partite)}")
+    try:  # in ombra: quote per data di API-Football, solo per la misura (nessun effetto sull'app)
+        giro_quote_af(base, fx, giorno)
+    except Exception as e:  # noqa: BLE001
+        print(f"Quote API-Football in ombra: non riuscite ({type(e).__name__}: {e})")
     attivi = {p["campionato"] for p in partite.values()} if fx else set(ODDS_API_LEAGUES)
     if not fx:
         print("API-Football non disponibile: uso solo The Odds API per partite e quote.")
@@ -412,6 +416,42 @@ def giro_infortuni(base="data", forza=True):
                 x["dal"] = visto.get((sq, x["n"])) or out["aggiornato"]
         salva("data", "infortuni.json", out)
     print(f"Infortuni (API-Football): {n} giocatori in {len(out['squadre'])} squadre, oggi e domani")
+
+
+AF_QUOTE_PAGINE = 30  # pagine da 10 partite: le richieste che infortuni e formazioni non usano (misurato: ~10 su 89 al giorno)
+
+
+def giro_quote_af(base, fx, giorno):
+    """IN OMBRA: quote del giorno da API-Football (/odds?date=, verificato il 4/11 sul piano gratuito: ~170 partite in 17
+    pagine, 9 bookmaker tra cui Pinnacle e Betfair, aggiornate ogni ~3 ore). Non entrano ancora nell'app: si salvano in forma
+    ridotta in data/AAAA-MM-GG/quote_af.json per misurare sulle partite finite se valgono piu delle quote del mattino di
+    The Odds API (2 crediti per campionato) e di ESPN (un bookmaker). Le pagine si fermano al tetto "quote" del salvadanaio."""
+    squadre = {f["fixture"]["id"]: f for f in (fx or {}).get("response", [])}
+    righe, page, tot = [], 1, 1
+    while page <= min(tot, AF_QUOTE_PAGINE):
+        x = af("/odds", cat="quote", date=giorno, page=page) if page > 1 else af("/odds", cat="quote", date=giorno)
+        if not x:
+            break
+        tot = (x.get("paging") or {}).get("total", 1) or 1
+        for it in x.get("response", []):
+            fid = (it.get("fixture") or {}).get("id")
+            r = riassunto(media_af(it))
+            if not fid or not r.get("quota_media_1"):
+                continue
+            f = squadre.get(fid) or {}
+            pin = next((b for b in it.get("bookmakers", []) if b.get("name") == "Pinnacle"), None)
+            rp = riassunto(media_af({"bookmakers": [pin]})) if pin else {}
+            righe.append({"fx": fid, "lg": (it.get("league") or {}).get("name"), "paese": (it.get("league") or {}).get("country"),
+                          "ko": (f.get("fixture") or {}).get("date"), "h": ((f.get("teams") or {}).get("home") or {}).get("name"),
+                          "a": ((f.get("teams") or {}).get("away") or {}).get("name"), "nb": r.get("bookmaker_1"), "agg": it.get("update"),
+                          "q": [r.get(f"quota_media_{e}") for e in ("1", "X", "2")],
+                          "ou": [r.get("quota_media_Over 2.5"), r.get("quota_media_Under 2.5")],
+                          **({"pin": [rp.get(f"quota_media_{e}") for e in ("1", "X", "2")]} if rp.get("quota_media_1") else {})})
+        page += 1
+    if righe:
+        salva(os.path.join(base, giorno), "quote_af.json", righe)
+    print(f"Quote API-Football in ombra: {len(righe)} partite in {page - 1} pagine su {tot}")
+    return len(righe)
 
 
 def giro_formazioni(base="data", finestra_min=90):

@@ -55,14 +55,14 @@
  "af": {
   "giorno": "2026-11-05",
   "usate": {
-   "infortuni": 2,
+   "infortuni": 3,
    "partite": 1,
    "quote": 4
   },
-  "rimaste": 99
+  "rimaste": 93
  },
  "fd": {
   "giorno": "2026-11-05",
-  "usate": 24
+  "usate": 25
  }
 }

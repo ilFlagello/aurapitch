@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { immagineSchedina, mercatoBookmaker } from "./condividi.js";
 import { Citazione, citazioneSchedina, citazioneDiario } from "./citazioni.js";
-import { Sheet, TIPI_GIOCATORI, QUOTA_MIN, probVera, esitoGamba, statoGiocata, C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, buildForzata, PROFILI_SLIP, ESITI_SCHEDINA, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
+import { Sheet, TIPI_GIOCATORI, QUOTA_MIN, probVera, esitoGamba, statoGiocata, C, Chip, Ctx, Flag, Ic, PERIODI, Schede, TONE, auraCol, buildSlip, buildTarget, buildForzata, completaSchedina, PROFILI_SLIP, ESITI_SCHEDINA, candidati, evalCode, hit, html, inPeriodo, mLabel, norm, odd, options, pct, store } from "./base.js";
 import { GiocoResponsabile } from "./extra.js";
 import { IACard } from "./ia.js";
 import { Allenatore } from "./allenatore.js";
@@ -137,23 +137,109 @@ import { META, principali, slipOffPredefinito } from "./ordine.js";
             <button onClick=${() => doCopy(text(legs, false))} className=${"py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Copy} size=${15} />Copia testo</button>
             <button onClick=${() => doCopy(text(legs, true))} className=${"py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Smartphone} size=${15} />Testo WhatsApp</button></div></div>`}
         <p className=${"text-[11px] " + C.mu}>Le probabilità sono stime: nessuna schedina è sicura. Gioca solo cifre che puoi permetterti di perdere.</p><//>`,
-        html`<${React.Fragment}>
-        <div className=${C.card + " px-4 py-2"}>${mine.length ? mine.map((l) => html`<${LegRow} key=${l.id} l=${l} onDel=${() => setMySlip(mySlip.filter((x) => x.id !== l.id))} />`)
-          : html`<div className=${"py-3 text-sm " + C.mu}>Vuota. Apri una partita e tocca un esito in "Aggiungi alla tua schedina".</div>`}</div>
-        ${mine.length > 0 && html`<div className=${C.card + " p-4 space-y-2"}>
-          <div className="flex justify-between text-sm"><span className=${C.mu}>Quota totale</span><b className=${"tabular-nums " + C.tx}>${odd(mTot)}</b></div>
-          <div className="flex justify-between text-sm"><span className=${C.mu}>Probabilità secondo l'IA</span><b className=${"tabular-nums " + C.tx}>${(mProb * 100).toFixed(1).replace(".", ",")}%</b></div>
-          ${PV.diversa && html`<div className=${"text-[12px] rounded-xl border p-2.5 " + (PV.p < PV.ind ? TONE.warn : TONE.info)}><b>Schedina onesta:</b> ${PV.collegate.size} giocate sono sulla stessa partita e dipendono l'una dall'altra.
-            Moltiplicando le probabilità sembrerebbe il ${(PV.ind * 100).toFixed(1).replace(".", ",")}%, quella vera è il <b>${(PV.p * 100).toFixed(1).replace(".", ",")}%</b>.${PV.p > PV.ind ? " Qui giocano a tuo favore: ma la quota del bookmaker di solito ne tiene già conto." : ""}</div>`}
-          <div className="grid grid-cols-3 gap-2 pt-1">
-            <button onClick=${() => doCopy(text(mine, false))} className=${"py-2 rounded-xl border text-xs font-semibold " + TONE.good}>Copia</button>
-            <button onClick=${() => doCopy(text(mine, true))} className=${"py-2 rounded-xl border text-xs font-semibold " + TONE.good}>WhatsApp</button>
-            <button onClick=${() => setMySlip([])} className=${"py-2 rounded-xl text-xs font-semibold " + C.ch + " " + C.tx}>Svuota</button></div>
-          <${Gioca} legs=${mine.filter((l) => l.q)} /></div>`}<//>`,
+        html`<${MiaSchedina} />`,
         html`<${React.Fragment}><${Diario} /><${Allenatore} /><${GiocoResponsabile} compatto=${true} /><//>`,
         html`<${React.Fragment}><${IACard} /><${StoricoSchedine} /><${StoricoCard} /><//>`]}<//></div>`;
     }
 
+
+    /* ---- "La mia schedina" completata dall'IA (scelta 1A di Andrea, 5/11): le tue scelte restano ferme, l'IA aggiunge le partite
+       che mancano con lo stile, il numero di partite, le voci e la quota che scegli. Tutto in una pagina, scritte piccole. ---- */
+    const Lucchetto = () => html`<svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" className=${"shrink-0 " + C.acc}><rect x="5" y="11" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" strokeWidth="2.2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" strokeWidth="2.2" /></svg>`;
+    const Stellina = () => html`<svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" className="shrink-0"><path d="M12 3l1.8 4.9L19 9.7l-5.2 1.8L12 16.4l-1.8-4.9L5 9.7l5.2-1.8z" fill="#0F9D84" /></svg>`;
+    const QUOTE_MIE = [0, 3, 5, 10, 20, 50, 100];
+    function RigaMia({ l, lg, onDel }) {
+      const h = hit(l.m, l.k);
+      const ora = new Date(l.m.ko).toLocaleString("it-IT", { weekday: "short", hour: "2-digit", minute: "2-digit" });
+      return html`<div className=${"flex items-center gap-2.5 py-2 border-t first:border-t-0 " + C.bd}>
+        ${l.ia ? html`<span aria-label="Aggiunta dall'IA" role="img"><${Stellina} /></span>` : html`<span aria-label="Scelta tua" role="img"><${Lucchetto} /></span>`}
+        <div className="flex-1 min-w-0"><div className=${"text-[13px] font-semibold truncate " + C.tx}>${l.m.h} – ${l.m.a}</div>
+          <div className=${"text-[11px] truncate " + C.mu}>${(lg(l.m.lg) || {}).name || ""} · ${l.ia ? "IA " + pct(l.p) + "%" : ora}${l.stima ? " · quota stimata" : ""}</div></div>
+        <span className=${"text-[13px] font-bold text-right max-w-[38%] leading-tight " + C.tx}>${mLabel(l.m, l.k, true)}</span>
+        <span className=${"num text-[17px] font-bold w-10 text-right " + C.tx}>${odd(l.q)}</span>
+        ${h === null ? null : h ? html`<${Ic.CheckCircle2} size=${16} className="text-emerald-500 shrink-0" />` : html`<${Ic.XCircle} size=${16} className="text-rose-500 shrink-0" />`}
+        ${onDel && html`<button aria-label=${"Togli " + l.m.h + " – " + l.m.a} onClick=${onDel} className=${"w-8 h-8 -mr-1.5 flex items-center justify-center shrink-0 " + C.mu}><${Ic.Trash2} size=${14} /></button>`}</div>`;
+    }
+    function MiaSchedina() {
+      const { D, lg, byId, pro, mySlip, setMySlip, setUnlock, doCopy, favLeagues } = React.useContext(Ctx);
+      const leggi = (k, d, ok) => { const v = store.get(k, d); return ok(v) ? v : d; };
+      const [on, setOn0] = useState(() => store.get("mieOn", true) !== false);
+      const [prof, setProf0] = useState(() => leggi("mieProf", 1, (v) => [0, 1, 2].includes(v)));
+      const [nTot, setN0] = useState(() => leggi("mieN", 0, (v) => Number.isInteger(v) && v >= 0 && v <= 14));
+      const [tipi, setTipi0] = useState(() => leggi("mieTipi", ["P"], (v) => Array.isArray(v) && v.length > 0));
+      const [qo, setQo0] = useState(() => leggi("mieQ", 0, (v) => QUOTE_MIE.includes(v)));
+      const [vr, setVr] = useState(0);
+      const salva = (k, f) => (v) => { f(v); store.set(k, v); setVr(0); };
+      const setOn = salva("mieOn", setOn0), setProf = salva("mieProf", setProf0), setN = salva("mieN", setN0), setTipi = salva("mieTipi", setTipi0), setQo = salva("mieQ", setQo0);
+      useEffect(() => { if (prof === 2 && !pro) setProf0(1); }, [pro]); // Colpaccio è PRO
+      const fisse = mySlip.map((x) => ({ ...x, m: byId[x.id] })).filter((x) => x.m).map((x) => ({ ...x, ...options(x.m).find((o) => o.k === norm(x.k)) })).filter((l) => l.q);
+      // dove cerca l'IA: stessi campionati e periodo di "Crea con l'IA"
+      const off = store.get("slipOff", null) || slipOffPredefinito(D.leagues.map((l) => l.k), favLeagues);
+      const per = store.get("slipPer", "3g"), today = D.today || new Date().toISOString().slice(0, 10);
+      const pool = D.matches.filter((m) => !off.includes(m.lg) && (D.demo || m.st === "NS") && (D.demo || inPeriodo(m.date, per, today)));
+      const tipoG = tipi.length === 1 && tipi[0] === "P" ? "" : tipi.join("+");
+      const legs = on && fisse.length ? completaSchedina(pool, fisse, prof, nTot, qo, vr, tipoG ? tipi : null) : Object.assign(fisse.map((l) => ({ ...l, mia: true })), { aggiunte: 0, fatta: fisse.reduce((a, l) => a * l.q, 1) });
+      const tot = legs.reduce((a, l) => a * l.q, 1), PV = probVera(legs);
+      const pc = (p) => (p >= 0.095 ? Math.round(p * 100) + "%" : (p * 100).toFixed(1).replace(".", ",") + "%");
+      const del = (id) => setMySlip(mySlip.filter((x) => x.id !== id));
+      const testo = (ls, wa) => (wa ? "*Schedina AuraPitch*\n" : "") + ls.slice().sort((a, b) => String(a.m.ko).localeCompare(String(b.m.ko))).map((l) => { const [mer, es] = mercatoBookmaker(l.m, l.k);
+        const ora = new Date(l.m.ko).toLocaleString("it-IT", { weekday: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+        return (wa ? "- " : "") + `${ora} ${l.m.h} - ${l.m.a} | ${mer}: ${wa ? "*" + es + "*" : es} @ ${odd(l.q)}`; }).join("\n") + `\nQuota totale ${odd(ls.reduce((a, l) => a * l.q, 1))}`;
+      if (!fisse.length) return html`<div className=${C.card + " p-4 space-y-1"}><div className=${"text-[15px] font-bold " + C.tx}>La tua schedina è vuota</div>
+        <p className=${"text-[13px] leading-snug " + C.mu}>Apri una partita e tocca una quota: la trovi qui, e l'IA può completarla con le partite che mancano.</p></div>`;
+      // partite in tutto: "decide l'IA" oppure da (tue + 1) a 12
+      const scelte = [0, ...Array.from({ length: Math.max(0, 12 - fisse.length) }, (_, i) => fisse.length + 1 + i)];
+      const iN = Math.max(0, scelte.indexOf(nTot));
+      const resta = qo ? qo / legs.fatta : 0;
+      const btn = (attivo) => "border-0 rounded-full font-semibold " + (attivo ? C.on : C.ch + " " + C.tx);
+      return html`<${React.Fragment}>
+        <div className=${C.card + " px-4 pt-3 pb-1"}>
+          <div className="flex items-baseline justify-between mb-1"><span className=${"text-[15px] font-bold " + C.tx}>Le tue scelte</span>
+            <span className=${"text-[12px] " + C.mu}>quota fatta <b className=${"num text-[17px] " + C.tx}>×${odd(legs.fatta)}</b></span></div>
+          ${fisse.map((l) => html`<${RigaMia} key=${l.id} l=${l} lg=${lg} onDel=${() => del(l.id)} />`)}</div>
+
+        <div className=${C.card + " p-4 space-y-3"}>
+          <div className="flex items-center gap-2"><${Ic.Sparkles} size=${16} className=${C.acc} /><span className=${"text-[15px] font-bold flex-1 " + C.tx}>Completa con l'IA</span>
+            <button role="switch" aria-checked=${on} aria-label="Completa con l'IA" onClick=${() => setOn(!on)} className=${"relative w-11 h-[26px] rounded-full transition-colors " + (on ? "bg-[#5B2EE6] dark:bg-[#A58BFF]" : "bg-[#17152B]/20 dark:bg-white/20")}>
+              <i className=${"absolute top-[3px] w-5 h-5 rounded-full bg-white shadow transition-all " + (on ? "left-[21px]" : "left-[3px]")}></i></button></div>
+          ${on && html`<div className="grid grid-cols-[58px_1fr] items-center gap-x-2 gap-y-2.5">
+            <span className=${"text-[12px] " + C.mu}>Stile</span>
+            <div className="grid grid-cols-3 gap-1">${PROFILI_SLIP.map((P, i) => { const lk = i === 2 && !pro; return html`<button key=${i} onClick=${() => (lk ? setUnlock(true) : setProf(i))}
+              className=${"rounded-[10px] px-1 py-[7px] text-[11px] leading-tight " + (prof === i ? C.on + " font-bold" : C.ch + " font-semibold " + C.tx)}><span className="inline-flex items-center gap-1">${P.nome.replace(" da Bar", "")}${lk && html`<${Ic.Lock} size=${10} />`}</span></button>`; })}</div>
+            <span className=${"text-[12px] " + C.mu}>Partite</span>
+            <div className="flex items-center gap-2.5">
+              <button aria-label="Una partita in meno" disabled=${iN === 0} onClick=${() => setN(scelte[iN - 1])} className=${"w-[30px] h-[30px] rounded-full text-[16px] font-bold disabled:opacity-40 " + C.ch + " " + C.tx}>−</button>
+              <span className=${"min-w-[22px] text-center " + C.tx}>${nTot ? html`<b className="num text-[22px]">${nTot}</b>` : html`<b className="text-[12px]">IA</b>`}</span>
+              <button aria-label="Una partita in più" disabled=${iN === scelte.length - 1} onClick=${() => setN(scelte[iN + 1])} className=${"w-[30px] h-[30px] rounded-full text-[16px] font-bold disabled:opacity-40 " + C.ch + " " + C.tx}>+</button>
+              <span className=${"text-[11px] " + C.mu}>${fisse.length} ${fisse.length === 1 ? "tua" : "tue"} + ${legs.aggiunte} dell'IA</span></div>
+            <span className=${"text-[12px] " + C.mu}>Giocate</span>
+            <div className="flex flex-wrap gap-1">${TIPI_GIOCATORI.map(([k, t]) => { const a = tipi.includes(k); return html`<button key=${k} aria-pressed=${a}
+              onClick=${() => { const nx = a ? tipi.filter((x) => x !== k) : [...tipi, k]; setTipi(nx.length ? nx : ["P"]); }}
+              className=${"px-2.5 py-[5px] text-[11px] rounded-full font-semibold " + (a ? C.seg : C.ch + " " + C.tx)}>${t}</button>`; })}</div>
+            <span className=${"text-[12px] " + C.mu}>Quota</span>
+            <div className="flex gap-1 overflow-x-auto noscroll -mr-4 pr-4">${QUOTE_MIE.map((q) => html`<button key=${q} onClick=${() => setQo(q)}
+              className=${"shrink-0 px-2.5 " + btn(qo === q) + (q ? " num text-[15px] font-bold py-[2px]" : " text-[11px] py-[5px]")}>${q ? "×" + q : "Libera"}</button>`)}</div></div>`}
+          ${on && html`<p className=${"text-[11px] leading-snug " + C.mu}>${legs.raggiunta ? `Le tue scelte arrivano già a ×${odd(legs.fatta)}: per ×${qo} non serve aggiungere niente.`
+            : legs.completa ? "Hai già tutte le partite che hai chiesto: aumenta il numero per farne aggiungere altre."
+            : !legs.aggiunte ? "Nessuna partita adatta tra quelle dei prossimi giorni: prova un altro stile, altre giocate o un'altra quota."
+            : legs.libera ? "Poche giocate per questo stile: l'IA ha preso le più vicine."
+            : `Cerca tra le partite di "Crea con l'IA" (${(PERIODI.find((x) => x[0] === per) || [0, "prossimi giorni"])[1].toLowerCase()}), senza riusare le tue.${qo && resta > 1 ? ` Per ×${qo} manca ×${odd(resta)}.` : ""}`}</p>`}</div>
+
+        <div className=${C.card + " px-4 pt-3 pb-4"}>
+          <div className=${"text-[15px] font-bold mb-1 " + C.tx}>La schedina</div>
+          ${legs.map((l) => html`<${RigaMia} key=${l.m.id} l=${l} lg=${lg} />`)}
+          <div className=${"flex items-end justify-between border-t pt-2.5 mt-1 " + C.bd}>
+            <div><div className=${"text-[11px] " + C.mu}>Quota totale${qo && on ? " · obiettivo ×" + qo : ""}</div><div className=${"num text-[32px] font-extrabold leading-none " + C.tx}>×${odd(tot)}</div></div>
+            <div className="text-right"><div className=${"text-[11px] " + C.mu}>passa secondo l'IA</div><div className=${"num text-[23px] font-bold leading-tight " + C.tx}>${pc(PV.p)}</div></div></div>
+          ${PV.diversa && html`<div className=${"text-[11px] rounded-xl border p-2 mt-2 " + (PV.p < PV.ind ? TONE.warn : TONE.info)}>${PV.collegate.size} giocate sono sulla stessa partita e dipendono l'una dall'altra: la probabilità vera è il <b>${pc(PV.p)}</b>, non il ${pc(PV.ind)}.</div>`}
+          ${on && legs.aggiunte > 0 && html`<button onClick=${() => setVr(vr + 1)} className=${"w-full mt-3 py-2.5 rounded-xl text-[13px] font-semibold flex items-center justify-center gap-1.5 " + C.ch + " " + C.tx}><${Ic.Repeat} size=${14} />Un'altra combinazione</button>`}
+          <div className="mt-3"><${Gioca} legs=${legs} /></div>
+          <div className="grid grid-cols-3 gap-2 mt-2">
+            <button onClick=${() => doCopy(testo(legs, false))} className=${"py-2 rounded-xl text-[12px] font-semibold " + C.ch + " " + C.tx}>Copia</button>
+            <button onClick=${() => doCopy(testo(legs, true))} className=${"py-2 rounded-xl text-[12px] font-semibold " + C.ch + " " + C.tx}>WhatsApp</button>
+            <button onClick=${() => setMySlip([])} className=${"py-2 rounded-xl text-[12px] font-semibold " + C.ch + " " + C.mu}>Svuota</button></div></div>
+        <p className=${"text-[11px] " + C.mu}>Le probabilità sono stime: nessuna schedina è sicura. Gioca solo cifre che puoi permetterti di perdere.</p><//>`;
+    }
 
   /* ---- storico delle schedine IA per stile: ogni giorno il server salva la schedina di base di ogni stile e la verifica ---- */
   function StoricoSchedine() {

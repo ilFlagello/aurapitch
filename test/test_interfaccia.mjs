@@ -322,6 +322,60 @@ async function giroSquadra(tema) {
   } catch (e) { errori.push(`[${tema}] squadra: ${e.message.split("\n")[0]}`); }
   await ctx.close();
 }
+// "La mia schedina" completata dall'IA (5/11): due scelte dell'utente, l'IA aggiunge le partite che mancano; e dalla partita
+// il tasto "Completa" del messaggio porta lì
+async function giroMiaSchedina(tema) {
+  const G = JSON.parse(fs.readFileSync(path.join(DIST, "data", "giornata.json"), "utf8"));
+  const prossime = G.matches.filter((m) => m.st === "NS" && m.tip && m.tip.consiglio && m.odds && ["CL", "EL", "ECL", "I1", "E0", "SP1", "D1", "F1"].includes(m.lg))
+    .sort((a, b) => a.ko.localeCompare(b.ko));
+  if (prossime.length < 5) return;
+  const mie = prossime.slice(0, 2).map((m) => ({ id: m.id, k: m.tip.consiglio.c }));
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, colorScheme: tema, hasTouch: true, serviceWorkers: "block" });
+  const p = await ctx.newPage();
+  p.on("pageerror", (e) => errori.push(`[${tema} mia schedina] errore: ${e.message}`));
+  await p.route(/^(?!http:\/\/127\.0\.0\.1)/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
+  await p.goto(URL0); await p.waitForTimeout(800);
+  await p.evaluate((mie) => { for (const [k, v] of [["onb", true], ["guideSeen", true], ["swipeOk", true], ["slip", mie], ["slipPer", "7g"], ["sch:schedina", 1]]) localStorage.setItem("ap:" + k, JSON.stringify(v)); }, mie);
+  if (await p.getByText("Ho almeno").count()) { await p.locator("#eta").check(); await p.locator("#acc").check(); await p.getByRole("button", { name: "Entra", exact: true }).click(); }
+  await p.reload(); await p.waitForTimeout(1200);
+  if (await p.getByRole("button", { name: "Salta" }).count()) await p.getByRole("button", { name: "Salta" }).click();
+  const ia = () => p.getByRole("img", { name: "Aggiunta dall'IA" }).count();
+  try {
+    await p.getByRole("button", { name: "Schedina IA", exact: true }).click(); await p.waitForTimeout(1500);
+    for (const t of ["Le tue scelte", "Completa con l'IA", "La schedina"]) if (!(await p.getByText(t, { exact: true }).count())) errori.push(`[${tema}] mia schedina: manca "${t}"`);
+    if ((await p.getByRole("img", { name: "Scelta tua" }).count()) < 4) errori.push(`[${tema}] mia schedina: le 2 scelte devono comparire in "Le tue scelte" e nella schedina`);
+    const n0 = await ia();
+    if (n0 < 1) errori.push(`[${tema}] mia schedina: l'IA non aggiunge partite`);
+    await p.screenshot({ path: path.join(OUT, `${tema}-mia-schedina.png`), fullPage: true });
+    await p.getByRole("button", { name: "Una partita in più" }).click(); await p.waitForTimeout(300);
+    const n1 = await ia();
+    await p.getByRole("button", { name: "Una partita in più" }).click(); await p.waitForTimeout(300);
+    if ((await ia()) !== n1 + 1) errori.push(`[${tema}] mia schedina: con una partita in più l'IA non ne aggiunge una (${n1} → ${await ia()})`);
+    await p.locator("button", { hasText: /^×10$/ }).click(); await p.waitForTimeout(300);
+    if (!(await p.getByText(/obiettivo ×10/).count())) errori.push(`[${tema}] mia schedina: la quota obiettivo non compare`);
+    await p.getByRole("button", { name: "Una partita in meno" }).click(); await p.getByRole("button", { name: "Una partita in meno" }).click(); await p.waitForTimeout(300);
+    const q = Number((await p.getByText(/^×\d+,\d\d$/).last().textContent()).replace("×", "").replace(",", "."));
+    if (!(q > 5 && q < 20)) errori.push(`[${tema}] mia schedina: con obiettivo ×10 la quota è ×${q}`);
+    await p.screenshot({ path: path.join(OUT, `${tema}-mia-schedina-x10.png`), fullPage: true });
+    await p.getByRole("switch", { name: "Completa con l'IA" }).click(); await p.waitForTimeout(300);
+    if (await ia()) errori.push(`[${tema}] mia schedina: con "Completa" spento restano partite dell'IA`);
+    await p.getByRole("switch", { name: "Completa con l'IA" }).click();
+    const t = await p.evaluate(() => document.body.innerText);
+    if (/undefined|NaN/.test(t)) errori.push(`[${tema}] mia schedina: testo con "undefined" o "NaN"`);
+    // dalla partita: "+" sul consiglio, poi "Completa" nel messaggio porta a "La mia schedina"
+    await p.getByRole("button", { name: "Partite", exact: true }).last().click(); await p.waitForTimeout(500);
+    const m3 = prossime[2];
+    await p.locator("main button").filter({ hasText: m3.h }).filter({ hasText: m3.a }).first().click({ timeout: 5000 }); await p.waitForTimeout(900);
+    const piu = p.getByRole("button", { name: "Aggiungi alla schedina" });
+    if (await piu.count()) {
+      await piu.first().click(); await p.waitForTimeout(200);
+      await p.getByRole("button", { name: "Completa", exact: true }).click({ timeout: 3000 }); await p.waitForTimeout(700);
+      if ((await p.getByRole("tab", { name: "La mia schedina" }).getAttribute("aria-selected")) !== "true") errori.push(`[${tema}] "Completa" non apre "La mia schedina"`);
+      if ((await p.getByRole("img", { name: "Scelta tua" }).count()) < 6) errori.push(`[${tema}] mia schedina: la terza scelta non c'è`);
+    }
+  } catch (e) { errori.push(`[${tema}] mia schedina: ${e.message.split("\n")[0]}`); }
+  await ctx.close();
+}
 // diretta (punto 4 del 3/11): barra "Chi spinge adesso" con una partita finta in corso (scoreboard e scheda ESPN finti)
 async function giroPressione(tema) {
   const L = JSON.parse(fs.readFileSync(path.join(DIST, "data", "lista.json"), "utf8"));
@@ -416,6 +470,7 @@ for (const t of ["light", "dark"]) await giro(t);
 await giroSenzaQuote("light");
 for (const t of ["light", "dark"]) await giroTabellone(t);
 await giroSquadra("dark");
+for (const t of ["light", "dark"]) await giroMiaSchedina(t);
 await giroPressione("light");
 for (const t of ["light", "dark"]) await giroAlgoritmo(t);
 await b.close(); srv.close();

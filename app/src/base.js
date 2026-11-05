@@ -512,6 +512,34 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     }
     return sel.map((x) => ({ m: x.m, ...x.o }));
   }
+  /* "La mia schedina" completata dall'IA (5/11, richiesta di Andrea): le giocate scelte dall'utente restano ferme, l'IA aggiunge
+     solo le partite che mancano con le stesse regole della schedina che crea da sola (stile, voci ammesse, quota obiettivo).
+     nTot = partite in tutto, comprese quelle dell'utente (0 = lo decide lo stile); T = quota totale obiettivo (0 = libera), di cui
+     si tiene conto della quota già fatta dalle scelte; le partite già scelte non si riusano. */
+  function completaSchedina(matches, fisse, prof, nTot, T, v = 0, voci = null) {
+    const R = PROFILI_SLIP[prof] || PROFILI_SLIP[1];
+    const usate = new Set(fisse.map((l) => l.m.id));
+    const resto = matches.filter((m) => !usate.has(m.id));
+    const fatta = fisse.reduce((a, l) => a * (l.q || 1), 1);
+    const fine = (agg, extra = {}) => Object.assign([...fisse.map((l) => ({ ...l, mia: true })), ...agg.map((l) => ({ ...l, ia: true }))], { aggiunte: agg.length, fatta, ...extra });
+    const nAgg = nTot ? Math.max(0, nTot - fisse.length) : null; // null: lo decide lo stile (o la quota)
+    if (nAgg === 0) return fine([], { completa: true });
+    if (T) {
+      const resta = T / fatta;
+      if (resta < 1.15) return fine([], { raggiunta: true });
+      const agg = buildTarget(resto, prof, resta, v, nAgg || 0, voci);
+      return fine(agg, { allargata: agg.allargata, libera: agg.libera });
+    }
+    const n = nAgg != null ? nAgg : Math.max(0, R.n - fisse.length);
+    if (!n) return fine([], { completa: true });
+    // quota ideale di ogni giocata pensata sul numero totale di partite, non solo su quelle aggiunte
+    const pool = poolStile(resto, prof, 0, v, voci, quotaIdeale(prof, fisse.length + n), n);
+    // "Un'altra combinazione" cambia davvero: le partite aggiunte nella combinazione precedente perdono punti (come buildTarget, #74)
+    const prima = v > 0 ? new Set(completaSchedina(matches, fisse, prof, nTot, T, v - 1, voci).filter((l) => l.ia).map((l) => l.m.id)) : null;
+    const sc = (x) => x.c[0].sc + 0.12 * rumore(x.m.id, v) - (prima && prima.has(x.m.id) ? 0.3 : 0);
+    const agg = pool.sort((a, b) => sc(b) - sc(a)).slice(0, n).map((x) => ({ m: x.m, ...x.c[0] }));
+    return fine(agg, { allargata: pool.allargata, libera: pool.libera });
+  }
   const PERIODI = [["oggi", "Oggi"], ["domani", "Domani"], ["3g", "Prossimi 3 giorni"], ["weekend", "Weekend"], ["7g", "Prossimi 7 giorni"], ["tutte", "Tutte"]];
   function inPeriodo(date, per, today) {
     const t0 = new Date(today + "T12:00:00"), d = new Date(date + "T12:00:00"), g = Math.round((d - t0) / 86400000);
@@ -738,4 +766,4 @@ function classificaViva(S, partite) {
   return { ...S, generale, casa: applica(S.casa, 0), trasferta: applica(S.trasferta, 1), viva: { live: nuove.filter((m) => m.st === "LIVE").length, finite: nuove.filter((m) => m.st === "FT").length } };
 }
 
-export { TIPI_GIOCATORI, QUOTA_MIN, classificaViva, registraColori, iniziali, matriceRis, probVera, NomeSquadra, NomeGiocatore, NomeLega, Ricarica, vibra, esitoGamba, statoGiocata, html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROFILI_SLIP, quotaIdeale, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };
+export { TIPI_GIOCATORI, QUOTA_MIN, classificaViva, registraColori, iniziali, matriceRis, probVera, NomeSquadra, NomeGiocatore, NomeLega, Ricarica, vibra, esitoGamba, statoGiocata, html, Ic, store, pct, pctL, odd, hs, mmss, C, TONE, DOT, confTone, ESITI, TC, SH, teamColors, lum, dist, auraCol, schiarisci, AuraLine, Crest, Flag, LEGACY, norm, nf, TEMPI, evalCode, mLabel, spiega, GROUPS, mGroup, leggiXg, options, hit, buildSlip, PROFILI_SLIP, quotaIdeale, ESCLUSI_SLIP, rumore, candidati, buildTarget, ESITI_SCHEDINA, buildForzata, completaSchedina, PERIODI, inPeriodo, Seg, Tabs, Chip, Sheet, FavPill, Form, Marchio, Giorni, Schede, Voce, puoCambiareScheda, inizioSwipe, fineSwipe, Ctx };

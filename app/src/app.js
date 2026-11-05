@@ -176,7 +176,7 @@ import { Guida } from "./guida.js";
     // conto alla rovescia del PRO: al secondo solo nell'ultima ora (prima basta un aggiornamento al minuto: niente ridisegni inutili)
     useEffect(() => { if (until <= Date.now()) return; let id; const giro = () => { setNow(Date.now()); if (Date.now() > until) return; id = setTimeout(giro, until - Date.now() > 3600e3 ? 60000 : 1000); }; giro(); return () => clearTimeout(id); }, [until]);
     useEffect(() => store.set("slip", mySlip), [mySlip]);
-    useEffect(() => { if (toast) { const id = setTimeout(() => setToast(""), 1800); return () => clearTimeout(id); } }, [toast]);
+    useEffect(() => { if (toast) { const id = setTimeout(() => setToast(""), toast.a ? 4000 : 1800); return () => clearTimeout(id); } }, [toast]);
     const [nuova, setNuova] = useState(false);
     const [quotaBassa, setQuotaBassa] = useState(null); // giocata a quota troppo bassa: l'IA propone un'alternativa
     // dopo un aggiornamento: una volta sola il riquadro con le novità (chi installa per la prima volta non lo vede)
@@ -358,9 +358,12 @@ import { Guida } from "./guida.js";
         setQuotaBassa({ m, k, q: o.q, alt });
         return;
       }
-      if (mySlip.some((x) => x.id === m.id)) { setMySlip(mySlip.map((x) => (x.id === m.id ? { id: m.id, k } : x))); flash("Esito aggiornato in schedina"); }
-      else { setMySlip([...mySlip, { id: m.id, k }]); flash("Aggiunta alla schedina"); }
+      // dopo ogni scelta, un tocco porta a "La mia schedina", dove l'IA può completarla (5/11)
+      const vai = ["Completa", apriMiaSchedina];
+      if (mySlip.some((x) => x.id === m.id)) { setMySlip(mySlip.map((x) => (x.id === m.id ? { id: m.id, k } : x))); flash({ t: "Esito aggiornato", a: vai }); }
+      else { setMySlip([...mySlip, { id: m.id, k }]); flash({ t: "In schedina: " + (mySlip.length + 1), a: vai }); }
     };
+    const apriMiaSchedina = () => { pila.current = []; transizione(() => { setOpen(null); setTeam(null); store.set("sch:schedina", 1); setSlipKey((x) => x + 1); setTab("schedina"); }); window.scrollTo(0, 0); };
     const doCopy = async (t) => {
       try { await navigator.clipboard.writeText(t); flash("Copiata negli appunti"); } catch (e) { setCopyText(t); }
     };
@@ -552,8 +555,8 @@ import { Guida } from "./guida.js";
         <p className=${"text-[13px] " + C.mu}>Aggiornata il ${NOVITA[0].data}. Ecco cosa è cambiato:</p>
         <div className="space-y-2">${NOVITA[0].punti.map((x) => html`<div key=${x} className="flex gap-2.5"><span className=${"mt-[7px] w-1.5 h-1.5 rounded-full shrink-0 bg-[#5B2EE6] dark:bg-[#A58BFF]"}></span><span className=${"text-[14px] leading-snug " + C.tx}>${x}</span></div>`)}</div>
         <button onClick=${chiudiNovita} className=${"w-full py-3 rounded-2xl text-[15px] font-bold " + C.on}>Ho capito</button><//>`}
-      ${toast && html`<div role="status" className="fixed left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-sm font-medium shadow-lg bg-[#17152B] text-white dark:bg-white dark:text-black"
-        style=${{ bottom: "calc(96px + env(safe-area-inset-bottom, 0px))" }}>${toast}</div>`}
+      ${toast && html`<div role="status" className=${"fixed left-1/2 -translate-x-1/2 z-50 rounded-full text-sm font-medium shadow-lg bg-[#17152B] text-white dark:bg-white dark:text-black flex items-center gap-3 whitespace-nowrap " + (toast.a ? "pl-4 pr-1.5 py-1.5" : "px-4 py-2")}
+        style=${{ bottom: "calc(96px + env(safe-area-inset-bottom, 0px))" }}>${toast.a ? html`<span>${toast.t}</span><button onClick=${() => { setToast(""); toast.a[1](); }} className="px-3 py-1.5 rounded-full text-[13px] font-bold bg-[#A58BFF] text-[#0E0C18] dark:bg-[#5B2EE6] dark:text-white">${toast.a[0]}</button>` : toast}</div>`}
     </div><//>`;
   }
 

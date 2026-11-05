@@ -125,8 +125,10 @@ def rosa(lg, tid):
     return out
 
 
-def risultati(lg, tid):
-    d = get(f"{SITE}{lg}/teams/{tid}/schedule")
+def risultati(lg, tid, d=None):
+    """Partite finite della squadra nel calendario ESPN `lg` (o nella risposta `d` gia scaricata). Ogni partita ha anche "lg",
+    lo slug ESPN della competizione in cui si e giocata (serve con il calendario di tutte le competizioni)."""
+    d = d if d is not None else get(f"{SITE}{lg}/teams/{tid}/schedule")
     out = []
     for ev in d.get("events", []):
         c = ev["competitions"][0]
@@ -137,9 +139,32 @@ def risultati(lg, tid):
         if not me or not op:
             continue
         sc = lambda x: int((x.get("score") or {}).get("value", 0) if isinstance(x.get("score"), dict) else (x.get("score") or 0))
-        out.append({"eid": ev["id"], "t": ev["date"], "casa": me["homeAway"] == "home", "avv": op["team"].get("shortDisplayName") or op["team"]["displayName"], "gf": sc(me), "gs": sc(op)})
+        out.append({"eid": ev["id"], "t": ev["date"], "casa": me["homeAway"] == "home", "avv": op["team"].get("shortDisplayName") or op["team"]["displayName"], "gf": sc(me), "gs": sc(op),
+                    "lg": (ev.get("league") or {}).get("slug") or lg})
     out.sort(key=lambda r: r["t"])
     return out
+
+
+def amichevole(slug):
+    """Amichevoli e tornei estivi: non contano per forma, riposo e statistiche ("club.friendly" e simili)."""
+    return "friendly" in str(slug or "").lower()
+
+
+STORIA_MAX = 25  # partite salvate per squadra (le piu recenti): bastano per forma (5), statistiche (10), riposo e curiosita
+STORIA_EXTRA = 150  # richieste in piu al giorno per le squadre che giocano oltre le 48 ore (il giro completo dura gia ~42 minuti su 60)
+
+
+def storia_squadra(tid):
+    """Tutte le partite finite della squadra nella stagione, in TUTTE le competizioni (campionato, coppe nazionali ed europee),
+    senza amichevoli: una richiesta (all/teams/<id>/schedule, verificata il 4-5/11). L'id ESPN e lo stesso in ogni competizione.
+    Restituisce (partite, risposta grezza)."""
+    d = get(f"{SITE}all/teams/{tid}/schedule")
+    return [r for r in risultati("all", tid, d) if not amichevole(r["lg"])], d
+
+
+def compatta(storia):
+    """Formato salvato in squadre.json["storia"]: [data, casa 1/0, avversario, gol fatti, gol subiti, slug della competizione]."""
+    return [[r["t"], 1 if r["casa"] else 0, r["avv"], r["gf"], r["gs"], r["lg"]] for r in storia[-STORIA_MAX:]]
 
 
 def cartellini(lg, eid, tid):
@@ -165,7 +190,7 @@ def classifica_espn(lg):
     righe = []
     for e in ((d.get("children") or [{}])[0].get("standings") or {}).get("entries", []):
         v = {s["name"]: s.get("value") for s in e.get("stats", [])}
-        righe.append({"team": e["team"].get("shortDisplayName") or e["team"]["displayName"], "lungo": e["team"].get("displayName"), "pg": int(v.get("gamesPlayed") or 0), "v": int(v.get("wins") or 0),
+        righe.append({"team": e["team"].get("shortDisplayName") or e["team"]["displayName"], "lungo": e["team"].get("displayName"), "id": e["team"].get("id"), "pg": int(v.get("gamesPlayed") or 0), "v": int(v.get("wins") or 0),
                       "n": int(v.get("ties") or 0), "p": int(v.get("losses") or 0), "gf": int(v.get("pointsFor") or 0), "gs": int(v.get("pointsAgainst") or 0),
                       "pt": int(v.get("points") or 0), "rank": int(v.get("rank") or 0)})
     righe.sort(key=lambda r: (r["rank"] or 99, -r["pt"]))
@@ -663,7 +688,7 @@ def giro_espn(base="data", ore=48):
             for sq in (m["h"], m["a"]):
                 if sq not in squadre or squadre[sq] in COPPE:  # il campionato vale piu della coppa (rosa, squalifiche)
                     squadre[sq] = m["lg"]
-    out = {"agg": ora.isoformat(), "squadre": {}, "classifiche": {}}
+    out = {"agg": ora.isoformat(), "squadre": {}, "classifiche": {}, "storia": {}}
     elenco = {}
     for k in sorted(set(squadre.values())):
         try:
@@ -678,7 +703,13 @@ def giro_espn(base="data", ore=48):
             continue
         lg = ESPN_LG[k]
         try:
-            r = {"lg": k, "id": t["id"], "rosa": rosa(lg, t["id"]), "risultati": risultati(lg, t["id"])}
+            # storia di TUTTE le competizioni (una richiesta, come prima quella del solo campionato): i "risultati" di sempre
+            # (solo la competizione della partita: li usano consiglio e specialisti) sono le stesse partite filtrate per competizione
+            if t["id"] not in out["storia"]:
+                tutte, _ = storia_squadra(t["id"])
+                out["storia"][t["id"]] = compatta(tutte)
+                _STORIA[t["id"]] = tutte
+            r = {"lg": k, "id": t["id"], "rosa": rosa(lg, t["id"]), "risultati": [x for x in _STORIA.get(t["id"], []) if x["lg"] == lg]}
             if r["risultati"]:
                 ult = r["risultati"][-1]
                 rossi, gialli = cartellini(lg, ult["eid"], t["id"])
@@ -687,13 +718,20 @@ def giro_espn(base="data", ore=48):
         except Exception as e:  # noqa: BLE001
             print(f"ESPN {nome}: errore {e}")
     # colori ufficiali delle maglie di tutte le squadre dei campionati (per l'aura delle partite nell'app)
+    # con l'id ESPN: e l'elenco da cui genera_app riconosce le squadre (identita.py)
     out["colori"] = {}
     for k, lg in ESPN_LG.items():
         try:
             tt = elenco.get(k) or [t["team"] for t in get(f"{SITE}{lg}/teams")["sports"][0]["leagues"][0]["teams"]]
-            out["colori"][k] = [{x: t.get(x) for x in ("displayName", "shortDisplayName", "name", "location", "color", "alternateColor")} for t in tt]
+            elenco[k] = tt
+            out["colori"][k] = [{x: t.get(x) for x in ("id", "displayName", "shortDisplayName", "name", "location", "abbreviation", "color", "alternateColor")} for t in tt]
         except Exception as e:  # noqa: BLE001
             print(f"ESPN colori {k}: {e}")
+    try:
+        n_extra = storie_in_piu(gio, elenco, out["storia"], ora)
+        print(f"ESPN storia delle squadre (tutte le competizioni): {len(out['storia'])} squadre, {n_extra} richieste per chi gioca oltre le 48 ore")
+    except Exception as e:  # noqa: BLE001 - la storia in piu non deve fermare il giro
+        print(f"ESPN storia in piu: errore {e}")
     out["risultati_lega"] = {}
     for k in SOLO_ESPN + COPPE:
         evs = []
@@ -726,6 +764,38 @@ def giro_espn(base="data", ore=48):
     with open(os.path.join(base, "espn", "squadre.json"), "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
     print(f"ESPN: {len(out['squadre'])} squadre con rosa e risultati, classifiche: {list(out['classifiche'])}")
+
+
+_STORIA = {}  # storia completa (con l'id della partita) delle squadre scaricate in questo giro
+
+
+def storie_in_piu(gio, elenco, storia, ora, massimo=STORIA_EXTRA):
+    """Storia di tutte le competizioni anche per le squadre che giocano tra 48 ore e 5 giorni (solo la storia: niente rosa),
+    riconosciute con identita.py tra le squadre della competizione della partita. Prima le partite piu vicine."""
+    import identita as ID
+    fatte = 0
+    partite = []
+    for m in gio.get("matches", []):
+        try:
+            ko = datetime.fromisoformat(m["ko"])
+        except (KeyError, ValueError):
+            continue
+        if m.get("lg") in ESPN_LG and m.get("lg") not in NAZIONALI and timedelta(hours=-3) <= ko - ora <= timedelta(days=5):
+            partite.append((ko, m))
+    for _, m in sorted(partite, key=lambda x: x[0]):
+        for nome in (m["h"], m["a"]):
+            tid = ID.id_espn(nome, elenco.get(m["lg"]) or [])
+            if not tid or tid in storia:
+                continue
+            if fatte >= massimo:
+                return fatte
+            fatte += 1
+            try:
+                tutte, _ = storia_squadra(tid)
+                storia[tid] = compatta(tutte)
+            except Exception as e:  # noqa: BLE001
+                print(f"ESPN storia {nome}: errore {e}")
+    return fatte
 
 
 # campionati e coppe SENZA quote dei bookmaker (scelti da Andrea il 3/11): calendario, risultati, classifica e diretta da ESPN,

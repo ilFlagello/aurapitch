@@ -24,6 +24,7 @@ import onesta as ON
 import specialisti as SP
 import cartellini as CK
 import espn_dati as ES
+import identita as ID
 import stima_sq as SQ
 import fattori as FT
 import giocatori as GC
@@ -606,6 +607,9 @@ def indice_scontri():
     mot = SP.Motore()  # modello statistico indipendente: stato aggiornato a oggi
     for r in uniche:
         mot.aggiorna(r["h"], r["a"], r["lg"], r["gh"], r["ga"], r["sh"], r["sa"], r["t"])
+    # nomi dell'archivio per divisione, ultimi 4 anni (promosse e retrocesse comprese): l'identita unica cerca qui, solo nel paese giusto
+    limite = datetime.now(timezone.utc) - timedelta(days=4 * 365)
+    mot.nomi_div = ID.nomi_archivio([r for r in uniche if r["t"] >= limite])
     return SP.indice_diretti(uniche), mot
 
 
@@ -623,6 +627,155 @@ def nota_scontri(dir_, tip, h, a):
     if ospite and p <= 1 and v >= 2:
         return f"Negli ultimi {len(d6)} scontri diretti {a} ha vinto {p} volt{'a' if p == 1 else 'e'}, {h} {v} ({n} pareggi)."
     return None
+
+
+def testo_riposo(h, a, rh, ra):
+    if rh is not None and ra is not None and abs(rh - ra) >= 3:
+        return {"tone": "info", "text": f"{h if rh > ra else a} ha {abs(rh - ra)} giorni di riposo in più."}
+    if rh is not None and ra is not None:
+        return {"tone": "ok", "text": f"Riposo simile: {rh} giorni per {h}, {ra} per {a} (partite di campionato e coppe nei dati)."}
+    if rh is not None or ra is not None:  # se ne conosce uno solo (es. squadra di un campionato che ESPN non segue)
+        chi, gg, altro = (h, rh, a) if rh is not None else (a, ra, h)
+        return {"tone": "ok", "text": f"{chi}: {gg} giorni di riposo (campionato e coppe). Per {altro} non disponibili."}
+    return {"tone": "ok", "text": "Giorni di riposo non disponibili per questo campionato."}
+
+
+def _arrotonda(x):
+    if isinstance(x, float):
+        return round(x, 4)
+    if isinstance(x, list):
+        return [_arrotonda(y) for y in x]
+    if isinstance(x, dict):
+        return {k: _arrotonda(v) for k, v in x.items()}
+    return x
+
+
+def ombra_identita(ih, ia, sto, t0, k, scontri, motore, ids, sp0):
+    """IN OMBRA: gli stessi ingressi di consiglio e specialisti calcolati con l'identita unica (storia di tutte le competizioni,
+    nome dell'archivio cercato nel paese giusto, posizione nel campionato anche in coppa). Non cambia nulla nell'app: va in
+    data/AAAA-MM-GG/identita_ombra.json, accanto ai valori di oggi (sp0), per misurare su partite vere se il nuovo e meglio."""
+    try:
+        ah, aa = ih.get("arch"), ia.get("arch")
+        dir_n = SP.diretti_di(scontri, ah, aa) if ah and aa else []
+        mot_n = motore.caratteristiche(ah or "", aa or "", k, t0)
+        sp_n = SP.segnali(sto["h"], sto["a"], t0, dir_n, mot_n)
+        return _arrotonda({"es": [ih.get("es"), ia.get("es")], "fd": [ih.get("fd"), ia.get("fd")], "casa": [ih.get("casa"), ia.get("casa")], "arch": [ah, aa],
+                           "n": [len([z for z in sto["h"] if z["t"] < t0]), len([z for z in sto["a"] if z["t"] < t0])],
+                           "sp": sp_n, "sp0": sp0, "pos": [ids.posizione(ih), ids.posizione(ia)],
+                           "sh": M.statistiche([z for z in sto["h"] if z["t"] < t0]), "sa": M.statistiche([z for z in sto["a"] if z["t"] < t0])})
+    except Exception as e:  # noqa: BLE001 - l'ombra non deve mai fermare il giro dei dati
+        return {"errore": f"{type(e).__name__}: {e}"}
+
+
+# ---------- identita unica delle squadre (Blocco 5, passo 2: identita.py) ----------
+
+FD_DI = {"SA": "I1", "PL": "E0", "PD": "SP1", "BL1": "D1", "CL": "CL"}  # competizione football-data.org -> codice dell'app
+
+
+def testo_posizione(r, prefisso=""):
+    """Riga di classifica (pos, punti, partite, squadre) -> testo della scheda partita."""
+    pos, pt, pg, n = r
+    tone = "good" if pos <= 4 else ("warn" if n and pos >= n - 2 else "ok")
+    media = f"{(pt / pg) if pg else 0:.2f}".replace(".", ",")
+    return {"tone": tone, "text": f"{prefisso}{pos}° con {pt} punti in {pg} partite, {media} a partita."}
+
+
+class Identita:
+    """Chi e ogni squadra dell'app (id ESPN, id football-data.org, campionato, nome nell'archivio) e la sua storia unica di
+    tutte le competizioni. Serve ai TESTI della scheda partita (forma, riposo, classifica, curiosita) e alle misure in ombra:
+    consiglio e specialisti restano calcolati come prima finche l'ombra non dice che il nuovo e meglio (regola del progetto)."""
+
+    def __init__(self, esd, fdp, classifiche, per_div):
+        self.liste = {k: [t for t in v if t.get("id")] for k, v in (esd.get("colori") or {}).items()}
+        self.da_slug = {v: k for k, v in ES.ESPN_LG.items()}
+        self.storia_es = {}
+        for tid, righe in (esd.get("storia") or {}).items():
+            lst = []
+            for r in righe:
+                try:
+                    lst.append({"t": utc(r[0]), "casa": bool(r[1]), "avv": r[2], "gf": int(r[3]), "gs": int(r[4]), "lg": r[5]})
+                except (TypeError, ValueError, IndexError, AttributeError):
+                    continue
+            self.storia_es[str(tid)] = lst
+        self.per_fd = {k: v for k, v in storico(fdp).items() if isinstance(k, int)}
+        self.fd2es, nomi_fd = {}, {}
+        for m in fdp.values():
+            kk = FD_DI.get(m.get("_code"))
+            for lato in ("homeTeam", "awayTeam"):
+                tm = m.get(lato) or {}
+                if kk and tm.get("id") is not None:
+                    nomi_fd.setdefault(tm["id"], (kk, tm))
+        for fid, (kk, tm) in nomi_fd.items():
+            es = ID.id_espn(tm.get("name"), self.liste.get(kk)) or ID.id_espn(tm.get("shortName"), self.liste.get(kk))
+            if es:
+                self.fd2es[fid] = es
+        conta = {}
+        for es in self.fd2es.values():
+            conta[es] = conta.get(es, 0) + 1
+        self.es2fd = {es: fid for fid, es in self.fd2es.items() if conta[es] == 1}
+        self.cl_fd = {code: (tabs or {}).get("TOTAL") or [] for code, tabs in classifiche.items() if not str(code).startswith("ES_")}
+        self.cl_es = {k: v for k, v in (esd.get("classifiche") or {}).items() if v}
+        self.codice = {lg[0]: lg[4] for lg in LEAGUES}
+        self.nome_lg = {lg[0]: lg[1] for lg in LEAGUES}
+        self.per_div = per_div or {}
+        self._cache = {}
+
+    def _casa_da_liste(self, es):
+        for kk, lst in self.liste.items():
+            if kk not in ES.COPPE and kk not in ES.NAZIONALI and any(t.get("id") == es for t in lst):
+                return kk
+        return None
+
+    def chi(self, nome, k, fd_id=None):
+        chiave = (nome, k, fd_id)
+        if chiave not in self._cache:
+            es = self.fd2es.get(fd_id) if fd_id is not None else None
+            if es is None and k not in ES.NAZIONALI:
+                es = ID.id_espn(nome, self.liste.get(k))
+            fd = fd_id if fd_id is not None else self.es2fd.get(es)
+            casa = (k if k not in ES.COPPE and k not in ES.NAZIONALI else None) or ID.campionato_di(self.storia_es.get(es), self.da_slug, ES.COPPE + ES.NAZIONALI) \
+                or (self._casa_da_liste(es) if es else None)
+            self._cache[chiave] = {"es": es, "fd": fd, "casa": casa, "arch": ID.nome_archivio(nome, k, self.per_div, casa),
+                                   "storia": ID.unisci(self.per_fd.get(fd), self.storia_es.get(es))}
+        return self._cache[chiave]
+
+    def riga(self, kk, ident):
+        """(posizione, punti, partite, squadre) della squadra nella classifica della competizione kk, cercata per id."""
+        code = self.codice.get(kk)
+        if code and ident.get("fd") is not None:
+            rows = self.cl_fd.get(code) or []
+            for i, r in enumerate(rows):
+                if (r.get("team") or {}).get("id") == ident["fd"]:
+                    return r.get("position", i + 1), r.get("points", 0), r.get("playedGames", 0), len(rows)
+        if ident.get("es") and kk in self.cl_es:
+            rows = self.cl_es[kk]
+            for i, r in enumerate(rows):
+                if r.get("id") and str(r["id"]) == str(ident["es"]):
+                    return r.get("rank") or i + 1, r.get("pt", 0), r.get("pg", 0), len(rows)
+        return None
+
+    def attese(self, ident, k):
+        """Testo della classifica: in campionato quella del campionato; in coppa quella della coppa (se c'e) piu quella del
+        campionato della squadra. None se non c'e nessuna classifica per questa squadra."""
+        if k not in ES.COPPE:
+            r = self.riga(k, ident)
+            return testo_posizione(r) if r else None
+        parti = []
+        r = self.riga(k, ident)
+        if r:
+            parti.append(testo_posizione(r, f"{self.nome_lg.get(k, k)}: "))
+        casa = ident.get("casa")
+        r2 = self.riga(casa, ident) if casa else None
+        if r2:
+            parti.append(testo_posizione(r2, f"In {self.nome_lg.get(casa, casa)}: "))
+        if not parti:
+            return None
+        return {"tone": parti[-1]["tone"], "text": " ".join(x["text"] for x in parti)}
+
+    def posizione(self, ident):
+        """Posizione nel campionato della squadra (per le misure in ombra)."""
+        r = self.riga(ident.get("casa"), ident) if ident.get("casa") else None
+        return r[0] if r else None
 
 
 def genera():
@@ -691,6 +844,8 @@ def genera():
             righe.append({"team": {"id": "es:" + (mio or r["team"]), "shortName": mio or r["team"]}, "position": r["rank"] or i + 1, "points": r["pt"], "playedGames": r["pg"],
                           "won": r["v"], "draw": r["n"], "lost": r["p"], "goalsFor": r["gf"], "goalsAgainst": r["gs"]})
         classifiche["ES_" + k_es] = {"TOTAL": righe}
+    ids = Identita(esd, fdp, classifiche, getattr(motore, "nomi_div", None))
+    print(f"Identita: {len(ids.storia_es)} squadre con la storia ESPN di tutte le competizioni, {len(ids.fd2es)} squadre football-data.org con id ESPN")
     scores = {}
     for path in glob.glob(os.path.join(FD, "scores_*.json")):
         for e in jload(path, []) or []:
@@ -739,12 +894,17 @@ def genera():
         l5 = [ultime5(per_team, hid, t0), ultime5(per_team, aid, t0)] if (code or hid or aid) else [[], []]
         prec, h2h = precedenti(m_fd["id"], hid, aid) if m_fd else ({"tone": "ok", "text": "Precedenti non disponibili per questo campionato nei dati gratuiti."}, [])
         rh, ra = (riposo(per_team, hid, t0), riposo(per_team, aid, t0)) if (code or hid or aid) else (None, None)
-        if rh is not None and ra is not None and abs(rh - ra) >= 3:
-            ctx = {"tone": "info", "text": f"{h if rh > ra else a} ha {abs(rh - ra)} giorni di riposo in più."}
-        elif rh is not None and ra is not None:
-            ctx = {"tone": "ok", "text": f"Riposo simile: {rh} giorni per {h}, {ra} per {a} (partite di campionato e coppe nei dati)."}
-        else:
-            ctx = {"tone": "ok", "text": "Giorni di riposo non disponibili per questo campionato."}
+        # identita unica (Blocco 5): storia di TUTTE le competizioni per i testi della scheda (forma, riposo, classifica, curiosita).
+        # Consiglio e specialisti usano ancora per_team/hid/aid come prima: i valori nuovi vanno in ombra (_oid, salva_identita_ombra)
+        ih, ia = ids.chi(h, k, hid if m_fd else None), ids.chi(a, k, aid if m_fd else None)
+        sto = {"h": ih["storia"] or (per_team.get(hid, []) if hid else []), "a": ia["storia"] or (per_team.get(aid, []) if aid else [])}
+        if sto["h"] or sto["a"]:
+            l5 = [ultime5(sto, "h", t0), ultime5(sto, "a", t0)]
+            # riposo solo se la storia comprende il campionato della squadra: Ferencvaros ha solo le coppe (ESPN non segue
+            # il campionato ungherese) e "10 giorni di riposo in piu" sarebbe falso
+            rh = riposo(sto, "h", t0) if (ih["casa"] or not ih["storia"]) else None
+            ra = riposo(sto, "a", t0) if (ia["casa"] or not ia["storia"]) else None
+        ctx = testo_riposo(h, a, rh, ra)
         tabs = classifiche.get(code) if code else classifiche.get("ES_" + k)
         # mercati e consiglio IA motivato
         lh, la = gol_da_quote(q["mk"], q["mo"], q.get("mo_l"), q.get("linea"))
@@ -785,6 +945,7 @@ def genera():
         extra, cart = CK.mercati(medie_ck.get(k), nome_csv(k, h), nome_csv(k, a), q["mk"][0], q["mk"][2], arb) if k in medie_ck else (None, None)
         arbitro = scheda_arbitro(arb_nome, arb, (medie_ck.get(k) or {}).get("lega") or {}) if arb_nome else None
         extra = extra or []
+        att = [testo_classifica(tabs, hid), testo_classifica(tabs, aid)] if tabs else [{"tone": "ok", "text": "Classifica non disponibile nei dati gratuiti."}] * 2
         mid = f"{k}-{m_fd['id'] if m_fd else zlib.crc32((h + '|' + a + '|' + loc.date().isoformat()).encode())}"
         if k in ES.NAZIONALI:  # nazionali: nome italiano per l'app, quello originale per diretta e risultati
             import nazionali as NZ
@@ -797,17 +958,18 @@ def genera():
             "p": [pc["1"], pc["X"], pc["2"]] if CB.attivo() and all(c in pc for c in "1X2") else q["mk"], "_p0": q["mk"], "mk": q["mk"],
             "po": pc.get("O2.5", q["mo"]) if CB.attivo() and q["mo"] is not None else (q["mo"] if q["mo"] is not None else 0.5), "mo": q["mo"] if q["mo"] is not None else 0.5,
             "odds": q["odds"], "max": q["max"], "nb": q["nb"], "xg": [lh, la], "elo": [None, None],
-            "forma": [testo_forma(l5[0]), testo_forma(l5[1])] if (code or hid or aid) else [{"tone": "ok", "text": "Forma non disponibile per questo campionato nei dati gratuiti."}] * 2,
-            "attese": [testo_classifica(tabs, hid), testo_classifica(tabs, aid)] if tabs else [{"tone": "ok", "text": "Classifica non disponibile nei dati gratuiti."}] * 2,
+            "forma": [testo_forma(l5[0]), testo_forma(l5[1])] if (code or hid or aid or sto["h"] or sto["a"]) else [{"tone": "ok", "text": "Forma non disponibile per questo campionato nei dati gratuiti."}] * 2,
+            "attese": [ids.attese(ih, k) or att[0], ids.attese(ia, k) or att[1]],
             "prec": prec, "ctx": ctx, "flags": [], "last5": l5, "h2h": h2h, "stats": [],
             "markets": righe_mercati(mercati) + extra, "tip": tip,
             "xg_mercato": xg_quote, "xg_base": [lh, la], "sp": sp, "fattori": [], "foto": r["_foto"], "cart": cart, "arbitro": arbitro,
             "xgf": [lettura_xg(k, h, t0), lettura_xg(k, a, t0)] if k in xg_lega else None,
-            "curiosita": curiosita_partita(per_team, hid, aid, h, a, t0) if (hid or aid) else [],
+            "curiosita": curiosita_partita(sto, "h", "a", h, a, t0) if (sto["h"] or sto["a"]) else (curiosita_partita(per_team, hid, aid, h, a, t0) if (hid or aid) else []),
             "col": colori_partita(colori_es.get(k), h, a), "_be": q.get("be"),
             "_ctx": {"coppa": [coppa_vicina(cal_coppe, h, t0), coppa_vicina(cal_coppe, a, t0)] if k not in ES.COPPE else None, "riposo": [rh, ra], "sh": sh, "sa": sa, "pos_h": pos.get(hid), "pos_a": pos.get(aid), "raccolte": raccolte,
                      "gol": [next((rr.get("goalsFor") for rr in (tabs or {}).get("TOTAL", []) if (rr.get("team") or {}).get("id") == x), None) for x in (hid, aid)],
                      "ol": [q["mo_l"], q["linea"]] if q.get("mo_l") and q.get("linea") else None},
+            "_oid": ombra_identita(ih, ia, sto, t0, k, scontri, motore, ids, sp) if st == "NS" else None,
         })
     # 3 partite FREE: le piu importanti tra oggi e domani non ancora iniziate
     cand = [m for m in out["matches"] if m["st"] == "NS" and m["date"] in (oggi.isoformat(), (oggi + timedelta(days=1)).isoformat())]
@@ -893,8 +1055,13 @@ def scrivi_forza(out, scontri, motore, path=None):
             lg_di.setdefault(m["h"], m["lg"])
             lg_di.setdefault(m["a"], m["lg"])
     forza = {}
+    per_div = getattr(motore, "nomi_div", None)
     for nome, k in lg_di.items():
-        chiave = SP.piega(SP.risolvi(nome, scontri))
+        if per_div is not None:  # identita unica: nome dell'archivio solo tra le squadre dello stesso paese, mai femminili o giovanili
+            arch = ID.nome_archivio(nome, k, per_div)
+            chiave = SP.piega(arch) if arch else None
+        else:
+            chiave = SP.piega(SP.risolvi(nome, scontri))
         if motore.n.get(chiave, 0) >= 5 and chiave in motore.elo:
             forza[nome] = [round(motore.elo[chiave]), k]
     path = path or FORZA_OUT
@@ -1714,6 +1881,34 @@ def salva_mercati_ombra(d):
     print(f"Mercati nuovi in ombra: {n} partite aggiornate")
 
 
+def salva_identita_ombra(d):
+    """IN OMBRA (identita unica, Blocco 5): ingressi di consiglio e specialisti calcolati con la storia di tutte le competizioni
+    (_oid, solo nel giro completo), aggiornati fino al blocco del consiglio e poi fermi. Un file per giorno di partita:
+    data/AAAA-MM-GG/identita_ombra.json. Non va nell'app."""
+    per_giorno = {}
+    ora = datetime.now(timezone.utc)
+    for m in d.get("matches", []):
+        o = m.get("_oid")
+        if not o or m.get("st") != "NS" or (m.get("blocco") or {}).get("st") in ("bloccato", "tardivo"):
+            continue
+        try:
+            if ora >= datetime.fromisoformat(m["ko"]) - timedelta(minutes=BLOCCO_MIN):
+                continue
+        except (KeyError, TypeError, ValueError):
+            continue
+        per_giorno.setdefault(m["date"], {})[m["id"]] = dict(o, lg=m.get("lg"), t=ora.isoformat(timespec="minutes"))
+    n = 0
+    for giorno, nuovi in per_giorno.items():
+        path = os.path.join(DATA, giorno, "identita_ombra.json")
+        vecchi = jload(path, {}) or {}
+        vecchi.update(nuovi)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(vecchi, f, ensure_ascii=False, separators=(",", ":"))
+        n += len(nuovi)
+    print(f"Identita unica in ombra: {n} partite aggiornate")
+
+
 def blocca_consigli(d):
     """Ogni consiglio si blocca BLOCCO_MIN minuti prima del calcio d'inizio (o al giro del mattino, se fino ad allora non ci sono altri giri)
     e resta quello fino a fine partita, giusto o sbagliato. Il consiglio bloccato vive nel registro privato dei consigli (cassaforte)."""
@@ -2027,11 +2222,15 @@ def main():
         salva_mercati_ombra(d)
     except Exception as e:  # noqa: BLE001 - i mercati in ombra non devono mai fermare il giro dei dati
         print(f"Mercati nuovi in ombra: non salvati ({type(e).__name__}: {e})")
+    try:
+        salva_identita_ombra(d)
+    except Exception as e:  # noqa: BLE001 - l'ombra non deve mai fermare il giro dei dati
+        print(f"Identita unica in ombra: non salvata ({type(e).__name__}: {e})")
     aggiungi_movimenti(d)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
         # le probabilita di base e gli specialisti dei giocatori (_pg) vanno solo nel diario, non nel file pubblico dell'app
-        json.dump({**d, "matches": [{k: v for k, v in m.items() if k not in ("_pg", "_be")} for m in d.get("matches", [])]}, f, ensure_ascii=False, separators=(",", ":"))  # _be: vedi NON_SERVONO
+        json.dump({**d, "matches": [{k: v for k, v in m.items() if k not in ("_pg", "_be", "_oid")} for m in d.get("matches", [])]}, f, ensure_ascii=False, separators=(",", ":"))  # _be, _oid: vedi NON_SERVONO
     scrivi_stato(d)
     scrivi_lista(d)
     aggiorna_storico(d)
@@ -2053,7 +2252,7 @@ STATO_OUT = os.path.join("app", "data", "stato.json")
 DETTAGLI = ("markets", "ia", "cart", "curiosita", "xgf", "segnali", "attese", "prec", "forma", "ctx", "h2h", "last5", "odds", "max", "elo", "foto",
             "arbitro", "xg_mercato", "fattori", "formazione", "cambio")
 FATTORI_LISTA = ("chi", "lato", "tipo", "fonte", "delta")  # nella lista resta un riassunto delle assenze (pagina squadra)
-NON_SERVONO = ("_ctx", "_firma", "_p0", "sp", "xg_base", "_pg", "uff_eff", "_be")
+NON_SERVONO = ("_ctx", "_firma", "_p0", "sp", "xg_base", "_pg", "uff_eff", "_be", "_oid")
 
 
 def scrivi_lista(d):

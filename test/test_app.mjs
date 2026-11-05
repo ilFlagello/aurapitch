@@ -107,6 +107,32 @@ if (pool.length >= 12) {
   }
 }
 
+// 3c. "La mia schedina" completata dall'IA (5/11): scelte ferme, nessuna partita riusata, numero di partite e quota obiettivo rispettati
+{
+  const pool = D.matches.filter((m) => m.st === "NS" && m.markets);
+  const fisse = pool.filter((m) => m.tip && m.tip.consiglio).slice(0, 2).map((m) => ({ m, ...B.options(m).find((o) => o.k === m.tip.consiglio.c) })).filter((l) => l.q);
+  if (fisse.length === 2) {
+    const ids = (L) => L.map((l) => l.m.id);
+    for (const prof of [0, 1]) {
+      const L = B.completaSchedina(pool, fisse, prof, 0, 0, 0);
+      ok(L.length === B.PROFILI_SLIP[prof].n, `mia schedina stile ${prof}: ${L.length} partite invece di ${B.PROFILI_SLIP[prof].n}`);
+      ok(L.slice(0, 2).every((l, i) => l.mia && l.m.id === fisse[i].m.id && l.k === fisse[i].k), "mia schedina: le scelte dell'utente devono restare ferme e in testa");
+      ok(new Set(ids(L)).size === L.length, "mia schedina: partita usata due volte");
+      const L6 = B.completaSchedina(pool, fisse, prof, 6, 0, 0);
+      ok(L6.length === 6 && L6.aggiunte === 4, `mia schedina: con 6 partite in tutto l'IA ne aggiunge 4 (${L6.aggiunte})`);
+      const L2 = B.completaSchedina(pool, fisse, prof, 2, 0, 0);
+      ok(L2.length === 2 && L2.completa, "mia schedina: con 2 partite in tutto non si aggiunge nulla");
+      const LT = B.completaSchedina(pool, fisse, prof, 0, 20, 0), q = LT.reduce((a, l) => a * l.q, 1);
+      ok(LT.aggiunte > 0 && q > 20 * 0.7 && q < 20 * 1.45, `mia schedina stile ${prof}: obiettivo x20, quota ${q.toFixed(2)}`);
+      const LV = B.completaSchedina(pool, fisse, prof, 0, 0, 1);
+      ok(ids(LV).join() !== ids(L).join(), `mia schedina stile ${prof}: "Un'altra combinazione" non cambia`);
+    }
+    const R = B.completaSchedina(pool, fisse, 1, 0, 1.2, 0);
+    ok(R.raggiunta && R.length === 2, "mia schedina: obiettivo già raggiunto dalle scelte");
+    const giocatori = B.completaSchedina(pool, fisse, 1, 5, 0, 0, ["MARC"]);
+    ok(giocatori.slice(2).every((l) => /^MARC:/.test(l.k)), "mia schedina: con i soli marcatori l'IA aggiunge solo marcatori");
+  } else console.log("mia schedina: meno di 2 partite con consiglio, prova saltata");
+}
 // 6. schedina con esito scelto: stesso esito in ogni partita, nessuna partita doppia, quota vicina all'obiettivo
 if (pool.length >= 12) for (const es of ["1", "X", "GG", "O2.5", "FAV"]) {
   const L0 = B.buildForzata(pool, es, 1, 0, 0);

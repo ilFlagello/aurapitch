@@ -1,6 +1,12 @@
 /* AuraPitch - versione dell'app e novità. A ogni pubblicazione con cambi visibili si aggiunge una voce IN CIMA:
    il numero cresce (1.1, 1.2, ...) e l'app lo mostra nel profilo e nel riquadro "Novità" dopo l'aggiornamento. */
 export const NOVITA = [
+  { v: "3.0", data: "5 novembre 2026", punti: [
+    "Nuovi stemmi delle squadre: un tondo con il disegno della maglia (strisce, cerchi, metà, banda) e i colori veri del club, riconoscibile anche piccolissimo. Nessuno stemma ufficiale",
+    "\"La mia schedina\" completata dall'IA: le tue giocate restano ferme e l'IA aggiunge le partite che mancano, con lo stile, il numero di partite, le giocate ammesse e la quota che scegli (tiene conto della quota che hai già fatto). Dopo aver toccato una quota, il tasto \"Completa\" ti porta lì",
+    "\"Le mie schedine\": toccando la barra della schedina in corso si apre una pagina con ogni schedina giocata, partita per partita come in un tabellone. Verde presa, giallo in corso, rosso persa, anche prima del fischio quando il risultato non può più cambiare l'esito (es. Over 2,5 con 3 gol)",
+    "Scheda partita, \"In breve\": in una sola scheda il consiglio, le ultime 5 di tutte le competizioni con la sigla della competizione, la posizione in classifica (in coppa anche quella in campionato), le assenze e una o due cose da sapere",
+  ] },
   { v: "2.9", data: "5 novembre 2026", punti: [
     "Pagina della squadra: risultati e prossime partite di tutte le competizioni (campionato, coppe nazionali ed europee), con il nome della competizione accanto a ogni partita. Prima comparivano solo le partite della competizione da cui si apriva la squadra",
   ] },

@@ -70,8 +70,20 @@ def piega(nome):
 
 
 def parole(nome):
+    """Parole che distinguono il club. Lettere singole consecutive diventano una sigla ("F.C." -> "fc", "D.C." -> "dc",
+    "L.P." -> "lp", che poi si abbina per iniziali a "La Plata")."""
+    pezzi, sigla = [], ""
+    for t in piega(nome).split() + [""]:
+        if len(t) == 1 and t.isalpha():
+            sigla += t
+            continue
+        if sigla:
+            pezzi.append(sigla)
+            sigla = ""
+        if t:
+            pezzi.append(t)
     out = []
-    for t in piega(nome).split():
+    for t in pezzi:
         t = ESTESE.get(t, t)
         if t and t not in VUOTE and not t.isdigit():
             out.append(t)
@@ -177,7 +189,7 @@ def nome_archivio(nome, k, per_div, casa=None):
     cand = sorted(set().union(*(per_div.get(d, set()) for d in divs)))
     if not cand:
         return None
-    m = MANUALE.get(piega(nome))
+    m = MANUALE.get(piega(nome)) or MANUALE.get(" ".join(parole(nome)))
     if m in cand:
         return m
     if segni(parole(nome)) - {"b"}:  # femminili e giovanili: l'archivio ha solo prime squadre maschili (e qualche seconda squadra "B")

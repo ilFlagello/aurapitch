@@ -445,7 +445,11 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     let n = nP || Math.max(1, Math.min(14, Math.round(LT / Math.log(R.mid))));
     const qt = Math.max(QUOTA_MIN, Math.exp(LT / n));
     const pool = poolStile(matches, prof, qt, v, voci, 0, n + 2);
-    pool.sort((a, b) => b.c[0].sc + 0.15 * rumore(b.m.id, v) - (a.c[0].sc + 0.15 * rumore(a.m.id, v)));
+    // "Un'altra combinazione" deve cambiare davvero: le partite della combinazione precedente perdono punti (5/11: con quota x2
+    // basta una partita e Inter-Como X2 staccava tanto le altre che il rumore non bastava, la schedina restava uguale 4 volte su 5)
+    const prima = v > 0 ? new Set(buildTarget(matches, prof, T, v - 1, nP, voci).map((l) => l.m.id)) : null;
+    const pen = (x) => (prima && prima.has(x.m.id) ? 0.3 : 0);
+    pool.sort((a, b) => b.c[0].sc + 0.15 * rumore(b.m.id, v) - pen(b) - (a.c[0].sc + 0.15 * rumore(a.m.id, v) - pen(a)));
     if (!pool.length) return [];
     n = Math.min(n, pool.length);
     let sel = pool.slice(0, n).map((x) => ({ x, i: 0 }));

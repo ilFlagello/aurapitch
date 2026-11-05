@@ -39,6 +39,21 @@ for (const [c, righe] of Object.entries(py)) for (const [h, a, h1, a1, v] of rig
 ok(casi > 1000, "troppi pochi casi confrontati: " + casi);
 console.log("esiti confrontati:", casi, "su", Object.keys(py).length, "codici");
 
+// stemmi "tondo maglia" (5/11): nomi diversi della stessa squadra trovano la stessa maglia, squadre diverse no
+{
+  const outM = path.join(tmp, "maglie.mjs");
+  await esbuild.build({ entryPoints: [path.join(APP, "src/maglie.js")], bundle: true, platform: "node", format: "esm", outfile: outM, logLevel: "error" });
+  const M = await import(pathToFileURL(outM).href);
+  const uguali = [["AC Milan", "Milan"], ["Atlético de Madrid", "Atletico Madrid"], ["Club Brugge KV", "Club Brugge"], ["FC Porto", "Porto"], ["Ferencváros TC", "Ferencvaros"], ["Barça", "Barcelona"]];
+  for (const [x, y] of uguali) ok(M.maglia(x) && JSON.stringify(M.maglia(x)) === JSON.stringify(M.maglia(y)), `maglia: ${x} e ${y} devono essere la stessa`);
+  for (const t of ["Inter Miami CF", "Santos Laguna", "Racing Genk", "Chelsea FC Women", "Sporting Kansas City"]) ok(!M.maglia(t) || M.maglia(t)[0] === "s", `maglia: ${t} non deve prendere le strisce di un'altra squadra`);
+  ok(JSON.stringify(M.maglia("Inter Miami CF")) !== JSON.stringify(M.maglia("Inter")), "maglia: Inter Miami non è l'Inter");
+  for (const [k, v] of Object.entries(M.MAGLIE)) ok(Array.isArray(v) && v[0] in M.DISEGNI && /^#[0-9A-F]{6}$/i.test(v[1]) && /^#[0-9A-F]{6}$/i.test(v[2]), `maglia scritta male: ${k}`);
+  // ogni squadra vista oggi ha uno stemma: maglia oppure tinta unita con i colori ESPN
+  const sq = new Set(D.matches.flatMap((m) => [m.h, m.a]));
+  ok([...sq].every((t) => B.teamColors(t)), "colori di riserva per tutte le squadre");
+}
+
 // 2. etichette leggibili per tutti i mercati
 for (const m of D.matches) for (const r of m.markets) {
   const l = B.mLabel(m, r[0]), s = B.mLabel(m, r[0], true);

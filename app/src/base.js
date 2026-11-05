@@ -1,6 +1,7 @@
 /* AuraPitch - utilità, stile, mercati (codici, etichette, esiti), algoritmi della schedina e componenti di base. */
 import React, { useState, useEffect, useRef } from "react";
 import htm from "htm";
+import { maglia, DISEGNI } from "./maglie.js";
 import { LuActivity, LuCalculator, LuCalendar, LuChartColumn, LuCheck, LuChevronDown, LuChevronLeft, LuChevronRight, LuChevronUp, LuCircleCheck, LuCircleDot, LuCircleHelp, LuCircleX, LuClock, LuCopy, LuCrown, LuInfo, LuLock, LuMoon, LuNewspaper, LuPlay, LuPlus, LuRepeat, LuSearch, LuShare2, LuBookOpen, LuShield, LuShieldCheck, LuShirt, LuSmartphone, LuSparkles, LuStar, LuSun, LuSwords, LuTrash2, LuTrendingUp, LuTriangleAlert, LuTrophy, LuUsers, LuX, LuZap } from "react-icons/lu";
 
 const html = htm.bind(React.createElement);
@@ -113,25 +114,23 @@ Ic.Ball = ({ size = 14, className = "" }) => html`<svg width=${size} height=${si
     if (/^real\b/i.test(t) && w[1]) return ("R" + w[1][0]).toUpperCase();
     return (u.length === 1 ? u[0].slice(0, 3) : u[0][0] + u[1][0] + (u[2] && u.length === 3 ? u[2][0] : "")).toUpperCase();
   }
+  /* stemma "tondo maglia" (scelto da Andrea il 5/11): cerchio con il disegno della prima maglia (strisce, cerchi, metà, banda)
+     e i suoi due colori, da maglie.js; le squadre che non sono lì hanno la tinta unita con i colori veri da ESPN e un anello
+     del secondo colore. Nessuno stemma ufficiale, nessuna scritta: si legge anche a 14 px. */
   function Crest({ t, size = 20 }) {
-    const [a0, b0, k] = teamColors(t);
-    const vero = COLORI[t];
-    const a = vero ? vero[0] : a0;
-    let b = vero ? vero[1] || b0 : b0;
-    if (vero && dist(a, b) < 120) b = lum(a) > 0.5 ? "#17152B" : "#FFFFFF";
-    const id = "s" + (hs(t) % 100000);
-    const testo = size >= 26 ? iniziali(t) : "";
-    const chiaro = /^#/.test(a) ? lum(a) > 0.62 : false;
+    const mg = maglia(t);
+    let a, b, d = "";
+    if (mg) { d = DISEGNI[mg[0]] || ""; a = mg[1]; b = mg[2]; }
+    else { const [a0, b0] = teamColors(t); const vero = COLORI[t]; a = vero ? vero[0] : a0; b = vero ? vero[1] || b0 : b0; }
+    // anello: per la tinta unita il secondo colore, se si distingue; altrimenti un filo neutro che si vede su chiaro e su scuro
+    const anello = !d && /^#/.test(a) && /^#/.test(b) && dist(a, b) >= 120 ? b : null;
+    const sw = size <= 16 ? 2 : size <= 24 ? 1.6 : 1.1;
+    const id = "mg" + (hs(t) % 1000000);
     return html`<svg width=${size} height=${size} viewBox="0 0 24 24" className="shrink-0" aria-hidden="true">
-      <defs><linearGradient id=${id} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fff" stopOpacity="0.28" /><stop offset="0.55" stopColor="#fff" stopOpacity="0" /></linearGradient></defs>
-      <path d=${SH} fill=${a} />
-      ${!testo && k === "v" && html`<path d="M12 2L21 5V12C21 17 17 21 12 22Z" fill=${b} />`}
-      ${!testo && k === "h" && html`<rect x="3.2" y="9" width="17.6" height="4" fill=${b} />`}
-      ${!testo && k === "s" && html`<circle cx="12" cy="11" r="3.6" fill=${b} />`}
-      ${testo && html`<rect x="3" y="15.2" width="18" height="1.6" fill=${b} opacity="0.9" />`}
-      ${testo && html`<text x="12" y="13" textAnchor="middle" fontSize=${testo.length > 2 ? 6.2 : 7.4} fontWeight="800" fontFamily="'Big Shoulders', Figtree, system-ui, sans-serif" fill=${chiaro ? "#17152B" : "#FFFFFF"} letterSpacing="0.2">${testo}</text>`}
-      <path d=${SH} fill=${"url(#" + id + ")"} />
-      <path d=${SH} fill="none" stroke=${b} strokeWidth="1.3" /></svg>`;
+      ${d && html`<defs><clipPath id=${id}><circle cx="12" cy="12" r="10.5" /></clipPath></defs>`}
+      <circle cx="12" cy="12" r="10.5" fill=${a} />
+      ${d && html`<path d=${d} fill=${b} clipPath=${"url(#" + id + ")"} />`}
+      <circle cx="12" cy="12" r="10.5" fill="none" strokeWidth=${anello ? sw : 1} stroke=${anello || undefined} className=${anello ? "" : "stroke-[#17152B]/25 dark:stroke-white/30"} /></svg>`;
   }
   function Flag({ k, w = 20 }) {
     const h = (w * 2) / 3;

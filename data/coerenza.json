@@ -1,6 +1,9 @@
 {
- "quando": "2026-11-04T23:50+00:00",
- "controlli": 158976,
- "problemi": [],
+ "quando": "2026-11-05T06:42+00:00",
+ "controlli": 155847,
+ "problemi": [
+  "partita doppia (stesso id): Tigres UANL-Cruz Azul (2026-11-08)",
+  "partita doppia (stesse squadre, stesso giorno): Tigres UANL-Cruz Azul (2026-11-08)"
+ ],
  "consigli_controllati": true
 }

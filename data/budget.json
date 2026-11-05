@@ -1,32 +1,68 @@
 {
  "odds": {
-  "giorno": "2026-11-04",
-  "inizio": 396,
-  "quota": 13,
+  "giorno": "2026-11-05",
+  "inizio": 384,
+  "quota": 7,
   "spesi": {
-   "mattino": 12
+   "mattino": 2
   },
   "mattino_fatto": true,
-  "rimasti": 384,
+  "rimasti": 382,
   "ultime": {
    "Serie A": "2026-11-04",
    "Serie B": "2026-11-04",
    "Premier League": "2026-11-04",
    "LaLiga": "2026-11-04",
    "Bundesliga": "2026-11-04",
-   "Champions League": "2026-11-04"
+   "Champions League": "2026-11-04",
+   "Europa League": "2026-11-05"
+  },
+  "calendario": {
+   "2026-11-05": {
+    "fasce": 4,
+    "leghe": 2
+   },
+   "2026-11-06": {
+    "fasce": 5,
+    "leghe": 5
+   },
+   "2026-11-07": {
+    "fasce": 15,
+    "leghe": 5
+   },
+   "2026-11-08": {
+    "fasce": 16,
+    "leghe": 5
+   },
+   "2026-11-20": {
+    "fasce": 2,
+    "leghe": 2
+   },
+   "2026-11-21": {
+    "fasce": 12,
+    "leghe": 4
+   },
+   "2026-11-22": {
+    "fasce": 12,
+    "leghe": 4
+   },
+   "2026-11-23": {
+    "fasce": 3,
+    "leghe": 3
+   }
   }
  },
  "af": {
-  "giorno": "2026-11-04",
+  "giorno": "2026-11-05",
   "usate": {
-   "infortuni": 11,
-   "partite": 1
+   "infortuni": 2,
+   "partite": 1,
+   "quote": 4
   },
-  "rimaste": 84
+  "rimaste": 99
  },
  "fd": {
-  "giorno": "2026-11-04",
-  "usate": 50
+  "giorno": "2026-11-05",
+  "usate": 24
  }
 }

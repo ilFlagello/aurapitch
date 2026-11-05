@@ -486,8 +486,9 @@ def curiosita_partita(per_team, hid, aid, h, a, t0):
 
 def ultime5(per_team, tid, prima):
     lst = [z for z in per_team.get(tid, []) if z["t"] < prima][-5:]
+    # "c": competizione (sigla ESPN o codice d'archivio), per la "In breve" con tutte le competizioni (5/11)
     return [{"data": z["t"].astimezone(ROME).strftime("%d/%m/%y"), "avv": z["avv"], "casa": z["casa"], "ris": f"{z['gf']}-{z['gs']}",
-             "esito": "V" if z["gf"] > z["gs"] else ("N" if z["gf"] == z["gs"] else "P")} for z in lst]
+             "esito": "V" if z["gf"] > z["gs"] else ("N" if z["gf"] == z["gs"] else "P"), **({"c": z["lg"]} if z.get("lg") else {})} for z in lst]
 
 
 def testo_forma(l5):
@@ -772,6 +773,16 @@ class Identita:
             return None
         return {"tone": parti[-1]["tone"], "text": " ".join(x["text"] for x in parti)}
 
+    def posti(self, ident, k):
+        """Posizioni per la "In breve" (5/11): [{"c": competizione, "p": posizione, "n": squadre}], prima la competizione della
+        partita, poi (in coppa) il campionato della squadra. Solo testo: il consiglio non le usa."""
+        out = []
+        for kk in [k] + ([ident.get("casa")] if k in ES.COPPE and ident.get("casa") else []):
+            r = self.riga(kk, ident)
+            if r:
+                out.append({"c": kk, "p": r[0], "n": r[3]})
+        return out
+
     def posizione(self, ident):
         """Posizione nel campionato della squadra (per le misure in ombra)."""
         r = self.riga(ident.get("casa"), ident) if ident.get("casa") else None
@@ -959,7 +970,7 @@ def genera():
             "po": pc.get("O2.5", q["mo"]) if CB.attivo() and q["mo"] is not None else (q["mo"] if q["mo"] is not None else 0.5), "mo": q["mo"] if q["mo"] is not None else 0.5,
             "odds": q["odds"], "max": q["max"], "nb": q["nb"], "xg": [lh, la], "elo": [None, None],
             "forma": [testo_forma(l5[0]), testo_forma(l5[1])] if (code or hid or aid or sto["h"] or sto["a"]) else [{"tone": "ok", "text": "Forma non disponibile per questo campionato nei dati gratuiti."}] * 2,
-            "attese": [ids.attese(ih, k) or att[0], ids.attese(ia, k) or att[1]],
+            "attese": [ids.attese(ih, k) or att[0], ids.attese(ia, k) or att[1]], "posti": [ids.posti(ih, k), ids.posti(ia, k)],
             "prec": prec, "ctx": ctx, "flags": [], "last5": l5, "h2h": h2h, "stats": [],
             "markets": righe_mercati(mercati) + extra, "tip": tip,
             "xg_mercato": xg_quote, "xg_base": [lh, la], "sp": sp, "fattori": [], "foto": r["_foto"], "cart": cart, "arbitro": arbitro,
@@ -2249,7 +2260,7 @@ def main():
 
 STATO_OUT = os.path.join("app", "data", "stato.json")
 # l'app scarica prima una lista leggera; i dettagli di una partita arrivano quando la apri, i mercati quando apri la Schedina
-DETTAGLI = ("markets", "ia", "cart", "curiosita", "xgf", "segnali", "attese", "prec", "forma", "ctx", "h2h", "last5", "odds", "max", "elo", "foto",
+DETTAGLI = ("markets", "ia", "cart", "curiosita", "xgf", "segnali", "attese", "posti", "prec", "forma", "ctx", "h2h", "last5", "odds", "max", "elo", "foto",
             "arbitro", "xg_mercato", "fattori", "formazione", "cambio")
 FATTORI_LISTA = ("chi", "lato", "tipo", "fonte", "delta")  # nella lista resta un riassunto delle assenze (pagina squadra)
 NON_SERVONO = ("_ctx", "_firma", "_p0", "sp", "xg_base", "_pg", "uff_eff", "_be", "_oid")

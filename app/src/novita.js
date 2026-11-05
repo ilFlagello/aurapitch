@@ -1,6 +1,9 @@
 /* AuraPitch - versione dell'app e novità. A ogni pubblicazione con cambi visibili si aggiunge una voce IN CIMA:
    il numero cresce (1.1, 1.2, ...) e l'app lo mostra nel profilo e nel riquadro "Novità" dopo l'aggiornamento. */
 export const NOVITA = [
+  { v: "2.9", data: "5 novembre 2026", punti: [
+    "Pagina della squadra: risultati e prossime partite di tutte le competizioni (campionato, coppe nazionali ed europee), con il nome della competizione accanto a ogni partita. Prima comparivano solo le partite della competizione da cui si apriva la squadra",
+  ] },
   { v: "2.8", data: "5 novembre 2026", punti: [
     "Ogni squadra è riconosciuta come un solo club in tutte le competizioni: nella scheda partita la forma, le ultime partite e i giorni di riposo contano campionato, coppe nazionali e coppe europee insieme (es. il Milan in Europa League mostra anche le partite di Serie A, il Celtic in campionato non mostra più solo le partite di Europa League)",
     "Nelle partite di coppa la classifica mostra anche la posizione nel proprio campionato (es. \"Europa League: 12°… In Serie A: 3°…\"); nei campionati seguiti con ESPN la classifica non è più \"non disponibile\"",

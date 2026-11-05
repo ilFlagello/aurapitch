@@ -1,6 +1,11 @@
 /* AuraPitch - versione dell'app e novità. A ogni pubblicazione con cambi visibili si aggiunge una voce IN CIMA:
    il numero cresce (1.1, 1.2, ...) e l'app lo mostra nel profilo e nel riquadro "Novità" dopo l'aggiornamento. */
 export const NOVITA = [
+  { v: "2.7", data: "5 novembre 2026", punti: [
+    "Classifica in diretta anche nella scheda partita: accanto alle squadre in campo compare LIVE (verde se vince, grigio se pareggia, rosso se perde) con le frecce delle posizioni guadagnate o perse",
+    "Europa League e Conference League hanno la loro classifica della fase a campionato, anche in diretta",
+    "Nessuna partita sparisce più quando una fonte delle quote non le ha ancora aggiornate (es. Fenerbahçe-Liverpool in Champions), e niente più partite doppie",
+  ] },
   { v: "2.6", data: "4 novembre 2026", punti: [
     "Nei mercati dei giocatori e nella Schedina IA la voce \"Ammoniti\" diventa \"Cartellini\": vale qualsiasi cartellino, giallo o rosso (come già nel controllo dei risultati)",
   ] },

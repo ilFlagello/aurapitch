@@ -123,6 +123,13 @@ def esd_finto():
             "classifiche": {"EL": [{"team": "Ferencvaros", "id": "622", "rank": 7, "pt": 7, "pg": 3}, {"team": "Milan", "id": "103", "rank": 12, "pt": 6, "pg": 3}]}}
 
 
+class TestRiposo(unittest.TestCase):
+    def test_testo(self):
+        self.assertIn("Milan: 4 giorni di riposo", GA.testo_riposo("Milan", "Ferencvaros", 4, None)["text"])
+        self.assertIn("Per Milan non disponibili", GA.testo_riposo("Milan", "Ferencvaros", None, 14)["text"])
+        self.assertIn("ha 3 giorni di riposo in più", GA.testo_riposo("A", "B", 7, 4)["text"])
+
+
 class TestIdentitaApp(unittest.TestCase):
     def setUp(self):
         fdp = {1: {"id": 1, "_code": "SA", "utcDate": t(-4).isoformat(), "status": "FINISHED", "homeTeam": {"id": 586, "name": "Torino FC", "shortName": "Torino"},
@@ -149,6 +156,7 @@ class TestIdentitaApp(unittest.TestCase):
         att = self.ids.attese(self.ids.chi("Ferencvaros", "EL"), "EL")
         self.assertIn("Europa League: 7°", att["text"])
         self.assertNotIn("In ", att["text"])  # campionato ungherese non disponibile
+        self.assertIsNone(self.ids.chi("Ferencvaros", "EL")["casa"])  # niente campionato: genera non calcola il riposo
 
     def test_squadra_sconosciuta_niente(self):
         i = self.ids.chi("Squadra Inventata", "SC0")

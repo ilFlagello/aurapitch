@@ -634,6 +634,9 @@ def testo_riposo(h, a, rh, ra):
         return {"tone": "info", "text": f"{h if rh > ra else a} ha {abs(rh - ra)} giorni di riposo in più."}
     if rh is not None and ra is not None:
         return {"tone": "ok", "text": f"Riposo simile: {rh} giorni per {h}, {ra} per {a} (partite di campionato e coppe nei dati)."}
+    if rh is not None or ra is not None:  # se ne conosce uno solo (es. squadra di un campionato che ESPN non segue)
+        chi, gg, altro = (h, rh, a) if rh is not None else (a, ra, h)
+        return {"tone": "ok", "text": f"{chi}: {gg} giorni di riposo (campionato e coppe). Per {altro} non disponibili."}
     return {"tone": "ok", "text": "Giorni di riposo non disponibili per questo campionato."}
 
 
@@ -897,7 +900,10 @@ def genera():
         sto = {"h": ih["storia"] or (per_team.get(hid, []) if hid else []), "a": ia["storia"] or (per_team.get(aid, []) if aid else [])}
         if sto["h"] or sto["a"]:
             l5 = [ultime5(sto, "h", t0), ultime5(sto, "a", t0)]
-            rh, ra = riposo(sto, "h", t0), riposo(sto, "a", t0)
+            # riposo solo se la storia comprende il campionato della squadra: Ferencvaros ha solo le coppe (ESPN non segue
+            # il campionato ungherese) e "10 giorni di riposo in piu" sarebbe falso
+            rh = riposo(sto, "h", t0) if (ih["casa"] or not ih["storia"]) else None
+            ra = riposo(sto, "a", t0) if (ia["casa"] or not ia["storia"]) else None
         ctx = testo_riposo(h, a, rh, ra)
         tabs = classifiche.get(code) if code else classifiche.get("ES_" + k)
         # mercati e consiglio IA motivato

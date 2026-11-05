@@ -154,7 +154,11 @@ def carica_quote():
                     righe.append(r)
         except OSError:
             continue
-    migliori = {}
+    # Una partita = stesso campionato e stesse squadre (stessa_partita): i nomi cambiano tra fonti e giorni
+    # ("Club Brugge" / "Club Brugge KV", "AEK Athens FC" / "PAE AEK") e a volte cambia l'orario.
+    # Si tiene la fotografia piu recente CON le quote 1X2; senza, la piu recente (4/11: Fenerbahce-Liverpool spariva dall'app
+    # perche la riga del giorno non aveva quote e copriva quella del giorno prima, e PSV-Brugge compariva due volte).
+    gruppi = {}
     for r in righe:
         if not r.get("inizio"):
             continue
@@ -164,11 +168,33 @@ def carica_quote():
             continue
         if r["_foto"] > t.astimezone(ROME).strftime("%Y-%m-%d"):
             continue  # fotografia presa dopo la partita
-        k = (r.get("campionato"), " ".join(sorted(toks(r.get("casa")))), " ".join(sorted(toks(r.get("ospite")))), t.strftime("%Y-%m-%d"))
-        if k not in migliori or migliori[k]["_foto"] < r["_foto"]:
-            r["_t"] = t
-            migliori[k] = r
-    return list(migliori.values())
+        r["_t"] = t
+        cand = gruppi.setdefault(r.get("campionato"), [])
+        for g in cand:
+            x = g[0]
+            if stessa_partita(x, r):
+                g.append(r)
+                break
+        else:
+            cand.append([r])
+    return [max(g, key=lambda r: (ha_quote_1x2(r), r["_foto"])) for cand in gruppi.values() for g in cand]
+
+
+def stessa_partita(x, r):
+    """Due righe di quote (stesso campionato) sono la stessa partita? Tutte e due le squadre simili entro 36 ore (l'orario
+    puo essere spostato), oppure una squadra con lo stesso identico nome entro 3 ore. Non basta un nome contenuto nell'altro:
+    "Sydney FC" e "Western Sydney Wanderers" sono squadre diverse."""
+    dt = abs((x["_t"] - r["_t"]).total_seconds())
+    if dt <= 36 * 3600 and sim(x.get("casa"), r.get("casa")) >= 0.9 and sim(x.get("ospite"), r.get("ospite")) >= 0.9:
+        return True
+    if dt <= 3 * 3600:
+        return any(toks(x.get(c)) and toks(x.get(c)) == toks(r.get(c)) for c in ("casa", "ospite"))
+    return False
+
+
+def ha_quote_1x2(r):
+    """La riga ha le quote 1X2 (The Odds API o API-Football)? Senza, la partita non puo entrare nell'app."""
+    return any(all(fnum(r.get(f"{src}quota_media_{e}")) for e in ("1", "X", "2")) for src in ("oa_", "af_"))
 
 
 def togli_margine(quote):

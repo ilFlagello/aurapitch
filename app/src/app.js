@@ -7,6 +7,7 @@ import { NOVITA, VERSIONE } from "./novita.js";
 import { QUOTA_MIN, options, mLabel, odd, pct, classificaViva, registraColori, Ricarica, vibra, AuraLine, C, Crest, Ctx, Flag, Giorni, Ic, Marchio, Seg, Sheet, TONE, auraCol, hs, html, mmss, store } from "./base.js";
 import { BarraSchedina, Cerca, Glossario, PrimoAvvio, partitaSettimana } from "./extra.js";
 import { Row } from "./riga.js";
+import { SchedineInCorso } from "./incorso.js";
 // schermate secondarie caricate solo quando servono (avvio piu leggero); poi scaricate in silenzio per l'uso offline
 const pigra = (f, nome) => React.lazy(() => f().then((m) => ({ default: m[nome] })));
 let modPartita = null; // scheda partita gia scaricata: si mostra subito, senza passare dall'attesa di React.Suspense (che aspetta almeno 300 ms)
@@ -79,6 +80,7 @@ import { Guida } from "./guida.js";
     const [err, setErr] = useState("");
     const [theme, setTheme] = useState(store.get("theme", "system"));
     const [tab, setTab] = useState("partite");
+    const [inCorso, setInCorso] = useState(false); // pagina "Schedine in corso", aperta dal banner (5/11)
     const [slipKey, setSlipKey] = useState(0); // cambia quando il banner "Schedina in corso" chiede una sezione precisa
     const [open, setOpen] = useState(null);
     const [mt, setMt] = useState(0);
@@ -448,7 +450,7 @@ import { Guida } from "./guida.js";
     const views = { partite: home, campionati: sosp(html`<${LeaguesView} />`), schedina: sosp(html`<${SlipView} key=${slipKey} />`), club: sosp(html`<${ClubView} />`) };
     const DOCK = [["partite", "Partite", Ic.Calendar], ["campionati", "Campionati", Ic.Trophy], ["schedina", "Schedina IA", Ic.Sparkles], ["club", "Il Mio Club", Ic.Shield]];
 
-    const ctx = { invita, gratisOggi, usaGratis, apriSquadra, apriGiocatore, apriLega, A, setRecensione, setLegale, caricaDettagli, caricaMercati, syncOn, setSyncOn, setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen: (v) => (v == null ? indietro() : goMatch(v)), mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
+    const ctx = { apriInCorso: () => setInCorso(true), invita, gratisOggi, usaGratis, apriSquadra, apriGiocatore, apriLega, A, setRecensione, setLegale, caricaDettagli, caricaMercati, syncOn, setSyncOn, setGloss, favTeams, setFavTeams, favLeagues, setFavLeagues, mia, ripristina, diario, setDiario, pushUrl, D, byId, lg, pro, unlocked, goMatch, setOpen: (v) => (v == null ? indietro() : goMatch(v)), mt, setMt, addLeg, mySlip, setMySlip, doCopy, setUnlock, fav, setFav, team, setTeam: openTeam, stor, aff, favM, toggleFavM };
     return html`<${Ctx.Provider} value=${ctx}><div className="min-h-screen pb-28">
       ${header}
       <main className="max-w-[480px] mx-auto" onTouchStart=${tsH} onTouchMove=${tmH} onTouchEnd=${teH}><${Ricarica} tira=${tira} attivo=${ricaricando} />${!online && html`<div role="status" className=${"mx-4 mb-3 px-3.5 py-2.5 rounded-2xl border text-[13px] flex items-center gap-2 " + TONE.warn}><${Ic.Clock} size=${15} />Sei offline: vedi i dati delle ${(D.generato || "").slice(-5)}. Quando torna la rete, tira giù la pagina per aggiornarli.</div>`}${team ? html`<${TeamView} key=${team.name} />` : open_m ? (D.leggera && !open_m.dett && !open_m.nq ? html`<div className="px-4 pt-4 space-y-3" aria-busy="true"><div className=${C.card + " p-5 text-center"}><div className=${"text-[17px] font-semibold " + C.tx}>${open_m.h} - ${open_m.a}</div><div className=${"text-[13px] mt-1 " + C.mu}>${online ? "Carico l'analisi della partita..." : "Sei offline: l'analisi di questa partita non è ancora stata scaricata."}</div>
@@ -490,7 +492,8 @@ import { Guida } from "./guida.js";
       ${!onb && html`<${PrimoAvvio} onFine=${() => { setOnb(true); store.set("onb", true); store.set("guideSeen", true);
         // primo utilizzo: 7 giorni di PRO completo, per vedere subito tutto quello che l'app sa fare (una volta sola per telefono)
         if (!store.get("prova7", 0) && !sub && until < Date.now()) { const u = Date.now() + 7 * 86400e3; store.set("prova7", Date.now()); store.set("until", u); setUntil(u); flash("Benvenuto: 7 giorni di PRO completo, gratis"); } }} />`}
-      ${!open && !team && html`<${BarraSchedina} vaiSchedina=${(sez) => { store.set("sch:schedina", sez); setSlipKey((k) => k + 1); setTab("schedina"); window.scrollTo(0, 0); }} />`}
+      ${!open && !team && !inCorso && html`<${BarraSchedina} vaiSchedina=${() => setInCorso(true)} />`}
+      ${inCorso && html`<${SchedineInCorso} onClose=${() => setInCorso(false)} />`}
       ${askPush && html`<${Sheet} title="Notifiche della partita" onClose=${() => setAskPush(false)}>
         <p className=${"text-[15px] " + C.tx}>Vuoi ricevere un avviso anche con il telefono bloccato per <b>inizio partita, gol, espulsioni, fine primo tempo e finale</b> delle tue preferite?</p>
         ${/iPhone|iPad/.test(navigator.userAgent) && !navigator.standalone && html`<div className=${"text-[13px] rounded-xl p-3 " + TONE.warn + " border"}>Su iPhone le notifiche funzionano solo aprendo AuraPitch dall'icona sulla schermata Home (Safari, Condividi, Aggiungi alla schermata Home).</div>`}

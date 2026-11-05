@@ -155,6 +155,22 @@ ok(Object.values(Z.Q).every((q) => q[0] && q[1]), "citazione senza autore");
 let conCit = 0; for (let i = 0; i < 600; i++) if (Z.citazioneSchedina([{ m: { id: "x" + i }, k: "1" }], 5)) conCit++;
 ok(conCit > 120 && conCit < 290, "frequenza delle citazioni nella schedina: " + conCit + " su 600");
 
+// 4b. "Schedine in corso" (5/11): esito già deciso durante la partita solo quando nessun gol in più può cambiarlo
+{
+  const outI = path.join(tmp, "incorso.mjs");
+  await esbuild.build({ entryPoints: [path.join(APP, "src/incorso.js")], bundle: true, platform: "node", format: "esm", outfile: outI, nodePaths: [MODS],
+    alias: { htm: path.join(APP, "vendor/htm/index.mjs") }, logLevel: "error" });
+  const I = await import(pathToFileURL(outI).href);
+  const vivo = (g) => ({ st: "LIVE", g });
+  const casi = [["O2.5", [2, 1], true], ["O2.5", [2, 0], null], ["U2.5", [2, 1], false], ["U2.5", [1, 1], null], ["GG", [1, 1], true], ["NG", [1, 1], false],
+    ["NG", [1, 0], null], ["1", [3, 0], null], ["X", [0, 0], null], ["O1.5+GG", [2, 1], true], ["T1:1", [2, 0], null], ["KO9.5", [0, 0], null], ["MARC:Leão", [1, 0], null]];
+  for (const [k, g, v] of casi) ok(I.giaDeciso(vivo(g), k) === v, `in corso: ${k} con ${g.join("-")} deve essere ${v}`);
+  ok(I.giaDeciso({ st: "FT", g: [1, 0] }, "1") === true && I.giaDeciso({ st: "NS" }, "1") === null, "in corso: finale e non iniziata");
+  const byId = { a: { st: "LIVE", g: [3, 0] }, b: { st: "NS" }, c: { st: "FT", g: [0, 0] } };
+  const st = [{ id: "a", k: "O2.5" }, { id: "b", k: "1" }, { id: "c", k: "KO9.5" }, { id: "c", k: "KO9.5", ok: true }, { id: "z", k: "1" }].map((x) => I.statoGamba(x, byId));
+  ok(st.join() === "v,n,m,v,?", "in corso: stati delle giocate " + st.join());
+  ok(I.inGioco({ legs: [{ id: "b", k: "1" }] }, byId) && !I.inGioco({ legs: [{ id: "c", k: "1" }] }, byId), "in corso: in gioco o chiusa");
+}
 // 4. periodi
 ok(B.inPeriodo("2026-10-28", "oggi", "2026-10-28") && !B.inPeriodo("2026-10-29", "oggi", "2026-10-28"), "periodo oggi");
 ok(B.inPeriodo("2026-10-29", "domani", "2026-10-28"), "periodo domani");

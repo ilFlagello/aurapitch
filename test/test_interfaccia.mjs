@@ -357,6 +357,51 @@ async function giroPressione(tema) {
   } catch (e) { errori.push(`[${tema}] diretta: ${e.message.split("\n")[0]}`); }
   await ctx.close();
 }
+// "Schedine in corso" (5/11): dal banner una pagina con ogni schedina giocata e lo stato di ogni partita; verde e rosso anche
+// prima del fischio quando l'esito non può più cambiare (Over 2,5 con 3 gol, Under 2,5 con 3 gol)
+async function giroInCorso(tema) {
+  const L = JSON.parse(fs.readFileSync(path.join(DIST, "data", "lista.json"), "utf8"));
+  const oggi = L.matches.filter((m) => m.date === L.today && m.st === "NS" && ["CL", "EL", "ECL", "I1", "E0", "SP1", "D1"].includes(m.lg));
+  const fin = L.matches.find((m) => m.st === "FT" && m.g && m.g[0] !== m.g[1]);
+  const dopo = L.matches.find((m) => m.st === "NS" && m.date > L.today);
+  if (oggi.length < 2 || !fin || !dopo) return;
+  const [m0, m1] = oggi;
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, colorScheme: tema, hasTouch: true, serviceWorkers: "block" });
+  const p = await ctx.newPage();
+  p.on("pageerror", (e) => errori.push(`[${tema} in corso] errore: ${e.message}`));
+  const cors = { "Access-Control-Allow-Origin": "*" };
+  const sq = (m, j, g) => ({ homeAway: j ? "away" : "home", score: String(g), team: { id: m.id + j, displayName: j ? m.a : m.h, shortDisplayName: j ? m.a : m.h, name: j ? m.a : m.h } });
+  const ev = (id, m, g, stato) => ({ id, date: m.ko, status: stato, competitions: [{ competitors: [sq(m, 0, g[0]), sq(m, 1, g[1])] }] });
+  const in2 = { type: { state: "in", name: "STATUS_SECOND_HALF", completed: false }, displayClock: "63'" };
+  const int = { type: { state: "in", name: "STATUS_HALFTIME", completed: false }, displayClock: "45'" };
+  await p.route(/^(?!http:\/\/127\.0\.0\.1)/, (r) => {
+    const u = decodeURIComponent(r.request().url());
+    if (/\/scoreboard\?dates=/.test(u)) return r.fulfill({ headers: cors, json: { events: [ev("701", m0, [3, 0], in2), ev("702", m1, [2, 1], int)] } });
+    return r.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+  });
+  const gamba = (m, k, l, q) => ({ id: m.id, k, q, p: 0.6, h: m.h, a: m.a, l });
+  const vince = fin.g[0] > fin.g[1] ? "1" : "2";
+  const diario = [{ id: "x1", t: Date.now() - 3 * 3600e3, imp: 5, q: 1.5 * 1.9 * 1.6 * 1.4,
+    legs: [gamba(m0, "O2.5", "Over 2,5", 1.5), gamba(m1, "U2.5", "Under 2,5", 1.9), gamba(dopo, "X", "X", 1.6), gamba(fin, vince, vince, 1.4)] }];
+  await p.goto(URL0); await p.waitForTimeout(800);
+  await p.evaluate((d) => { for (const [k, v] of [["onb", true], ["guideSeen", true], ["swipeOk", true], ["diario", d]]) localStorage.setItem("ap:" + k, JSON.stringify(v)); }, diario);
+  if (await p.getByText("Ho almeno").count()) { await p.locator("#eta").check(); await p.locator("#acc").check(); await p.getByRole("button", { name: "Entra", exact: true }).click(); }
+  await p.reload(); await p.waitForTimeout(1800);
+  if (await p.getByRole("button", { name: "Salta" }).count()) await p.getByRole("button", { name: "Salta" }).click();
+  try {
+    await p.getByRole("button", { name: "Apri le schedine in corso" }).click({ timeout: 8000 }); await p.waitForTimeout(500);
+    if (!(await p.getByRole("dialog", { name: "Schedine in corso" }).count())) errori.push(`[${tema}] in corso: il banner non apre la pagina`);
+    const attese = [[m0, "Over 2,5, presa"], [m1, "Under 2,5, persa"], [dopo, "X, non ancora iniziata"], [fin, vince + ", presa"]];
+    for (const [m, t] of attese) if (!(await p.locator(`[aria-label="${m.h} – ${m.a}: ${t}"]`).count())) errori.push(`[${tema}] in corso: ${m.h} – ${m.a} doveva essere "${t}"`);
+    for (const t of ["Schedina persa", "63'", "Intervallo", "Finale"]) if (!(await p.getByText(t, { exact: true }).count())) errori.push(`[${tema}] in corso: manca "${t}"`);
+    await p.screenshot({ path: path.join(OUT, `${tema}-in-corso.png`), fullPage: true });
+    const t = await p.evaluate(() => document.body.innerText);
+    if (/undefined|NaN/.test(t)) errori.push(`[${tema}] in corso: testo con "undefined" o "NaN"`);
+    await p.getByRole("button", { name: "Indietro" }).first().click(); await p.waitForTimeout(400);
+    if (await p.getByRole("dialog", { name: "Schedine in corso" }).count()) errori.push(`[${tema}] in corso: "Indietro" non chiude la pagina`);
+  } catch (e) { errori.push(`[${tema}] in corso: ${e.message.split("\n")[0]}`); }
+  await ctx.close();
+}
 // pagina dell'algoritmo (punto 8 del 4/11): in alto pochi numeri, sotto le sezioni che si aprono, con i numeri dei punti 1-4
 async function giroAlgoritmo(tema) {
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, colorScheme: tema, hasTouch: true, serviceWorkers: "block" });
@@ -417,6 +462,7 @@ await giroSenzaQuote("light");
 for (const t of ["light", "dark"]) await giroTabellone(t);
 await giroSquadra("dark");
 await giroPressione("light");
+for (const t of ["light", "dark"]) await giroInCorso(t);
 for (const t of ["light", "dark"]) await giroAlgoritmo(t);
 await b.close(); srv.close();
 console.log(errori.length ? errori.join("\n") : "Interfaccia: nessun errore");

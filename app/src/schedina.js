@@ -189,7 +189,7 @@ import { META, principali, slipOffPredefinito } from "./ordine.js";
   /* ---- diario delle giocate: resta sul telefono; l'esito di ogni partita si salva appena è noto ---- */
   // esitoGamba e statoGiocata stanno in base.js (servono anche fuori dalla Schedina)
   function Diario() {
-    const { byId, diario, setDiario } = React.useContext(Ctx);
+    const { byId, diario, setDiario, apriInCorso } = React.useContext(Ctx);
     const [aperta, setAperta] = useState(null);
     // salva gli esiti noti (le partite escono dal file dopo qualche giorno)
     useEffect(() => {
@@ -206,7 +206,9 @@ import { META, principali, slipOffPredefinito } from "./ordine.js";
     const chiudibile = (g, x) => { const m = byId[g.id]; return m ? m.st === "FT" : Date.now() - x.t > 4 * 3600e3; };
     const segna = (id, i, v) => setDiario(diario.map((z) => (z.id !== id ? z : { ...z, legs: z.legs.map((g, j) => (j === i ? { ...g, ok: v } : g)) })));
     return html`<div className=${C.card + " p-4"}>
-      <div className="flex items-baseline mb-2"><span className=${C.lab + " flex-1"}>Il mio diario</span><span className=${"text-[12px] " + C.mu}>${diario.length} giocate</span></div>
+      <div className="flex items-baseline mb-2"><span className=${C.lab + " flex-1"}>Il mio diario</span>${apriInCorso && diario.some((x) => statoGiocata(x, byId) === "aperta")
+        ? html`<button onClick=${apriInCorso} className=${"text-[13px] font-semibold flex items-center " + C.acc}>Segui in corso<${Ic.ChevronRight} size=${15} /></button>`
+        : html`<span className=${"text-[12px] " + C.mu}>${diario.length} giocate</span>`}</div>
       <div className="grid grid-cols-3 gap-2 mb-2">${[["Giocato", eur(speso)], ["Vinto", eur(vinto)], ["Resa", ch.length ? (vinto - speso >= 0 ? "+" : "") + eur(vinto - speso) : "-"]].map(([l, v]) => html`<div key=${l} className=${"rounded-[14px] p-2.5 " + C.ch}>
         <div className=${"text-[11px] " + C.mu}>${l}</div><div className=${"num text-[20px] font-bold " + (l === "Resa" && ch.length ? (vinto >= speso ? "text-[#0F9D84]" : "text-[#FF3D5A]") : C.tx)}>${v}</div></div>`)}</div>
       ${diario.slice().reverse().map((x) => { const st = statoGiocata(x, byId), o = aperta === x.id; return html`<div key=${x.id} className=${"border-t " + C.bd}>

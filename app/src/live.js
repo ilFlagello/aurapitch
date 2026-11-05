@@ -522,15 +522,21 @@ function riga(ev, tid) {
     esito: t.state === "post" && g[0] != null ? (g[0] > g[1] ? "V" : g[0] === g[1] ? "N" : "P") : null,
   };
 }
+// partite della squadra in TUTTE le competizioni (campionato, coppe nazionali ed europee): l'id ESPN e lo stesso ovunque.
+// Prima si usava il calendario della sola competizione da cui si apriva la squadra (Milan aperto dall'Europa League: solo
+// partite di coppa). Le amichevoli non contano.
+const amichevole = (ev) => /friendly/i.test((ev.league && ev.league.slug) || "");
 export async function loadTeam(lgE, tid) {
   const [res, fix, ros] = await Promise.all([
-    getJSON(`${SITE}${lgE}/teams/${tid}/schedule`, 600e3).catch(() => null),
-    getJSON(`${SITE}${lgE}/teams/${tid}/schedule?fixture=true`, 600e3).catch(() => null),
+    getJSON(`${SITE}all/teams/${tid}/schedule`, 600e3).catch(() => null)
+      .then((x) => (x && (x.events || []).length ? x : getJSON(`${SITE}${lgE}/teams/${tid}/schedule`, 600e3).catch(() => null))),
+    getJSON(`${SITE}all/teams/${tid}/schedule?fixture=true`, 600e3).catch(() => null)
+      .then((x) => (x && (x.events || []).length ? x : getJSON(`${SITE}${lgE}/teams/${tid}/schedule?fixture=true`, 600e3).catch(() => null))),
     getJSON(`${SITE}${lgE}/teams/${tid}/roster`, 3600e3).catch(() => null),
   ]);
   const team = (res && res.team) || (ros && ros.team) || {};
-  const risultati = ((res && res.events) || []).map((e) => riga(e, tid)).filter((r) => r.fatto).sort((a, b) => b.date.localeCompare(a.date));
-  const prossime = ((fix && fix.events) || []).map((e) => riga(e, tid)).filter((r) => !r.fatto).sort((a, b) => a.date.localeCompare(b.date));
+  const risultati = ((res && res.events) || []).filter((e) => !amichevole(e)).map((e) => riga(e, tid)).filter((r) => r.fatto).sort((a, b) => b.date.localeCompare(a.date));
+  const prossime = ((fix && fix.events) || []).filter((e) => !amichevole(e)).map((e) => riga(e, tid)).filter((r) => !r.fatto).sort((a, b) => a.date.localeCompare(b.date));
   const rosa = ((ros && ros.athletes) || []).map((a) => ({
     id: a.id, name: a.displayName, short: a.shortName || a.displayName, last: a.lastName || a.displayName, num: a.jersey, pos: a.position && a.position.abbreviation,
     ruolo: ruolo(a.position && a.position.abbreviation), eta: a.age, naz: nazione(a.citizenship),

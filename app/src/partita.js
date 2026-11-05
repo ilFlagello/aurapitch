@@ -1120,6 +1120,62 @@ import { pressione, conPosizioni } from "./pressione.js";
       </div>`;
     }
 
+    /* ---- "In breve" in una scheda sola (scelta 3A di Andrea, 5/11): consiglio, ultime 5 di tutte le competizioni con la sigla
+       della competizione, posizione in classifica, assenze e una o due cose da sapere. Solo prima del fischio. ---- */
+    const DA_SLUG = Object.fromEntries(Object.entries(ESPN_LG).map(([k, v]) => [v, k]));
+    const SIGLE = { I1: "SA", I2: "SB", CL: "UCL", EL: "UEL", ECL: "UECL", CI: "CI", SCI: "SCI", E0: "PL", E1: "CH", SP1: "LIGA", SP2: "LIGA2", D1: "BUN", D2: "BUN2", F1: "L1", F2: "L2", N1: "ERE", P1: "LIGA", FAC: "FAC", ELC: "EFL", CDR: "CDR", DFB: "DFB", CDF: "CDF", SC0: "SPL", B1: "PRO", T1: "SL", NL: "NL", MLS: "MLS", BR1: "BRA", AR1: "ARG" };
+    const sigla = (c) => { const k = DA_SLUG[c] || c; return SIGLE[k] || String(k || "").split(".").pop().toUpperCase().slice(0, 4); };
+    const COL_FORMA = { V: "bg-[#0F9D84]", N: "bg-[#8E8AA6]", P: "bg-[#E5304D]" };
+    function SchedaBreve({ m, vai, sapere }) {
+      const { unlocked, setUnlock, addLeg, mySlip, lg, D } = React.useContext(Ctx);
+      const tip = m.tip && m.tip.consiglio;
+      const inSlip = mySlip.find((x) => x.id === m.id);
+      const preso = inSlip && norm(inSlip.k) === (tip && tip.c);
+      const l5 = m.last5 || [[], []];
+      const misto = l5.some((x) => new Set(x.map((z) => z.c).filter(Boolean)).size > 1);
+      const nomeLg = (c) => (lg(c) || {}).name || c;
+      // posizioni: quelle preparate dal server (competizione della partita, e in coppa il campionato), altrimenti la classifica dell'app
+      const posti = (j) => { const P = m.posti && m.posti[j]; if (P && P.length) return P;
+        const S = D && D.standings && D.standings[m.lg], i = S ? S.generale.findIndex((r) => r.team === (j ? m.a : m.h)) : -1;
+        return i >= 0 ? [{ c: m.lg, p: i + 1 }] : []; };
+      const assenze = (m.fattori || []).filter((f) => f.chi && /squalifica|infortun|dubbio|notizia|assen/.test(f.tipo || "notizia"))
+        .sort((a, b) => Math.abs(b.delta || 0) - Math.abs(a.delta || 0)).slice(0, 2)
+        .map((f) => `${f.chi} (${f.lato ? m.a : m.h}) ${f.tipo === "dubbio" ? "è in dubbio" : f.tipo === "squalifica" ? "è squalificato" : "potrebbe non esserci"}`);
+      // squalificati e infortunati raccontati tra le cose "da sapere" vanno nelle assenze
+      for (const t of sapere) if (/squalificat|infortunat|in dubbio|non ci sar/.test(t) && assenze.length < 3 && !assenze.some((a) => t.startsWith(a.split(" (")[0]))) assenze.push(t.replace(/\.$/, ""));
+      const riposo = m.ctx && m.ctx.text && !/non disponibil|nessun/i.test(m.ctx.text) ? [m.ctx.text] : [];
+      const altre = [...sapere.filter((t) => !assenze.some((a) => t.startsWith(a.split(" (")[0]) || t.replace(/\.$/, "") === a)), ...riposo].slice(0, 2);
+      const nulla = !tip && !l5[0].length && !l5[1].length && !assenze.length && !altre.length;
+      if (nulla) return null;
+      return html`<div className=${C.card + " p-4"}>
+        ${tip && (unlocked(m) ? html`<div className="flex items-center gap-2.5">
+            <${Ic.Sparkles} size=${18} className=${C.acc + " shrink-0"} />
+            <div className="flex-1 min-w-0"><div className=${"text-[11px] " + C.mu}>${tip.titolo === "Indicazione dalle quote" ? "Indicazione dalle quote" : "Il consiglio dell'IA"}</div>
+              <div className=${"text-[19px] font-extrabold leading-tight " + C.tx}>${mLabel(m, tip.c)}</div></div>
+            <div className="text-right shrink-0"><div className=${"num text-[22px] font-extrabold leading-none " + C.tx}>${pct(tip.p)}%</div>
+              <div className=${"text-[11px] " + C.mu}>quota ${tip.qm ? "" : "stimata "}${odd(tip.q)}</div></div>
+            <button aria-label="Aggiungi alla schedina" onClick=${() => addLeg(m, tip.c)} className=${"w-9 h-9 rounded-full flex items-center justify-center shrink-0 " + C.on}>${preso ? html`<${Ic.Check} size=${16} />` : html`<${Ic.Plus} size=${16} />`}</button></div>`
+          : html`<button onClick=${() => setUnlock(true)} className=${"w-full text-left text-[13px] rounded-xl p-3 " + C.ch + " " + C.tx}><${Ic.Lock} size=${13} className="inline mr-1" />Sblocca con PRO o con l'analisi gratis del giorno per vedere il consiglio.</button>`)}
+        ${(l5[0].length > 0 || l5[1].length > 0) && html`<${React.Fragment}>
+          ${tip && html`<div className=${"h-px my-3 " + C.ch}></div>`}
+          <div className=${"text-[11px] mb-1.5 " + C.mu}>Ultime 5${misto ? ", tutte le competizioni" : ""}</div>
+          ${[0, 1].map((j) => { const P = posti(j); return html`<div key=${j} className="flex items-center gap-2 py-1">
+            <span className=${"w-[92px] shrink-0 text-[13px] font-bold truncate " + C.tx}>${j ? m.a : m.h}</span>
+            <span className="flex gap-1" role="img" aria-label=${"Ultime partite: " + l5[j].map((z) => ({ V: "vittoria", N: "pareggio", P: "sconfitta" })[z.esito]).join(", ")}>
+              ${l5[j].map((z, i) => html`<span key=${i} className="flex flex-col items-center gap-[2px]" title=${z.data + " " + (z.casa ? "contro " : "in casa di ") + z.avv + " " + z.ris}>
+                <b className=${"w-[22px] h-[22px] rounded-[7px] flex items-center justify-center text-[11px] text-white " + COL_FORMA[z.esito]}>${z.esito}</b>
+                ${misto && html`<span className=${"text-[8px] font-bold leading-none " + C.mu}>${z.c ? sigla(z.c) : ""}</span>`}</span>`)}
+              ${!l5[j].length && html`<span className=${"text-[12px] " + C.mu}>nessuna partita nei dati</span>`}</span>
+            <span className="ml-auto text-right leading-tight shrink-0">${P.slice(0, 2).map((x, i) => html`<span key=${i} className=${"block text-[11px] " + C.mu}>
+              ${i ? "" : html`<b className=${"num text-[17px] " + C.tx}>${x.p}° </b>`}${i ? x.p + "° " : ""}${nomeLg(x.c)}</span>`)}</span></div>`; })}<//>`}
+        ${(assenze.length > 0 || altre.length > 0) && html`<div className=${"h-px my-3 " + C.ch}></div>
+          <div className="space-y-2">
+            ${assenze.length > 0 && html`<div className="flex gap-2 items-start"><${Ic.AlertTriangle} size=${15} className="text-[#E5304D] shrink-0 mt-[2px]" />
+              <span className=${"text-[13px] leading-snug " + C.tx}><b>Assenze:</b> ${assenze.join("; ")}.</span></div>`}
+            ${altre.map((t, i) => html`<div key=${i} className="flex gap-2 items-start"><${Ic.Info} size=${15} className=${C.acc + " shrink-0 mt-[2px]"} />
+              <span className=${"text-[13px] leading-snug " + C.tx}>${i ? "" : html`<b>Da sapere: </b>`}${t}</span></div>`)}</div>`}
+        <${Vai} onClick=${() => vai(tip ? 3 : 4)}>${tip ? "Perché, e tutte le altre giocate" : "Forma, classifica e precedenti"}<//></div>`;
+    }
     /* ---- "In breve": solo l'essenziale, diverso prima, durante e dopo la partita; il resto si scopre scorrendo ---- */
     function Vai({ onClick, children }) {
       return html`<button onClick=${onClick} className=${"mt-3 w-full flex items-center justify-between rounded-[14px] px-3.5 py-2.5 text-[14px] font-semibold " + C.ch + " " + C.tx}><span>${children}</span><${Ic.ChevronRight} size=${17} className=${C.mu} /></button>`;
@@ -1153,15 +1209,7 @@ import { pressione, conPosizioni } from "./pressione.js";
           <div className=${"text-[12px] font-semibold uppercase tracking-[0.08em] " + C.acc}>${cit.derby}</div>
           <div className="mt-2"><${Citazione} q=${cit.q} /></div></div>`}
         ${grande && html`<${Anteprima} m=${m} />`}
-        ${st === "NS" && tip && html`<div className=${C.card + " p-4"}>
-          <div className="flex items-center gap-2 mb-2"><${Ic.Sparkles} size=${17} className=${C.acc} /><span className=${C.lab + " flex-1"}>${tip.titolo === "Indicazione dalle quote" ? "Indicazione dalle quote" : "Il consiglio dell'IA"}</span>
-            ${unlocked(m) && html`<button aria-label="Aggiungi alla schedina" onClick=${() => addLeg(m, tip.c)} className=${"w-9 h-9 rounded-full flex items-center justify-center " + (inSlip && norm(inSlip.k) === tip.c ? C.on : C.ch + " " + C.tx)}>${inSlip && norm(inSlip.k) === tip.c ? html`<${Ic.Check} size=${16} />` : html`<${Ic.Plus} size=${16} />`}</button>`}</div>
-          ${unlocked(m) ? html`<div className=${"text-[20px] font-bold leading-tight " + C.tx}>${mLabel(m, tip.c)}</div>
-            <div className=${"text-[14px] mt-1 " + C.tx}>${spiega(m, tip.c)}</div>
-            <div className="flex gap-4 mt-2.5"><span className=${"text-[13px] " + C.mu}>Probabilità <b className=${"num text-[19px] " + C.tx}>${pct(tip.p)}%</b></span><span className=${"text-[13px] " + C.mu}>Quota ${tip.qm ? "" : "stimata "}<b className=${"num text-[19px] " + C.tx}>${odd(tip.q)}</b></span></div>
-            <${Garanzie} m=${m} />`
-          : html`<button onClick=${() => setUnlock(true)} className=${"w-full text-left text-[14px] rounded-xl p-3 " + C.ch + " " + C.tx}><${Ic.Lock} size=${13} className="inline mr-1" />Sblocca con PRO o con l'analisi gratis del giorno per vedere il consiglio.</button>`}
-          <${Vai} onClick=${() => vai(3)}>Perché, e tutte le altre giocate<//></div>`}
+        ${st === "NS" && html`<${SchedaBreve} m=${m} vai=${vai} sapere=${sapere} />`}
         ${st !== "NS" && html`<${LiveTips} m=${m} sm=${sm} />`}
         ${st !== "NS" && sm && html`<div className=${C.card + " p-4"}>
           <div className=${C.lab + " mb-2"}>${st === "FT" ? "Com'è finita" : "In questo momento"}</div>
@@ -1174,9 +1222,6 @@ import { pressione, conPosizioni } from "./pressione.js";
           ${best && html`<button onClick=${() => onPlayer(best.p, best.j)} className="w-full flex items-center gap-2.5 mt-3 text-left"><span className=${"text-[13px] " + C.mu}>${st === "FT" ? "Migliore in campo" : "Il migliore finora"}</span><span className=${"flex-1 text-[15px] font-semibold truncate " + C.tx}>${best.p.name}</span><${VotoChip} v=${best.p.voto} /></button>`}
           <${Vai} onClick=${() => vai(1)}>Andamento, eventi, tiri e statistiche<//></div>`}
         ${st === "NS" && html`<${Sondaggio} m=${m} />`}
-        ${st === "NS" && sapere.length > 0 && html`<div className=${C.card + " p-4"}><div className=${C.lab + " mb-2"}>Da sapere</div>
-          <div className="space-y-2.5">${sapere.map((t, i) => html`<div key=${i} className="flex gap-3"><i className="block w-[3px] self-stretch rounded-full shrink-0 bg-[#5B2EE6] dark:bg-[#A58BFF]"></i><span className=${"text-[15px] leading-snug " + C.tx}>${t}</span></div>`)}</div>
-          <${Vai} onClick=${() => vai(4)}>Forma, classifica e precedenti<//></div>`}
         ${st === "NS" && sm && sm.formazioni[0] && html`<div className=${C.card + " p-4"}><div className=${C.lab}>Formazioni ufficiali uscite</div>
           <div className=${"text-[14px] mt-1 " + C.mu}>${m.h} ${sm.formazioni[0].formation || ""}, ${m.a} ${(sm.formazioni[1] || {}).formation || ""}.</div><${Vai} onClick=${() => vai(2)}>Guarda le formazioni<//></div>`}
         ${cit && !cit.derby && st === "NS" && html`<div className="px-1 py-1"><${Citazione} q=${cit.q} piccola=${true} /></div>`}

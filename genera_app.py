@@ -210,6 +210,14 @@ def togli_margine(quote):
     return [v / sum(p) for v in p]
 
 
+def nome_unico(nomi, varianti, soglia=0.8):
+    """Il nome della lista piu simile a una delle varianti, solo se sopra soglia e senza pari merito (altrimenti None)."""
+    voti = sorted(((ES.sim(n, varianti), n) for n in nomi if n), reverse=True)
+    if not voti or voti[0][0] < soglia or (len(voti) > 1 and voti[1][0] == voti[0][0]):
+        return None
+    return voti[0][1]
+
+
 def gol_da_quote(mk, mo, mo_l=None, linea=None):
     """Gol attesi dalle quote: Over/Under 2,5 se c'e, altrimenti la linea ESPN (es. 3,5), altrimenti solo l'1X2."""
     if mo is None and mo_l is not None and linea:
@@ -665,13 +673,21 @@ def genera():
             return None
         best = max(med["squadre"], key=lambda t: ES.sim(nome, [t]), default=None)
         return best if best and ES.sim(nome, [best]) >= 0.8 else None
-    for k_es in ES.SOLO_ESPN:  # classifiche da ESPN (Serie B e campionati senza football-data.org)
+    # nomi delle squadre come compariranno nelle partite dell'app (dalle quote), per campionato: la classifica ESPN li usa,
+    # cosi la classifica in diretta dell'app ritrova le squadre in campo ("Ferencvaros" -> "Ferencváros TC")
+    nomi_app = {}
+    for r in quote:
+        lg_r = next((lg for lg in LEAGUES if lg[5] == r.get("campionato")), None)
+        if lg_r and not lg_r[4]:
+            nomi_app.setdefault(lg_r[0], set()).update({pulisci(r.get("casa") or ""), pulisci(r.get("ospite") or "")})
+    for k_es in ES.SOLO_ESPN + ES.CLASSIFICHE_COPPE:  # classifiche da ESPN (Serie B, campionati senza football-data.org, Europa e Conference League)
       cl2 = (esd.get("classifiche") or {}).get(k_es)
       if cl2:
         nostri = [n for n, es in (esd.get("squadre") or {}).items() if es.get("lg") == k_es]
         righe = []
         for i, r in enumerate(cl2):
-            mio = next((n for n in nostri if ES.sim(n, [r["team"]]) >= 0.8), None)
+            varianti = [r["team"]] + ([r["lungo"]] if r.get("lungo") else [])
+            mio = next((n for n in nostri if ES.sim(n, varianti) >= 0.8), None) or nome_unico(nomi_app.get(k_es) or (), varianti)
             righe.append({"team": {"id": "es:" + (mio or r["team"]), "shortName": mio or r["team"]}, "position": r["rank"] or i + 1, "points": r["pt"], "playedGames": r["pg"],
                           "won": r["v"], "draw": r["n"], "lost": r["p"], "goalsFor": r["gf"], "goalsAgainst": r["gs"]})
         classifiche["ES_" + k_es] = {"TOTAL": righe}

@@ -35,6 +35,8 @@ NAZIONALI = ("NL", "AMI", "EQ", "WCQ")
 COPPE = ("KNV", "CDB", "ACL2", "UWCL", "CL", "EL", "ECL", "CI", "FAC", "ELC", "CDR", "DFB", "CDF", "SCI", "LIB", "SUD", "ACL", "NL", "AMI", "EQ", "WCQ")
 SOLO_ESPN = ("I2", "F1", "N1", "P1", "E1", "D2", "SP2", "B1", "T1", "SC0", "A1", "G1", "DK1", "MLS", "BR1", "AR1", "MX1", "J1",
              "F2", "NO1", "SE1", "SA1", "CHI1", "COL1", "AU1", "UY1", "PY1", "EC1", "PE1", "E2", "E3", "EC", "SC1", "N2", "BR2", "AR2", "MX2", "USL", "WSL", "AUW", "CN1", "AR3", "CR1", "RU1")  # campionati con classifica e risultati da ESPN (non da football-data.org)
+# coppe con la classifica della fase a campionato da ESPN (la Champions arriva da football-data.org); verificato il 4/11
+CLASSIFICHE_COPPE = ("EL", "ECL")
 # quote da ESPN: nome del campionato come nel file delle quote (deve coincidere con l'ultimo campo di LEAGUES in genera_app.py)
 QUOTE_ESPN = {"F1": "Ligue 1", "N1": "Eredivisie", "P1": "Primeira Liga", "E1": "Championship", "FAC": "FA Cup", "ELC": "Carabao Cup",
               "CDR": "Copa del Rey", "DFB": "DFB-Pokal", "CDF": "Coppa di Francia", "SCI": "Supercoppa Italiana",
@@ -55,7 +57,8 @@ FD_NUOVI = {"A1": ("Austria", "Bundesliga"), "DK1": ("Denmark", "Superliga"), "M
             "FI1": ("Finland", "Veikkausliiga"), "IE1": ("Ireland", "Premier Division")}
 SOGLIE_GIALLI = (5, 10)  # squalifica alla 5a e alla 10a ammonizione (regola comune a Serie A, Serie B, Premier, LaLiga, Bundesliga)
 STOP = {"al", "fc", "ac", "as", "ss", "us", "ssc", "afc", "cf", "sc", "calcio", "club", "de", "1907", "1909", "1913", "1919", "bc", "vfb", "vfl", "tsg", "sv", "fsv", "rc", "cd", "ud", "rcd", "ca", "sd", "1846", "04", "05", "1899", "hellas"}
-ALIAS = {"internazionale": "inter", "inter milan": "inter", "ac milan": "milan", "manchester united": "man united", "manchester city": "man city", "bayern munich": "bayern", "tottenham hotspur": "tottenham"}
+ALIAS = {"internazionale": "inter", "inter milan": "inter", "ac milan": "milan", "manchester united": "man united", "manchester city": "man city", "bayern munich": "bayern", "tottenham hotspur": "tottenham",
+         "olympiakos piraeus": "olympiacos", "olympiakos": "olympiacos", "omonoia": "omonia"}  # grafie diverse tra quote ed ESPN (coppe europee)
 
 
 def get(url):
@@ -162,7 +165,7 @@ def classifica_espn(lg):
     righe = []
     for e in ((d.get("children") or [{}])[0].get("standings") or {}).get("entries", []):
         v = {s["name"]: s.get("value") for s in e.get("stats", [])}
-        righe.append({"team": e["team"].get("shortDisplayName") or e["team"]["displayName"], "pg": int(v.get("gamesPlayed") or 0), "v": int(v.get("wins") or 0),
+        righe.append({"team": e["team"].get("shortDisplayName") or e["team"]["displayName"], "lungo": e["team"].get("displayName"), "pg": int(v.get("gamesPlayed") or 0), "v": int(v.get("wins") or 0),
                       "n": int(v.get("ties") or 0), "p": int(v.get("losses") or 0), "gf": int(v.get("pointsFor") or 0), "gs": int(v.get("pointsAgainst") or 0),
                       "pt": int(v.get("points") or 0), "rank": int(v.get("rank") or 0)})
     righe.sort(key=lambda r: (r["rank"] or 99, -r["pt"]))
@@ -706,7 +709,7 @@ def giro_espn(base="data", ore=48):
         out["senza_quote"] = giro_senza_quote(ora)
     except Exception as e:  # noqa: BLE001 - i campionati senza quote non devono fermare il giro
         print(f"ESPN senza quote: errore {e}")
-    for k in SOLO_ESPN:
+    for k in SOLO_ESPN + CLASSIFICHE_COPPE:
         try:
             out["classifiche"][k] = classifica_espn(ESPN_LG[k])
         except Exception as e:  # noqa: BLE001

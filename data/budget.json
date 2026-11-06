@@ -5,10 +5,10 @@
   "quota": 14,
   "spesi": {
    "mattino": 4,
-   "prepartita": 4
+   "prepartita": 6
   },
   "mattino_fatto": true,
-  "rimasti": 370,
+  "rimasti": 368,
   "ultime": {
    "Serie A": "2026-11-06",
    "Serie B": "2026-11-06",
@@ -68,6 +68,6 @@
  },
  "fd": {
   "giorno": "2026-11-06",
-  "usate": 94
+  "usate": 95
  }
 }

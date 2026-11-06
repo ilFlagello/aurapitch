@@ -12048,16 +12048,16 @@
 "nome": "F.C. Südtirol",
 "allenatori": [
 {
-"chi": "Giovanni Stroppa",
-"qid": "Q2656692",
-"da": "2011-01-01",
-"a": "2012-01-01"
-},
-{
 "chi": "Maurizio Pellegrino",
 "qid": "Q3852681",
 "da": "2011-01-01",
 "a": "2011-01-01"
+},
+{
+"chi": "Giovanni Stroppa",
+"qid": "Q2656692",
+"da": "2011-01-01",
+"a": "2012-01-01"
 },
 {
 "chi": "Stefano Vecchi",
@@ -12090,16 +12090,16 @@
 "a": "2017-01-01"
 },
 {
-"chi": "Alberto Colombo",
-"qid": "Q1871054",
-"da": "2017-01-01",
-"a": "2017-01-01"
-},
-{
 "chi": "Paolo Zanetti",
 "qid": "Q1494098",
 "da": "2017-01-01",
 "a": "2019-01-01"
+},
+{
+"chi": "Alberto Colombo",
+"qid": "Q1871054",
+"da": "2017-01-01",
+"a": "2017-01-01"
 },
 {
 "chi": "Stefano Vecchi",
@@ -13650,14 +13650,14 @@
 "a": "2013-04-02"
 },
 {
-"chi": "Arjan van der Laan",
-"qid": "Q2212508",
+"chi": "Peter van den Berg",
+"qid": "Q2079317",
 "da": "2013-04-02",
 "a": "2013-04-06"
 },
 {
-"chi": "Peter van den Berg",
-"qid": "Q2079317",
+"chi": "Arjan van der Laan",
+"qid": "Q2212508",
 "da": "2013-04-02",
 "a": "2013-04-06"
 },
@@ -13686,14 +13686,14 @@
 "a": "2014-11-29"
 },
 {
-"chi": "John de Wolf",
-"qid": "Q1438559",
+"chi": "Peter van den Berg",
+"qid": "Q2079317",
 "da": "2014-11-29",
 "a": "2014-12-31"
 },
 {
-"chi": "Peter van den Berg",
-"qid": "Q2079317",
+"chi": "John de Wolf",
+"qid": "Q1438559",
 "da": "2014-11-29",
 "a": "2014-12-31"
 },
@@ -23103,7 +23103,7 @@
 },
 "Andorra": {
 "wikidata": "Q1386854",
-"nome": "FC Andorra",
+"nome": "FC ASESINOS FC",
 "allenatori": [
 {
 "chi": "Ferran Costa Pinazo",
@@ -30809,13 +30809,11 @@
 "Kalamata",
 "Academico Viseu",
 "Lommel SK",
-"Sheffield Utd",
 "Boston Utd",
 "Brackley Town",
-"Oxford City",
 "Dover Athletic",
+"Oxford City",
 "Villarreal B",
-"KV Mechelen",
 "Waasland-Beveren"
 ]
 }

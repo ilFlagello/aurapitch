@@ -1,0 +1,10 @@
+campionato,casa,id,inizio,ospite,stato,oa_bfx_1,oa_bfx_2,oa_bfx_X,oa_bookmaker_1,oa_bookmaker_2,oa_bookmaker_Over 2.5,oa_bookmaker_Under 2.5,oa_bookmaker_X,oa_margine,oa_mbk_1,oa_mbk_2,oa_mbk_O,oa_mbk_X,oa_pin_1,oa_pin_2,oa_pin_X,oa_prob_1,oa_prob_2,oa_prob_Over 2.5,oa_prob_X,oa_quota_max_1,oa_quota_max_2,oa_quota_max_Over 2.5,oa_quota_max_Under 2.5,oa_quota_max_X,oa_quota_media_1,oa_quota_media_2,oa_quota_media_Over 2.5,oa_quota_media_Under 2.5,oa_quota_media_X
+2. Bundesliga,Eintracht Braunschweig,1576225,2026-11-06T18:30:00+01:00,Energie Cottbus,NS,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+2. Bundesliga,Dynamo Dresden,1576231,2026-11-06T18:30:00+01:00,SpVgg Greuther Fürth,NS,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Bundesliga,Hamburger SV,1575218,2026-11-06T20:30:00+01:00,Borussia Mönchengladbach,NS,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+LaLiga 2,Castellón,1570006,2026-11-06T20:30:00+01:00,Eibar,PST,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Serie B,Ascoli,1601593,2026-11-06T20:30:00+01:00,Palermo,NS,0.3034,0.423,0.2736,21,21,11,11,21,0.0862,0.3034,0.423,,0.2736,0.2955,0.4283,0.2762,0.3063,0.4223,0.5699,0.2714,3.25,2.34,1.65,2.27,3.6,3.006,2.18,1.615,2.14,3.392
+Serie A,Venezia,1550196,2026-11-06T20:45:00+01:00,Udinese,NS,0.4185,0.3014,0.2801,24,24,16,16,24,0.0592,0.4172,0.3001,0.5191,0.2828,0.4191,0.3044,0.2766,0.4232,0.3029,0.5355,0.2739,2.38,3.3,1.91,2.12,3.7,2.231,3.117,1.771,2.042,3.447
+Championship,Derby,1563256,2026-11-06T21:00:00+01:00,Bolton,NS,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+LaLiga,Sevilla,1570450,2026-11-06T21:00:00+01:00,Alaves,NS,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Premier League,Everton,1557460,2026-11-06T21:00:00+01:00,Coventry,NS,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,

@@ -12048,16 +12048,16 @@
 "nome": "F.C. Südtirol",
 "allenatori": [
 {
-"chi": "Maurizio Pellegrino",
-"qid": "Q3852681",
-"da": "2011-01-01",
-"a": "2011-01-01"
-},
-{
 "chi": "Giovanni Stroppa",
 "qid": "Q2656692",
 "da": "2011-01-01",
 "a": "2012-01-01"
+},
+{
+"chi": "Maurizio Pellegrino",
+"qid": "Q3852681",
+"da": "2011-01-01",
+"a": "2011-01-01"
 },
 {
 "chi": "Stefano Vecchi",
@@ -13650,14 +13650,14 @@
 "a": "2013-04-02"
 },
 {
-"chi": "Peter van den Berg",
-"qid": "Q2079317",
+"chi": "Arjan van der Laan",
+"qid": "Q2212508",
 "da": "2013-04-02",
 "a": "2013-04-06"
 },
 {
-"chi": "Arjan van der Laan",
-"qid": "Q2212508",
+"chi": "Peter van den Berg",
+"qid": "Q2079317",
 "da": "2013-04-02",
 "a": "2013-04-06"
 },
@@ -13686,14 +13686,14 @@
 "a": "2014-11-29"
 },
 {
-"chi": "Peter van den Berg",
-"qid": "Q2079317",
+"chi": "John de Wolf",
+"qid": "Q1438559",
 "da": "2014-11-29",
 "a": "2014-12-31"
 },
 {
-"chi": "John de Wolf",
-"qid": "Q1438559",
+"chi": "Peter van den Berg",
+"qid": "Q2079317",
 "da": "2014-11-29",
 "a": "2014-12-31"
 },

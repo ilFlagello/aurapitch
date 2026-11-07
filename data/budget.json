@@ -1,14 +1,13 @@
 {
  "odds": {
-  "giorno": "2026-11-06",
-  "inizio": 378,
-  "quota": 14,
+  "giorno": "2026-11-07",
+  "inizio": 366,
+  "quota": 29,
   "spesi": {
-   "mattino": 4,
-   "prepartita": 6
+   "prepartita": 2
   },
-  "mattino_fatto": true,
-  "rimasti": 368,
+  "mattino_fatto": false,
+  "rimasti": 364,
   "ultime": {
    "Serie A": "2026-11-06",
    "Serie B": "2026-11-06",
@@ -68,6 +67,6 @@
  },
  "fd": {
   "giorno": "2026-11-07",
-  "usate": 10
+  "usate": 11
  }
 }
